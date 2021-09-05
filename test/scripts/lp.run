@@ -1,0 +1,12 @@
+model lp.mod;
+
+let p := 5;
+
+option solver cplex;
+objective OBJ;
+solve;
+
+display x1;
+display x2;
+display y;
+

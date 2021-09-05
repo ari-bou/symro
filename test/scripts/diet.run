@@ -1,0 +1,2 @@
+model diet.mod;
+data diet.dat;

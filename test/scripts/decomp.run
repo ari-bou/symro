@@ -1,0 +1,31 @@
+model decomp.mod;
+data decomp.dat;
+
+# General Options
+option show_stats 3;
+option presolve 16;
+option presolve_eps 0.01;
+option solution_precision 13;
+option display_1col 1000;
+option display_width 1000;
+option display_precision 0;
+option presolve_warnings -1;
+
+# Solver Options
+option conopt_options "outlev=3 timing=3 errlim=10000 Rtnwmi=1e-5 Rtnwma=1e-3";
+option ipopt_options "halt_on_ampl_error yes";
+option snopt_options "outlev=3";
+option knitro_options "outlev=3 ms_enable=0";
+
+objective OBJ;
+
+option solver cplex;
+solve;
+
+display NODE;
+display ARC;
+display PROFIT;
+
+display OBJ;
+
+display {i in 1.._ncons} (_conname[i], _con[i].body, _con[i].dual);

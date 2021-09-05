@@ -1,0 +1,40 @@
+model lp_sce.mod;
+
+param cut_count = 2;
+param lambda_1{s in S, 1..cut_count};
+param y_soln = 0.4;
+
+let p[1] := 5;
+let p[2] := 15;
+let p[3] := 30;
+
+#fix {s in S} y[s] := 200;
+
+option solver cplex;
+objective OBJ;
+solve;
+
+display x1;
+display x2;
+display y;
+
+/*
+display {i in 1.._ncons} (_conname[i], _con[i].body, _con[i].dual, _con[i].body * _con[i].dual);
+
+#display 4.5 + sum {s in S} (- 10 * p[s] * (y_soln - y[s]) + lambda_1[s] * p[s] * (y_soln - y[s]));
+#display sum {s in S} (x1[s] + x2[s] + lambda_1[s] * - x1[s] + lambda_2[s] * (p[s] * x2[s] + x1[s] - 15) + lambda_3[s] * (0.1 - x2[s]));
+
+#minimize OBJ_x: sum {s in S} (x1[s] + x2[s] + lambda_1[s] * - x1[s] + lambda_2[s] * (p[s] * x2[s] + x1[s] - 15) + lambda_3[s] * (0.1 - x2[s]));
+#objective OBJ_x;
+#solve;
+
+let {s in S} lambda_1[s,1] := 0;
+let {s in S} lambda_1[s,2] := 1;
+
+print "Cut 1 (opt): eta >= ...";
+display 4.5 + sum {s in S} (- 10 * p[s] * (y_soln - 0) + lambda_1[s,1] * p[s] * (y_soln - 0));
+
+print "Cut 2 (fbl): 0 >= ...";
+display 9955.75 + sum {s in S} (lambda_1[s,2] * p[s] * (y_soln - 200.009));
+*/
+

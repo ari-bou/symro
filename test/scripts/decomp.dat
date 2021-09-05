@@ -1,0 +1,60 @@
+set RAW_MATERIALS := A B C;
+set PRODUCTS := X Y Z;
+
+set LINKAGES :=
+    (A,*)       X Y Z
+    (B,*)       X Y Z
+    (C,*)       X Y Z
+;
+
+set QUALITIES := ALPHA;
+
+param YIELD:
+            A       B       C       := 
+    X       2       0.9     1.6
+    Y       0.7     1.5     0.4
+    Z       0.3     0.8     1.4
+;
+
+param MIN_PROD :=
+    X   12
+    Y   6
+    Z   2
+;
+
+param DEMAND :=
+    X   180
+    Y   140
+    Z   90
+;
+
+param QUALITY_RAW_MAT:
+               A    B    C :=
+    ALPHA      40   75   90
+;
+
+param QUALITY_SPEC_MIN:
+               X    Y    Z  :=
+    ALPHA     50   70   80
+;
+
+param QUALITY_SPEC_MAX:
+               X    Y    Z :=
+    ALPHA      1000  1000  1000
+;
+
+param COST:
+            1       2       3   :=
+    A       23      26      16
+    B       27      16      25
+    C       14      37      22
+    X       15      28      8
+    Y       22      25      29
+    Z      52      19      21
+;
+
+param PROBABILITY :=
+    1   0.4
+    2   0.3
+    3   0.3
+;

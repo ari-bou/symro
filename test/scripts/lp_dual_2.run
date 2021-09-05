@@ -1,0 +1,46 @@
+var x1 >= 0;
+var x2 >= 0;
+var x3 >= 0;
+
+minimize OBJ_P: x1 - x2 + 3*x3;
+
+CON_P1: 0 >= x1 + x2 + x3 - 10;
+CON_P2: 2 >= 2*x1 - x2 - x3;
+CON_P3: 6 >= 2*x1 - 2*x2 - 3*x3;
+#CON_P1: x1 + x2 + x3 - 10 <= 0;
+#CON_P2: 2*x1 - x2 - x3 - 2 <= 0;
+#CON_P3: 2*x1 - 2*x2 - 3*x3 - 6 <= 0;
+#CON_P1: -x1 - x2 - x3 + 10 >= 0;
+#CON_P2: -2*x1 + x2 + x3 + 2 >= 0;
+#CON_P3: -2*x1 + 2*x2 + 3*x3 + 6 >= 0;
+
+problem PRIMAL: x1, x2, x3, OBJ_P, CON_P1, CON_P2, CON_P3;
+
+problem PRIMAL;
+option solver CPLEX;
+solve;
+
+display {i in 1.._snvars} (_varname[i], _var[i]);
+display {i in 1.._ncons} (_conname[i], _con[i].dual);
+
+# ***
+
+var y1 >= 0;
+var y2 >= 0;
+var y3 >= 0;
+
+maximize OBJ_D: -10*y1 - 2*y2 - 6*y3;
+
+CON_D1: -y1 - 2*y2 - 2*y3 - 1 <= 0;
+CON_D2: -y1 + y2 + 2*y3 + 1 <= 0;
+CON_D3: -y1 + y2 + 3*y3 - 3 <= 0;
+
+problem DUAL: y1, y2, y3, OBJ_D, CON_D1, CON_D2, CON_D3;
+
+problem DUAL;
+option solver CPLEX;
+solve;
+
+display {i in 1.._nvars} (_varname[i], _var[i]);
+display {i in 1.._ncons} (_conname[i], _con[i].dual);
+

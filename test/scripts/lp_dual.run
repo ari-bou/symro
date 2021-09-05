@@ -1,0 +1,39 @@
+#option presolve 0;
+
+var x1 >= 0;
+var x2 >= 0;
+
+maximize OBJ_P: 3 * x1 + 4 * x2;
+
+CON_P: 5 * x1 + 6 * x2 - 7 = 0;
+
+problem PRIMAL: x1, x2, OBJ_P, CON_P;
+
+problem PRIMAL;
+option solver CPLEX;
+solve;
+
+display CON_P.dual;
+display x1;
+display x2;
+
+# ***
+
+var y1;
+
+minimize OBJ_D: 7 * y1;
+
+#CON_D1: 5 * y1 >= 3;
+#CON_D2: 6 * y1 >= 4;
+CON_D1: 0 >= 3 - 5 * y1;
+CON_D2: 4 - 6 * y1 <= 0;
+
+problem DUAL: y1, OBJ_D, CON_D1, CON_D2;
+
+problem DUAL;
+option solver CPLEX;
+solve;
+
+display CON_D1.dual;
+display CON_D2.dual;
+display y1;

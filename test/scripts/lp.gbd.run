@@ -1,0 +1,35 @@
+model "lp.modr";
+model "lp.gbd.modm";
+model "lp.gbd.modrsl";
+let p := 5;
+option solver cplex;
+objective OBJ;
+problem PrimalSubproblem:
+	x1,
+	x2,
+	y,
+	OBJ,
+	CON2,
+	CON3,
+	CON1
+;
+problem PrimalSubproblem_FBL:
+	x1,
+	x2,
+	y,
+	CON3_SL,
+	CON1_SL,
+	FBL_OBJ_PrimalSubproblem,
+	CON2,
+	CON3_F,
+	CON1_F
+;
+problem Master:
+	y,
+	eta,
+	{ct in CUTS} GBD_F[ct],
+	{ct in CUTS} GBD_G_0[ct],
+	MASTER_OBJ,
+	{ct in CUTS: is_feasible[ct] = 1} GBD_OPT_CUT[ct],
+	{ct in CUTS: is_feasible[ct] = 0} GBD_FBL_CUT[ct]
+;

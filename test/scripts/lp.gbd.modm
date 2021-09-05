@@ -1,0 +1,35 @@
+# SETS AND PARAMETERS
+# --------------------------------------------------------------------------------------------------
+# beginregion
+param CUT_COUNT default 0;
+set CUTS := 1..CUT_COUNT;
+param obj_stored{ct in CUTS} default 0;
+param is_feasible{ct in CUTS} default 0;
+param y_stored{ct in CUTS} default 0;
+param lambda_CON1{ct in CUTS} default 0;
+# endregion 
+
+
+# VARIABLES
+# --------------------------------------------------------------------------------------------------
+# beginregion
+var eta >= -100000;
+var GBD_F{ct in CUTS} = (10 * p * y - (10 * p * y_stored[ct]));
+var GBD_G_0{ct in CUTS} = (p * y - (p * y_stored[ct]));
+# endregion 
+
+
+# OBJECTIVES
+# --------------------------------------------------------------------------------------------------
+# beginregion
+minimize MASTER_OBJ: eta;
+# endregion 
+
+
+# CONSTRAINTS
+# --------------------------------------------------------------------------------------------------
+# beginregion
+GBD_OPT_CUT{ct in CUTS: is_feasible[ct] = 1}: eta >= obj_stored[ct] + GBD_F[ct] + lambda_CON1[ct] * GBD_G_0[ct];
+GBD_FBL_CUT{ct in CUTS: is_feasible[ct] = 0}: 0 >= obj_stored[ct] + lambda_CON1[ct] * GBD_G_0[ct];
+# endregion 
+

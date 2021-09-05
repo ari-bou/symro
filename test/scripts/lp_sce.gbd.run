@@ -1,0 +1,38 @@
+model "lp_sce.modr";
+model "lp_sce.gbd.modm";
+model "lp_sce.gbd.modrsl";
+let p[1] := 5;
+let p[2] := 15;
+let p[3] := 30;
+option solver cplex;
+objective OBJ;
+problem PrimalSubproblem {s in S}:
+	x1[s],
+	x2[s],
+	y[s],
+	OBJ_SUB_PrimalSubproblem[s],
+	CON2[s],
+	CON3[s],
+	CON1[s]
+;
+problem PrimalSubproblem_FBL {s in S}:
+	x1[s],
+	x2[s],
+	y[s],
+	CON3_SL[s],
+	CON1_SL[s],
+	FBL_OBJ_PrimalSubproblem[s],
+	CON2[s],
+	CON3_F[s],
+	CON1_F[s]
+;
+problem Master:
+	{s in S} y[s],
+	eta,
+	{s in S, ct in CUTS} GBD_F[s,ct],
+	{s in S, ct in CUTS} GBD_G_0[s,ct],
+	MASTER_OBJ,
+	{s in S} NON_ANT[s],
+	{ct in CUTS: is_feasible[ct] = 1} GBD_OPT_CUT[ct],
+	{ct in CUTS: is_feasible[ct] = 0} GBD_FBL_CUT[ct]
+;

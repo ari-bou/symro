@@ -1,5 +1,5 @@
 import pathlib
-from setuptools import setup
+import setuptools
 
 # The directory containing this file
 HERE = pathlib.Path(__file__).parent
@@ -8,20 +8,24 @@ HERE = pathlib.Path(__file__).parent
 README = (HERE / "README.md").read_text()
 
 # This call to setup() does all the work
-setup(name="symro",
-      version="0.0.1",
-      description="SYMbolic Reformulation and Optimization (SYMRO) package",
-      long_description=README,
-      long_description_content_type="text/markdown",
-      url="https://github.com/ari-bou/symro",
-      author="Ariel A. Boucheikhchoukh",
-      author_email="ariel.boucheikh@gmail.com",
-      license="MIT",
-      classifiers=[
-          "License :: OSI Approved :: MIT License",
-          "Programming Language :: Python :: 3",
-          "Programming Language :: Python :: 3.8",
-      ],
-      packages=["core"],
-      include_package_data=True,
-      install_requires=["amplpy", "numpy", "ordered-set"])
+setuptools.setup(
+    name="symro",
+    version="0.0.1",
+    description="SYMbolic Reformulation and Optimization (SYMRO) package",
+    long_description=README,
+    long_description_content_type="text/markdown",
+    url="https://github.com/ari-bou/symro",
+    author="Ariel A. Boucheikhchoukh",
+    author_email="ariel.boucheikh@gmail.com",
+    license="MIT",
+    classifiers=[
+      "License :: OSI Approved :: MIT License",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.8",
+    ],
+    package_dir={"": "core"},
+    packages=setuptools.find_packages(where="src"),
+    python_requires=">=3.8",
+    include_package_data=True,
+    install_requires=["amplpy>=0.7.1", "numpy>=1.21.2", "ordered-set>=4.0.2"]
+)

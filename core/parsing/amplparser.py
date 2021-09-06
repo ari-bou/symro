@@ -791,7 +791,7 @@ class AMPLParser:
         # Dummy
         else:
             self._next_token()
-            return mat.DummyNode(id=self._generate_free_node_id(), dummy=token)
+            return mat.DummyNode(id=self._generate_free_node_id(), symbol=token)
 
     def _parse_string_literal(self):
 

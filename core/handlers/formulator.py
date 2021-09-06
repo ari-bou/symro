@@ -23,8 +23,6 @@ class Formulator:
         self.problem = problem
         self.node_builder.problem = problem
 
-        print("Standardizing model of problem {0}".format(self.problem.symbol))
-
         # Standardize objective functions
         for meta_obj in self.problem.model_meta_objs:
             self.__standardize_objective(meta_obj)
@@ -70,17 +68,51 @@ class Formulator:
 
     def __standardize_constraint(self, meta_con: mat.MetaConstraint):
 
-        ctype = meta_con.elicit_constraint_type()
-        if ctype == mat.MetaConstraint.EQUALITY_TYPE:
-            ref_meta_cons = self.__standardize_equality_constraint(meta_con)
-        elif ctype == mat.MetaConstraint.INEQUALITY_TYPE:
-            ref_meta_cons = self.__standardize_inequality_constraint(meta_con)
-        elif ctype == mat.MetaConstraint.DOUBLE_INEQUALITY_TYPE:
-            ref_meta_cons = self.__standardize_double_inequality_constraint(meta_con)
+        ctype = meta_con.elicit_constraint_type()  # elicit constraint type
+
+        if self.__is_constraint_standardized(meta_con):
+            return []  # return an empty list if the constraint is already in standard form
+
         else:
-            ref_meta_cons = []
+            if ctype == mat.MetaConstraint.EQUALITY_TYPE:
+                ref_meta_cons = self.__standardize_equality_constraint(meta_con)
+            elif ctype == mat.MetaConstraint.INEQUALITY_TYPE:
+                ref_meta_cons = self.__standardize_inequality_constraint(meta_con)
+            elif ctype == mat.MetaConstraint.DOUBLE_INEQUALITY_TYPE:
+                ref_meta_cons = self.__standardize_double_inequality_constraint(meta_con)
+            else:
+                raise ValueError("Formulator unable to resolve the constraint type of '{0}'".format(meta_con))
 
         return ref_meta_cons
+
+    @staticmethod
+    def __is_constraint_standardized(meta_con: mat.MetaConstraint):
+
+        # double inequality
+        if meta_con.ctype == mat.MetaConstraint.DOUBLE_INEQUALITY_TYPE:
+            return False
+
+        # single inequality or equality
+        else:
+
+            rel_node = meta_con.expression.expression_node
+            if not isinstance(rel_node, mat.RelationalOperationNode):
+                raise ValueError("Formulator expected a relational operation node"
+                                 " while verifying whether the constraint '{0}' is in standard form".format(meta_con))
+
+            if rel_node.operator == ">=":
+                return False  # inequality is reversed
+
+            rhs_node = rel_node.rhs_operand
+
+            if not isinstance(rhs_node, mat.NumericNode):
+                return False  # rhs operand is non-zero
+
+            else:
+                if rhs_node.value != 0:
+                    return False  # rhs operand is non-zero
+                else:
+                    return True
 
     def __standardize_equality_constraint(self, meta_con: mat.MetaConstraint) -> List[mat.MetaConstraint]:
 

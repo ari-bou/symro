@@ -83,7 +83,6 @@ class ModelWriter:
         if model_file_extension is not None:
             model_file_name = os.path.splitext(model_file_name)[0] + model_file_extension
 
-        print("Writing model script {0}".format(model_file_name))
         self.script = ""
 
         if (include_sets or include_params) and len(meta_sets_params) > 0:

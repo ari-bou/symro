@@ -119,11 +119,11 @@ class SetExpressionNode(ExpressionNode, ABC):
     def get_dim(self, state: State) -> int:
         pass
 
-    def get_dummy_nodes(self, state: State) -> list:
+    def get_dummy_component_nodes(self, state: State) -> list:
         dummy_nodes = [None] * self.get_dim(state)
         return dummy_nodes
 
-    def get_dummy_symbols(self, state: State) -> Tuple[Union[int, float, str, tuple, None], ...]:
+    def get_dummy_elements(self, state: State) -> Tuple[Union[int, float, str, tuple, None], ...]:
         dummy_syms = [None] * self.get_dim(state)
         return tuple(dummy_syms)
 

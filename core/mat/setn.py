@@ -248,7 +248,7 @@ class IndexingSetNode(SetExpressionNode):
             for jc, cmpt in enumerate(dummy_node.component_nodes):
                 if isinstance(cmpt, DummyNode):  # Component is a dummy node
                     if dummy_symbols is not None:
-                        if cmpt.dummy in dummy_symbols:
+                        if cmpt.symbol in dummy_symbols:
                             is_dim_fixed.append(True)  # dummy is controlled
                         else:
                             is_dim_fixed.append(False)  # dummy is not controlled
@@ -296,16 +296,16 @@ class IndexingSetNode(SetExpressionNode):
     def get_dim(self, state: State) -> int:
         return self.dummy_node.get_dim()
 
-    def get_dummy_symbols(self, state: State) -> Tuple[Union[int, float, str, tuple], ...]:
+    def get_dummy_elements(self, state: State) -> Tuple[Union[int, float, str, tuple], ...]:
         if isinstance(self.dummy_node, DummyNode):
-            return tuple([self.dummy_node.dummy])
+            return tuple([self.dummy_node.symbol])
         elif isinstance(self.dummy_node, CompoundDummyNode):
             dummy_syms = []
             for component_dummy_node in self.dummy_node.component_nodes:
                 dummy_syms.append(component_dummy_node.get_literal())
             return tuple(dummy_syms)
 
-    def get_dummy_nodes(self, state: State) -> list:
+    def get_dummy_component_nodes(self, state: State) -> list:
         if isinstance(self.dummy_node, DummyNode):
             return [self.dummy_node]
         elif isinstance(self.dummy_node, CompoundDummyNode):
@@ -392,7 +392,7 @@ class CompoundSetNode(BaseSetNode):
         # Combine dummy symbols from indexing set and each component set
         combined_dummy_syms = None if dummy_symbols is None else list(dummy_symbols)
         for set_node in self.set_nodes:
-            component_dummy_syms = list(set_node.get_dummy_symbols(state))
+            component_dummy_syms = list(set_node.get_dummy_elements(state))
             if combined_dummy_syms is None:
                 combined_dummy_syms = component_dummy_syms
             else:
@@ -413,10 +413,10 @@ class CompoundSetNode(BaseSetNode):
 
                 if idx_set_ip is None:
                     idx_set_ip = component_idx_set_ip
-                    sub_combined_dummy_syms = set_node.get_dummy_symbols(state)
+                    sub_combined_dummy_syms = set_node.get_dummy_elements(state)
                 else:
                     idx_set_ip = cartesian_product([idx_set_ip, component_idx_set_ip])
-                    sub_combined_dummy_syms += set_node.get_dummy_symbols(state)
+                    sub_combined_dummy_syms += set_node.get_dummy_elements(state)
 
             combine_idx_sets.append(idx_set_ip)
 
@@ -437,33 +437,18 @@ class CompoundSetNode(BaseSetNode):
     def get_dim(self, state: State) -> int:
         return sum([set_node.get_dim(state) for set_node in self.set_nodes])
 
-    def get_dummy_nodes(self, state: State) -> List[Union[DummyNode, ArithmeticExpressionNode, StringExpressionNode]]:
+    def get_dummy_component_nodes(self, state: State) -> List[Union[DummyNode,
+                                                                    ArithmeticExpressionNode,
+                                                                    StringExpressionNode]]:
         dummy_nodes = []
         for set_node in self.set_nodes:
-            dummy_nodes.extend(set_node.get_dummy_nodes(state))
+            dummy_nodes.extend(set_node.get_dummy_component_nodes(state))
         return dummy_nodes
 
-    def get_uncontrolled_dummy_nodes(self,
-                                     state: State
-                                     ) -> List[Union[DummyNode, ArithmeticExpressionNode, StringExpressionNode]]:
-
-        dummy_nodes = self.get_dummy_nodes(state)
-
-        dummy_syms = set()
-        unctrl_dummy_nodes = []
-
-        for component_node in dummy_nodes:
-            if isinstance(component_node, DummyNode):
-                if component_node.dummy not in dummy_syms:
-                    dummy_syms.add(component_node.dummy)
-                    unctrl_dummy_nodes.append(component_node)
-
-        return unctrl_dummy_nodes
-
-    def get_dummy_symbols(self, state: State) -> Tuple[Union[int, float, str, tuple], ...]:
+    def get_dummy_elements(self, state: State) -> Tuple[Union[int, float, str, tuple], ...]:
         dummy_syms = []
         for set_node in self.set_nodes:
-            dummy_syms.extend(set_node.get_dummy_symbols(state))
+            dummy_syms.extend(set_node.get_dummy_elements(state))
         return tuple(dummy_syms)
 
     def get_children(self) -> List[ExpressionNode]:

@@ -908,7 +908,7 @@ class AMPLScriptParser(AMPLParser):
         else:
             literal = self._extract_string([' ', ';'])
             return mat.DummyNode(id=self._generate_free_node_id(),
-                                 dummy=literal)
+                                 symbol=literal)
 
     # A.16: display, print, and printf
     def __parse_display_print_statement(self):

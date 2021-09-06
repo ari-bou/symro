@@ -36,9 +36,9 @@ class BaseDummyNode(ExpressionNode, ABC):
 
 class DummyNode(BaseDummyNode):
 
-    def __init__(self, dummy: str, id: int = 0):
+    def __init__(self, symbol: str, id: int = 0):
         super().__init__(id)
-        self.dummy: str = dummy
+        self.symbol: str = symbol
 
     def evaluate(self,
                  state: State,
@@ -47,7 +47,7 @@ class DummyNode(BaseDummyNode):
                  ) -> List[Union[int, float, str]]:
 
         if idx_set is None:
-            return [self.dummy]
+            return [self.symbol]
 
         else:
             results = []
@@ -65,11 +65,11 @@ class DummyNode(BaseDummyNode):
     def __control_dummy(self,
                         idx_set_member: IndexSetMember,
                         dummy_symbols: Tuple[str, ...]) -> Union[int, float, str]:
-        if self.dummy in dummy_symbols:
-            pos = dummy_symbols.index(self.dummy)
+        if self.symbol in dummy_symbols:
+            pos = dummy_symbols.index(self.symbol)
             return idx_set_member[pos]
         else:
-            return self.dummy
+            return self.symbol
 
     def is_constant(self) -> bool:
         return True
@@ -81,14 +81,14 @@ class DummyNode(BaseDummyNode):
         if dummy_syms is None:
             return True
         else:
-            return self.dummy in dummy_syms
+            return self.symbol in dummy_syms
 
     @staticmethod
     def get_dim() -> int:
         return 1
 
     def get_unbound_symbols(self) -> List[str]:
-        return [self.dummy]
+        return [self.symbol]
 
     def get_children(self) -> list:
         return []
@@ -98,9 +98,9 @@ class DummyNode(BaseDummyNode):
 
     def get_literal(self) -> str:
         if not self.is_prioritized:
-            return self.dummy
+            return self.symbol
         else:
-            return "({0})".format(self.dummy)
+            return "({0})".format(self.symbol)
 
 
 class CompoundDummyNode(BaseDummyNode):
@@ -157,7 +157,7 @@ class CompoundDummyNode(BaseDummyNode):
         syms = []
         for component_node in self.component_nodes:
             if isinstance(component_node, DummyNode):
-                syms.append(component_node.dummy)
+                syms.append(component_node.symbol)
         return syms
 
     def get_children(self) -> list:

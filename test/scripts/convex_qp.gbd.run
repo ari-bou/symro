@@ -1,7 +1,7 @@
-model "decomp.modr";
-model "decomp.gbd.modm";
-model "decomp.gbd.modrsl";
-data decomp.dat;
+model "convex_qp.modr";
+model "convex_qp.gbd.modm";
+model "convex_qp.gbd.modrsl";
+data convex_qp.dat;
 option show_stats 3;
 option presolve 16;
 option presolve_eps 0.01;

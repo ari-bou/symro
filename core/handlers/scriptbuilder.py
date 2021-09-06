@@ -68,7 +68,6 @@ class ScriptBuilder:
         if model_file_extension is not None:
             model_file_name += model_file_extension
 
-        print("Building model script {0}".format(model_file_name))
         self.script = stm.Script(id=model_file_name)
 
         if (include_sets or include_params) and len(meta_sets_params) > 0:

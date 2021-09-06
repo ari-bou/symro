@@ -64,7 +64,6 @@ class GBDAlgorithm:
         self.can_catch_exceptions: bool = False
         self.log: str = ""
 
-        print("Building GBD problem")
         self.gbd_problem = self.__gbd_problem_builder.build_gbd_problem(problem=self.problem,
                                                                         comp_var_defs=complicating_vars,
                                                                         mp_symbol=mp_symbol,
@@ -131,7 +130,6 @@ class GBDAlgorithm:
         # --- Execution ---
 
         self.__log_message("Running GBD")
-        print("Instantiating problem {0}".format(self.gbd_problem.name))
 
         self.gbd_problem.engine = AMPLEngine(working_dir_path=self.gbd_problem.working_dir_path)
         self.__ampl_engine = self.gbd_problem.engine
@@ -155,8 +153,6 @@ class GBDAlgorithm:
         self.__ampl_engine.api.eval(script_literal + '\n')
 
     def __run_algorithm(self):
-
-        print("Running GBD on problem {0}\n".format(self.gbd_problem.name))
 
         start_time = datetime.now()
         is_feasible, v_ub, y, dual_mult = self.__run_loop()
@@ -212,7 +208,6 @@ class GBDAlgorithm:
                 # Store complicating variables
                 self.__log_indexed_message("Storing complicating variables", iter)
                 y_i = self.__store_complicating_variables()
-                # print(y_i)
 
                 self.__set_is_feasible_flag(True)
                 self.__set_stored_obj_value(0)
@@ -225,7 +220,6 @@ class GBDAlgorithm:
 
                 self.__log_indexed_message("Storing dual multipliers", iter)
                 self.__assign_values_to_dual_params(dual_soln)
-                # print(dual_soln)
 
                 # Update Global Upper Bound
                 if ub < global_ub and is_it_feasible:
@@ -318,8 +312,7 @@ class GBDAlgorithm:
 
         solver_output = self.__ampl_engine.solve(solver_name=self.mp_solver_name,
                                                  solver_options=self.mp_solver_options)
-        if self.verbosity >= 2:
-            print(solver_output)
+        self.__print_solver_output(solver_output)
 
         solve_result = self.__ampl_engine.get_solve_result()
 
@@ -357,8 +350,7 @@ class GBDAlgorithm:
                                    sp_index=sp_container.sp_index)
 
         solver_output = self.__ampl_engine.solve(self.sp_solver_name, self.sp_solver_options)
-        if self.verbosity >= 2:
-            print(solver_output)
+        self.__print_solver_output(solver_output)
 
         if not self.__interpret_solver_result(solver_output,
                                               iter=iter,
@@ -401,8 +393,7 @@ class GBDAlgorithm:
                                    sp_index=sp_container.sp_index)
 
         solver_output = self.__ampl_engine.solve(self.sp_solver_name, self.sp_solver_options)
-        if self.verbosity >= 2:
-            print(solver_output)
+        self.__print_solver_output(solver_output)
 
         if not self.__interpret_solver_result(solver_output,
                                               iter=iter,
@@ -661,21 +652,34 @@ class GBDAlgorithm:
                                                                                int(global_lb),
                                                                                int(global_ub),
                                                                                is_feasible)
-        print(message)
+        if self.verbosity == 1:
+            print(message)
+
         self.__log_indexed_message(message=message,
                                    iter=iter)
 
-    @staticmethod
-    def __print_solution(is_feasible: bool,
+    def __print_solver_output(self, solver_output: str):
+        if self.verbosity >= 3:
+            print(solver_output)
+
+    def __print_solution(self,
+                         is_feasible: bool,
                          v_ub: float,
                          y: Dict[str, Union[float, Dict[tuple, float]]],
-                         sol_time_seconds: float):
+                         runtime_seconds: float):
+
         if is_feasible:
-            print("\n ub = {0} \n y = {1}".format(v_ub, pprint.pformat(y)))
+            message = "\nv = {0} \ny = {1}".format(v_ub, pprint.pformat(y))
         else:
-            print("\n Problem is infeasible")
-        sol_time_hours = sol_time_seconds / 3600
-        print("Solution time: {0:.0f} s ({1:.1f} h)".format(sol_time_seconds, sol_time_hours))
+            message = "\nProblem is infeasible"
+
+        runtime_hours = runtime_seconds / 3600
+        message += "\nruntime = {0:.0f} s ({1:.1f} h)".format(runtime_seconds, runtime_hours)
+
+        if self.verbosity == 1:
+            print(message)
+
+        self.__log_message(message)
 
     def __log_indexed_message(self,
                               message: str,
@@ -693,11 +697,14 @@ class GBDAlgorithm:
         self.__log_message(message)
 
     def __log_message(self, message: str):
+
         now = datetime.now()
         current_time = now.strftime("%H:%M:%S")
         entry = "{0}: {1}".format(current_time, message)
+
         self.log += entry + '\n'
-        if self.verbosity >= 1:
+
+        if self.verbosity >= 2:
             print(entry)
 
     def __write_log_file(self):

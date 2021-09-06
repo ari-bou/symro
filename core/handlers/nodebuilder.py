@@ -38,7 +38,14 @@ class NodeBuilder:
 
     @staticmethod
     def retrieve_unbound_symbols(node: mat.ExpressionNode,
-                                 unbound_sym_subset: Iterable[str] = None) -> Set[str]:
+                                 in_filter: Iterable[str] = None) -> Set[str]:
+        """
+        Retrieve the unbound symbols that are present in an expression tree. Includes unbound symbols defined in scope
+        and in the outer scope.
+        :param node: root of the expression tree
+        :param in_filter: inclusive filter set of symbols to retrieve if present in the expression tree
+        :return: set of unbound symbols present in the expression tree
+        """
 
         dummy_syms = set()
 
@@ -50,10 +57,10 @@ class NodeBuilder:
             node = queue.get()
 
             if isinstance(node, mat.DummyNode):
-                if unbound_sym_subset is None:
-                    dummy_syms.add(node.dummy)
-                elif node.dummy in unbound_sym_subset:
-                    dummy_syms.add(node.dummy)
+                if in_filter is None:
+                    dummy_syms.add(node.symbol)
+                elif node.symbol in in_filter:
+                    dummy_syms.add(node.symbol)
             else:
                 children = node.get_children()
                 for child in children:
@@ -84,8 +91,8 @@ class NodeBuilder:
             node = queue.get()
 
             if isinstance(node, mat.DummyNode):
-                if node.dummy in mapping:
-                    node.dummy = mapping[node.dummy]
+                if node.symbol in mapping:
+                    node.symbol = mapping[node.symbol]
             else:
                 children = node.get_children()
                 for child in children:
@@ -112,12 +119,12 @@ class NodeBuilder:
                 dummy_node = set_node.dummy_node
 
                 if isinstance(dummy_node, mat.DummyNode):
-                    assign_set_node_to_unbound_symbol(dummy_node.dummy, set_node)
+                    assign_set_node_to_unbound_symbol(dummy_node.symbol, set_node)
 
                 elif isinstance(dummy_node, mat.CompoundDummyNode):
                     for component_dummy_node in dummy_node.component_nodes:
                         if isinstance(component_dummy_node, mat.DummyNode):
-                            assign_set_node_to_unbound_symbol(component_dummy_node.dummy, set_node)
+                            assign_set_node_to_unbound_symbol(component_dummy_node.symbol, set_node)
 
         return mapping
 
@@ -141,9 +148,9 @@ class NodeBuilder:
             node = queue.get()
 
             if isinstance(node, mat.DummyNode):
-                if node.dummy not in outer_scope_unbound_syms:
+                if node.symbol not in outer_scope_unbound_syms:
                     # add the unbound symbol to the set of unique unbound symbols defined in the current scope
-                    current_scope_unbound_syms.add(node.dummy)
+                    current_scope_unbound_syms.add(node.symbol)
 
             else:
 
@@ -153,10 +160,10 @@ class NodeBuilder:
                     dummy_node = node.dummy_node
 
                     if isinstance(dummy_node, mat.DummyNode):  # scalar dummy node
-                        if dummy_node.dummy not in outer_scope_unbound_syms:
-                            if dummy_node.dummy in current_scope_unbound_syms \
-                                    or dummy_node.dummy in blacklisted_unbound_syms:
-                                mapping[dummy_node.dummy] = ""
+                        if dummy_node.symbol not in outer_scope_unbound_syms:
+                            if dummy_node.symbol in current_scope_unbound_syms \
+                                    or dummy_node.symbol in blacklisted_unbound_syms:
+                                mapping[dummy_node.symbol] = ""
                         else:
                             raise ValueError("Node builder encountered an indexing set node '{0}'".format(node)
                                              + " without an uncontrolled dummy")
@@ -164,10 +171,10 @@ class NodeBuilder:
                     elif isinstance(dummy_node, mat.CompoundDummyNode):  # compound dummy node
                         for component_node in dummy_node.component_nodes:
                             if isinstance(component_node, mat.DummyNode):
-                                if component_node.dummy not in outer_scope_unbound_syms:
-                                    if component_node.dummy in current_scope_unbound_syms \
-                                            or component_node.dummy in blacklisted_unbound_syms:
-                                        mapping[component_node.dummy] = ""
+                                if component_node.symbol not in outer_scope_unbound_syms:
+                                    if component_node.symbol in current_scope_unbound_syms \
+                                            or component_node.symbol in blacklisted_unbound_syms:
+                                        mapping[component_node.symbol] = ""
 
                 children = node.get_children()
                 for child in children:
@@ -200,7 +207,7 @@ class NodeBuilder:
         dummy_symbols = meta_entity.get_dummy_symbols()
         for ds in dummy_symbols:
             component_nodes.append(mat.DummyNode(id=self.generate_free_node_id(),
-                                                 dummy=ds))
+                                                 symbol=ds))
 
         return mat.CompoundDummyNode(id=self.generate_free_node_id(),
                                      component_nodes=component_nodes)

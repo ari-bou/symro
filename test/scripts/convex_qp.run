@@ -1,5 +1,5 @@
-model decomp.mod;
-data decomp.dat;
+model convex_qp.mod;
+data convex_qp.dat;
 
 # General Options
 option show_stats 3;

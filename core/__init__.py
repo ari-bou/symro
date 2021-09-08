@@ -4,7 +4,7 @@ from symro.core.prob.problem import Problem
 import symro.core.handlers.problembuilder as __problem_builder
 from symro.core.algo.gbd.gbdalgorithm import GBDAlgorithm
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 DEFAULT_WORKING_DIR_PATH = os.getcwd()
 

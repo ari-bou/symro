@@ -26,10 +26,6 @@ SymRO was developed under the auspices of the McMaster Advanced Control Consorti
 
 
 **References**
-1. Fourer R, Gay DM, Kernighan BW. A Modeling Language for Mathematical Programming.
-Management Science. 1990;36(5):519-554.
-1. Geoffrion A. Generalized Benders Decomposition. Journal of Optimization Theory and
-Applications. 1972;10(4):237-260.
-1. Li X, Tomasgard A, Barton PI. Nonconvex Generalized Benders Decomposition for Stochas-
-tic Separable Mixed-Integer Nonlinear Programs. Journal of Optimization Theory and
-Applications. 2011;151(3):425-454.
+1. Fourer R, Gay DM, Kernighan BW. A Modeling Language for Mathematical Programming. Management Science. 1990;36(5):519-554.
+1. Geoffrion A. Generalized Benders Decomposition. Journal of Optimization Theory and Applications. 1972;10(4):237-260.
+1. Li X, Tomasgard A, Barton PI. Nonconvex Generalized Benders Decomposition for Stochastic Separable Mixed-Integer Nonlinear Programs. Journal of Optimization Theory and Applications. 2011;151(3):425-454.

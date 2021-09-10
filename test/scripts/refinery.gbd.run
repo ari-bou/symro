@@ -1,0 +1,92 @@
+model "refinery.modr";
+model "refinery.gbd.modm";
+model "refinery.gbd.modrsl";
+option show_stats 3;
+option conopt_options "outlev=3";
+option knitro_options "outlev=3";
+option gurobi_options "outlev=1";
+data refinery.dat;
+let S := 6;
+let T := 10;
+let {t in TIMEPERIODS: 5 <= t <= 6} SHUTDOWN['RF',t,1] := 1;
+let {t in TIMEPERIODS: 4 <= t <= 7} SHUTDOWN['RF',t,1] := 1;
+let {t in TIMEPERIODS: 3 <= t <= 8} SHUTDOWN['RF',t,1] := 1;
+let {t in TIMEPERIODS: 5 <= t <= 6} SHUTDOWN['CC',t,1] := 1;
+let {t in TIMEPERIODS: 4 <= t <= 7} SHUTDOWN['CC',t,1] := 1;
+let {t in TIMEPERIODS: 3 <= t <= 8} SHUTDOWN['CC',t,1] := 1;
+objective TOTAL_PROFIT;
+option solver gurobi;
+problem PrimalSubproblem {s in SCENARIOS}:
+	{(i,u) in INLETS, t in TIMEPERIODS} F_IN[i,u,t,s],
+	{(i,u) in OUTLETS, t in TIMEPERIODS} F_OUT[i,u,t,s],
+	{i in STREAMS} INIT_INVENTORY[i],
+	{i in STREAMS, t in TIMEPERIODS} INVENTORY[i,t,s],
+	{u in CORE_UNITS} UNIT_SIZE[u],
+	{i in STREAMS} TANK_SIZE[i],
+	{i in STREAMS} TANK_LOCATION[i],
+	{t in TIMEPERIODS} OPERATING_PROFIT[t,s],
+	CAPITAL_COST,
+	TIMEPERIOD_PROFIT_PrimalSubproblem[s],
+	{u in UNITS, t in TIMEPERIODS} UNIT_MASS_BALANCES[u,t,s],
+	{i in STREAMS, u_out in UNITS, u_in in UNITS, t in TIMEPERIODS: (i,u_out) in OUTLETS and (i,u_in) in INLETS} LINKAGE_MASS_BALANCES[i,u_out,u_in,t,s],
+	{j in STREAMS, u in CORE_UNITS, t in TIMEPERIODS: (j,u) in OUTLETS} CORE_UNIT_PRODUCT_RATES[j,u,t,s],
+	{u in UNITS, t in TIMEPERIODS} UNIT_TPT_BOUNDS_I1[u,t,s],
+	{u in UNITS, t in TIMEPERIODS} UNIT_TPT_BOUNDS_I2[u,t,s],
+	{i in STREAMS, t in TIMEPERIODS: t = T} LAST_TANK_INVENTORY[i,t,s],
+	{j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} BLENDING_PRODUCT_RATES_I1[j,u,t,s],
+	{j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} BLENDING_PRODUCT_RATES_I2[j,u,t,s],
+	{q in PROPERTIES, j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} MIN_QUALITY_SPEC[q,j,u,t,s],
+	{q in PROPERTIES, j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} MAX_QUALITY_SPEC[q,j,u,t,s],
+	{i in STREAMS} INIT_INVENTORY_BOUND[i],
+	{u in CORE_UNITS, t in TIMEPERIODS} UNIT_DESIGN_TPT_BOUND[u,t,s],
+	{i in STREAMS, t in TIMEPERIODS} INVENTORY_DESIGN_LEVEL_BOUND[i,t,s]
+;
+problem PrimalSubproblem_FBL {s in SCENARIOS}:
+	{(i,u) in INLETS, t in TIMEPERIODS} F_IN[i,u,t,s],
+	{(i,u) in OUTLETS, t in TIMEPERIODS} F_OUT[i,u,t,s],
+	{i in STREAMS} INIT_INVENTORY[i],
+	{i in STREAMS, t in TIMEPERIODS} INVENTORY[i,t,s],
+	{u in CORE_UNITS} UNIT_SIZE[u],
+	{i in STREAMS} TANK_SIZE[i],
+	{i in STREAMS} TANK_LOCATION[i],
+	{t in TIMEPERIODS} OPERATING_PROFIT[t,s],
+	CAPITAL_COST,
+	{u in UNITS, t in TIMEPERIODS} UNIT_TPT_BOUNDS_I1_SL[u,t,s],
+	{u in UNITS, t in TIMEPERIODS} UNIT_TPT_BOUNDS_I2_SL[u,t,s],
+	{j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} BLENDING_PRODUCT_RATES_I1_SL[j,u,t,s],
+	{j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} BLENDING_PRODUCT_RATES_I2_SL[j,u,t,s],
+	{q in PROPERTIES, j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} MIN_QUALITY_SPEC_SL[q,j,u,t,s],
+	{q in PROPERTIES, j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} MAX_QUALITY_SPEC_SL[q,j,u,t,s],
+	{i in STREAMS} INIT_INVENTORY_BOUND_SL[i],
+	{u in CORE_UNITS, t in TIMEPERIODS} UNIT_DESIGN_TPT_BOUND_SL[u,t,s],
+	{i in STREAMS, t in TIMEPERIODS} INVENTORY_DESIGN_LEVEL_BOUND_SL[i,t,s],
+	FBL_OBJ_PrimalSubproblem[s],
+	{u in UNITS, t in TIMEPERIODS} UNIT_MASS_BALANCES[u,t,s],
+	{i in STREAMS, u_out in UNITS, u_in in UNITS, t in TIMEPERIODS: (i,u_out) in OUTLETS and (i,u_in) in INLETS} LINKAGE_MASS_BALANCES[i,u_out,u_in,t,s],
+	{j in STREAMS, u in CORE_UNITS, t in TIMEPERIODS: (j,u) in OUTLETS} CORE_UNIT_PRODUCT_RATES[j,u,t,s],
+	{u in UNITS, t in TIMEPERIODS} UNIT_TPT_BOUNDS_I1_F[u,t,s],
+	{u in UNITS, t in TIMEPERIODS} UNIT_TPT_BOUNDS_I2_F[u,t,s],
+	{i in STREAMS, t in TIMEPERIODS: t = T} LAST_TANK_INVENTORY[i,t,s],
+	{j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} BLENDING_PRODUCT_RATES_I1_F[j,u,t,s],
+	{j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} BLENDING_PRODUCT_RATES_I2_F[j,u,t,s],
+	{q in PROPERTIES, j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} MIN_QUALITY_SPEC_F[q,j,u,t,s],
+	{q in PROPERTIES, j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} MAX_QUALITY_SPEC_F[q,j,u,t,s],
+	{i in STREAMS} INIT_INVENTORY_BOUND_F[i],
+	{u in CORE_UNITS, t in TIMEPERIODS} UNIT_DESIGN_TPT_BOUND_F[u,t,s],
+	{i in STREAMS, t in TIMEPERIODS} INVENTORY_DESIGN_LEVEL_BOUND_F[i,t,s]
+;
+problem Master:
+	{u in CORE_UNITS} UNIT_SIZE[u],
+	{i in STREAMS} TANK_SIZE[i],
+	{i in STREAMS} TANK_LOCATION[i],
+	eta,
+	{s in SCENARIOS, ct in CUTS} GBD_F[s,ct],
+	{i in STREAMS, ct in CUTS} GBD_G_0[i,ct],
+	{u in CORE_UNITS, t in TIMEPERIODS, s in SCENARIOS, ct in CUTS} GBD_G_1[u,t,s,ct],
+	{i in STREAMS, t in TIMEPERIODS, s in SCENARIOS, ct in CUTS} GBD_G_2[i,t,s,ct],
+	MASTER_OBJ,
+	{i in STREAMS} INVENTORY_TANK_ALLOCATION[i],
+	INVENTORY_TANK_COUNT,
+	{ct in CUTS: is_feasible[ct] = 1} GBD_OPT_CUT[ct],
+	{ct in CUTS: is_feasible[ct] = 0} GBD_FBL_CUT[ct]
+;

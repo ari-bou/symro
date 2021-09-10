@@ -8,26 +8,26 @@ from symro.core.parsing.amplparser import AMPLParser
 
 class NodeBuilder:
 
-    def __init__(self, problem: Problem = None):
-        self.problem: Problem = problem
-        self.dummy_sym_mapping: Optional[Dict[str, str]] = None  # mapping of dummy symbols created by certain methods
+    def __init__(self, problem: Problem):
+        self._problem: Problem = problem
+        self.unb_sym_map: Optional[Dict[str, str]] = None  # mapping of unbound symbols created by certain methods
         self.__free_node_id: int = 0
 
     # Symbol Generation
     # ------------------------------------------------------------------------------------------------------------------
 
-    @staticmethod
-    def generate_unique_symbol(base_symbol: str = None,
-                               scope_symbols: Iterable[str] = None):
+    def generate_unique_symbol(self,
+                               base_symbol: str = None,
+                               symbol_blacklist: Iterable[str] = None):
 
         if base_symbol is None:
             base_symbol = "ENTITY"
-        if scope_symbols is None:
-            return base_symbol
+        if symbol_blacklist is None:
+            symbol_blacklist = set()
 
         i = 1
         sym = base_symbol
-        while sym in scope_symbols:
+        while sym in symbol_blacklist or sym in self._problem.symbols:
             sym = base_symbol + str(i)
             i += 1
 
@@ -37,20 +37,20 @@ class NodeBuilder:
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def retrieve_unbound_symbols(node: mat.ExpressionNode,
+    def retrieve_unbound_symbols(root_node: mat.ExpressionNode,
                                  in_filter: Iterable[str] = None) -> Set[str]:
         """
         Retrieve the unbound symbols that are present in an expression tree. Includes unbound symbols defined in scope
         and in the outer scope.
-        :param node: root of the expression tree
+        :param root_node: root of the expression tree
         :param in_filter: inclusive filter set of symbols to retrieve if present in the expression tree
         :return: set of unbound symbols present in the expression tree
         """
 
-        dummy_syms = set()
+        unb_syms = set()
 
         queue = Queue()
-        queue.put(node)
+        queue.put(root_node)
 
         while not queue.empty():
 
@@ -58,20 +58,27 @@ class NodeBuilder:
 
             if isinstance(node, mat.DummyNode):
                 if in_filter is None:
-                    dummy_syms.add(node.symbol)
+                    unb_syms.add(node.symbol)
                 elif node.symbol in in_filter:
-                    dummy_syms.add(node.symbol)
+                    unb_syms.add(node.symbol)
             else:
                 children = node.get_children()
                 for child in children:
                     queue.put(child)
 
-        return dummy_syms
+        return unb_syms
+
+    def retrieve_unbound_symbols_of_nodes(self, root_nodes: Iterable[mat.ExpressionNode]):
+        unb_syms = set()
+        for root_node in root_nodes:
+            if root_node is not None:
+                unb_syms = unb_syms.union(self.retrieve_unbound_symbols(root_node))
+        return unb_syms
 
     @staticmethod
     def replace_unbound_symbols(node: mat.ExpressionNode, mapping: Dict[str, str]):
         """
-        Replace a selection of dummy symbols in an expression tree. Modifies the dummy nodes rather than replacing
+        Replace a selection of unbound symbols in an expression tree. Modifies the dummy nodes rather than replacing
         them with new objects.
         :param node: root of the expression tree
         :param mapping: dictionary of original dummy symbols mapped to replacement dummy symbols.
@@ -97,6 +104,53 @@ class NodeBuilder:
                 children = node.get_children()
                 for child in children:
                     queue.put(child)
+
+    @staticmethod
+    def replace_dummy_nodes(root_node: mat.ExpressionNode,
+                            mapping: Dict[str, mat.ExpressionNode]) -> mat.ExpressionNode:
+        """
+        Replace a selection of dummy nodes in an expression tree. The replaced dummy nodes are discarded and substituted
+        with deep copies of the supplied replacement nodes.
+        :param root_node: root of the expression tree
+        :param mapping: dictionary of original dummy symbols mapped to replacement nodes.
+        :return: root node
+        """
+
+        if mapping is None:
+            return root_node
+        if len(mapping) == 0:
+            return root_node
+
+        if isinstance(root_node, mat.DummyNode):
+            if root_node.symbol in mapping:
+                return mapping[root_node.symbol]
+            else:
+                return root_node
+
+        queue = Queue()
+        queue.put(root_node)
+
+        while not queue.empty():
+
+            node: mat.ExpressionNode = queue.get()
+            modified_children = []
+
+            for child in node.get_children():
+
+                if isinstance(child, mat.DummyNode):
+                    if child.symbol in mapping:
+                        modified_children.append(mapping[child.symbol])
+                    else:
+                        modified_children.append(child)
+                        queue.put(child)
+
+                else:
+                    modified_children.append(child)
+                    queue.put(child)
+
+            node.set_children(modified_children)
+
+        return root_node
 
     @staticmethod
     def map_unbound_symbols_to_controlling_sets(set_nodes: List[mat.SetExpressionNode],
@@ -240,17 +294,17 @@ class NodeBuilder:
         if meta_entity.get_dimension() == 0:
             return None
 
-        indexing_meta_sets = [ms for name, ms in meta_entity.idx_meta_sets.items()]
+        idx_meta_sets = list(meta_entity.idx_meta_sets)
 
         # Remove controlled sets
         if remove_sets is not None:
             if isinstance(remove_sets, dict):
                 remove_sets = [ms for ms in remove_sets.values()]
             remove_sets = [get_set_sym(s) for s in remove_sets]
-            indexing_meta_sets = [ms for ms in indexing_meta_sets if ms.symbol not in remove_sets]
+            idx_meta_sets = [ms for ms in idx_meta_sets if ms.symbol not in remove_sets]
 
-        return self.build_idx_set_node(indexing_meta_sets,
-                                       meta_entity.idx_set_con_literal,
+        return self.build_idx_set_node(idx_meta_sets,
+                                       meta_entity.get_idx_set_con_literal(),
                                        custom_dummy_syms)
 
     def build_idx_set_node(self,
@@ -326,7 +380,7 @@ class NodeBuilder:
                             dummy_sym_mapping[dummy_sym] = modified_dummy_sym
                             all_dummy_syms.append(modified_dummy_sym)
 
-        ampl_parser = AMPLParser(self.problem)
+        ampl_parser = AMPLParser(self._problem)
 
         # instantiate a list to contain the component set nodes
         component_set_nodes = []
@@ -369,7 +423,7 @@ class NodeBuilder:
                                            set_nodes=component_set_nodes,
                                            constraint_node=con_node)
 
-        self.dummy_sym_mapping = dummy_sym_mapping
+        self.unb_sym_map = dummy_sym_mapping
         return idx_set_node
 
     def combine_idx_set_nodes(self, idx_set_nodes: Iterable[Optional[mat.CompoundSetNode]]):
@@ -531,17 +585,17 @@ class NodeBuilder:
     # ------------------------------------------------------------------------------------------------------------------
 
     def generate_free_node_id(self) -> int:
-        if self.problem is not None:
-            return self.problem.generate_free_node_id()
+        if self._problem is not None:
+            return self._problem.generate_free_node_id()
         else:
             free_node_id = self.__free_node_id
             self.__free_node_id += 1
             return free_node_id
 
     def seed_free_node_id(self, node: mat.ExpressionNode) -> int:
-        if self.problem is not None:
-            self.problem.seed_free_node_id(node.get_free_id())
-            return self.problem.generate_free_node_id()
+        if self._problem is not None:
+            self._problem.seed_free_node_id(node.get_free_id())
+            return self._problem.generate_free_node_id()
         else:
             self.__free_node_id = max(self.__free_node_id, node.get_free_id())
             return self.generate_free_node_id()

@@ -15,23 +15,21 @@ def run_general_test_group():
 
 
 def build_problem_from_file_test() -> bool:
-    # noinspection PyBroadException
     try:
-        symro.build_problem("diet.run",
-                            working_dir_path=SCRIPT_DIR_PATH)
+        symro.read_ampl("diet.run",
+                        working_dir_path=SCRIPT_DIR_PATH)
         return True
     except Exception as e:
-        print(e)
+        warnings.warn(str(e))
         return False
 
 
 def build_problem_from_literal_test():
-    # noinspection PyBroadException
     try:
-        symro.build_problem(script_literal="set I;")
+        symro.read_ampl(script_literal="set I;")
         return True
     except Exception as e:
-        print(e)
+        warnings.warn(str(e))
         return False
 
 
@@ -43,7 +41,10 @@ def run_all_tests():
                                                run_node_builder_test_group,
                                                run_entity_builder_test_group,
                                                run_gbd_test_group])
-    print("\n{0}/{1} tests were conducted successfully.".format(true_count, total_count))
+
+    print("\nSummary")
+    print('-' * 50)
+    print("{0}/{1} tests were conducted successfully.".format(true_count, total_count))
 
 
 # Execution

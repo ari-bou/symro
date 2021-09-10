@@ -510,7 +510,7 @@ class AMPLParser:
     def _parse_indexing_set_definition(self) -> Union[mat.CompoundSetNode, mat.EnumeratedSet]:
 
         # Start at opening brace '{'
-        self._next_token()
+        self._next_token()  # skip opening brace '{'
 
         idx_set_node = self.__parse_set_definition()
         if not isinstance(idx_set_node, mat.CompoundSetNode) and not isinstance(idx_set_node, mat.EnumeratedSet):
@@ -825,6 +825,19 @@ class AMPLParser:
         else:
             return self._parse_string_expression()
 
+    def parse_declared_entity_and_idx_set(self, literal: str):
+
+        script = self._tokenize(literal)
+        self._active_script = script
+
+        idx_set_node = None
+        if self.get_token() == '{':
+            idx_set_node = self._parse_indexing_set_definition()
+
+        entity_node = self._parse_declared_entity()
+
+        return idx_set_node, entity_node
+
     def parse_declared_entity(self, literal: str) -> mat.DeclaredEntityNode:
         script = self._tokenize(literal)
         self._active_script = script
@@ -901,14 +914,17 @@ class AMPLParser:
                                      component_nodes=nodes)
 
     def __parse_predefined_parameter(self):
+
         token = self.get_token()
 
         # A.7.2
         if token == "Infinity":
+            self._next_token()  # skip symbol
             return mat.NumericNode(id=self._generate_free_node_id(),
                                    value=np.inf)
         else:
-            return self._parse_declared_entity()
+            # treat it as a declared entity
+            return self._parse_declared_entity()  # symbol is skipped in this method
 
     def __parse_numeric_constant(self, token: str):
 

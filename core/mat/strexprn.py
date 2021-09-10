@@ -11,7 +11,7 @@ class StringNode(StringExpressionNode):
 
     def __init__(self, literal: str, delimiter: str, id: int = 0):
         super().__init__(id)
-        self.literal: str = literal
+        self.literal: str = literal  # string literal without delimiter
         self.delimiter: str = delimiter
 
     def evaluate(self,

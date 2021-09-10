@@ -9,11 +9,11 @@ __version__ = "0.0.2"
 DEFAULT_WORKING_DIR_PATH = os.getcwd()
 
 
-def build_problem(file_path: str = None,
-                  script_literal: str = None,
-                  name: str = None,
-                  description: str = None,
-                  working_dir_path: str = None):
+def read_ampl(file_path: str = None,
+              script_literal: str = None,
+              name: str = None,
+              description: str = None,
+              working_dir_path: str = None):
     if working_dir_path is None:
         working_dir_path = DEFAULT_WORKING_DIR_PATH
     return __problem_builder.build_problem_from_ampl_script(name=name,

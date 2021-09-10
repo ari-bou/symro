@@ -1,0 +1,47 @@
+# SETS AND PARAMETERS
+# --------------------------------------------------------------------------------------------------
+# beginregion
+param CUT_COUNT default 0;
+set CUTS := 1..CUT_COUNT;
+param obj_stored{ct in CUTS} default 0;
+param is_feasible{ct in CUTS} default 0;
+param UNIT_SIZE_stored{u in CORE_UNITS, ct in CUTS} default 0;
+param TANK_SIZE_stored{i in STREAMS, ct in CUTS} default 0;
+param TANK_LOCATION_stored{i in STREAMS, ct in CUTS} default 0;
+param lambda_INIT_INVENTORY_BOUND{i in STREAMS, ct in CUTS} default 0;
+param lambda_UNIT_DESIGN_TPT_BOUND{u in CORE_UNITS, t in TIMEPERIODS, s in SCENARIOS, ct in CUTS} default 0;
+param lambda_INVENTORY_DESIGN_LEVEL_BOUND{i in STREAMS, t in TIMEPERIODS, s in SCENARIOS, ct in CUTS} default 0;
+# endregion 
+
+
+# VARIABLES
+# --------------------------------------------------------------------------------------------------
+# beginregion
+var eta >= -1000000;
+var GBD_F{s in SCENARIOS, ct in CUTS} = 0;
+var GBD_G_0{i in STREAMS, ct in CUTS} = (-(TANK_SIZE[i]) - (-(TANK_SIZE_stored[i,ct])));
+var GBD_G_1{u in CORE_UNITS, t in TIMEPERIODS, s in SCENARIOS, ct in CUTS} = (-(UNIT_SIZE[u]) - (-(UNIT_SIZE_stored[u,ct])));
+var GBD_G_2{i in STREAMS, t in TIMEPERIODS, s in SCENARIOS, ct in CUTS} = (-(TANK_SIZE[i]) - (-(TANK_SIZE_stored[i,ct])));
+# endregion 
+
+
+# OBJECTIVES
+# --------------------------------------------------------------------------------------------------
+# beginregion
+minimize MASTER_OBJ: eta;
+# endregion 
+
+
+# CONSTRAINTS
+# --------------------------------------------------------------------------------------------------
+# beginregion
+GBD_OPT_CUT{ct in CUTS: is_feasible[ct] = 1}: eta >= 
+    obj_stored[ct] 
+    + (sum {s in SCENARIOS} GBD_F[s,ct]) 
+    + (sum {i in STREAMS} lambda_INIT_INVENTORY_BOUND[i,ct] * GBD_G_0[i,ct]) 
+    + (sum {u in CORE_UNITS, t in TIMEPERIODS, s in SCENARIOS} lambda_UNIT_DESIGN_TPT_BOUND[u,t,s,ct] * GBD_G_1[u,t,s,ct]) 
+    + (sum {i in STREAMS, t in TIMEPERIODS, s in SCENARIOS} lambda_INVENTORY_DESIGN_LEVEL_BOUND[i,t,s,ct] * GBD_G_2[i,t,s,ct])
+;
+GBD_FBL_CUT{ct in CUTS: is_feasible[ct] = 0}: 0 >= obj_stored[ct] + (sum {i in STREAMS} lambda_INIT_INVENTORY_BOUND[i,ct] * GBD_G_0[i,ct]) + (sum {u in CORE_UNITS, t in TIMEPERIODS, s in SCENARIOS} lambda_UNIT_DESIGN_TPT_BOUND[u,t,s,ct] * GBD_G_1[u,t,s,ct]) + (sum {i in STREAMS, t in TIMEPERIODS, s in SCENARIOS} lambda_INVENTORY_DESIGN_LEVEL_BOUND[i,t,s,ct] * GBD_G_2[i,t,s,ct]);
+# endregion 
+

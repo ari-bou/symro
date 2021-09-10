@@ -175,7 +175,7 @@ def __standardize_indices_from_api(raw_indices: Union[int, float, str,
 
 def __complete_meta_entity_construction(problem: Problem):
     entity_builder = EntityBuilder(problem)
-    entity_builder.build_idx_meta_sets_of_model()
+    entity_builder.build_all_idx_meta_sets()
     __build_declared_subproblems(problem, entity_builder)
 
 

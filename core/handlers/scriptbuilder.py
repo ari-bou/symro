@@ -135,8 +135,8 @@ class ScriptBuilder:
         def build_indexing_and_entity_node_tuple(meta_entity: mat.MetaEntity):
 
             entity_idx_node = node_builder.build_default_entity_index_node(meta_entity)
-            if node_builder.dummy_sym_mapping is not None:
-                node_builder.replace_unbound_symbols(entity_idx_node, node_builder.dummy_sym_mapping)
+            if node_builder.unb_sym_map is not None:
+                node_builder.replace_unbound_symbols(entity_idx_node, node_builder.unb_sym_map)
 
             entity_node = mat.DeclaredEntityNode(symbol=meta_entity.symbol,
                                                  entity_index_node=entity_idx_node,
@@ -146,6 +146,8 @@ class ScriptBuilder:
                 return None, entity_node
             else:
                 # build a new indexing set node with modified dummy symbols
+                if meta_entity.symbol == "LINKAGE_MASS_BALANCES":
+                    x = 2
                 entity_idx_set_node = node_builder.build_entity_idx_set_node(meta_entity=meta_entity,
                                                                              remove_sets=idx_meta_sets,
                                                                              custom_dummy_syms=custom_dummy_syms)

@@ -1,0 +1,156 @@
+set RAW_MAT_STREAMS := CRUDE_A, CRUDE_B, CRUDE_C;
+
+set INTERMEDIATE_STREAMS := 
+    FG_CDU, FG_RF, FG_CC, 
+    SRG, SRG_TO_PG, SRG_TO_RG,
+    SRN, SRN_TO_RF, SRN_TO_PG, SRN_TO_RG, SRN_TO_DF,
+    SRDS, SRDS_TO_CC, SRDS_TO_DF, SRDS_TO_FO,
+    SRFO, SRFO_TO_CC, SRFO_TO_DF, SRFO_TO_FO,
+    RFG, RFG_TO_PG, RFG_TO_RG,
+    CCG, CCG_TO_PG, CCG_TO_RG,
+    CCFO, CCFO_TO_DF, CCFO_TO_FO
+;
+
+set PRODUCT_STREAMS := PG, RG, DF, FO;
+
+set FG_STREAMS :=  FG_CDU, FG_RF, FG_CC;
+
+set CORE_UNITS := CDU, RF, CC;
+
+set SPLIT_POINTS := SRG_SP, SRN_SP, SRDS_SP, SRFO_SP, RFG_SP, CCG_SP, CCFO_SP;
+
+set BLENDING_TANKS := PG_TANK, RG_TANK, DF_TANK, FO_TANK;
+
+set INLETS :=
+
+    (*,CDU)                                     CRUDE_A CRUDE_B CRUDE_C
+    (*,RF)                                      SRN_TO_RF
+    (*,CC)                                      SRDS_TO_CC SRFO_TO_CC
+    
+    (*,SRG_SP)                                  SRG
+    (*,SRN_SP)                                  SRN
+    (*,SRDS_SP)                                 SRDS
+    (*,SRFO_SP)                                 SRFO
+    (*,RFG_SP)                                  RFG
+    (*,CCG_SP)                                  CCG
+    (*,CCFO_SP)                                 CCFO
+    
+    (*,PG_TANK)                                 SRG_TO_PG RFG_TO_PG SRN_TO_PG CCG_TO_PG
+    (*,RG_TANK)                                 SRG_TO_RG RFG_TO_RG SRN_TO_RG CCG_TO_RG
+    (*,DF_TANK)                                 SRN_TO_DF CCFO_TO_DF SRDS_TO_DF SRFO_TO_DF
+    (*,FO_TANK)                                 CCFO_TO_FO SRDS_TO_FO SRFO_TO_FO
+
+;
+
+set OUTLETS :=
+
+    (*,CDU)                                     FG_CDU SRG SRN SRDS SRFO
+    (*,RF)                                      RFG FG_RF
+    (*,CC)                                      CCG CCFO FG_CC
+    
+    (*,SRG_SP)                                  SRG_TO_PG SRG_TO_RG
+    (*,SRN_SP)                                  SRN_TO_RF SRN_TO_PG SRN_TO_RG SRN_TO_DF
+    (*,SRDS_SP)                                 SRDS_TO_CC SRDS_TO_DF SRDS_TO_FO
+    (*,SRFO_SP)                                 SRFO_TO_CC SRFO_TO_DF SRFO_TO_FO
+    (*,RFG_SP)                                  RFG_TO_PG RFG_TO_RG
+    (*,CCG_SP)                                  CCG_TO_PG CCG_TO_RG
+    (*,CCFO_SP)                                 CCFO_TO_DF CCFO_TO_FO
+    
+    (*,PG_TANK)                                 PG
+    (*,RG_TANK)                                 RG
+    (*,DF_TANK)                                 DF
+    (*,FO_TANK)                                 FO
+
+;
+
+set PROPERTIES := OCT VP DEN SUL ;
+
+param CORE_UNIT_YIELD :=
+
+    [CRUDE_A,*,CDU]         FG_CDU 0.01     SRG 0.05     SRN 0.09     SRDS 0.45     SRFO 0.4
+    [CRUDE_B,*,CDU]         FG_CDU 0.01     SRG 0.19     SRN 0.2      SRDS 0.35     SRFO 0.25
+    [CRUDE_C,*,CDU]         FG_CDU 0.01     SRG 0.14     SRN 0.3      SRDS 0.4      SRFO 0.15
+    
+    [SRN_TO_RF,*,RF]        FG_RF 0.01      RFG 0.99    
+    
+    [SRDS_TO_CC,*,CC]       FG_CC 0.01      CCG 0.7     CCFO 0.29
+    [SRFO_TO_CC,*,CC]       FG_CC 0.01      CCG 0.55    CCFO 0.44
+    
+;
+
+param MIN_PRODUCTION :=
+    PG  10
+    RG  30
+    DF  15
+    FO  10
+;
+
+param DEMAND :=
+    PG  150
+    RG  180
+    DF  160
+    FO  500
+;
+
+param QUALITY (tr):
+                    OCT         VP          DEN         SUL  :=
+    
+    SRG_TO_PG       70          18.4        0           0
+    RFG_TO_PG       100         2.57        0           0
+    SRN_TO_PG       65          6.54        0           0
+    CCG_TO_PG       86          6.9         0           0
+    
+    SRG_TO_RG       70          18.4        0           0
+    RFG_TO_RG       100         2.57        0           0
+    SRN_TO_RG       65          6.54        0           0
+    CCG_TO_RG       86          6.9         0           0
+    
+    SRN_TO_DF       0           0           272         0.283
+    CCFO_TO_DF      0           0           294.4       0.353
+    SRDS_TO_DF      0           0           292         0.526
+    SRFO_TO_DF      0           0           500         1.5
+    
+    CCFO_TO_FO      0           0           294.4       0.353
+    SRDS_TO_FO      0           0           292         0.526
+    SRFO_TO_FO      0           0           500         1.5
+    
+;
+
+param MIN_QUALITY (tr):
+                    OCT         VP         DEN         SUL  :=
+    PG              95          0           0           0
+    RG              89          0           0           0
+    DF              0           0           0           0
+    FO              0           0           0           0
+;
+
+param MAX_QUALITY (tr):
+                    OCT         VP         DEN         SUL  :=
+    PG              150         8           0           0
+    RG              150         8           0           0
+    DF              0           0           306         0.4
+    FO              0           0           352         3
+;
+
+param MATERIAL_COST :=
+    
+    CRUDE_A     59.38
+    CRUDE_B     62.87
+    CRUDE_C     65.12
+    
+    FG_CDU      0.02
+    FG_RF       0.02
+    FG_CC       0.02
+    
+    PG          102.8
+    RG          86.47
+    DF          88.36
+    FO          75.92
+
+;
+
+param OPERATING_COST :=
+    CDU     1
+    RF      3.5
+    CC      2.2
+;

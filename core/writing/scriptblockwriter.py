@@ -67,7 +67,7 @@ def generate_entity_indexing_set_definition(meta_entity: mat.MetaEntity,
         elif isinstance(s, mat.MetaSet):
             return s.symbol
 
-    indexing_meta_sets = [ms for name, ms in meta_entity.idx_meta_sets.items()]
+    indexing_meta_sets = [ms for ms in meta_entity.idx_meta_sets]
 
     # Remove controlled sets
     if remove_sets is not None:
@@ -75,7 +75,7 @@ def generate_entity_indexing_set_definition(meta_entity: mat.MetaEntity,
         indexing_meta_sets = [ms for ms in indexing_meta_sets if ms.symbol not in remove_sets]
 
     return generate_indexing_set_definition(indexing_meta_sets,
-                                            meta_entity.idx_set_con_literal)
+                                            meta_entity.get_idx_set_con_literal())
 
 
 def generate_indexing_set_definition(idx_meta_sets: Optional[Union[List[mat.MetaSet], Dict[str, mat.MetaSet]]],

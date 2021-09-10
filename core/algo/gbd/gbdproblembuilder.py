@@ -49,7 +49,7 @@ class GBDProblemBuilder:
         self.comp_vars: Dict[str, mat.Variable] = {}
 
         # Handlers
-        self.formulator: Formulator = Formulator()
+        self.formulator: Optional[Formulator] = None
         self.node_builder: Optional[NodeBuilder] = None
         self.entity_builder: Optional[EntityBuilder] = None
 
@@ -64,7 +64,7 @@ class GBDProblemBuilder:
 
     def build_gbd_problem(self,
                           problem: Problem,
-                          comp_var_defs: List[Union[str, Tuple[str, str]]],
+                          comp_var_defs: List[str],
                           mp_symbol: str = None,
                           primal_sp_symbol: str = None,
                           fbl_sp_symbol: str = None,
@@ -86,7 +86,9 @@ class GBDProblemBuilder:
                                       working_dir_path=working_dir_path)
 
         # standardize model
-        self.gbd_problem.origin_to_std_con_map = self.formulator.standardize_model(self.gbd_problem)
+        self.formulator = Formulator(self.gbd_problem)
+        self.formulator.substitute_defined_variables()
+        self.gbd_problem.origin_to_std_con_map = self.formulator.standardize_model()
 
         # retrieve or construct complicating meta-variables
         self.__collect_complicating_meta_variables(comp_var_defs)
@@ -127,7 +129,7 @@ class GBDProblemBuilder:
     # Complicating Variables
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __collect_complicating_meta_variables(self, comp_var_defs: List[Union[str, Tuple[str, str]]]):
+    def __collect_complicating_meta_variables(self, comp_var_defs: List[str]):
         for i, comp_var_def in enumerate(comp_var_defs, start=1):
             comp_var_id = "y_{0}".format(i)
             meta_vars = self.__retrieve_meta_entity_from_definition(comp_var_def)
@@ -155,8 +157,8 @@ class GBDProblemBuilder:
                 # that are not decomposed
                 sum_idx_meta_sets = []
                 obj_idx_meta_sets = []
-                for sym, ms in idx_meta_sets.items():
-                    if sym not in sp_idx_meta_set_syms:
+                for ms in idx_meta_sets:
+                    if ms.symbol not in sp_idx_meta_set_syms:
                         sum_idx_meta_sets.append(ms)
                     else:
                         obj_idx_meta_sets.append(ms)
@@ -193,7 +195,7 @@ class GBDProblemBuilder:
                                                                         custom_dummy_syms=default_dummy_syms)
 
                 # replace dummy symbols in expression with default dummy symbols
-                self.node_builder.replace_unbound_symbols(expr_node, mapping=self.node_builder.dummy_sym_mapping)
+                self.node_builder.replace_unbound_symbols(expr_node, mapping=self.node_builder.unb_sym_map)
 
                 # build meta-objective expression
                 expression = mat.Expression(expr_node)
@@ -306,9 +308,9 @@ class GBDProblemBuilder:
 
     def build_defined_primal_sp(self,
                                 sp_sym: str,
-                                var_defs: List[Union[str, Tuple[str, str]]] = None,
-                                obj_def: Union[str, Tuple[str, str]] = None,
-                                con_defs: List[Union[str, Tuple[str, str]]] = None):
+                                var_defs: List[str] = None,
+                                obj_def: str = None,
+                                con_defs: List[str] = None):
 
         # retrieve existing subproblem
         if obj_def is None and var_defs is None:
@@ -468,11 +470,11 @@ class GBDProblemBuilder:
                 parent_meta_var = self.gbd_problem.meta_vars[meta_var.symbol]
 
                 # Retrieve indexing meta-sets
-                idx_meta_sets = [ms for n, ms in parent_meta_var.idx_meta_sets.items()]
+                idx_meta_sets = [ms for ms in parent_meta_var.idx_meta_sets]
                 idx_meta_sets.append(self.gbd_problem.cuts)
 
                 # Retrieve constraint
-                idx_set_con_literal = parent_meta_var.idx_set_con_literal
+                idx_set_con_literal = parent_meta_var.get_idx_set_con_literal()
 
                 # Build storage meta-parameter
                 stored_comp_dec = self.entity_builder.build_meta_param(symbol=storage_symbol,
@@ -656,19 +658,19 @@ class GBDProblemBuilder:
 
             # Build meta-entities
 
-            idx_meta_sets = dict(meta_con.idx_meta_sets)
-            idx_meta_sets[self.gbd_problem.cuts_sym] = self.gbd_problem.cuts
+            idx_meta_sets = list(meta_con.idx_meta_sets)
+            idx_meta_sets.append(self.gbd_problem.cuts)
 
             gv = self.entity_builder.build_meta_var(symbol=gv_sym,
                                                     idx_meta_sets=idx_meta_sets,
-                                                    idx_set_con_literal=meta_con.idx_set_con_literal,
+                                                    idx_set_con_literal=meta_con.get_idx_set_con_literal(),
                                                     idx_set_node=idx_set_node,
                                                     defined_value=rhs_node)
 
             gc_sym = "GBD_AUX_CON_G_{0}".format(i)
             gc = self.entity_builder.build_meta_con(symbol=gc_sym,
                                                     idx_meta_sets=idx_meta_sets,
-                                                    idx_set_con_literal=meta_con.idx_set_con_literal,
+                                                    idx_set_con_literal=meta_con.get_idx_set_con_literal(),
                                                     idx_set_node=idx_set_node,
                                                     expression=aux_expr)
 
@@ -689,9 +691,9 @@ class GBDProblemBuilder:
     def __build_duality_multiplier(self, meta_con: mat.MetaConstraint, id: int):
 
         sym = "lambda_{0}".format(meta_con.symbol)
-        idx_meta_sets = [ms for n, ms in meta_con.idx_meta_sets.items()]
+        idx_meta_sets = [ms for ms in meta_con.idx_meta_sets]
         idx_meta_sets.append(self.gbd_problem.cuts)
-        idx_set_con_literal = meta_con.idx_set_con_literal
+        idx_set_con_literal = meta_con.get_idx_set_con_literal()
 
         # Build duality multiplier meta-parameter
         duality_multiplier = self.entity_builder.build_meta_param(symbol=sym,
@@ -1065,7 +1067,7 @@ class GBDProblemBuilder:
         full_to_reduced_dim_index_map = {}
         dim_index = -1
         red_dim_index = -1
-        for _, ims in parent_meta_var.idx_meta_sets.items():
+        for ims in parent_meta_var.idx_meta_sets:
             for is_dim_fixed_i in ims.is_dim_fixed:
                 dim_index += 1
                 if not is_dim_fixed_i:
@@ -1310,7 +1312,6 @@ class GBDProblemBuilder:
         # build meta-constraint
         meta_con = mat.MetaConstraint(symbol=self.gbd_problem.opt_cut_con_sym,
                                       idx_meta_sets=idx_meta_sets,
-                                      idx_set_con_literal=idx_set_con_node.get_literal(),
                                       idx_set_node=idx_set_node,
                                       expression=expression)
 
@@ -1339,7 +1340,6 @@ class GBDProblemBuilder:
         # build meta-constraint
         meta_con = mat.MetaConstraint(symbol=self.gbd_problem.fbl_cut_con_sym,
                                       idx_meta_sets=idx_meta_sets,
-                                      idx_set_con_literal=idx_set_con_node.get_literal(),
                                       idx_set_node=idx_set_node,
                                       expression=expression)
 
@@ -1934,87 +1934,30 @@ class GBDProblemBuilder:
     def generate_free_node_id(self) -> int:
         return self.node_builder.generate_free_node_id()
 
-    def __retrieve_meta_entity_from_definition(self, entity_def: Union[str, Tuple[str, str]]):
+    def __retrieve_meta_entity_from_definition(self, entity_def: str):
 
-        idx_set_literal = None
-        if isinstance(entity_def, str):
-            sym = entity_def
-        else:
-            sym = entity_def[0]
-            idx_set_literal = entity_def[1]
+        ampl_parser = AMPLParser(self.gbd_problem)
+        idx_set_node, entity_node = ampl_parser.parse_declared_entity_and_idx_set(entity_def)
 
+        sym = entity_node.symbol
         if sym in self.gbd_problem.origin_to_std_con_map:
-            syms = [mc.symbol for mc in self.gbd_problem.origin_to_std_con_map[sym]]
+            std_syms = [mc.symbol for mc in self.gbd_problem.origin_to_std_con_map[sym]]
         else:
-            syms = [sym]
+            std_syms = [sym]
 
         meta_entities = []
 
-        for sym in syms:
-            if idx_set_literal is None:
-                meta_entities.append(self.gbd_problem.get_meta_entity(sym))
+        for std_sym in std_syms:
+            parent_meta_entity = self.gbd_problem.get_meta_entity(std_sym)
+            if idx_set_node is None:
+                meta_entities.append(parent_meta_entity)
             else:
-                meta_entities.append(self.__generate_sub_meta_entity(sym=sym, idx_set_literal=idx_set_literal))
+                sub_meta_entity = self.entity_builder.build_sub_meta_entity(idx_subset_node=idx_set_node,
+                                                                            meta_entity=parent_meta_entity,
+                                                                            entity_idx_node=entity_node.idx_node)
+                meta_entities.append(sub_meta_entity)
 
         return meta_entities
-
-    def __generate_sub_meta_entity(self,
-                                   sym: str,
-                                   idx_set_literal: str):
-
-        ampl_parser = AMPLParser(self.gbd_problem)
-
-        meta_entity = self.gbd_problem.get_meta_entity(sym)
-
-        idx_set_node = ampl_parser.parse_indexing_set_definition(idx_set_literal)
-
-        # meta-variable
-        if isinstance(meta_entity, mat.MetaVariable):
-            sub_meta_entity = self.entity_builder.build_meta_var(symbol=sym,
-                                                                 idx_set_node=idx_set_node,
-                                                                 is_binary=meta_entity.is_binary,
-                                                                 is_integer=meta_entity.is_integer,
-                                                                 is_symbolic=meta_entity.is_symbolic,
-                                                                 default_value=meta_entity.default_value,
-                                                                 defined_value=meta_entity.fixed_value,
-                                                                 lower_bound=meta_entity.lower_bound,
-                                                                 upper_bound=meta_entity.upper_bound)
-
-        # meta-objective
-        elif isinstance(meta_entity, mat.MetaObjective):
-            sub_meta_entity = self.entity_builder.build_meta_obj(symbol=sym,
-                                                                 idx_set_node=idx_set_node,
-                                                                 direction=meta_entity.direction,
-                                                                 expression=meta_entity.expression)
-
-        # meta-constraint
-        elif isinstance(meta_entity, mat.MetaConstraint):
-            sub_meta_entity = self.entity_builder.build_meta_con(symbol=sym,
-                                                                 idx_set_node=idx_set_node,
-                                                                 expression=meta_entity.expression)
-
-        else:
-            raise ValueError("GBD problem builder encountered a meta-entity that is not a variable, objective,"
-                             + " or constraint while constructing a meta-entity subset")
-
-        if sub_meta_entity.get_dimension() != meta_entity.get_dimension():
-            raise ValueError("GBD problem builder was unable to resolve an entity definition: "
-                             + " the dimension of {0} does not match that of its parent".format(sub_meta_entity))
-        if len(sub_meta_entity.idx_meta_sets) != len(meta_entity.idx_meta_sets):
-            raise ValueError("GBD problem builder was unable to resolve an entity definition: "
-                             + " the number of component indexing sets of {0}".format(sub_meta_entity)
-                             + " does not match that of its parent")
-
-        sub_component_set_syms = list(sub_meta_entity.idx_meta_sets.keys())
-        for k, component_set_sym in enumerate(meta_entity.idx_meta_sets.keys()):
-            super_dim = sub_meta_entity.idx_meta_sets[sub_component_set_syms[k]].dimension
-            sub_dim = meta_entity.idx_meta_sets[component_set_sym].dimension
-            if super_dim != sub_dim:
-                raise ValueError("GBD problem builder was unable to resolve an entity definition: "
-                                 + " the dimension of a component indexing set of {0}".format(sub_meta_entity)
-                                 + " does not match that of its corresponding set in the parent")
-
-        return sub_meta_entity
 
     def generate_entity_sp_index(self,
                                  sp_index: mat.IndexSetMember,

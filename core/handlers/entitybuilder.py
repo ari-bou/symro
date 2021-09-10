@@ -1,6 +1,7 @@
 from copy import deepcopy
+from ordered_set import OrderedSet
 from queue import Queue
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import symro.core.mat as mat
 from symro.core.prob.problem import BaseProblem, Problem
@@ -10,8 +11,8 @@ from symro.core.handlers.nodebuilder import NodeBuilder
 class EntityBuilder:
 
     def __init__(self, problem: Problem):
-        self.problem: Problem = problem
-        self.node_builder: NodeBuilder = NodeBuilder(problem)
+        self._problem: Problem = problem
+        self._node_builder: NodeBuilder = NodeBuilder(problem)
 
     # Meta-Entity Construction
     # ------------------------------------------------------------------------------------------------------------------
@@ -29,14 +30,18 @@ class EntityBuilder:
                        is_dim_fixed: List[bool] = None,
                        super_set_node: mat.BaseSetNode = None,
                        set_node: mat.BaseSetNode = None):
+
         if idx_meta_sets is None and idx_set_node is not None:
-            idx_meta_sets, idx_set_con_literal = self.build_idx_meta_sets_from_idx_set_node(idx_set_node)
+            self._build_idx_meta_sets_of_meta_set(idx_set_node,
+                                                  super_set_node,
+                                                  set_node)
+
         if idx_set_node is None:
-            idx_set_node = self.node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
+            idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
+
         return mat.MetaSet(symbol=symbol,
                            alias=alias,
                            idx_meta_sets=idx_meta_sets,
-                           idx_set_con_literal=idx_set_con_literal,
                            idx_set_node=idx_set_node,
                            dimension=dimension,
                            reduced_dimension=reduced_dimension,
@@ -58,19 +63,27 @@ class EntityBuilder:
                          default_value: Union[int, float, str, mat.ExpressionNode] = None,
                          super_set_node: mat.BaseSetNode = None,
                          relational_constraints: Dict[str, mat.ExpressionNode] = None):
+
+        default_value_node = self._build_value_node(default_value)
+
         if idx_meta_sets is None and idx_set_node is not None:
-            idx_meta_sets, idx_set_con_literal = self.build_idx_meta_sets_from_idx_set_node(idx_set_node)
+            idx_meta_sets = self._build_idx_meta_sets_of_meta_param(
+                idx_set_node=idx_set_node,
+                default_value_node=default_value,
+                super_set_node=super_set_node,
+                relational_constraints=relational_constraints)
+
         if idx_set_node is None:
-            idx_set_node = self.node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
+            idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
+
         meta_param = mat.MetaParameter(symbol=symbol,
                                        alias=alias,
                                        idx_meta_sets=idx_meta_sets,
-                                       idx_set_con_literal=idx_set_con_literal,
                                        idx_set_node=idx_set_node,
                                        is_binary=is_binary,
                                        is_integer=is_integer,
                                        is_symbolic=is_symbolic,
-                                       default_value=default_value,
+                                       default_value=default_value_node,
                                        super_set_node=super_set_node,
                                        relational_constraints=relational_constraints)
         return meta_param
@@ -88,22 +101,33 @@ class EntityBuilder:
                        defined_value: Union[int, float, str, mat.ExpressionNode] = None,
                        lower_bound: Union[int, float, str, mat.ExpressionNode] = None,
                        upper_bound: Union[int, float, str, mat.ExpressionNode] = None):
+
+        default_value_node = self._build_value_node(default_value)
+        defined_value_node = self._build_value_node(defined_value)
+        lower_bound_node = self._build_value_node(lower_bound)
+        upper_bound_node = self._build_value_node(upper_bound)
+
         if idx_meta_sets is None and idx_set_node is not None:
-            idx_meta_sets, idx_set_con_literal = self.build_idx_meta_sets_from_idx_set_node(idx_set_node)
+            idx_meta_sets = self._build_idx_meta_sets_of_meta_var(
+                idx_set_node=idx_set_node,
+                default_value_node=default_value,
+                lower_bound_node=lower_bound,
+                upper_bound_node=upper_bound)
+
         if idx_set_node is None:
-            idx_set_node = self.node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
+            idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
+
         meta_var = mat.MetaVariable(symbol=symbol,
                                     alias=alias,
                                     idx_meta_sets=idx_meta_sets,
-                                    idx_set_con_literal=idx_set_con_literal,
                                     idx_set_node=idx_set_node,
                                     is_binary=is_binary,
                                     is_integer=is_integer,
                                     is_symbolic=is_symbolic,
-                                    default_value=default_value,
-                                    defined_value=defined_value,
-                                    lower_bound=lower_bound,
-                                    upper_bound=upper_bound)
+                                    default_value=default_value_node,
+                                    defined_value=defined_value_node,
+                                    lower_bound=lower_bound_node,
+                                    upper_bound=upper_bound_node)
         return meta_var
 
     def build_meta_obj(self,
@@ -114,14 +138,18 @@ class EntityBuilder:
                        idx_set_node: mat.CompoundSetNode = None,
                        direction: str = None,
                        expression: mat.Expression = None):
+
         if idx_meta_sets is None and idx_set_node is not None:
-            idx_meta_sets, idx_set_con_literal = self.build_idx_meta_sets_from_idx_set_node(idx_set_node)
+            idx_meta_sets = self._build_idx_meta_sets_of_meta_obj(
+                idx_set_node=idx_set_node,
+                expression=expression)
+
         if idx_set_node is None:
-            idx_set_node = self.node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
+            idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
+
         meta_obj = mat.MetaObjective(symbol=symbol,
                                      alias=alias,
                                      idx_meta_sets=idx_meta_sets,
-                                     idx_set_con_literal=idx_set_con_literal,
                                      idx_set_node=idx_set_node,
                                      direction=direction,
                                      expression=expression)
@@ -134,51 +162,140 @@ class EntityBuilder:
                        idx_set_con_literal: str = None,
                        idx_set_node: mat.CompoundSetNode = None,
                        expression: mat.Expression = None):
+
         if idx_meta_sets is None and idx_set_node is not None:
-            idx_meta_sets, idx_set_con_literal = self.build_idx_meta_sets_from_idx_set_node(idx_set_node)
+            idx_meta_sets = self._build_idx_meta_sets_of_meta_con(
+                idx_set_node=idx_set_node,
+                expression=expression)
+
         if idx_set_node is None:
-            idx_set_node = self.node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
+            idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
+
         meta_con = mat.MetaConstraint(symbol=symbol,
                                       alias=alias,
                                       idx_meta_sets=idx_meta_sets,
-                                      idx_set_con_literal=idx_set_con_literal,
                                       idx_set_node=idx_set_node,
                                       expression=expression)
         return meta_con
 
+    def _build_value_node(self,
+                          value: Union[None, int, float, str, mat.ExpressionNode]
+                          ) -> Optional[mat.ExpressionNode]:
+
+        node = value
+
+        if value is not None:
+
+            if isinstance(value, int) or isinstance(value, float):
+                node = mat.NumericNode(id=self._problem.generate_free_node_id(),
+                                       value=value)
+            elif isinstance(value, str):
+                node = mat.StringNode(id=self._problem.generate_free_node_id(),
+                                      literal=value,
+                                      delimiter='"')
+        return node
+
     # Indexing Set Construction
     # ------------------------------------------------------------------------------------------------------------------
 
-    def build_idx_meta_sets_of_model(self):
+    def build_all_idx_meta_sets(self):
 
-        def build(me: mat.MetaEntity):
-            idx_meta_sets, idx_set_con_literal = self.build_idx_meta_sets_from_idx_set_node(me.idx_set_node)
-            me.idx_meta_sets = idx_meta_sets
-            me.idx_set_con_literal = idx_set_con_literal
+        self._build_idx_meta_sets_of_problem(self._problem)
+        for sp in self._problem.subproblems.values():
+            self._build_idx_meta_sets_of_problem(sp)
 
-        for meta_entity in self.problem.model_meta_sets_params:
-            build(meta_entity)
+    def _build_idx_meta_sets_of_problem(self, problem: BaseProblem):
 
-        for meta_entity in self.problem.model_meta_vars:
-            build(meta_entity)
+        for me in problem.model_meta_sets_params:
+            if isinstance(me, mat.MetaSet):
+                me.idx_meta_sets = self._build_idx_meta_sets_of_meta_set(idx_set_node=me.idx_set_node,
+                                                                         super_set_node=me.super_set_node,
+                                                                         set_node=me.set_node)
 
-        for meta_entity in self.problem.model_meta_objs:
-            build(meta_entity)
+            elif isinstance(me, mat.MetaParameter):
+                me.idx_meta_sets = self._build_idx_meta_sets_of_meta_param(
+                    idx_set_node=me.idx_set_node,
+                    default_value_node=me.default_value,
+                    super_set_node=me.super_set_node,
+                    relational_constraints=me.relational_constraints)
 
-        for meta_entity in self.problem.model_meta_cons:
-            build(meta_entity)
+        for me in problem.model_meta_vars:
+            me.idx_meta_sets = self._build_idx_meta_sets_of_meta_var(
+                idx_set_node=me.idx_set_node,
+                default_value_node=me.default_value,
+                lower_bound_node=me.lower_bound,
+                upper_bound_node=me.upper_bound)
 
-    def build_idx_meta_sets_from_idx_set_node(self, idx_set_node: mat.CompoundSetNode):
+        for me in problem.model_meta_objs:
+            me.idx_meta_sets = self._build_idx_meta_sets_of_meta_obj(
+                idx_set_node=me.idx_set_node,
+                expression=me.expression)
 
-        idx_meta_sets = {}
-        idx_set_con_literal = None
+        for me in problem.model_meta_cons:
+            me.idx_meta_sets = self._build_idx_meta_sets_of_meta_con(
+                idx_set_node=me.idx_set_node,
+                expression=me.expression)
+
+    def _build_idx_meta_sets_of_meta_set(self,
+                                         idx_set_node: mat.CompoundSetNode,
+                                         super_set_node: mat.BaseSetNode = None,
+                                         set_node: mat.BaseSetNode = None):
+        blacklist = self._node_builder.retrieve_unbound_symbols_of_nodes([super_set_node, set_node])
+        return self.build_idx_meta_sets(idx_set_node, unb_syms_blacklist=blacklist)
+
+    def _build_idx_meta_sets_of_meta_param(self,
+                                           idx_set_node: mat.CompoundSetNode,
+                                           default_value_node: mat.ExpressionNode = None,
+                                           super_set_node: mat.BaseSetNode = None,
+                                           relational_constraints: Dict[str, mat.ExpressionNode] = None):
+
+        bl_nodes = [default_value_node, super_set_node]
+        if relational_constraints is not None:
+            bl_nodes.extend(relational_constraints.values())
+        blacklist = self._node_builder.retrieve_unbound_symbols_of_nodes(bl_nodes)
+        return self.build_idx_meta_sets(idx_set_node, unb_syms_blacklist=blacklist)
+
+    def _build_idx_meta_sets_of_meta_var(self,
+                                         idx_set_node: mat.CompoundSetNode,
+                                         default_value_node: mat.ExpressionNode = None,
+                                         defined_value_node: mat.ExpressionNode = None,
+                                         lower_bound_node: mat.ExpressionNode = None,
+                                         upper_bound_node: mat.ExpressionNode = None):
+        blacklist = self._node_builder.retrieve_unbound_symbols_of_nodes([default_value_node,
+                                                                          defined_value_node,
+                                                                          lower_bound_node,
+                                                                          upper_bound_node])
+        return self.build_idx_meta_sets(idx_set_node, unb_syms_blacklist=blacklist)
+
+    def _build_idx_meta_sets_of_meta_obj(self,
+                                         idx_set_node: mat.CompoundSetNode,
+                                         expression: mat.Expression = None):
+        if expression is not None:
+            blacklist = self._node_builder.retrieve_unbound_symbols_of_nodes([expression.expression_node])
+        else:
+            blacklist = set()
+        return self.build_idx_meta_sets(idx_set_node, unb_syms_blacklist=blacklist)
+
+    def _build_idx_meta_sets_of_meta_con(self,
+                                         idx_set_node: mat.CompoundSetNode,
+                                         expression: mat.Expression = None):
+        if expression is not None:
+            blacklist = self._node_builder.retrieve_unbound_symbols_of_nodes([expression.expression_node])
+        else:
+            blacklist = set()
+        return self.build_idx_meta_sets(idx_set_node, unb_syms_blacklist=blacklist)
+
+    def build_idx_meta_sets(self,
+                            idx_set_node: mat.CompoundSetNode,
+                            unb_syms_blacklist: Iterable[str] = None) -> List[mat.MetaSet]:
+
+        idx_meta_sets = []
 
         if idx_set_node is None:
-            return idx_meta_sets, idx_set_con_literal
+            return idx_meta_sets
 
-        # Retrieve indexing set constraint
-        if idx_set_node.constraint_node is not None:
-            idx_set_con_literal = idx_set_node.constraint_node.get_literal()
+        if unb_syms_blacklist is None:
+            unb_syms_blacklist = set()
 
         component_set_syms = []
         component_dims = []
@@ -190,7 +307,7 @@ class EntityBuilder:
         # - store declared dummy symbols
         for component_set_node in idx_set_node.set_nodes:
 
-            component_dim = component_set_node.get_dim(self.problem.state)
+            component_dim = component_set_node.get_dim(self._problem.state)
 
             # Component set is indexed
             if isinstance(component_set_node, mat.IndexingSetNode):
@@ -222,7 +339,7 @@ class EntityBuilder:
             # Component set is declared
             if isinstance(component_set_node, mat.SetNode):
 
-                dummy_elements = list(self.problem.meta_sets[component_set_node.symbol].dummy_symbols)
+                dummy_elements = list(self._problem.meta_sets[component_set_node.symbol].dummy_symbols)
                 for j, de in enumerate(dummy_elements):
                     if de not in all_defined_indexing_dummies:
                         all_defined_indexing_dummies.add(de)
@@ -232,7 +349,7 @@ class EntityBuilder:
 
         # Pass 3: process dummy symbols
         k = 0
-        prev_defined_indexing_dummies = []
+        def_unb_syms = set()
         for i, component_set_node in enumerate(idx_set_node.set_nodes):
 
             component_set_sym = component_set_syms[i]
@@ -244,9 +361,10 @@ class EntityBuilder:
 
                 if isinstance(de, mat.DummyNode):
                     component_dummy.append(de.symbol)
-                    if de.symbol not in prev_defined_indexing_dummies:
+                    if de.symbol not in def_unb_syms:
                         reduced_component_dummy.append(de.symbol)
-                        prev_defined_indexing_dummies.append(de.symbol)
+                        def_unb_syms.add(de.symbol)
+                        unb_syms_blacklist.add(de.symbol)
                         is_dim_fixed.append(False)
                     else:
                         is_dim_fixed.append(True)
@@ -267,24 +385,28 @@ class EntityBuilder:
                     component_dummy.append(de)
                     reduced_component_dummy.append(de)
                     is_dim_fixed.append(False)
-                    prev_defined_indexing_dummies.append(de)
+                    def_unb_syms.add(de)
+                    unb_syms_blacklist.add(de)
 
                 else:  # dummy element is undeclared (None); will never be fixed
-                    dummy_element_base = ''
+
+                    unb_sym_base = ''
                     for c in component_set_syms[i]:
                         if c.isalpha():
-                            dummy_element_base = c[0].lower()
-                    if dummy_element_base == '':
-                        dummy_element_base = 'i'
-                    dummy_element = dummy_element_base
-                    m = 1
-                    while dummy_element in prev_defined_indexing_dummies:
-                        dummy_element = dummy_element_base + str(m)
-                        m += 1
-                    component_dummy.append(dummy_element)
-                    reduced_component_dummy.append(dummy_element)
+                            unb_sym_base = c[0].lower()
+                    if unb_sym_base == '':
+                        unb_sym_base = 'i'
+
+                    cmpt_unb_syms = self._node_builder.retrieve_unbound_symbols(component_set_node)
+                    unb_sym = self._node_builder.generate_unique_symbol(
+                        base_symbol=unb_sym_base,
+                        symbol_blacklist=cmpt_unb_syms | unb_syms_blacklist)
+
+                    component_dummy.append(unb_sym)
+                    reduced_component_dummy.append(unb_sym)
                     is_dim_fixed.append(False)
-                    prev_defined_indexing_dummies.append(dummy_element)
+                    def_unb_syms.add(unb_sym)
+                    unb_syms_blacklist.add(unb_sym)
 
                 k += 1
 
@@ -297,9 +419,9 @@ class EntityBuilder:
                                             dummy_symbols=component_dummy,
                                             reduced_dummy_symbols=reduced_component_dummy,
                                             is_dim_fixed=is_dim_fixed)
-            idx_meta_sets[component_set_sym] = indexing_meta_set
+            idx_meta_sets.append(indexing_meta_set)
 
-        return idx_meta_sets, idx_set_con_literal
+        return idx_meta_sets
 
     # Subproblem Construction
     # ------------------------------------------------------------------------------------------------------------------
@@ -314,13 +436,13 @@ class EntityBuilder:
 
         for me_idx_set_node, e_node in entity_nodes:
 
-            meta_entity = self.problem.get_meta_entity(e_node.symbol)
+            meta_entity = self._problem.get_meta_entity(e_node.symbol)
 
             if prob_idx_set_node is None and me_idx_set_node is None and e_node.idx_node is None:
                 sp.add_meta_entity_to_model(meta_entity)
 
             else:
-                idx_subset_node = self.node_builder.combine_idx_set_nodes([prob_idx_set_node, me_idx_set_node])
+                idx_subset_node = self._node_builder.combine_idx_set_nodes([prob_idx_set_node, me_idx_set_node])
                 sub_meta_entity = self.build_sub_meta_entity(idx_subset_node=deepcopy(idx_subset_node),
                                                              meta_entity=meta_entity,
                                                              entity_idx_node=deepcopy(e_node.idx_node))
@@ -335,8 +457,8 @@ class EntityBuilder:
                               idx_subset_node: mat.CompoundSetNode,
                               meta_entity: mat.MetaEntity,
                               entity_idx_node: mat.CompoundDummyNode):
-        sub_meta_entity_builder = self.SubMetaEntityBuilder(problem=self.problem,
-                                                            node_builder=self.node_builder)
+        sub_meta_entity_builder = self.SubMetaEntityBuilder(problem=self._problem,
+                                                            node_builder=self._node_builder)
         sub_meta_entity = sub_meta_entity_builder.build_sub_meta_entity(idx_subset_node=idx_subset_node,
                                                                         meta_entity=meta_entity,
                                                                         entity_idx_node=entity_idx_node)
@@ -365,11 +487,8 @@ class EntityBuilder:
                                                                         entity_idx_node)
 
             sub_meta_entity = deepcopy(meta_entity)
+            sub_meta_entity.is_sub = True  # set is_sub flag to True to designate the object as a sub-meta-entity
             sub_meta_entity.idx_set_node = idx_subset_node
-            if idx_subset_node.constraint_node is not None:
-                sub_meta_entity.idx_set_con_literal = str(idx_subset_node.constraint_node)
-            else:
-                sub_meta_entity.idx_set_con_literal = None
 
             return sub_meta_entity
 
@@ -489,7 +608,7 @@ class EntityBuilder:
                 else:
 
                     # check if the component node is controlled
-                    ctrl_unb_syms = self.node_builder.retrieve_unbound_symbols(node=cmpt_node,
+                    ctrl_unb_syms = self.node_builder.retrieve_unbound_symbols(root_node=cmpt_node,
                                                                                in_filter=inner_middle_unb_syms)
                     if len(ctrl_unb_syms):
                         # if the set of controlling unbound symbols is not empty, then the component is controlled
@@ -533,7 +652,7 @@ class EntityBuilder:
                                                        middle_set_node_ids=middle_set_node_ids,
                                                        outer_unb_syms=outer_unb_syms,
                                                        middle_unb_syms=middle_unb_syms,
-                                                       inner_scope_unbound_syms=inner_unb_syms)
+                                                       inner_unb_syms=inner_unb_syms)
             (middle_rep_map, tfm_middle_unb_syms, tfm_inner_unb_syms, middle_idx_set_node) = r
 
             inner_idx_set_node = self.__build_inner_scope_idx_set_node(idx_subset_node=idx_subset_node,
@@ -546,7 +665,7 @@ class EntityBuilder:
                                                                        middle_rep_map=middle_rep_map,
                                                                        outer_unb_syms=outer_unb_syms,
                                                                        middle_unb_syms=middle_unb_syms,
-                                                                       tfm_middle_scope_unb_syms=tfm_middle_unb_syms,
+                                                                       tfm_middle_unb_syms=tfm_middle_unb_syms,
                                                                        tfm_inner_unb_syms=tfm_inner_unb_syms)
 
             set_node = self.__build_set_node(middle_idx_set_node,
@@ -566,12 +685,12 @@ class EntityBuilder:
         def __assign_component_set_nodes_to_inner_and_middle_scopes(idx_subset_node: mat.CompoundSetNode,
                                                                     entity_idx_node: mat.CompoundDummyNode):
 
-            defined_unbound_syms = set()
+            def_unb_syms = set()
             set_node_id_to_defined_unbound_syms_map: Dict[int, Set[str]] = {}
-            defined_unbound_sym_to_set_node_id_map: Dict[str, int] = {}
+            def_unb_sym_to_sn_id_map: Dict[str, int] = {}
 
-            middle_scope_unbound_syms = set()
-            inner_scope_unbound_syms = set()
+            middle_unb_syms = OrderedSet()
+            inner_unb_syms = OrderedSet()
             entity_idx_unbound_syms = set()  # instantiate set of unbound symbols that control the entity index
 
             middle_set_node_ids = set()
@@ -583,15 +702,15 @@ class EntityBuilder:
                     entity_idx_unbound_syms.add(component_node.symbol)
 
             def handle_dummy_node(sn_id: int, dn: mat.DummyNode):
-                if dn.symbol not in defined_unbound_syms:
-                    defined_unbound_syms.add(dn.symbol)
+                if dn.symbol not in def_unb_syms:
+                    def_unb_syms.add(dn.symbol)
                     set_node_id_to_defined_unbound_syms_map[sn_id].add(dn.symbol)
-                    defined_unbound_sym_to_set_node_id_map[dn.symbol] = sn_id
+                    def_unb_sym_to_sn_id_map[dn.symbol] = sn_id
                     if dn.symbol in entity_idx_unbound_syms:
-                        inner_scope_unbound_syms.add(dn.symbol)
+                        inner_unb_syms.add(dn.symbol)
                         return 0  # unbound symbol is defined in inner scope
                     else:
-                        middle_scope_unbound_syms.add(dn.symbol)
+                        middle_unb_syms.add(dn.symbol)
                         return 1  # unbound symbol is defined in middle scope
                 return -1  # unbound symbol has already been defined
 
@@ -628,13 +747,13 @@ class EntityBuilder:
                     if is_middle:
                         middle_set_node_ids.add(component_set_node.id)
 
-            return (defined_unbound_syms,
+            return (def_unb_syms,
                     set_node_id_to_defined_unbound_syms_map,
-                    defined_unbound_sym_to_set_node_id_map,
+                    def_unb_sym_to_sn_id_map,
                     middle_set_node_ids,
                     inner_set_node_ids,
-                    middle_scope_unbound_syms,
-                    inner_scope_unbound_syms)
+                    middle_unb_syms,
+                    inner_unb_syms)
 
         def __build_middle_scope_idx_set_node(self,
                                               set_node_map: Dict[int, mat.SetExpressionNode],
@@ -644,8 +763,8 @@ class EntityBuilder:
                                               def_unb_sym_to_sn_id_map: Dict[str, int],
                                               middle_set_node_ids: Set[int],
                                               outer_unb_syms: List[str],
-                                              middle_unb_syms: Set[str],
-                                              inner_scope_unbound_syms: Set[str]):
+                                              middle_unb_syms: OrderedSet[str],
+                                              inner_unb_syms: OrderedSet[str]):
 
             if len(middle_set_node_ids) > 0:
 
@@ -676,12 +795,12 @@ class EntityBuilder:
                     middle_idx_set_node,
                     blacklisted_unbound_syms=outer_unb_syms)
 
-                tfm_middle_scope_unbound_syms = set()
+                tfm_middle_scope_unbound_syms = OrderedSet()
                 for unbound_sym in middle_unb_syms:
                     tfm_middle_scope_unbound_syms.add(middle_rep_map.get(unbound_sym, unbound_sym))
 
-                tfm_inner_scope_unbound_syms = set()
-                for unbound_sym in inner_scope_unbound_syms:
+                tfm_inner_scope_unbound_syms = OrderedSet()
+                for unbound_sym in inner_unb_syms:
                     tfm_inner_scope_unbound_syms.add(middle_rep_map.get(unbound_sym, unbound_sym))
 
                 self.node_builder.replace_unbound_symbols(middle_idx_set_node, middle_rep_map)
@@ -689,7 +808,7 @@ class EntityBuilder:
             else:
                 middle_rep_map = {}
                 tfm_middle_scope_unbound_syms = middle_unb_syms
-                tfm_inner_scope_unbound_syms = inner_scope_unbound_syms
+                tfm_inner_scope_unbound_syms = inner_unb_syms
                 middle_idx_set_node = None
 
             return middle_rep_map, tfm_middle_scope_unbound_syms, tfm_inner_scope_unbound_syms, middle_idx_set_node
@@ -704,9 +823,9 @@ class EntityBuilder:
                                              inner_set_node_ids: Set[int],
                                              middle_rep_map: Dict[str, str],
                                              outer_unb_syms: List[str],
-                                             middle_unb_syms: Set[str],
-                                             tfm_middle_scope_unb_syms: Set[str],
-                                             tfm_inner_unb_syms: Set[str]):
+                                             middle_unb_syms: OrderedSet[str],
+                                             tfm_middle_unb_syms: OrderedSet[str],
+                                             tfm_inner_unb_syms: OrderedSet[str]):
 
             if len(inner_set_node_ids) == 0:
                 one_node = mat.NumericNode(id=self.problem.generate_free_node_id(), value=1)
@@ -735,7 +854,7 @@ class EntityBuilder:
 
             inner_rep_map = self.node_builder.generate_unbound_symbol_clash_replacement_map(
                 inner_idx_set_node,
-                outer_scope_unbound_syms=tfm_middle_scope_unb_syms,
+                outer_scope_unbound_syms=tfm_middle_unb_syms,
                 blacklisted_unbound_syms=tfm_inner_unb_syms | set(outer_unb_syms))
 
             self.node_builder.replace_unbound_symbols(inner_idx_set_node, inner_rep_map)
@@ -782,7 +901,7 @@ class EntityBuilder:
 
         def __build_set_member_node(self,
                                     inner_to_outer_mapping: Dict[str, str],
-                                    inner_unb_syms: Set[str]):
+                                    inner_unb_syms: OrderedSet[str]):
 
             set_member_unbound_syms = [inner_to_outer_mapping.get(sym, sym) for sym in inner_unb_syms]
 

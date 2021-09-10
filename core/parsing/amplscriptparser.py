@@ -490,7 +490,7 @@ class AMPLScriptParser(AMPLParser):
             meta_var.is_integer = is_integer
             meta_var.is_symbolic = is_symbolic
             meta_var.default_value = default_value_node
-            meta_var.fixed_value = fixed_value_node
+            meta_var.defined_value = fixed_value_node
             meta_var.lower_bound = lower_bound_node
             meta_var.upper_bound = upper_bound_node
 
@@ -907,6 +907,8 @@ class AMPLScriptParser(AMPLParser):
         # Non-delimited string literal
         else:
             literal = self._extract_string([' ', ';'])
+            if self.get_token() == ' ':
+                self._next_token()  # skip whitespace
             return mat.DummyNode(id=self._generate_free_node_id(),
                                  symbol=literal)
 

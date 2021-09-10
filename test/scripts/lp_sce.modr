@@ -30,9 +30,9 @@ minimize OBJ_SUB_PrimalSubproblem{s in S}: (x1[s] + x2[s] - 10 * p[s] * y[s]);
 # CONSTRAINTS
 # --------------------------------------------------------------------------------------------------
 # beginregion
-CON1{s in S}: p[s] * y[s] - x1[s] - (0) <= 0;
-CON2{s in S}: p[s] * x2[s] + x1[s] - 15 - (0) = 0;
-CON3{s in S}: 0.1 - x2[s] - (0) <= 0;
-NON_ANT{s in S}: y[s] - y[1] - (0) = 0;
+CON1{s in S}: p[s] * y[s] - x1[s] <= 0;
+CON2{s in S}: p[s] * x2[s] + x1[s] - 15 = 0;
+CON3{s in S}: 0.1 - x2[s] <= 0;
+NON_ANT{s in S}: y[s] - y[1] = 0;
 # endregion 
 

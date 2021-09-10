@@ -54,10 +54,21 @@ def run_test_groups(test_groups: Iterable[Callable[[], Tuple[int, int]]]):
     return true_count, total_count
 
 
-def check_result(actual_result, expected_result) -> bool:
-    result = str(actual_result) == str(expected_result)
-    if result:
+def check_str_result(actual_result, expected_result) -> bool:
+    if str(actual_result) == str(expected_result):
         print("Correct result: {0}".format(actual_result))
+        return True
     else:
         warnings.warn("Incorrect result: {0} \nExpected result: {1}".format(actual_result, expected_result))
-    return result
+        return False
+
+
+def check_num_result(actual_result: Union[int, float],
+                     expected_result: Union[int, float],
+                     tol: float = 0.01) -> bool:
+    if abs(actual_result - expected_result) <= tol:
+        print("Correct result: {0}".format(actual_result))
+        return True
+    else:
+        warnings.warn("Incorrect result: {0} \nExpected result: {1}".format(actual_result, expected_result))
+        return False

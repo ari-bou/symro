@@ -23,7 +23,7 @@ class GBDAlgorithm:
 
     def __init__(self,
                  problem: Problem,
-                 complicating_vars: List[Union[str, Tuple[str, str]]],
+                 complicating_vars: List[str],
                  mp_symbol: str = None,
                  primal_sp_symbol: str = None,
                  fbl_sp_symbol: str = None,
@@ -80,9 +80,9 @@ class GBDAlgorithm:
 
     def add_decomposition_subproblem(self,
                                      sp_symbol: str,
-                                     vars: List[Union[str, Tuple[str, str]]] = None,
-                                     obj: Union[str, Tuple[str, str]] = None,
-                                     cons: List[Union[str, Tuple[str, str]]] = None):
+                                     vars: List[str] = None,
+                                     obj: str = None,
+                                     cons: List[str] = None):
         self.__gbd_problem_builder.build_defined_primal_sp(sp_sym=sp_symbol,
                                                            var_defs=vars,
                                                            obj_def=obj,
@@ -137,8 +137,10 @@ class GBDAlgorithm:
         self.__evaluate_script()
 
         try:
-            self.__run_algorithm()
+            v_ub, y = self.__run_algorithm()
         except Exception as e:
+            v_ub = None
+            y = None
             if self.can_catch_exceptions:
                 self.__log_message(str(e))
             else:
@@ -146,6 +148,8 @@ class GBDAlgorithm:
 
         if can_write_log:
             self.__write_log_file()
+
+        return v_ub, y
 
     def __evaluate_script(self):
         self.__log_message("Reading model and data")
@@ -164,6 +168,8 @@ class GBDAlgorithm:
             self.__log_message("Algorithm terminated with feasible solution")
         else:
             self.__log_message("Algorithm terminated with infeasible solution")
+
+        return v_ub, y
 
     # Algorithm
     # ------------------------------------------------------------------------------------------------------------------

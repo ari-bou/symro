@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import symro.core.constants as const
 from symro.core.mat.entity import Entity
@@ -18,43 +18,42 @@ class MetaEntity(ABC):
                  symbol: str,
                  alias: str = None,
                  idx_meta_sets: Union[List["MetaSet"], Dict[str, "MetaSet"]] = None,
-                 idx_set_con_literal: str = None,
                  idx_set_node: CompoundSetNode = None):
+
+        if idx_meta_sets is None:
+            idx_meta_sets = []
+        elif isinstance(idx_meta_sets, dict):
+            idx_meta_sets = [ms for ms in idx_meta_sets.values()]
 
         self.symbol: str = symbol
         self.alias: str = alias
-        self.idx_meta_sets: Dict[str, "MetaSet"] = idx_meta_sets
-        self.idx_set_con_literal: str = idx_set_con_literal
+        self.idx_meta_sets: List["MetaSet"] = idx_meta_sets
         self.idx_set_node: CompoundSetNode = idx_set_node
-
-        if self.idx_meta_sets is None:
-            self.idx_meta_sets = {}
-        elif isinstance(self.idx_meta_sets, list):
-            self.idx_meta_sets = {idx_set.symbol: idx_set for idx_set in self.idx_meta_sets}
+        self.is_sub: bool = False  # designates whether the meta-entity is a subset of another meta-entity
 
     def __eq__(self, other):
         return str(self) == str(other)
 
     def get_dummy_symbols(self) -> List[str]:
         dummy_symbols = []
-        for name, meta_set in self.idx_meta_sets.items():
+        for meta_set in self.idx_meta_sets:
             dummy_symbols.extend(meta_set.reduced_dummy_symbols)
         return dummy_symbols
 
     def get_dimension(self) -> int:
-        return sum([meta_set.dimension for name, meta_set in self.idx_meta_sets.items()])
+        return sum([meta_set.dimension for meta_set in self.idx_meta_sets])
 
     def get_reduced_dimension(self) -> int:
-        return sum([meta_set.reduced_dimension for name, meta_set in self.idx_meta_sets.items()])
+        return sum([meta_set.reduced_dimension for meta_set in self.idx_meta_sets])
 
     def is_indexed_with(self, meta_set: "MetaSet") -> bool:
-        return meta_set.symbol in self.idx_meta_sets
+        return any(map(lambda ms: ms.symbol == meta_set.symbol, self.idx_meta_sets))
 
     def get_first_reduced_dim_index_of_idx_set(self, meta_set: "MetaSet") -> int:
         if self.is_indexed_with(meta_set):
             counter = 0
-            for name, ms in self.idx_meta_sets.items():
-                if name == meta_set.symbol:
+            for ms in self.idx_meta_sets:
+                if ms.symbol == meta_set.symbol:
                     return counter
                 counter += ms.reduced_dimension
         else:
@@ -64,10 +63,16 @@ class MetaEntity(ABC):
         if pos >= self.get_reduced_dimension():
             raise ValueError("Position is out of range")
         p = 0
-        for sym, ms in self.idx_meta_sets.items():
+        for ms in self.idx_meta_sets:
             p += ms.reduced_dimension
             if p > pos:
                 return ms
+
+    def get_idx_set_con_literal(self) -> Optional[str]:
+        if self.idx_set_node is not None:
+            if self.idx_set_node.constraint_node is not None:
+                return self.idx_set_node.constraint_node.get_literal()
+        return None
 
     def is_owner(self, entity: Entity, state: State):
         """
@@ -104,7 +109,6 @@ class MetaSet(MetaEntity):
                  symbol: str,
                  alias: str = None,
                  idx_meta_sets: Union[List["MetaSet"], Dict[str, "MetaSet"]] = None,
-                 idx_set_con_literal: str = None,
                  idx_set_node: CompoundSetNode = None,
                  dimension: int = None,
                  reduced_dimension: int = None,
@@ -117,7 +121,6 @@ class MetaSet(MetaEntity):
         super(MetaSet, self).__init__(symbol=symbol,
                                       alias=alias,
                                       idx_meta_sets=idx_meta_sets,
-                                      idx_set_con_literal=idx_set_con_literal,
                                       idx_set_node=idx_set_node)
 
         self.dimension: int = dimension
@@ -214,25 +217,23 @@ class MetaParameter(MetaEntity):
                  symbol: str,
                  alias: str = None,
                  idx_meta_sets: Union[List[MetaSet], Dict[str, MetaSet]] = None,
-                 idx_set_con_literal: str = None,
                  idx_set_node: CompoundSetNode = None,
                  is_binary: bool = False,
                  is_integer: bool = False,
                  is_symbolic: bool = False,
-                 default_value: Union[int, float, str, ExpressionNode] = None,
+                 default_value: ExpressionNode = None,
                  super_set_node: BaseSetNode = None,
                  relational_constraints: Dict[str, ExpressionNode] = None):
 
         super(MetaParameter, self).__init__(symbol=symbol,
                                             alias=alias,
                                             idx_meta_sets=idx_meta_sets,
-                                            idx_set_con_literal=idx_set_con_literal,
                                             idx_set_node=idx_set_node)
 
         self.is_binary: bool = is_binary
         self.is_integer: bool = is_integer
         self.is_symbolic: bool = is_symbolic
-        self.default_value: Union[int, float, str, ExpressionNode] = default_value
+        self.default_value: ExpressionNode = default_value
         self.super_set_node: BaseSetNode = super_set_node
         self.relational_constraints: Dict[str, ExpressionNode] = relational_constraints \
             if relational_constraints is not None else {}
@@ -282,35 +283,36 @@ class MetaVariable(MetaEntity):
                  symbol: str,
                  alias: str = None,
                  idx_meta_sets: Union[List[MetaSet], Dict[str, MetaSet]] = None,
-                 idx_set_con_literal: str = None,
                  idx_set_node: CompoundSetNode = None,
                  is_binary: bool = False,
                  is_integer: bool = False,
                  is_symbolic: bool = False,
-                 default_value: Union[int, float, str, ExpressionNode] = None,
-                 defined_value: Union[int, float, str, ExpressionNode] = None,
-                 lower_bound: Union[int, float, str, ExpressionNode] = None,
-                 upper_bound: Union[int, float, str, ExpressionNode] = None):
+                 default_value: ExpressionNode = None,
+                 defined_value: ExpressionNode = None,
+                 lower_bound: ExpressionNode = None,
+                 upper_bound: ExpressionNode = None):
 
         super(MetaVariable, self).__init__(symbol=symbol,
                                            alias=alias,
                                            idx_meta_sets=idx_meta_sets,
-                                           idx_set_con_literal=idx_set_con_literal,
                                            idx_set_node=idx_set_node)
 
         self.is_binary: bool = is_binary
         self.is_integer: bool = is_integer
         self.is_symbolic: bool = is_symbolic
-        self.default_value: Union[int, float, str, ExpressionNode] = default_value
-        self.fixed_value: Union[int, float, str, ExpressionNode] = defined_value
-        self.lower_bound: Union[int, float, str, ExpressionNode] = lower_bound
-        self.upper_bound: Union[int, float, str, ExpressionNode] = upper_bound
+        self.default_value: ExpressionNode = default_value
+        self.defined_value: ExpressionNode = defined_value
+        self.lower_bound: ExpressionNode = lower_bound
+        self.upper_bound: ExpressionNode = upper_bound
 
     def __str__(self):
         declaration = "var {0}".format(self.symbol)
         if self.get_dimension() > 0 and self.idx_set_node is not None:
             declaration += str(self.idx_set_node)
         return declaration
+
+    def is_defined(self) -> bool:
+        return self.defined_value is not None
 
     def get_type(self) -> str:
         return const.VAR_TYPE
@@ -332,8 +334,8 @@ class MetaVariable(MetaEntity):
             attributes.append("symbolic")
         if self.default_value is not None:
             attributes.append(":= {0}".format(self.default_value))
-        if self.fixed_value is not None:
-            attributes.append("= {0}".format(self.fixed_value))
+        if self.defined_value is not None:
+            attributes.append("= {0}".format(self.defined_value))
         if self.lower_bound is not None:
             attributes.append(">= {0}".format(self.lower_bound))
         if self.upper_bound is not None:
@@ -356,14 +358,12 @@ class MetaObjective(MetaEntity):
                  symbol: str,
                  alias: str = None,
                  idx_meta_sets: Union[List[MetaSet], Dict[str, MetaSet]] = None,
-                 idx_set_con_literal: str = None,
                  idx_set_node: CompoundSetNode = None,
                  direction: str = "minimize",
                  expression: Expression = None):
         super(MetaObjective, self).__init__(symbol=symbol,
                                             alias=alias,
                                             idx_meta_sets=idx_meta_sets,
-                                            idx_set_con_literal=idx_set_con_literal,
                                             idx_set_node=idx_set_node)
 
         if direction not in ["minimize", "maximize"]:
@@ -403,14 +403,12 @@ class MetaConstraint(MetaEntity):
                  symbol: str,
                  alias: str = None,
                  idx_meta_sets: Union[List[MetaSet], Dict[str, MetaSet]] = None,
-                 idx_set_con_literal: str = None,
                  idx_set_node: CompoundSetNode = None,
                  expression: Expression = None,
                  ctype: str = None):
         super(MetaConstraint, self).__init__(symbol=symbol,
                                              alias=alias,
                                              idx_meta_sets=idx_meta_sets,
-                                             idx_set_con_literal=idx_set_con_literal,
                                              idx_set_node=idx_set_node)
         self.expression: Expression = expression
         self.ctype: str = ctype

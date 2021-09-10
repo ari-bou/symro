@@ -1,0 +1,26 @@
+option show_stats 3;
+option conopt_options "outlev=3";
+option knitro_options "outlev=3";
+option gurobi_options "outlev=1";
+
+model refinery.mod;
+data refinery.dat;
+
+let S := 6;
+let T := 10;
+
+let {t in TIMEPERIODS: 5 <= t <= 6} SHUTDOWN['RF',t,1] := 1;
+let {t in TIMEPERIODS: 4 <= t <= 7} SHUTDOWN['RF',t,1] := 1;
+let {t in TIMEPERIODS: 3 <= t <= 8} SHUTDOWN['RF',t,1] := 1;
+let {t in TIMEPERIODS: 5 <= t <= 6} SHUTDOWN['CC',t,1] := 1;
+let {t in TIMEPERIODS: 4 <= t <= 7} SHUTDOWN['CC',t,1] := 1;
+let {t in TIMEPERIODS: 3 <= t <= 8} SHUTDOWN['CC',t,1] := 1;
+
+objective TOTAL_PROFIT;
+option solver gurobi;
+solve;
+
+display UNIT_SIZE;
+display TANK_SIZE;
+display TANK_LOCATION;
+display TOTAL_PROFIT.val;

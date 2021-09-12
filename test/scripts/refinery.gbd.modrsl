@@ -1,7 +1,6 @@
 # VARIABLES
 # --------------------------------------------------------------------------------------------------
 # beginregion
-var INIT_INVENTORY_BOUND_SL{i in STREAMS} := 0, >= 0;
 var UNIT_DESIGN_TPT_BOUND_SL{u in CORE_UNITS, t in TIMEPERIODS, s in SCENARIOS} := 0, >= 0;
 var INVENTORY_DESIGN_LEVEL_BOUND_SL{i in STREAMS, t in TIMEPERIODS, s in SCENARIOS} := 0, >= 0;
 var UNIT_TPT_BOUNDS_I1_SL{u in UNITS, t in TIMEPERIODS, s in SCENARIOS} := 0, >= 0;
@@ -16,14 +15,13 @@ var MAX_QUALITY_SPEC_SL{q in PROPERTIES, j in PRODUCT_STREAMS, u in BLENDING_TAN
 # OBJECTIVES
 # --------------------------------------------------------------------------------------------------
 # beginregion
-minimize FBL_OBJ_PrimalSubproblem{s in SCENARIOS}: (sum {u in UNITS, t in TIMEPERIODS} UNIT_TPT_BOUNDS_I1_SL[u,t,s]) + (sum {u in UNITS, t in TIMEPERIODS} UNIT_TPT_BOUNDS_I2_SL[u,t,s]) + (sum {j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} BLENDING_PRODUCT_RATES_I1_SL[j,u,t,s]) + (sum {j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} BLENDING_PRODUCT_RATES_I2_SL[j,u,t,s]) + (sum {q in PROPERTIES, j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} MIN_QUALITY_SPEC_SL[q,j,u,t,s]) + (sum {q in PROPERTIES, j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} MAX_QUALITY_SPEC_SL[q,j,u,t,s]) + (sum {i in STREAMS} INIT_INVENTORY_BOUND_SL[i]) + (sum {u in CORE_UNITS, t in TIMEPERIODS} UNIT_DESIGN_TPT_BOUND_SL[u,t,s]) + (sum {i in STREAMS, t in TIMEPERIODS} INVENTORY_DESIGN_LEVEL_BOUND_SL[i,t,s]);
+minimize FBL_OBJ_PrimalSubproblem{s in SCENARIOS}: (sum {u in UNITS, t in TIMEPERIODS} UNIT_TPT_BOUNDS_I1_SL[u,t,s]) + (sum {u in UNITS, t in TIMEPERIODS} UNIT_TPT_BOUNDS_I2_SL[u,t,s]) + (sum {j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} BLENDING_PRODUCT_RATES_I1_SL[j,u,t,s]) + (sum {j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} BLENDING_PRODUCT_RATES_I2_SL[j,u,t,s]) + (sum {q in PROPERTIES, j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} MIN_QUALITY_SPEC_SL[q,j,u,t,s]) + (sum {q in PROPERTIES, j in PRODUCT_STREAMS, u in BLENDING_TANKS, t in TIMEPERIODS: (j,u) in OUTLETS} MAX_QUALITY_SPEC_SL[q,j,u,t,s]) + (sum {u in CORE_UNITS, t in TIMEPERIODS} UNIT_DESIGN_TPT_BOUND_SL[u,t,s]) + (sum {i in STREAMS, t in TIMEPERIODS} INVENTORY_DESIGN_LEVEL_BOUND_SL[i,t,s]);
 # endregion 
 
 
 # CONSTRAINTS
 # --------------------------------------------------------------------------------------------------
 # beginregion
-INIT_INVENTORY_BOUND_F{i in STREAMS}: INIT_INVENTORY[i] - (TANK_SIZE[i]) - INIT_INVENTORY_BOUND_SL[i] <= 0;
 UNIT_DESIGN_TPT_BOUND_F{u in CORE_UNITS, t in TIMEPERIODS, s in SCENARIOS}: (sum {i in STREAMS: (i,u) in INLETS} (F_IN[i,u,t,s])) - (UNIT_SIZE[u]) - UNIT_DESIGN_TPT_BOUND_SL[u,t,s] <= 0;
 INVENTORY_DESIGN_LEVEL_BOUND_F{i in STREAMS, t in TIMEPERIODS, s in SCENARIOS}: INVENTORY[i,t,s] - (TANK_SIZE[i]) - INVENTORY_DESIGN_LEVEL_BOUND_SL[i,t,s] <= 0;
 UNIT_TPT_BOUNDS_I1_F{u in UNITS, t in TIMEPERIODS, s in SCENARIOS}: (1 - SHUTDOWN[u,t,s]) * MIN_UNIT_TPT[u] - (sum {i in STREAMS: (i,u) in INLETS} (F_IN[i,u,t,s])) - UNIT_TPT_BOUNDS_I1_SL[u,t,s] <= 0;

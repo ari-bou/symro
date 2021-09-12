@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import symro.core.constants as const
 import symro.core.mat as mat
@@ -56,8 +56,6 @@ class GBDProblem(Problem):
                  default_fbl_sp_symbol: str,
                  primal_sp_obj_sym: str,
                  init_lb: float,
-                 before_mp_solve: Callable = None,
-                 before_sp_solve: Callable = None,
                  working_dir_path: str = None):
 
         super(GBDProblem, self).__init__(engine=None,
@@ -179,10 +177,6 @@ class GBDProblem(Problem):
         self.sp_containers: List[GBDSubproblemContainer] = []
 
         self.mp: Optional[BaseProblem] = None
-
-        # --- Callables ---
-        self.before_mp_solve: Callable = before_mp_solve
-        self.before_sp_solve: Callable = before_sp_solve
 
     def get_idx_meta_sets(self) -> List[mat.MetaSet]:
         return [ms for ms in self.idx_meta_sets.values()]

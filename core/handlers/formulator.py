@@ -1,7 +1,7 @@
 import warnings
 from copy import deepcopy
 from queue import Queue
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import symro.core.constants as const
 import symro.core.mat as mat
@@ -369,9 +369,9 @@ class Formulator:
     # Substitution
     # ------------------------------------------------------------------------------------------------------------------
 
-    @staticmethod
-    def substitute(root_node: mat.ExpressionNode,
-                   sub_map: Dict[str, mat.ExpressionNode]):
+    def substitute(self,
+                   root_node: mat.ExpressionNode,
+                   sub_map: Dict[str, Tuple[mat.ExpressionNode, Iterable[str]]]) -> mat.ExpressionNode:
         """
         Substitute select declared entity nodes with corresponding expression nodes.
         :param root_node: root node of the expression in which substitution(s) are to take place
@@ -381,12 +381,17 @@ class Formulator:
 
         if sub_map is None:
             return root_node
+
         if len(sub_map) == 0:
             return root_node
+        else:
+            for sub_node, unb_syms in sub_map.values():
+                sub_node.is_prioritized = True
 
         if isinstance(root_node, mat.DeclaredEntityNode):
             if root_node.symbol in sub_map:
-                return deepcopy(sub_map[root_node.symbol])
+                sub_node, _ = sub_map[root_node.symbol]
+                return deepcopy(sub_node)
             else:
                 return root_node
 
@@ -395,14 +400,26 @@ class Formulator:
 
         while not queue.empty():
 
-            node = queue.get()
-
+            node: mat.ExpressionNode = queue.get()
             modified_children = []
+
             for child in node.get_children():
 
                 if isinstance(child, mat.DeclaredEntityNode):
+
                     if child.symbol in sub_map:
-                        modified_children.append(deepcopy(sub_map[child.symbol]))
+
+                        sub_node, unb_syms = sub_map[child.symbol]
+                        sub_node = deepcopy(sub_node)
+
+                        if child.idx_node is not None:
+                            dummy_map = {unb_sym: cmpt_node for unb_sym, cmpt_node in
+                                         zip(unb_syms, child.idx_node.component_nodes)}
+                            sub_node = self._node_builder.replace_dummy_nodes(sub_node,
+                                                                              mapping=dummy_map)
+
+                        modified_children.append(sub_node)
+
                     else:
                         modified_children.append(child)
                         queue.put(child)
@@ -410,6 +427,8 @@ class Formulator:
                 else:
                     modified_children.append(child)
                     queue.put(child)
+
+            node.set_children(modified_children)
 
         return root_node
 
@@ -420,7 +439,7 @@ class Formulator:
         sub_map = {}  # map of defined variable symbols to their defined values
         for mv in self._problem.model_meta_vars:
             if mv.is_defined():
-                sub_map[mv.symbol] = mv.defined_value
+                sub_map[mv.symbol] = (mv.defined_value, mv.get_dummy_symbols())
 
         if len(sub_map) > 0:
 

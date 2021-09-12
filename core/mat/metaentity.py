@@ -49,15 +49,24 @@ class MetaEntity(ABC):
     def is_indexed_with(self, meta_set: "MetaSet") -> bool:
         return any(map(lambda ms: ms.symbol == meta_set.symbol, self.idx_meta_sets))
 
-    def get_first_reduced_dim_index_of_idx_set(self, meta_set: "MetaSet") -> int:
+    def get_first_reduced_dim_index_of_idx_set(self, meta_set: "MetaSet") -> Optional[int]:
+        """
+        Get the positional index of the first dimension of the meta-entity's indexing set controlled by the supplied.
+        :param meta_set: meta-set for the first positional index is returned
+        :return: positional index or None if the meta-entity is not indexed with respect to the meta-set
+        """
+
+        # meta-entity is indexed with respect to the supplied meta-set
         if self.is_indexed_with(meta_set):
             counter = 0
             for ms in self.idx_meta_sets:
                 if ms.symbol == meta_set.symbol:
                     return counter
                 counter += ms.reduced_dimension
+
+        # meta-entity is not indexed with respect to the supplied meta-set
         else:
-            return -1
+            return None  # return
 
     def get_indexing_set_by_position(self, pos: int) -> "MetaSet":
         if pos >= self.get_reduced_dimension():

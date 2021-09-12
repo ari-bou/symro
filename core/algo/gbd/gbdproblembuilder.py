@@ -70,8 +70,6 @@ class GBDProblemBuilder:
                           fbl_sp_symbol: str = None,
                           primal_sp_obj_symbol: str = None,
                           init_lb: float = -np.inf,
-                          before_mp_solve: Callable = None,
-                          before_sp_solve: Callable = None,
                           working_dir_path: str = None) -> GBDProblem:
 
         # build GBD problem
@@ -81,8 +79,6 @@ class GBDProblemBuilder:
                                       default_fbl_sp_symbol=fbl_sp_symbol,
                                       primal_sp_obj_sym=primal_sp_obj_symbol,
                                       init_lb=init_lb,
-                                      before_mp_solve=before_mp_solve,
-                                      before_sp_solve=before_sp_solve,
                                       working_dir_path=working_dir_path)
 
         # standardize model
@@ -733,6 +729,9 @@ class GBDProblemBuilder:
             if node.get_type() == const.PARAM_TYPE:
                 return self.CONST_NODE
 
+            if node.symbol not in [mv.symbol for mv in self.gbd_problem.comp_meta_vars.values()]:
+                return self.PURE_X_NODE
+
             entities = node.collect_declared_entities(self.gbd_problem.state, idx_set, dummy_syms)
             vars = {k: v for k, v in entities.items() if isinstance(v, mat.Variable)}
 
@@ -757,8 +756,9 @@ class GBDProblemBuilder:
         elif isinstance(node, mat.FunctionNode):
 
             if node.is_reductive():
-                idx_sets = node.combine_indexing_sets(self.gbd_problem.state, idx_set, dummy_syms)
-                idx_set = OrderedSet().union(*idx_sets)
+                inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_syms)
+                inner_idx_set = OrderedSet().union(*inner_idx_sets)
+                idx_set = mat.cartesian_product([idx_set, inner_idx_set])
                 dummy_syms = node.idx_set_node.combined_dummy_syms
 
             statuses = []
@@ -776,7 +776,7 @@ class GBDProblemBuilder:
                 # Non-Reductive Function
                 if not node.is_reductive():
                     # All non-reductive functions in AMPL are nonlinear
-                    raise ValueError("GBD Setup Manager encountered a complicating function node"
+                    raise ValueError("GBD problem builder encountered a complicating function node"
                                      + " that violates Property P")
 
                 # Reductive Function
@@ -784,7 +784,7 @@ class GBDProblemBuilder:
 
                     # Nonlinear Reductive Function
                     if node.symbol != "sum":
-                        raise ValueError("GBD Setup Manager encountered a complicating function node"
+                        raise ValueError("GBD problem builder encountered a complicating function node"
                                          + " that violates Property P")
 
                     # Summation
@@ -819,7 +819,7 @@ class GBDProblemBuilder:
                 if node.operator in ['+', '-', "less"]:
                     return self.MIXED_NODE
                 else:
-                    raise ValueError("GBD Setup Manager encountered a complicating binary arithmetic operation node"
+                    raise ValueError("GBD problem builder encountered a complicating binary arithmetic operation node"
                                      + " that violates Property P")
 
         # Multi Operation
@@ -837,7 +837,7 @@ class GBDProblemBuilder:
                 if node.operator in ['+', '-', "less"]:
                     return self.MIXED_NODE
                 else:
-                    raise ValueError("GBD Setup Manager encountered a complicating multi arithmetic operation node"
+                    raise ValueError("GBD problem builder encountered a complicating multi arithmetic operation node"
                                      + " that violates Property P")
 
         # Conditional Operation
@@ -848,7 +848,7 @@ class GBDProblemBuilder:
             return self.__combine_node_statuses(statuses)
 
         else:
-            raise ValueError("GBD Setup Manager encountered an unexpected node"
+            raise ValueError("GBD problem builder encountered an unexpected node"
                              + " while verifying the formulation of a complicating expression")
 
     def __combine_node_statuses(self, statuses: List[int]) -> int:
@@ -906,8 +906,9 @@ class GBDProblemBuilder:
         elif isinstance(node, mat.FunctionNode):
 
             if node.is_reductive():
-                idx_sets = node.combine_indexing_sets(self.gbd_problem.state, idx_set, dummy_syms)
-                idx_set = OrderedSet().union(*idx_sets)
+                inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_syms)
+                inner_idx_set = OrderedSet().union(*inner_idx_sets)
+                idx_set = mat.cartesian_product([idx_set, inner_idx_set])
                 dummy_syms = node.idx_set_node.combined_dummy_syms
 
             statuses = []
@@ -1005,15 +1006,25 @@ class GBDProblemBuilder:
 
         # Conditional Operation
         elif isinstance(node, mat.ConditionalArithmeticExpressionNode):
+
             statuses = []
+
             for i, op_node in enumerate(node.operands):
+
                 ref_op_node, status = self.__reformulate_node(op_node, idx_set, dummy_syms)
+
+                if status == self.PURE_X_NODE:
+                    ref_op_node = mat.NumericNode(id=self.generate_free_node_id(),
+                                                  value=0)
+                    status = self.CONST_NODE
+
                 statuses.append(status)
                 node.operands[i] = ref_op_node
+
             return node, self.__combine_node_statuses(statuses)
 
         else:
-            raise ValueError("GBD Setup Manager encountered an unexpected node"
+            raise ValueError("GBD problem builder encountered an unexpected node"
                              + " while reformulating a complicating expression")
 
     def __reformulate_complicating_entity_node(self,
@@ -1215,16 +1226,20 @@ class GBDProblemBuilder:
                                               idx_set: mat.IndexSet,
                                               dummy_syms: Tuple[Union[int, float, str, tuple, None], ...]):
 
+        root_node.is_prioritized = True
         root_node_clone = deepcopy(root_node)
-        root_node_clone.is_prioritized = True
 
         queue = Queue()
-        queue.put(root_node_clone)
+        queue.put((root_node_clone, idx_set, dummy_syms))
 
         # modify complicating variable nodes
         while not queue.empty():
 
-            node = queue.get()
+            node, idx_set, dummy_syms = queue.get()
+            node: mat.ExpressionNode
+            idx_set: mat.IndexSet
+            dummy_syms: mat.IndexSetMember
+
             is_comp_var_node = False
 
             if isinstance(node, mat.DeclaredEntityNode):
@@ -1254,10 +1269,18 @@ class GBDProblemBuilder:
                         node.idx_node = storage_param_idx_node
                         node.set_type(const.PARAM_TYPE)
 
+            elif isinstance(node, mat.FunctionNode):
+                if node.is_reductive():
+                    # add the indexing set of the current scope to that of the outer scope
+                    inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_syms)
+                    inner_idx_set = OrderedSet().union(*inner_idx_sets)
+                    idx_set = mat.cartesian_product([idx_set, inner_idx_set])
+                    dummy_syms = node.idx_set_node.combined_dummy_syms
+
             if not is_comp_var_node:
                 children = node.get_children()
                 for child in children:
-                    queue.put(child)
+                    queue.put((child, idx_set, dummy_syms))
 
         # build subtraction node
         subtraction_node = mat.BinaryArithmeticOperationNode(id=self.generate_free_node_id(),
@@ -1970,10 +1993,12 @@ class GBDProblemBuilder:
         sp_idx_pos = 0  # first index position of the current indexing meta-set
         for idx_meta_set in self.gbd_problem.idx_meta_sets.values():
 
-            idx_syms = sp_index[sp_idx_pos:sp_idx_pos + idx_meta_set.reduced_dimension]
-            sp_idx_pos += idx_meta_set.reduced_dimension  # update position of the subproblem index
+            if meta_entity.is_indexed_with(idx_meta_set):
 
-            ent_idx_pos = meta_entity.get_first_reduced_dim_index_of_idx_set(idx_meta_set)
-            entity_index[ent_idx_pos:ent_idx_pos + idx_meta_set.reduced_dimension] = idx_syms  # update entity index
+                idx_syms = sp_index[sp_idx_pos:sp_idx_pos + idx_meta_set.reduced_dimension]
+                sp_idx_pos += idx_meta_set.reduced_dimension  # update position of the subproblem index
+
+                ent_idx_pos = meta_entity.get_first_reduced_dim_index_of_idx_set(idx_meta_set)
+                entity_index[ent_idx_pos:ent_idx_pos + idx_meta_set.reduced_dimension] = idx_syms  # update entity index
 
         return entity_index

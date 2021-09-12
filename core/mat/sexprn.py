@@ -25,8 +25,9 @@ class ConditionalSetExpressionNode(SetExpressionNode):
     def add_condition(self, condition: LogicalExpressionNode = None):
         if condition is not None:
             self.conditions.append(condition)
-        else:
-            self.conditions.append(None)
+
+    def has_trailing_else_clause(self) -> bool:
+        return len(self.operands) == len(self.conditions) + 1
 
     def get_dim(self, state: State) -> int:
         return self.operands[0].get_dim(state)
@@ -46,15 +47,14 @@ class ConditionalSetExpressionNode(SetExpressionNode):
         else:
             operand_count = int((count + 1) / 2)
         self.operands = operands[:operand_count]
-        self.conditions = [None] * operand_count
-        self.conditions[:operand_count] = operands[operand_count:]
+        self.conditions = operands[operand_count:]
 
     def get_literal(self) -> str:
         rhs = ""
         for i, operand in enumerate(self.operands):
             if i == 0:
                 rhs += "if {0} then {1}".format(self.conditions[i], operand)
-            elif i == len(self.operands) - 1 and self.conditions[i] is None:
+            elif i == len(self.operands) - 1 and self.has_trailing_else_clause():
                 rhs += " else {0}".format(operand)
             else:
                 rhs += " else if {0} then {1}".format(self.conditions[i], operand)

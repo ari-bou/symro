@@ -30,8 +30,8 @@ class GBDAlgorithm:
                  primal_sp_obj_symbol: str = None,
                  init_lb: float = -np.inf,
                  init_ub: float = np.inf,
-                 before_mp_solve: Callable = None,
-                 before_sp_solve: Callable = None,
+                 before_mp_solve: Callable[[GBDProblem, int], None] = None,
+                 before_sp_solve: Callable[[GBDProblem, int, str, mat.IndexSetMember], None] = None,
                  working_dir_path: str = None):
 
         # --- Problem ---
@@ -40,7 +40,7 @@ class GBDAlgorithm:
 
         # --- Handlers ---
         self.__gbd_problem_builder: GBDProblemBuilder = GBDProblemBuilder(problem)
-        self.__ampl_engine: Optional[AMPLEngine] = None
+        self.__engine: Optional[AMPLEngine] = None
 
         # --- Options ---
 
@@ -62,6 +62,13 @@ class GBDAlgorithm:
 
         self.verbosity: int = 0
         self.can_catch_exceptions: bool = False
+
+        # --- Callables ---
+        self.before_mp_solve: Callable[[GBDProblem, int], None] = before_mp_solve
+        self.before_sp_solve: Callable[[GBDProblem, int, str, mat.IndexSetMember], None] = before_sp_solve
+
+        # --- Algorithmic Constructs ---
+
         self.log: str = ""
 
         self.gbd_problem = self.__gbd_problem_builder.build_gbd_problem(problem=self.problem,
@@ -71,8 +78,6 @@ class GBDAlgorithm:
                                                                         fbl_sp_symbol=fbl_sp_symbol,
                                                                         primal_sp_obj_symbol=primal_sp_obj_symbol,
                                                                         init_lb=init_lb,
-                                                                        before_mp_solve=before_mp_solve,
-                                                                        before_sp_solve=before_sp_solve,
                                                                         working_dir_path=working_dir_path)
 
     # Setup
@@ -132,7 +137,7 @@ class GBDAlgorithm:
         self.__log_message("Running GBD")
 
         self.gbd_problem.engine = AMPLEngine(working_dir_path=self.gbd_problem.working_dir_path)
-        self.__ampl_engine = self.gbd_problem.engine
+        self.__engine = self.gbd_problem.engine
 
         self.__evaluate_script()
 
@@ -154,7 +159,7 @@ class GBDAlgorithm:
     def __evaluate_script(self):
         self.__log_message("Reading model and data")
         script_literal = self.gbd_problem.compound_script.main_script.get_literal()
-        self.__ampl_engine.api.eval(script_literal + '\n')
+        self.__engine.api.eval(script_literal + '\n')
 
     def __run_algorithm(self):
 
@@ -310,23 +315,23 @@ class GBDAlgorithm:
         return is_feasible, ub
 
     def __solve_mp(self, iter: int) -> Tuple[bool, float]:
-        before_mp_solve = self.gbd_problem.before_mp_solve
+        before_mp_solve = self.before_mp_solve
         if before_mp_solve is not None:
-            before_mp_solve(self.gbd_problem)
+            before_mp_solve(self.gbd_problem, iter)
 
         self.__log_indexed_message("Solving master problem", iter)
 
-        solver_output = self.__ampl_engine.solve(solver_name=self.mp_solver_name,
-                                                 solver_options=self.mp_solver_options)
+        solver_output = self.__engine.solve(solver_name=self.mp_solver_name,
+                                            solver_options=self.mp_solver_options)
         self.__print_solver_output(solver_output)
 
-        solve_result = self.__ampl_engine.get_solve_result()
+        solve_result = self.__engine.get_solve_result()
 
         if solve_result in ["infeasible", "failure"]:
             self.__log_indexed_message("Master problem is infeasible", iter)
             return False, 0
         else:
-            lb = self.__ampl_engine.get_obj_value(self.gbd_problem.mp_obj_sym)
+            lb = self.__engine.get_obj_value(self.gbd_problem.mp_obj_sym)
             self.__log_indexed_message("Lower bound of {0}".format(lb), iter)
             return True, lb
 
@@ -345,22 +350,23 @@ class GBDAlgorithm:
                                    sp_index=sp_container.sp_index)
         self.__fix_complicating_variables(sp_container=sp_container)
 
-        if self.gbd_problem.before_sp_solve is not None:
-            self.gbd_problem.before_sp_solve(self.gbd_problem,
-                                             sp_container.primal_sp.symbol,
-                                             sp_container.sp_index)
+        if self.before_sp_solve is not None:
+            self.before_sp_solve(self.gbd_problem,
+                                 iter,
+                                 sp_container.primal_sp.symbol,
+                                 sp_container.sp_index)
 
         self.__log_indexed_message("Solving primal subproblem",
                                    iter=iter,
-                                   sp_sym=sp_container.fbl_sp.symbol,
+                                   sp_sym=sp_container.primal_sp.symbol,
                                    sp_index=sp_container.sp_index)
 
-        solver_output = self.__ampl_engine.solve(self.sp_solver_name, self.sp_solver_options)
+        solver_output = self.__engine.solve(self.sp_solver_name, self.sp_solver_options)
         self.__print_solver_output(solver_output)
 
         if not self.__interpret_solver_result(solver_output,
                                               iter=iter,
-                                              sp_sym=sp_container.fbl_sp.symbol,
+                                              sp_sym=sp_container.primal_sp.symbol,
                                               sp_index=sp_container.sp_index):
             return False, 0
 
@@ -369,7 +375,7 @@ class GBDAlgorithm:
                                       dual_soln=dual_soln)
         self.__log_indexed_message("Subproblem objective is {0}".format(v_sp),
                                    iter=iter,
-                                   sp_sym=sp_container.fbl_sp.symbol,
+                                   sp_sym=sp_container.primal_sp.symbol,
                                    sp_index=sp_container.sp_index)
         return True, v_sp
 
@@ -388,17 +394,18 @@ class GBDAlgorithm:
                                    sp_index=sp_container.sp_index)
         self.__fix_complicating_variables(sp_container=sp_container)
 
-        if self.gbd_problem.before_sp_solve is not None:
-            self.gbd_problem.before_sp_solve(self.gbd_problem,
-                                             sp_container.fbl_sp.symbol,
-                                             sp_container.sp_index)
+        if self.before_sp_solve is not None:
+            self.before_sp_solve(self.gbd_problem,
+                                 iter,
+                                 sp_container.fbl_sp.symbol,
+                                 sp_container.sp_index)
 
         self.__log_indexed_message("Solving feasibility subproblem",
                                    iter=iter,
                                    sp_sym=sp_container.fbl_sp.symbol,
                                    sp_index=sp_container.sp_index)
 
-        solver_output = self.__ampl_engine.solve(self.sp_solver_name, self.sp_solver_options)
+        solver_output = self.__engine.solve(self.sp_solver_name, self.sp_solver_options)
         self.__print_solver_output(solver_output)
 
         if not self.__interpret_solver_result(solver_output,
@@ -428,7 +435,7 @@ class GBDAlgorithm:
 
         is_feasible = True
 
-        solve_result = self.__ampl_engine.get_solve_result()
+        solve_result = self.__engine.get_solve_result()
         if solve_result in ["infeasible", "failure"]:
             is_feasible = False
 
@@ -458,7 +465,7 @@ class GBDAlgorithm:
                                                sp_sym=sp_sym,
                                                sp_index=sp_index)
                     conopt_options = self.sp_solver_options + " maxiter={0}".format(solver_iter)
-                    solver_output = self.__ampl_engine.solve(self.sp_solver_name, conopt_options)
+                    solver_output = self.__engine.solve(self.sp_solver_name, conopt_options)
 
                     (is_feasible,
                      _,
@@ -488,7 +495,7 @@ class GBDAlgorithm:
         if problem_idx is not None:
             problem_idx = [mat.get_element_literal(s) for s in problem_idx]
             problem_literal += "[{0}]".format(','.join(problem_idx))
-        self.__ampl_engine.api.eval("problem {0};".format(problem_literal))
+        self.__engine.api.eval("problem {0};".format(problem_literal))
 
     # Storage and Retrieval
     # ------------------------------------------------------------------------------------------------------------------
@@ -536,9 +543,9 @@ class GBDAlgorithm:
 
             # Scalar variable
             if comp_meta_var.get_dimension() == 0:
-                value = self.__ampl_engine.get_var_value(var_sym)
+                value = self.__engine.get_var_value(var_sym)
                 value = modify_value(value, comp_meta_var)
-                self.__ampl_engine.set_param_value(storage_sym, [cut_count], value)
+                self.__engine.set_param_value(storage_sym, [cut_count], value)
                 y[var_sym] = value
 
             # Indexed variable
@@ -553,9 +560,9 @@ class GBDAlgorithm:
                     y[var_sym] = y_var
 
                 for var_idx in var_idx_set:
-                    value = self.__ampl_engine.get_var_value(var_sym, var_idx)
+                    value = self.__engine.get_var_value(var_sym, var_idx)
                     value = modify_value(value, comp_meta_var)
-                    self.__ampl_engine.set_param_value(storage_sym, list(var_idx) + [cut_count], value)
+                    self.__engine.set_param_value(storage_sym, list(var_idx) + [cut_count], value)
                     y_var[var_idx] = value
 
         return y
@@ -570,16 +577,16 @@ class GBDAlgorithm:
 
             # scalar variable
             if self.gbd_problem.meta_vars[var_sym].get_dimension() == 0:
-                value = self.__ampl_engine.get_param_value(storage_sym, [cut_count])
-                var = self.__ampl_engine.api.getVariable(var_sym)
+                value = self.__engine.get_param_value(storage_sym, [cut_count])
+                var = self.__engine.api.getVariable(var_sym)
                 var.fix(value)
 
             # indexed variable
             else:
 
                 for var_index in idx_set:
-                    value = self.__ampl_engine.get_param_value(storage_sym, list(var_index) + [cut_count])
-                    var = self.__ampl_engine.api.getVariable(var_sym)
+                    value = self.__engine.get_param_value(storage_sym, list(var_index) + [cut_count])
+                    var = self.__engine.api.getVariable(var_sym)
                     var = var.get(var_index)
                     var.fix(value)
 
@@ -594,7 +601,7 @@ class GBDAlgorithm:
                                     ):
 
         def retrieve_dual_value(sym: str, con_idx: Union[tuple, list, None] = None):
-            d = self.__ampl_engine.get_con_dual(sym, con_idx)
+            d = self.__engine.get_con_dual(sym, con_idx)
             return -d
 
         for con_sym, idx_set in sp_container.mixed_comp_con_idx_set.items():
@@ -625,16 +632,16 @@ class GBDAlgorithm:
 
             # scalar constraint
             if not isinstance(dual_mult_values[dual_mult.symbol], dict):
-                self.__ampl_engine.set_param_value(symbol=dual_mult.symbol,
-                                                   indices=[cut_count],
-                                                   value=dual_mult_values[dual_mult.symbol])
+                self.__engine.set_param_value(symbol=dual_mult.symbol,
+                                              indices=[cut_count],
+                                              value=dual_mult_values[dual_mult.symbol])
 
             # indexed constraint
             else:
                 for dual_index, value in dual_mult_values[dual_mult.symbol].items():
-                    self.__ampl_engine.set_param_value(symbol=dual_mult.symbol,
-                                                       indices=list(dual_index) + [cut_count],
-                                                       value=value)
+                    self.__engine.set_param_value(symbol=dual_mult.symbol,
+                                                  indices=list(dual_index) + [cut_count],
+                                                  value=value)
 
     @staticmethod
     def __reset_dual_solution(dual_soln: Dict[str, Union[float,
@@ -714,7 +721,7 @@ class GBDAlgorithm:
             print(entry)
 
     def __write_log_file(self):
-        util.write_file(dir_path=self.__ampl_engine.working_dir_path,
+        util.write_file(dir_path=self.__engine.working_dir_path,
                         file_name="gbd.log",
                         text=self.log)
 
@@ -741,32 +748,32 @@ class GBDAlgorithm:
         return entity_index
 
     def __get_cut_count(self) -> int:
-        cut_count = self.__ampl_engine.get_param_value(self.gbd_problem.cut_count_sym, None)
+        cut_count = self.__engine.get_param_value(self.gbd_problem.cut_count_sym, None)
         return int(cut_count)
 
     def __increment_cut_count(self):
-        cut_count = self.__ampl_engine.get_param_value(self.gbd_problem.cut_count_sym, None)
-        self.__ampl_engine.set_param_value(self.gbd_problem.cut_count_sym, None, int(cut_count + 1))
+        cut_count = self.__engine.get_param_value(self.gbd_problem.cut_count_sym, None)
+        self.__engine.set_param_value(self.gbd_problem.cut_count_sym, None, int(cut_count + 1))
 
     def __reset_cut_count(self):
-        self.__ampl_engine.set_param_value(self.gbd_problem.cut_count_sym, None, 0)
+        self.__engine.set_param_value(self.gbd_problem.cut_count_sym, None, 0)
 
     def __set_is_feasible_flag(self, flag: bool):
         num_flag = 1 if flag else 0
         cut_count = self.__get_cut_count()
-        self.__ampl_engine.set_param_value(self.gbd_problem.is_feasible_sym, [cut_count], num_flag)
+        self.__engine.set_param_value(self.gbd_problem.is_feasible_sym, [cut_count], num_flag)
 
     def __set_stored_obj_value(self, value: float):
         cut_count = self.__get_cut_count()
-        self.__ampl_engine.set_param_value(self.gbd_problem.stored_obj_sym, [cut_count], value)
+        self.__engine.set_param_value(self.gbd_problem.stored_obj_sym, [cut_count], value)
 
     def __update_stored_obj_value(self, added_value: float):
         cut_count = self.__get_cut_count()
-        value = self.__ampl_engine.get_param_value(self.gbd_problem.stored_obj_sym, [cut_count])
-        self.__ampl_engine.set_param_value(self.gbd_problem.stored_obj_sym, [cut_count], value + added_value)
+        value = self.__engine.get_param_value(self.gbd_problem.stored_obj_sym, [cut_count])
+        self.__engine.set_param_value(self.gbd_problem.stored_obj_sym, [cut_count], value + added_value)
 
     def __get_sp_obj_value(self,
                            obj: mat.MetaObjective,
                            sp_index: mat.IndexSetMember) -> float:
         obj_idx = self.__gbd_problem_builder.generate_entity_sp_index(sp_index=sp_index, meta_entity=obj)
-        return self.__ampl_engine.get_obj_value(obj.symbol, obj_idx)
+        return self.__engine.get_obj_value(obj.symbol, obj_idx)

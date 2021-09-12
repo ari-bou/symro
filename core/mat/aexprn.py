@@ -759,7 +759,7 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
         if idx_set is not None:
             count_p = len(idx_set)
 
-        clause_count = len(self.conditions)
+        clause_count = len(self.operands)
         results = []
         for ip in range(count_p):
 
@@ -772,9 +772,8 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
 
                 can_evaluate_operand = True
 
-                condition = self.conditions[k]
-                if condition is not None:
-                    can_evaluate_operand = condition.evaluate(state, sub_idx_set, dummy_symbols)[0]
+                if k < clause_count - 1 or not self.has_trailing_else_clause():
+                    can_evaluate_operand = self.conditions[k].evaluate(state, sub_idx_set, dummy_symbols)[0]
 
                 if can_evaluate_operand:
                     result = self.operands[k].evaluate(state, sub_idx_set, dummy_symbols)[0]
@@ -789,7 +788,7 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
                   idx_set_member: IndexSetMember = None,
                   dummy_symbols: Tuple[str, ...] = None):
 
-        clause_count = len(self.conditions)
+        clause_count = len(self.operands)
 
         idx_set = None
         if idx_set_member is not None:
@@ -799,9 +798,8 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
 
             can_evaluate_operand = True
 
-            condition = self.conditions[k]
-            if condition is not None:
-                can_evaluate_operand = condition.evaluate(state, idx_set, dummy_symbols)[0]
+            if k < clause_count - 1 or not self.has_trailing_else_clause():
+                can_evaluate_operand = self.conditions[k].evaluate(state, idx_set, dummy_symbols)[0]
 
             if can_evaluate_operand:
                 arg = self.operands[k].to_lambda(state, idx_set_member, dummy_symbols)
@@ -817,7 +815,7 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
         if idx_set is not None:
             count_p = len(idx_set)
 
-        clause_count = len(self.conditions)
+        clause_count = len(self.operands)
         entities = {}
         for ip in range(count_p):
 
@@ -830,9 +828,8 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
 
                 can_evaluate_operand = True
 
-                condition = self.conditions[k]
-                if condition is not None:
-                    can_evaluate_operand = condition.evaluate(state, sub_idx_set, dummy_symbols)[0]
+                if k < clause_count - 1 or not self.has_trailing_else_clause():
+                    can_evaluate_operand = self.conditions[k].evaluate(state, sub_idx_set, dummy_symbols)[0]
 
                 if can_evaluate_operand:
                     entities_ip = self.operands[k].collect_declared_entities(state, sub_idx_set, dummy_symbols)
@@ -854,15 +851,15 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
     def add_condition(self, condition: LogicalExpressionNode = None):
         if condition is not None and condition != "":
             self.conditions.append(condition)
-        else:
-            self.conditions.append(None)
+
+    def has_trailing_else_clause(self) -> bool:
+        return len(self.operands) == len(self.conditions) + 1
 
     def get_children(self) -> List[Union[ArithmeticExpressionNode, LogicalExpressionNode]]:
         children = []
         children.extend(self.operands)
         for condition in self.conditions:
-            if condition is not None:
-                children.append(condition)
+            children.append(condition)
         return children
 
     def set_children(self, operands: List[Union[ArithmeticExpressionNode, LogicalExpressionNode]]):
@@ -872,15 +869,14 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
         else:
             operand_count = int((count + 1) / 2)
         self.operands = operands[:operand_count]
-        self.conditions = [None] * operand_count
-        self.conditions[:operand_count] = operands[operand_count:]
+        self.conditions = operands[operand_count:]
 
     def get_literal(self) -> str:
         rhs = ""
         for i, operand in enumerate(self.operands):
             if i == 0:
                 rhs += "if {0} then {1}".format(self.conditions[i], operand)
-            elif i == len(self.operands) - 1 and self.conditions[i] is None:
+            elif i == len(self.operands) - 1 and self.has_trailing_else_clause():
                 rhs += " else {0}".format(operand)
             else:
                 rhs += " else if {0} then {1}".format(self.conditions[i], operand)

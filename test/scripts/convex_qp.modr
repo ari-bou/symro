@@ -32,9 +32,9 @@ var PROFIT{TIMEPERIODS, SCENARIOS};
 # OBJECTIVES
 # --------------------------------------------------------------------------------------------------
 # beginregion
-minimize OBJ: -(sum {t in TIMEPERIODS, s in SCENARIOS} (PROBABILITY[s] * ((sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s])) - (sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s] + 0.01 * COST[r,s] * NODE[r,t,s] ^ 1)))));
-minimize OBJ_SUB{t in TIMEPERIODS, s in SCENARIOS}: -(PROBABILITY[s] * ((sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s])) - (sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s] + 0.01 * COST[r,s] * NODE[r,t,s] ^ 1))));
-minimize OBJ_SUB_PrimalSubproblem{s in SCENARIOS}: (sum {t in TIMEPERIODS} -(PROBABILITY[s] * ((sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s])) - (sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s] + 0.01 * COST[r,s] * NODE[r,t,s] ^ 1)))));
+minimize OBJ: -(sum {t in TIMEPERIODS, s in SCENARIOS} (PROBABILITY[s] * ((sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s])) + -1 * (sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s] + 0.01 * COST[r,s] * NODE[r,t,s] ^ 1)))));
+minimize OBJ_SUB{t in TIMEPERIODS, s in SCENARIOS}: -(PROBABILITY[s] * ((sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s])) + -1 * (sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s] + 0.01 * COST[r,s] * NODE[r,t,s] ^ 1))));
+minimize OBJ_SUB_PrimalSubproblem{s in SCENARIOS}: (sum {t in TIMEPERIODS} -(PROBABILITY[s] * ((sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s])) + -1 * (sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s] + 0.01 * COST[r,s] * NODE[r,t,s] ^ 1)))));
 # endregion 
 
 
@@ -48,7 +48,7 @@ MIN_PRODUCTION{p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: MIN_PROD[p] - (
 PROD_DEMAND{p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: NODE[p,t,s] - (DEMAND[p]) <= 0;
 QUALITY_BLENDING_RULE_MIN{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: QUALITY_SPEC_MIN[q,p] * NODE[p,t,s] - (sum {r in RAW_MATERIALS} (QUALITY_RAW_MAT[q,r] * ARC[r,p,t,s])) <= 0;
 QUALITY_BLENDING_RULE_MAX{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: (sum {r in RAW_MATERIALS} (QUALITY_RAW_MAT[q,r] * ARC[r,p,t,s])) - (QUALITY_SPEC_MAX[q,p] * NODE[p,t,s]) <= 0;
-PROFIT_CALC{t in TIMEPERIODS, s in SCENARIOS}: PROFIT[t,s] - ((sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s])) - (sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s]))) = 0;
+PROFIT_CALC{t in TIMEPERIODS, s in SCENARIOS}: PROFIT[t,s] - ((sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s])) + -1 * (sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s]))) = 0;
 NON_ANT{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS}: INLET[r,t,s] - (INLET[r,t,1]) = 0;
 # endregion 
 

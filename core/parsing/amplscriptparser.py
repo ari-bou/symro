@@ -30,6 +30,10 @@ class AMPLScriptParser(AMPLParser):
         return self.compound_script
 
     def __parse_script(self):
+
+        if len(self._active_script.tokens) == 0:
+            return
+
         while True:
 
             can_continue, statements = self.__parse_sentence()

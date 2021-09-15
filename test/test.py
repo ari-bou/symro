@@ -1,5 +1,6 @@
 import symro
 from symro.test.test_util import *
+from symro.test.test_parsing import run_ampl_parser_test_group
 from symro.test.test_node_builder import run_node_builder_test_group
 from symro.test.test_entity_builder import run_entity_builder_test_group
 from symro.test.test_gbd import run_gbd_test_group
@@ -37,7 +38,8 @@ def build_problem_from_literal_test():
 # ----------------------------------------------------------------------------------------------------------------------
 
 def run_all_tests():
-    true_count, total_count = run_test_groups([run_general_test_group,
+    true_count, total_count = run_test_groups([run_ampl_parser_test_group,
+                                               run_general_test_group,
                                                run_node_builder_test_group,
                                                run_entity_builder_test_group,
                                                run_gbd_test_group])

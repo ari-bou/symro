@@ -15,7 +15,7 @@ param lambda_INLET_FLOW_RATE{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIO
 # beginregion
 var eta >= -1000000;
 var GBD_F{s in SCENARIOS, ct in CUTS} = 0;
-var GBD_G_0{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS, ct in CUTS} = (INLET[r,t,s] - (INLET_stored[r,t,s,ct]));
+var GBD_G_0{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS, ct in CUTS} = ((INLET[r,t,s]) - (INLET_stored[r,t,s,ct]));
 # endregion 
 
 

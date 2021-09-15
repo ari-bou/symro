@@ -439,8 +439,8 @@ class MetaConstraint(MetaEntity):
                 else:
                     self.ctype = self.DOUBLE_INEQUALITY_TYPE
             return self.ctype
-        raise ValueError("Meta-constraint expected an equality or an inequality expression"
-                         " while eliciting the constraint type")
+        raise ValueError("Meta-constraint '{0}' expected an equality or an inequality expression".format(self.symbol)
+                         + " while eliciting the constraint type from the expression node '{0}'".format(expr_node))
 
     def get_type(self) -> str:
         return const.CON_TYPE

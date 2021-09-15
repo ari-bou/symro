@@ -16,9 +16,10 @@ class AMPLParser:
 
     ARITH_UNA_OPR_SYMBOLS = ['+', '-']
 
-    ARITH_BIN_OPR_TERM_SYMBOLS = ['+', '-', "less"]
-    ARITH_BIN_OPR_FACTOR_SYMBOLS = ['*', '/', '^', "**", "div", "mod"]
-    ARITH_BIN_OPR_SYMBOLS = ARITH_BIN_OPR_TERM_SYMBOLS + ARITH_BIN_OPR_FACTOR_SYMBOLS
+    ARITH_BIN_OPR_SYMBOLS_12 = ['+', '-', "less"]
+    ARITH_BIN_OPR_SYMBOLS_14 = ['*', '/', "div", "mod"]
+    ARITH_BIN_OPR_SYMBOLS_16 = ['^', "**"]
+    ARITH_BIN_OPR_SYMBOLS = ARITH_BIN_OPR_SYMBOLS_12 + ARITH_BIN_OPR_SYMBOLS_14 + ARITH_BIN_OPR_SYMBOLS_16
 
     ARITH_FUNCTION_SYMBOLS = ["abs",
                               "alias",
@@ -51,8 +52,13 @@ class AMPLParser:
     LOGIC_BIN_OPR_SYMBOLS = ["&&", "||", "and", "or"]
 
     # --- Set Operation Symbols ---
+
     INFINITE_SET_SYMBOLS = ["Reals", "Integers", "ASCII", "EBCDIC", "Display"]
-    SET_OPR_SYMBOLS = ["union", "inter", "diff", "symdiff"]
+
+    SET_OPR_SYMBOLS_8 = ["union", "diff", "symdiff"]
+    SET_OPR_SYMBOLS_9 = ["inter"]
+    SET_OPR_SYMBOLS = SET_OPR_SYMBOLS_8 + SET_OPR_SYMBOLS_9
+
     SET_FUNCTION_SYMBOLS = ["next", "nextw",
                             "prev", "prevw",
                             "first", "last", "member",
@@ -260,34 +266,47 @@ class AMPLParser:
         self._active_script = script
         return self._parse_logical_expression()
 
-    def parse_relational_expression(self, literal: str):
-        script = self._tokenize(literal)
-        self._active_script = script
-        return self._parse_relational_expression()
-
     def _parse_logical_expression(self) -> Union[mat.LogicalExpressionNode,
                                                  mat.SetExpressionNode,
                                                  mat.ArithmeticExpressionNode,
                                                  mat.StringExpressionNode,
                                                  mat.BaseDummyNode]:
 
-        lhs_operand = self.__parse_logical_operand()
+        root_operation = self.__parse_logical_operand()
+        log_operation: Optional[mat.BinaryLogicalOperationNode] = None
 
-        # End of Expression
-        if self._is_last_token():
-            return lhs_operand
+        # parse next logical operation
+        while self.get_token() in self.LOGIC_BIN_OPR_SYMBOLS:
 
-        # Binary Logical Operator
-        if self.get_token() in self.LOGIC_BIN_OPR_SYMBOLS:
-            operator = self.get_token()
-            self._next_token()
-            rhs_operand = self._parse_logical_expression()
-            return mat.BinaryLogicalOperationNode(id=self._generate_free_node_id(),
-                                                  operator=operator,
-                                                  lhs_operand=lhs_operand,
-                                                  rhs_operand=rhs_operand)
+            operator = self.get_token()  # parse logical operator
+            self._next_token()  # skip operator
 
-        return lhs_operand
+            # parse next logical operand
+            rhs_operand = self.__parse_logical_operand()
+
+            # retrieve LHS operation node of the child logical operation node
+            if log_operation is None:
+                lhs_operand = root_operation  # LHS operand defaults to the first operand node
+            else:  # otherwise, the LHS operand is the logical operand node from the previous iteration
+                lhs_operand = log_operation.rhs_operand
+
+            # build child logical operation node
+            child_log_operation = mat.BinaryLogicalOperationNode(id=self._generate_free_node_id(),
+                                                                 operator=operator,
+                                                                 lhs_operand=lhs_operand,
+                                                                 rhs_operand=rhs_operand)
+
+            if log_operation is None:
+                # child logical operation is the first logical operation in the current scope
+                root_operation = child_log_operation
+
+            else:
+                # child logical operation is not the first logical operation in the current scope
+                log_operation.rhs_operand = child_log_operation
+
+            log_operation = child_log_operation  # store the newest logical operation node
+
+        return root_operation
 
     def __parse_logical_operand(self) -> Union[mat.LogicalExpressionNode,
                                                mat.SetExpressionNode,
@@ -297,7 +316,7 @@ class AMPLParser:
 
         token = self.get_token()
 
-        # Unary operator
+        # unary negation
         if token in ['!', "not"]:
             self._next_token()
             operand = self.__parse_logical_operand()
@@ -305,13 +324,13 @@ class AMPLParser:
                                                  operator=token,
                                                  operand=operand)
 
-        # Logical Reduction Operation
+        # logical reduction
         if token in ["exists", "forall"]:
 
             operator = token
+            self._next_token()  # skip operator
 
-            # Indexing set
-            self._next_token()
+            # parse indexing set
             idx_set_node = None
             if self.get_token() == '{':
                 idx_set_node = self._parse_indexing_set_definition()
@@ -374,6 +393,11 @@ class AMPLParser:
                                               member_node=dummy_node,
                                               set_node=rhs_operand)
 
+    def parse_relational_expression(self, literal: str):
+        script = self._tokenize(literal)
+        self._active_script = script
+        return self._parse_relational_expression()
+
     def _parse_relational_expression(self) -> Union[mat.RelationalOperationNode,
                                                     mat.SetExpressionNode,
                                                     mat.ArithmeticExpressionNode,
@@ -422,30 +446,61 @@ class AMPLParser:
         self._active_script = script
         return self._parse_set_expression()
 
-    def _parse_set_expression(self) -> Union[mat.SetExpressionNode,
-                                             mat.ArithmeticExpressionNode,
-                                             mat.StringExpressionNode,
-                                             mat.BaseDummyNode]:
+    def _parse_set_expression(self,
+                              precedence: int = 8
+                              ) -> Union[mat.SetExpressionNode,
+                                         mat.ArithmeticExpressionNode,
+                                         mat.StringExpressionNode,
+                                         mat.BaseDummyNode]:
 
-        lhs_operand = self.__parse_set()
-
-        # End of Expression
-        if self._is_last_token():
-            return lhs_operand
-
-        # Binary Set Operator
-        elif self.get_token() in self.SET_OPR_SYMBOLS:
-            operator = self.get_token()
-            self._next_token()
-            rhs_operand = self._parse_set_expression()
-            operation = mat.BinarySetOperationNode(id=self._generate_free_node_id(),
-                                                   operator=operator,
-                                                   lhs_operand=lhs_operand,
-                                                   rhs_operand=rhs_operand)
-            return operation
-
+        # parse the first operand
+        if precedence == 8:
+            root_operation = self._parse_set_expression(precedence=9)
         else:
-            return lhs_operand
+            root_operation = self.__parse_set()
+
+        set_operation: Optional[mat.BinarySetOperationNode] = None
+
+        if precedence == 8:  # precedence level 8
+            operators = self.SET_OPR_SYMBOLS_8
+        else:  # precedence level 9
+            operators = self.SET_OPR_SYMBOLS_9
+
+        # parse next set operation
+        while self.get_token() in operators:  # union, diff, symdiff
+
+            operator = self.get_token()
+            self._next_token()  # skip operator
+
+            # retrieve LHS operand
+            if set_operation is None:
+                lhs_operand = root_operation
+            else:
+                lhs_operand = set_operation.rhs_operand
+
+            # parse next RHS operand
+            if precedence == 8:  # precedence level 8
+                rhs_operand = self._parse_set_expression(precedence=9)
+            else:  # precedence level 9
+                rhs_operand = self.__parse_set()
+
+            # build a new binary set operation node
+            child_set_operation = mat.BinarySetOperationNode(id=self._generate_free_node_id(),
+                                                             operator=operator,
+                                                             lhs_operand=lhs_operand,
+                                                             rhs_operand=rhs_operand)
+
+            if set_operation is None:
+                # assign current set operation as the root operation
+                root_operation = child_set_operation
+            else:
+                # assign set operation of the current iteration
+                # as the RHS operand of the set operation of the previous iteration
+                set_operation.rhs_operand = child_set_operation
+
+            set_operation = child_set_operation  # update right-most operand node
+
+        return root_operation
 
     def __parse_set(self) -> Union[mat.SetExpressionNode,
                                    mat.ArithmeticExpressionNode,
@@ -512,7 +567,7 @@ class AMPLParser:
         # Start at opening brace '{'
         self._next_token()  # skip opening brace '{'
 
-        idx_set_node = self.__parse_set_definition()
+        idx_set_node = self.__parse_set_definition_body()
         if not isinstance(idx_set_node, mat.CompoundSetNode) and not isinstance(idx_set_node, mat.EnumeratedSet):
             raise ValueError("AMPL parser expected either compound set or an enumerate set" +
                              " while parsing indexing set expression")
@@ -522,7 +577,7 @@ class AMPLParser:
 
         return idx_set_node
 
-    def __parse_set_definition(self) -> mat.BaseSetNode:
+    def __parse_set_definition_body(self) -> mat.BaseSetNode:
 
         nodes = []  # list of set or element nodes
         con_node = None  # set constraint
@@ -589,74 +644,150 @@ class AMPLParser:
         self._active_script = script
         return self._parse_arithmetic_expression()
 
-    def _parse_arithmetic_expression(self) -> Union[mat.ArithmeticExpressionNode,
-                                                    mat.StringExpressionNode,
-                                                    mat.BaseDummyNode]:
+    def _parse_arithmetic_expression(self,
+                                     precedence: int = 12
+                                     ) -> Union[mat.ArithmeticExpressionNode,
+                                                mat.StringExpressionNode,
+                                                mat.BaseDummyNode]:
+        # parse first operand
 
-        lhs_operand = self.__parse_term()
+        if precedence == 12:
+            root_operation = self._parse_arithmetic_expression(precedence=14)
+        elif precedence == 14:
+            root_operation = self.__parse_unary_arithmetic_operation()
+        else:  # precedence level 16
+            root_operation = self.__parse_arithmetic_operand()
 
-        # End of Expression
-        if self._is_last_token():
-            return lhs_operand
+        arith_operation: Optional[Union[mat.BinaryArithmeticOperationNode, mat.MultiArithmeticOperationNode]] = None
 
-        # Binary Arithmetic Operator
-        elif self.get_token() in self.ARITH_BIN_OPR_TERM_SYMBOLS:
+        if precedence == 12:  # precedence level 12
+            operators = self.ARITH_BIN_OPR_SYMBOLS_12
+        elif precedence == 14:  # precedence level 14
+            operators = self.ARITH_BIN_OPR_SYMBOLS_14
+        else:  # precedence level 16
+            operators = self.ARITH_BIN_OPR_SYMBOLS_16
+
+        while self.get_token() in operators:  # parse next arithmetic operation
 
             operator = self.get_token()
-            self._next_token()
-            rhs_operand = self._parse_arithmetic_expression()
+            self._next_token()  # skip operator
 
-            operation = mat.BinaryArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                          operator=operator,
-                                                          lhs_operand=lhs_operand,
-                                                          rhs_operand=rhs_operand)
-            return operation
+            if precedence == 12:  # precedence level 12
+                rhs_operand = self._parse_arithmetic_expression(precedence=14)
+            elif precedence == 14:  # precedence level 14
+                rhs_operand = self.__parse_unary_arithmetic_operation()
+            else:  # precedence level 16
+                rhs_operand = self.__parse_arithmetic_operand()
 
-        return lhs_operand
+            # build a binary arithmetic operation node for the following operations:
+            # - non-negative subtraction
+            # - integer division
+            # - modulus
+            # - exponentiation
+            if operator in ["less", "div", "mod", '^', "**"]:
+                root_operation, arith_operation = self.__parse_binary_operand_arithmetic_expression(
+                    root_operation=root_operation,
+                    arith_operation=arith_operation,
+                    operator=operator,
+                    rhs_operand=rhs_operand)
 
-    def __parse_term(self) -> Union[mat.ArithmeticExpressionNode,
-                                    mat.StringExpressionNode,
-                                    mat.BaseDummyNode]:
+            # build a multi arithmetic operation node for the following operations:
+            # - addition
+            # - subtraction
+            # - multiplication
+            # - division
+            else:
+                root_operation, arith_operation = self.__parse_multi_operand_arithmetic_expression(
+                    root_operation=root_operation,
+                    arith_operation=arith_operation,
+                    operator=operator,
+                    rhs_operand=rhs_operand)
 
-        lhs_operand = self.__parse_factor()
+        return root_operation
 
-        # Binary Arithmetic Operator
-        if self.get_token() in ['*', '/', 'div', 'mod']:
-            operator = self.get_token()
-            self._next_token()
-            rhs_operand = self.__parse_term()
-            operation = mat.BinaryArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                          operator=operator,
-                                                          lhs_operand=lhs_operand,
-                                                          rhs_operand=rhs_operand)
-            return operation
+    def __parse_binary_operand_arithmetic_expression(self,
+                                                     root_operation: mat.ArithmeticExpressionNode,
+                                                     arith_operation: Optional[mat.BinaryArithmeticOperationNode],
+                                                     operator: str,
+                                                     rhs_operand: mat.ArithmeticExpressionNode):
 
-        return lhs_operand
-
-    def __parse_factor(self) -> Union[mat.ArithmeticExpressionNode,
-                                      mat.StringNode,
-                                      mat.BaseDummyNode]:
-
-        lhs_operand = self.__parse_arithmetic_operand()
-
-        # Binary Arithmetic Operator
-        if self.get_token() in ["**", '^']:
-            operator = self.get_token()
-            self._next_token()
-            rhs_operand = self.__parse_factor()
-            operation = mat.BinaryArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                          operator=operator,
-                                                          lhs_operand=lhs_operand,
-                                                          rhs_operand=rhs_operand)
-            return operation
-
+        # retrieve LHS operand
+        if arith_operation is None:
+            lhs_operand = root_operation
         else:
-            return lhs_operand
+            lhs_operand = arith_operation.rhs_operand
 
-    def __parse_arithmetic_operand(self) -> Union[mat.ArithmeticExpressionNode,
-                                                  mat.SetExpressionNode,
-                                                  mat.StringExpressionNode,
-                                                  mat.BaseDummyNode]:
+        child_arith_operation = mat.BinaryArithmeticOperationNode(id=self._generate_free_node_id(),
+                                                                  operator=operator,
+                                                                  lhs_operand=lhs_operand,
+                                                                  rhs_operand=rhs_operand)
+
+        if arith_operation is None:
+            root_operation = child_arith_operation
+        else:
+            arith_operation.rhs_operand = child_arith_operation
+
+        arith_operation = child_arith_operation
+
+        return root_operation, arith_operation
+
+    def __parse_multi_operand_arithmetic_expression(self,
+                                                    root_operation: mat.ArithmeticExpressionNode,
+                                                    arith_operation: Optional[mat.MultiArithmeticOperationNode],
+                                                    operator: str,
+                                                    rhs_operand: mat.ArithmeticExpressionNode):
+
+        # convert subtraction operation to addition operation
+        if operator == '-':
+
+            operator = '+'  # change the operator
+
+            # build a numeric node with value -1
+            neg_one_node = mat.NumericNode(id=self._generate_free_node_id(), value=-1)
+
+            # special case: RHS operand is a multi-operand multiplication operation node
+            if isinstance(rhs_operand, mat.MultiArithmeticOperationNode) and rhs_operand.operator == '*':
+                # add the -1 node to the list of operands
+                rhs_operand.operands.insert(0, neg_one_node)
+
+            # otherwise, build a new multi-operand multiplication operation node
+            else:
+                rhs_operand = mat.MultiArithmeticOperationNode(id=self._generate_free_node_id(),
+                                                               operator='*',
+                                                               operands=[neg_one_node, rhs_operand])
+
+        # convert division operation to multiplication operation
+        elif operator == '/':
+
+            operator = '*'  # change the operator
+
+            # build a numeric node with value 1
+            one_node = mat.NumericNode(id=self._generate_free_node_id(), value=1)
+
+            # build a division operation node
+            rhs_operand = mat.BinaryArithmeticOperationNode(id=self._generate_free_node_id(),
+                                                            operator='/',
+                                                            lhs_operand=one_node,
+                                                            rhs_operand=rhs_operand)
+            rhs_operand.is_prioritized = True
+
+        # build a new arithmetic operation node if it does not exist yet
+        if arith_operation is None:
+            arith_operation = mat.MultiArithmeticOperationNode(id=self._generate_free_node_id(),
+                                                               operator=operator,
+                                                               operands=[root_operation, rhs_operand])
+            root_operation = arith_operation
+
+        # otherwise, add the RHS operand to the existing arithmetic operation node
+        else:
+            arith_operation.operands.append(rhs_operand)
+
+        return root_operation, arith_operation
+
+    def __parse_unary_arithmetic_operation(self) -> Union[mat.ArithmeticExpressionNode,
+                                                          mat.SetExpressionNode,
+                                                          mat.StringExpressionNode,
+                                                          mat.BaseDummyNode]:
 
         token = self.get_token()
 
@@ -667,12 +798,22 @@ class AMPLParser:
                                                     operator=operator)
 
             self._next_token()
-            term_node = self.__parse_term()
-            node.operand = term_node
+            operand = self._parse_arithmetic_expression(precedence=16)
+            node.operand = operand
             return node
 
+        else:
+            return self._parse_arithmetic_expression(precedence=16)
+
+    def __parse_arithmetic_operand(self) -> Union[mat.ArithmeticExpressionNode,
+                                                  mat.SetExpressionNode,
+                                                  mat.StringExpressionNode,
+                                                  mat.BaseDummyNode]:
+
+        token = self.get_token()
+
         # Conditional Expression
-        elif token == "if":
+        if token == "if":
             return self.__parse_conditional_expression()
 
         # Variable or Parameter
@@ -708,7 +849,7 @@ class AMPLParser:
 
         # Reductive Function
         if idx_set_node is not None:
-            operand = self.__parse_term()
+            operand = self._parse_arithmetic_expression(precedence=14)
             operand.is_prioritized = True
             operands = [operand]
 
@@ -744,21 +885,26 @@ class AMPLParser:
                                                 mat.StringExpressionNode,
                                                 mat.BaseDummyNode]:
 
-        lhs_operand = self.__parse_string_term()
+        root_operation = self.__parse_string_term()
+        str_operation: Optional[mat.MultiStringOperationNode] = None
 
-        # Binary Arithmetic Operator
-        if self.get_token() == '&':
+        while self.get_token() == '&':
+
             operator = self.get_token()
-            self._next_token()
-            rhs_operand = self._parse_string_expression()
+            self._next_token()  # skip operator
 
-            operation = mat.BinaryStringOperationNode(id=self._generate_free_node_id(),
-                                                      operator=operator,
-                                                      lhs_operand=lhs_operand,
-                                                      rhs_operand=rhs_operand)
-            return operation
+            rhs_operand = self.__parse_string_term()
 
-        return lhs_operand
+            if str_operation is None:
+                str_operation = mat.MultiStringOperationNode(id=self._generate_free_node_id(),
+                                                             operator=operator,
+                                                             operands=[root_operation, rhs_operand])
+                root_operation = str_operation
+
+            else:
+                str_operation.operands.append(rhs_operand)
+
+        return root_operation
 
     def __parse_string_term(self) -> Union[mat.LogicalExpressionNode,
                                            mat.SetExpressionNode,

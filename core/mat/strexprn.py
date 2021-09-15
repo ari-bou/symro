@@ -37,20 +37,18 @@ class StringNode(StringExpressionNode):
         return self.delimiter + self.literal + self.delimiter
 
 
-class BinaryStringOperationNode(StringExpressionNode):
+class MultiStringOperationNode(StringExpressionNode):
 
     CONCAT_OPERATOR = '&'
 
     def __init__(self,
                  operator: str,
-                 lhs_operand: Union[StringExpressionNode, BaseDummyNode] = None,
-                 rhs_operand: Union[StringExpressionNode, BaseDummyNode] = None,
+                 operands: List[Union[StringExpressionNode, BaseDummyNode]] = None,
                  is_prioritized: bool = False,
                  id: int = 0):
         super().__init__(id)
         self.operator: str = operator
-        self.lhs_operand: Union[StringExpressionNode, BaseDummyNode] = lhs_operand
-        self.rhs_operand: Union[StringExpressionNode, BaseDummyNode] = rhs_operand
+        self.operands: List[Union[StringExpressionNode, BaseDummyNode]] = operands
         self.is_prioritized = is_prioritized
 
     def evaluate(self,
@@ -59,41 +57,52 @@ class BinaryStringOperationNode(StringExpressionNode):
                  dummy_symbols: Tuple[str, ...] = None
                  ) -> List[str]:
 
-        x_lhs = self.lhs_operand.evaluate(state, idx_set, dummy_symbols)
-        x_rhs = self.rhs_operand.evaluate(state, idx_set, dummy_symbols)
+        x_lhs = self.operands[0].evaluate(state, idx_set, dummy_symbols)
+        y = x_lhs
 
-        if self.operator == self.CONCAT_OPERATOR:  # Concatenation
-            y = [str(x_lhs_i) + str(x_rhs_i) for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-        else:
-            raise ValueError("Unable to resolve symbol '{0}'"
-                             " as a binary string operator".format(self.operator))
+        for i in range(1, len(self.operands)):
+
+            x_rhs = self.operands[i].evaluate(state, idx_set, dummy_symbols)
+
+            if self.operator == self.CONCAT_OPERATOR:  # Concatenation
+                y = [x_lhs_i + x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
+            else:
+                raise ValueError("Unable to resolve symbol '{0}'"
+                                 " as a string operator".format(self.operator))
+
+            x_lhs = y
+
         return y
 
     def to_lambda(self,
                   state: State,
                   idx_set_member: IndexSetMember = None,
                   dummy_symbols: Tuple[str, ...] = None):
-        x_lhs = self.lhs_operand.to_lambda(state, idx_set_member, dummy_symbols)
-        x_rhs = self.rhs_operand.to_lambda(state, idx_set_member, dummy_symbols)
+
+        args_all = []
+        for operand in self.operands:
+            args_all.append(operand.to_lambda(state, idx_set_member, dummy_symbols))
+
         if self.operator == self.CONCAT_OPERATOR:  # Concatenation
-            return partial(lambda l, r: str(l()) + str(r()), x_lhs, x_rhs)
+            return partial(lambda x: ''.join([x_i() for x_i in x]), args_all)
         else:
-            raise ValueError("Unable to resolve symbol '{0}'"
-                             " as a binary arithmetic operator".format(self.operator))
+            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
+                             + " as a string operator")
 
     def get_children(self) -> List:
-        return [self.lhs_operand, self.rhs_operand]
+        return list(self.operands)
 
     def set_children(self, operands: list):
-        if len(operands) > 0:
-            self.lhs_operand = operands[0]
-        if len(operands) > 1:
-            self.rhs_operand = operands[1]
+        self.operands = list(operands)
 
     def get_literal(self) -> str:
-        literal = "{0} {1} {2}".format(self.lhs_operand,
-                                       self.operator,
-                                       self.rhs_operand)
+        s = ""
+        for i, operand in enumerate(self.operands):
+            if i == 0:
+                s = operand.get_literal()
+            else:
+                s += " {0} {1}".format(self.operator, operand)
         if self.is_prioritized:
-            literal = '(' + literal + ')'
-        return literal
+            return '(' + s + ')'
+        else:
+            return s

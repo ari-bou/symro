@@ -16,7 +16,7 @@ minimize FBL_OBJ_PrimalSubproblem{s in S}: CON3_SL[s] + CON1_SL[s];
 # CONSTRAINTS
 # --------------------------------------------------------------------------------------------------
 # beginregion
-CON1_F{s in S}: p[s] * y[s] - x1[s] - CON1_SL[s] <= 0;
-CON3_F{s in S}: 0.1 - x2[s] - CON3_SL[s] <= 0;
+CON1_F{s in S}: p[s] * y[s] + -1 * x1[s] - CON1_SL[s] <= 0;
+CON3_F{s in S}: 0.1 + -1 * x2[s] - CON3_SL[s] <= 0;
 # endregion 
 

@@ -58,7 +58,7 @@ class AMPLScriptParser(AMPLParser):
         self.__parse_script()
         self._active_script = prev_script
 
-    def __parse_sentence(self) -> Tuple[bool, Union[stm.IStatement, List[stm.IStatement]]]:
+    def __parse_sentence(self) -> Tuple[bool, Union[stm.BaseStatement, List[stm.BaseStatement]]]:
 
         token = self.get_token()
         sentence = None
@@ -719,12 +719,12 @@ class AMPLScriptParser(AMPLParser):
             else:
                 self._next_token()  # skip comma ','
 
-        return stm.KeySpec(set_expr_node=set_expr_node,
-                           arrow_token=arrow_token,
-                           key_col_specs=key_col_specs)
+        return stm.TableKeySpec(set_expr_node=set_expr_node,
+                                arrow_token=arrow_token,
+                                key_col_specs=key_col_specs)
 
     # A.13
-    def __parse_data_spec(self) -> Union[stm.IndexedDataSpec, stm.DataSpec]:
+    def __parse_data_spec(self) -> Union[stm.IndexedTableDataSpec, stm.TableDataSpec]:
 
         node = self._parse_set_expression()
 
@@ -752,17 +752,17 @@ class AMPLScriptParser(AMPLParser):
 
                 self._next_token()  # skip closing delimiter '>'
 
-                return stm.IndexedDataSpec(idx_set_node=idx_set_node,
-                                           data_spec_components=data_spec_components,
-                                           form=2)
+                return stm.IndexedTableDataSpec(idx_set_node=idx_set_node,
+                                                data_spec_components=data_spec_components,
+                                                form=2)
 
             # Single Indexed Data Spec
             else:
                 data_col_node = self._parse_arithmetic_expression()
                 data_spec_component = self.__parse_data_spec_component(data_col_node)
-                return stm.IndexedDataSpec(idx_set_node=idx_set_node,
-                                           data_spec_components=[data_spec_component],
-                                           form=0)
+                return stm.IndexedTableDataSpec(idx_set_node=idx_set_node,
+                                                data_spec_components=[data_spec_component],
+                                                form=0)
 
         # Single Data Spec
         else:
@@ -795,9 +795,9 @@ class AMPLScriptParser(AMPLParser):
         else:
             form = 1
 
-        return stm.IndexedDataSpec(idx_set_node=idx_set_node,
-                                   data_spec_components=data_specs,
-                                   form=form)
+        return stm.IndexedTableDataSpec(idx_set_node=idx_set_node,
+                                        data_spec_components=data_specs,
+                                        form=form)
 
     # A.13
     def __parse_data_spec_component(self, data_col_node: Union[mat.ArithmeticExpressionNode,
@@ -815,9 +815,9 @@ class AMPLScriptParser(AMPLParser):
         else:
             direction = None
 
-        return stm.DataSpec(data_expr_node=data_expr_node,
-                            data_col_node=data_col_node,
-                            direction=direction)
+        return stm.TableDataSpec(data_expr_node=data_expr_node,
+                                 data_col_node=data_col_node,
+                                 direction=direction)
 
     # A.13
     def __parse_table_access_statement(self, command: str):

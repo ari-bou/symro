@@ -61,7 +61,7 @@ def __evaluate_ampl_script(problem: Problem,
 
 def __clean_script(script: stm.Script) -> str:
 
-    def validate(sta: stm.IStatement):
+    def validate(sta: stm.BaseStatement):
         if isinstance(sta, stm.SolveStatement):
             return False
         elif isinstance(sta, stm.ProblemStatement):

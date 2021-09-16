@@ -6,7 +6,9 @@ import symro.core.mat as mat
 from symro.core.prob.specialcommand import SpecialCommand
 
 
-class IStatement(ABC):
+# Base Statement
+# ----------------------------------------------------------------------------------------------------------------------
+class BaseStatement(ABC):
 
     def __init__(self):
         pass
@@ -20,11 +22,11 @@ class IStatement(ABC):
 
     def get_validated_literal(self,
                               indent_level: int = 0,
-                              validator: Callable[["IStatement"], bool] = None) -> str:
+                              validator: Callable[["BaseStatement"], bool] = None) -> str:
         return self.get_literal(indent_level)
 
 
-class Statement(IStatement):
+class Statement(BaseStatement):
 
     def __init__(self, literal: str):
         super(Statement, self).__init__()
@@ -34,7 +36,9 @@ class Statement(IStatement):
         return "{0}".format(indent_level * '\t') + self.literal
 
 
-class Comment(IStatement):
+# Comment
+# ----------------------------------------------------------------------------------------------------------------------
+class Comment(BaseStatement):
 
     def __init__(self, comment: str, is_multi: bool):
         super(Comment, self).__init__()
@@ -47,6 +51,9 @@ class Comment(IStatement):
         else:
             return "{0}/*{1}*/".format(indent_level * '\t', self.comment)
 
+
+# File I/O
+# ----------------------------------------------------------------------------------------------------------------------
 
 class Redirection:
 
@@ -63,7 +70,7 @@ class Redirection:
         return "{0} {1}".format(self.operator, self.file_name_node)
 
 
-class FileStatement(IStatement):
+class FileStatement(BaseStatement):
 
     def __init__(self,
                  command: str,
@@ -76,7 +83,9 @@ class FileStatement(IStatement):
         return "{0}{1} {2};".format(indent_level * '\t', self.command, self.file_name_node)
 
 
-class OptionStatement(IStatement):
+# Option Statement
+# ----------------------------------------------------------------------------------------------------------------------
+class OptionStatement(BaseStatement):
 
     def __init__(self,
                  arg_nodes: List[mat.ExpressionNode],
@@ -95,7 +104,9 @@ class OptionStatement(IStatement):
         return literal
 
 
-class ModelEntityDeclaration(IStatement):
+# Model Entity Declaration
+# ----------------------------------------------------------------------------------------------------------------------
+class ModelEntityDeclaration(BaseStatement):
 
     def __init__(self, meta_entity: mat.MetaEntity):
         super(ModelEntityDeclaration, self).__init__()
@@ -105,262 +116,9 @@ class ModelEntityDeclaration(IStatement):
         return "{0}".format(indent_level * '\t') + self.meta_entity.get_declaration()
 
 
-class KeySpec:
-
-    def __init__(self,
-                 set_expr_node: mat.SetExpressionNode,
-                 arrow_token: str,
-                 key_col_specs: List[Tuple[mat.ExpressionNode, mat.ExpressionNode]]):
-        self.set_expr_node: mat.SetExpressionNode = set_expr_node
-        self.arrow_token: str = arrow_token
-        self.key_col_specs: List[Tuple[mat.ExpressionNode, mat.ExpressionNode]] = key_col_specs
-
-    def __str__(self):
-        return self.get_literal()
-
-    def get_literal(self) -> str:
-
-        literal = ""
-
-        if self.set_expr_node is not None:
-            literal += "{0} {1} ".format(self.set_expr_node, self.arrow_token)
-
-        key_col_specs_str = []
-        for idx_node, data_col_node in self.key_col_specs:
-            if idx_node is None:
-                key_col_specs_str.append(data_col_node.get_literal())
-            else:
-                key_col_specs_str.append("{0} ~ {1}".format(idx_node, data_col_node))
-
-        literal += "[{0}]".format(", ".join(key_col_specs_str))
-
-        return literal
-
-
-class IDataSpec(ABC):
-
-    def __init__(self):
-        pass
-
-    def __str__(self):
-        return self.get_literal()
-
-    @abstractmethod
-    def get_literal(self) -> str:
-        pass
-
-
-class DataSpec(IDataSpec):
-
-    def __init__(self,
-                 data_expr_node: mat.ArithmeticExpressionNode,
-                 data_col_node: mat.ArithmeticExpressionNode,
-                 direction: str):
-        super(DataSpec, self).__init__()
-        self.data_expr_node: mat.ArithmeticExpressionNode = data_expr_node
-        self.data_col_node: mat.ArithmeticExpressionNode = data_col_node
-        self.direction: str = direction
-
-    def get_literal(self) -> str:
-        if self.data_expr_node is None:
-            literal = self.data_col_node.get_literal()
-        else:
-            literal = "{0} ~ {1}".format(self.data_expr_node, self.data_col_node)
-        if self.direction is not None:
-            literal += " {0}".format(self.direction)
-        return literal
-
-
-class IndexedDataSpec(IDataSpec):
-
-    def __init__(self,
-                 idx_set_node: mat.SetExpressionNode,
-                 data_spec_components: List[IDataSpec],
-                 form: int = 0):
-        super(IndexedDataSpec, self).__init__()
-        self.idx_set_node: mat.SetExpressionNode = idx_set_node
-        self.data_spec_components: List[IDataSpec] = data_spec_components
-        self.form: int = form
-
-    def get_literal(self) -> str:
-        if self.form == 0:
-            return "{0} {1}".format(self.idx_set_node, self.data_spec_components[0])
-        else:
-            data_spec_str = ", ".join([ds.get_literal() for ds in self.data_spec_components])
-            if self.form == 1:
-                return "{0} ({1})".format(self.idx_set_node, data_spec_str)
-            else:
-                return "{0} <{1}>".format(self.idx_set_node, data_spec_str)
-
-
-# table
-class TableDeclaration(IStatement):
-
-    def __init__(self,
-                 table_sym: str,
-                 idx_set_node: mat.SetExpressionNode,
-                 direction: str,
-                 opt_nodes: List[mat.StringExpressionNode],
-                 key_spec: KeySpec,
-                 data_specs: List[IDataSpec]):
-        super(TableDeclaration, self).__init__()
-        self.table_sym: str = table_sym
-        self.idx_set_node: mat.SetExpressionNode = idx_set_node
-        self.direction: str = direction
-        self.opt_nodes: List[mat.StringExpressionNode] = opt_nodes
-        self.key_spec: KeySpec = key_spec
-        self.data_specs: List[IDataSpec] = data_specs
-
-    def get_literal(self, indent_level: int = 0) -> str:
-
-        literal = "{0}table {1}".format(indent_level * '\t', self.table_sym)
-
-        if self.idx_set_node is not None:
-            literal += " {0}".format(self.idx_set_node)
-
-        if self.direction is not None:
-            literal += " {0}".format(self.direction)
-
-        if len(self.opt_nodes) > 0:
-            literal += " {0}".format(' '.join([n.get_literal() for n in self.opt_nodes]))
-
-        literal += ':'
-
-        specs = [self.key_spec]
-        specs.extend(self.data_specs)
-        literal += " {0};".format(", ".join([str(s) for s in specs]))
-
-        return literal
-
-
-class TableAccessStatement(IStatement):
-
-    def __init__(self,
-                 command: str,
-                 table_node: mat.DeclaredEntityNode):
-        super(TableAccessStatement, self).__init__()
-        self.command: str = command
-        self.table_node: mat.DeclaredEntityNode = table_node
-
-    def get_literal(self, indent_level: int = 0) -> str:
-        return "{0}{1} table {2};".format(indent_level * '\t', self.command, self.table_node)
-
-
-class IndexedArgList:
-
-    def __init__(self,
-                 idx_set_node: mat.SetExpressionNode,
-                 arg_nodes: List[mat.ExpressionNode]):
-        self.idx_set_node: mat.SetExpressionNode = idx_set_node
-        self.arg_nodes: List[mat.ExpressionNode] = arg_nodes
-
-    def __str__(self):
-        return self.get_literal()
-
-    def get_literal(self) -> str:
-        literal = self.idx_set_node.get_literal()
-        if len(self.arg_nodes) == 1:
-            literal += " {0}".format(self.arg_nodes[0])
-        else:
-            literal += " ({0})".format(", ".join([n.get_literal() for n in self.arg_nodes]))
-        return literal
-
-
-# display, print, printf
-class DisplayStatement(IStatement):
-
-    def __init__(self,
-                 command: str,
-                 idx_set_node: mat.SetExpressionNode,
-                 arg_list: List[Union[mat.ExpressionNode, IndexedArgList]],
-                 redirection: Redirection):
-        super(DisplayStatement, self).__init__()
-        self.command: str = command
-        self.idx_set_node: mat.SetExpressionNode = idx_set_node
-        self.arg_list: List[Union[mat.ExpressionNode, IndexedArgList]] = arg_list
-        self.redirection: Redirection = redirection
-
-    def get_literal(self, indent_level: int = 0) -> str:
-        literal = "{0}".format(indent_level * '\t') + self.command
-        if self.idx_set_node is not None:
-            literal += " {0}:".format(self.idx_set_node)
-        if len(self.arg_list) > 0:
-            literal += " {0}".format(", ".join([str(a) for a in self.arg_list]))
-        if self.redirection is not None:
-            literal += " {0}".format(self.redirection)
-        literal += ";"
-        return literal
-
-
-class SolveStatement(IStatement):
-
-    def __init__(self, redirection: Redirection):
-        super(SolveStatement, self).__init__()
-        self.redirection: Redirection = redirection
-
-    def get_literal(self, indent_level: int = 0) -> str:
-        if self.redirection is None:
-            return "{0}solve;".format(indent_level * '\t')
-        else:
-            return "{0}solve {1};".format(indent_level * '\t', self.redirection)
-
-
-# drop, restore, objective
-class NonAssignmentStatement(IStatement):
-
-    def __init__(self,
-                 command: str,
-                 idx_set_node: mat.SetExpressionNode,
-                 entity_node: mat.DeclaredEntityNode,
-                 redirection: Redirection):
-        super(NonAssignmentStatement, self).__init__()
-        self.command: str = command
-        self.idx_set_node: mat.SetExpressionNode = idx_set_node
-        self.entity_node: mat.DeclaredEntityNode = entity_node
-        self.redirection: Redirection = redirection
-
-    def get_literal(self, indent_level: int = 0) -> str:
-        literal = "{0}".format(indent_level * '\t') + self.command
-        if self.idx_set_node is not None:
-            literal += " {0}".format(self.idx_set_node)
-        literal += " {0}".format(self.entity_node)
-        if self.redirection is not None:
-            literal += " {0}".format(self.redirection)
-        literal += ';'
-        return literal
-
-
-# fix, unfix, let
-class AssignmentStatement(IStatement):
-
-    def __init__(self,
-                 command: str,
-                 idx_set_node: mat.SetExpressionNode,
-                 entity_node: mat.DeclaredEntityNode,
-                 expr_node: mat.ExpressionNode,
-                 redirection: Redirection):
-        super(AssignmentStatement, self).__init__()
-        self.command: str = command
-        self.idx_set_node: mat.SetExpressionNode = idx_set_node
-        self.entity_node: mat.DeclaredEntityNode = entity_node
-        self.expr_node: mat.ExpressionNode = expr_node
-        self.redirection: Redirection = redirection
-
-    def get_literal(self, indent_level: int = 0) -> str:
-        literal = "{0}".format(indent_level * '\t') + self.command
-        if self.idx_set_node is not None:
-            literal += " {0}".format(self.idx_set_node)
-        literal += " {0}".format(self.entity_node)
-        if self.expr_node is not None:
-            literal += " := {0}".format(self.expr_node)
-        if self.redirection is not None:
-            literal += " {0}".format(self.redirection)
-        literal += ';'
-        return literal
-
-
-# problem
-class ProblemStatement(IStatement):
+# Problem Statement
+# ----------------------------------------------------------------------------------------------------------------------
+class ProblemStatement(BaseStatement):
 
     def __init__(self,
                  prob_node: mat.DeclaredEntityNode,
@@ -415,17 +173,290 @@ class ProblemStatement(IStatement):
         return literal
 
 
+# Table Statements
+# ----------------------------------------------------------------------------------------------------------------------
+
+class TableKeySpec:
+
+    def __init__(self,
+                 set_expr_node: mat.SetExpressionNode,
+                 arrow_token: str,
+                 key_col_specs: List[Tuple[mat.ExpressionNode, mat.ExpressionNode]]):
+        self.set_expr_node: mat.SetExpressionNode = set_expr_node
+        self.arrow_token: str = arrow_token
+        self.key_col_specs: List[Tuple[mat.ExpressionNode, mat.ExpressionNode]] = key_col_specs
+
+    def __str__(self):
+        return self.get_literal()
+
+    def get_literal(self) -> str:
+
+        literal = ""
+
+        if self.set_expr_node is not None:
+            literal += "{0} {1} ".format(self.set_expr_node, self.arrow_token)
+
+        key_col_specs_str = []
+        for idx_node, data_col_node in self.key_col_specs:
+            if idx_node is None:
+                key_col_specs_str.append(data_col_node.get_literal())
+            else:
+                key_col_specs_str.append("{0} ~ {1}".format(idx_node, data_col_node))
+
+        literal += "[{0}]".format(", ".join(key_col_specs_str))
+
+        return literal
+
+
+class BaseTableDataSpec(ABC):
+
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        return self.get_literal()
+
+    @abstractmethod
+    def get_literal(self) -> str:
+        pass
+
+
+class TableDataSpec(BaseTableDataSpec):
+
+    def __init__(self,
+                 data_expr_node: mat.ArithmeticExpressionNode,
+                 data_col_node: mat.ArithmeticExpressionNode,
+                 direction: str):
+        super(TableDataSpec, self).__init__()
+        self.data_expr_node: mat.ArithmeticExpressionNode = data_expr_node
+        self.data_col_node: mat.ArithmeticExpressionNode = data_col_node
+        self.direction: str = direction
+
+    def get_literal(self) -> str:
+        if self.data_expr_node is None:
+            literal = self.data_col_node.get_literal()
+        else:
+            literal = "{0} ~ {1}".format(self.data_expr_node, self.data_col_node)
+        if self.direction is not None:
+            literal += " {0}".format(self.direction)
+        return literal
+
+
+class IndexedTableDataSpec(BaseTableDataSpec):
+
+    def __init__(self,
+                 idx_set_node: mat.SetExpressionNode,
+                 data_spec_components: List[BaseTableDataSpec],
+                 form: int = 0):
+        super(IndexedTableDataSpec, self).__init__()
+        self.idx_set_node: mat.SetExpressionNode = idx_set_node
+        self.data_spec_components: List[BaseTableDataSpec] = data_spec_components
+        self.form: int = form
+
+    def get_literal(self) -> str:
+        if self.form == 0:
+            return "{0} {1}".format(self.idx_set_node, self.data_spec_components[0])
+        else:
+            data_spec_str = ", ".join([ds.get_literal() for ds in self.data_spec_components])
+            if self.form == 1:
+                return "{0} ({1})".format(self.idx_set_node, data_spec_str)
+            else:
+                return "{0} <{1}>".format(self.idx_set_node, data_spec_str)
+
+
+# table
+class TableDeclaration(BaseStatement):
+
+    def __init__(self,
+                 table_sym: str,
+                 idx_set_node: mat.SetExpressionNode,
+                 direction: str,
+                 opt_nodes: List[mat.StringExpressionNode],
+                 key_spec: TableKeySpec,
+                 data_specs: List[BaseTableDataSpec]):
+        super(TableDeclaration, self).__init__()
+        self.table_sym: str = table_sym
+        self.idx_set_node: mat.SetExpressionNode = idx_set_node
+        self.direction: str = direction
+        self.opt_nodes: List[mat.StringExpressionNode] = opt_nodes
+        self.key_spec: TableKeySpec = key_spec
+        self.data_specs: List[BaseTableDataSpec] = data_specs
+
+    def get_literal(self, indent_level: int = 0) -> str:
+
+        literal = "{0}table {1}".format(indent_level * '\t', self.table_sym)
+
+        if self.idx_set_node is not None:
+            literal += " {0}".format(self.idx_set_node)
+
+        if self.direction is not None:
+            literal += " {0}".format(self.direction)
+
+        if len(self.opt_nodes) > 0:
+            literal += " {0}".format(' '.join([n.get_literal() for n in self.opt_nodes]))
+
+        literal += ':'
+
+        specs = [self.key_spec]
+        specs.extend(self.data_specs)
+        literal += " {0};".format(", ".join([str(s) for s in specs]))
+
+        return literal
+
+
+class TableAccessStatement(BaseStatement):
+
+    def __init__(self,
+                 command: str,
+                 table_node: mat.DeclaredEntityNode):
+        super(TableAccessStatement, self).__init__()
+        self.command: str = command
+        self.table_node: mat.DeclaredEntityNode = table_node
+
+    def get_literal(self, indent_level: int = 0) -> str:
+        return "{0}{1} table {2};".format(indent_level * '\t', self.command, self.table_node)
+
+
+# Data Statements
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+
+# Display Statement
+# ----------------------------------------------------------------------------------------------------------------------
+
+class IndexedArgList:
+
+    def __init__(self,
+                 idx_set_node: mat.SetExpressionNode,
+                 arg_nodes: List[mat.ExpressionNode]):
+        self.idx_set_node: mat.SetExpressionNode = idx_set_node
+        self.arg_nodes: List[mat.ExpressionNode] = arg_nodes
+
+    def __str__(self):
+        return self.get_literal()
+
+    def get_literal(self) -> str:
+        literal = self.idx_set_node.get_literal()
+        if len(self.arg_nodes) == 1:
+            literal += " {0}".format(self.arg_nodes[0])
+        else:
+            literal += " ({0})".format(", ".join([n.get_literal() for n in self.arg_nodes]))
+        return literal
+
+
+# display, print, printf
+class DisplayStatement(BaseStatement):
+
+    def __init__(self,
+                 command: str,
+                 idx_set_node: mat.SetExpressionNode,
+                 arg_list: List[Union[mat.ExpressionNode, IndexedArgList]],
+                 redirection: Redirection):
+        super(DisplayStatement, self).__init__()
+        self.command: str = command
+        self.idx_set_node: mat.SetExpressionNode = idx_set_node
+        self.arg_list: List[Union[mat.ExpressionNode, IndexedArgList]] = arg_list
+        self.redirection: Redirection = redirection
+
+    def get_literal(self, indent_level: int = 0) -> str:
+        literal = "{0}".format(indent_level * '\t') + self.command
+        if self.idx_set_node is not None:
+            literal += " {0}:".format(self.idx_set_node)
+        if len(self.arg_list) > 0:
+            literal += " {0}".format(", ".join([str(a) for a in self.arg_list]))
+        if self.redirection is not None:
+            literal += " {0}".format(self.redirection)
+        literal += ";"
+        return literal
+
+
+# Modelling Statements
+# ----------------------------------------------------------------------------------------------------------------------
+
+# drop, restore, objective
+class NonAssignmentStatement(BaseStatement):
+
+    def __init__(self,
+                 command: str,
+                 idx_set_node: mat.SetExpressionNode,
+                 entity_node: mat.DeclaredEntityNode,
+                 redirection: Redirection):
+        super(NonAssignmentStatement, self).__init__()
+        self.command: str = command
+        self.idx_set_node: mat.SetExpressionNode = idx_set_node
+        self.entity_node: mat.DeclaredEntityNode = entity_node
+        self.redirection: Redirection = redirection
+
+    def get_literal(self, indent_level: int = 0) -> str:
+        literal = "{0}".format(indent_level * '\t') + self.command
+        if self.idx_set_node is not None:
+            literal += " {0}".format(self.idx_set_node)
+        literal += " {0}".format(self.entity_node)
+        if self.redirection is not None:
+            literal += " {0}".format(self.redirection)
+        literal += ';'
+        return literal
+
+
+# fix, unfix, let
+class AssignmentStatement(BaseStatement):
+
+    def __init__(self,
+                 command: str,
+                 idx_set_node: mat.SetExpressionNode,
+                 entity_node: mat.DeclaredEntityNode,
+                 expr_node: mat.ExpressionNode,
+                 redirection: Redirection):
+        super(AssignmentStatement, self).__init__()
+        self.command: str = command
+        self.idx_set_node: mat.SetExpressionNode = idx_set_node
+        self.entity_node: mat.DeclaredEntityNode = entity_node
+        self.expr_node: mat.ExpressionNode = expr_node
+        self.redirection: Redirection = redirection
+
+    def get_literal(self, indent_level: int = 0) -> str:
+        literal = "{0}".format(indent_level * '\t') + self.command
+        if self.idx_set_node is not None:
+            literal += " {0}".format(self.idx_set_node)
+        literal += " {0}".format(self.entity_node)
+        if self.expr_node is not None:
+            literal += " := {0}".format(self.expr_node)
+        if self.redirection is not None:
+            literal += " {0}".format(self.redirection)
+        literal += ';'
+        return literal
+
+
+# Solve Statement
+# ----------------------------------------------------------------------------------------------------------------------
+class SolveStatement(BaseStatement):
+
+    def __init__(self, redirection: Redirection):
+        super(SolveStatement, self).__init__()
+        self.redirection: Redirection = redirection
+
+    def get_literal(self, indent_level: int = 0) -> str:
+        if self.redirection is None:
+            return "{0}solve;".format(indent_level * '\t')
+        else:
+            return "{0}solve {1};".format(indent_level * '\t', self.redirection)
+
+
+# Control Flow Statements
+# ----------------------------------------------------------------------------------------------------------------------
+
 class IfStatementClause:
 
     def __init__(self,
                  operator: str,
                  cdn_expr_node: Optional[mat.LogicalExpressionNode],
-                 statements: Union[IStatement, List[IStatement]],
-                 trailing_comments: List[IStatement] = None):
+                 statements: Union[BaseStatement, List[BaseStatement]],
+                 trailing_comments: List[BaseStatement] = None):
         self.operator: str = operator
         self.cdn_expr_node: mat.LogicalExpressionNode = cdn_expr_node
-        self.statements: List[IStatement] = statements if isinstance(statements, list) else [statements]
-        self.trailing_comments: List[IStatement] = trailing_comments if trailing_comments is not None else []
+        self.statements: List[BaseStatement] = statements if isinstance(statements, list) else [statements]
+        self.trailing_comments: List[BaseStatement] = trailing_comments if trailing_comments is not None else []
 
     def __str__(self):
         return self.get_literal()
@@ -451,7 +482,7 @@ class IfStatementClause:
 
     def get_validated_literal(self,
                               indent_level: int = 0,
-                              validator: Callable[[IStatement], bool] = None) -> str:
+                              validator: Callable[[BaseStatement], bool] = None) -> str:
 
         literal = "{0}".format('\t' * indent_level) + self.operator
 
@@ -473,7 +504,7 @@ class IfStatementClause:
         return literal
 
 
-class IfStatement(IStatement):
+class IfStatement(BaseStatement):
 
     def __init__(self, clauses: List[IfStatementClause]):
         super(IfStatement, self).__init__()
@@ -484,20 +515,20 @@ class IfStatement(IStatement):
 
     def get_validated_literal(self,
                               indent_level: int = 0,
-                              validator: Callable[[IStatement], bool] = None) -> str:
+                              validator: Callable[[BaseStatement], bool] = None) -> str:
         return '\n'.join([c.get_validated_literal(indent_level, validator) for c in self.clauses])
 
 
-class ForLoopStatement(IStatement):
+class ForLoopStatement(BaseStatement):
 
     def __init__(self,
                  loop_sym: str,
                  idx_set_node: mat.SetExpressionNode,
-                 statements: List[IStatement]):
+                 statements: List[BaseStatement]):
         super(ForLoopStatement, self).__init__()
         self.loop_sym: str = loop_sym
         self.idx_set_node: mat.SetExpressionNode = idx_set_node
-        self.statements: List[IStatement] = statements if isinstance(statements, list) else [statements]
+        self.statements: List[BaseStatement] = statements if isinstance(statements, list) else [statements]
 
     def get_literal(self, indent_level: int = 0) -> str:
 
@@ -515,7 +546,7 @@ class ForLoopStatement(IStatement):
 
     def get_validated_literal(self,
                               indent_level: int = 0,
-                              validator: Callable[[IStatement], bool] = None) -> str:
+                              validator: Callable[[BaseStatement], bool] = None) -> str:
 
         literal = "{0}for".format('\t' * indent_level)
         if self.loop_sym is not None:
@@ -532,7 +563,10 @@ class ForLoopStatement(IStatement):
         return literal
 
 
-class SpecialCommandStatement(IStatement):
+# Special Command Statement
+# ----------------------------------------------------------------------------------------------------------------------
+
+class SpecialCommandStatement(BaseStatement):
 
     def __init__(self, script_command: SpecialCommand):
         super(SpecialCommandStatement, self).__init__()
@@ -542,11 +576,13 @@ class SpecialCommandStatement(IStatement):
         return ""
 
 
-class StatementCollection(IStatement):
+# Statement Collection
+# ----------------------------------------------------------------------------------------------------------------------
+class StatementCollection(BaseStatement):
 
-    def __init__(self, statements: List[IStatement]):
+    def __init__(self, statements: List[BaseStatement]):
         super(StatementCollection, self).__init__()
-        self.statements: List[IStatement] = statements
+        self.statements: List[BaseStatement] = statements
 
     def get_literal(self, indent_level: int = 0) -> str:
         literals = []
@@ -556,12 +592,15 @@ class StatementCollection(IStatement):
 
     def get_validated_literal(self,
                               indent_level: int = 0,
-                              validator: Callable[[IStatement], bool] = None) -> str:
+                              validator: Callable[[BaseStatement], bool] = None) -> str:
         literals = []
         for statement in self.statements:
             literals.append("{0}".format(statement.get_validated_literal(indent_level, validator)))
         return '\n'.join(literals)
 
+
+# Scripts
+# ----------------------------------------------------------------------------------------------------------------------
 
 class Script:
 
@@ -569,12 +608,12 @@ class Script:
                  id: str = "main",
                  literal: str = None,
                  tokens: List[str] = None,
-                 statements: List[IStatement] = None):
+                 statements: List[BaseStatement] = None):
         self.id: str = id
         self.literal: str = literal
         self.tokens: List[str] = tokens
         self.token_index: int = 0
-        self.statements: List[IStatement] = statements if statements is not None else []
+        self.statements: List[BaseStatement] = statements if statements is not None else []
 
     def __str__(self):
         return self.get_literal()
@@ -603,7 +642,7 @@ class Script:
 
     def get_validated_literal(self,
                               indent_level: int = 0,
-                              validator: Callable[[IStatement], bool] = None) -> str:
+                              validator: Callable[[BaseStatement], bool] = None) -> str:
         literals = []
         for statement in self.statements:
             if validator(statement) and not isinstance(statement, SpecialCommandStatement):

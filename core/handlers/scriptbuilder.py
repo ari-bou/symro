@@ -186,5 +186,5 @@ class ScriptBuilder:
                               is_multi=False)
         self.__add_statement(comment)
 
-    def __add_statement(self, statement: stm.IStatement):
+    def __add_statement(self, statement: stm.BaseStatement):
         self.script.statements.append(statement)

@@ -5,8 +5,8 @@ import warnings
 
 import symro.core.mat as mat
 from symro.core.prob.specialcommand import SpecialCommand
-from symro.core.prob.statement import CompoundScript
-from symro.core.execution.amplengine import AMPLEngine
+import symro.core.prob.statement as stm
+import symro.core.util.util as util
 
 
 class BaseProblem:
@@ -71,12 +71,13 @@ class BaseProblem:
 
 class Problem(BaseProblem):
 
+    # Construction
+    # ------------------------------------------------------------------------------------------------------------------
     def __init__(self,
                  symbol: str = None,
                  description: str = None,
                  file_name: str = None,
-                 working_dir_path: str = None,
-                 engine: AMPLEngine = None):
+                 working_dir_path: str = None):
 
         # --- Name ---
         if symbol is None and file_name is not None:
@@ -86,11 +87,11 @@ class Problem(BaseProblem):
         super(Problem, self).__init__(symbol, description)
 
         # --- I/O ---
-        self.working_dir_path: str = working_dir_path
+        self.working_dir_path: str = working_dir_path if working_dir_path is not None else os.getcwd()
 
         # --- Script ---
         self.run_script_literal: str = ""
-        self.compound_script: Optional[CompoundScript] = None
+        self.compound_script: Optional[stm.CompoundScript] = None
         self.script_commands: Dict[str, List[SpecialCommand]] = {}  # Key: flag. Value: list of script commands.
 
         # --- Meta-Entities ---
@@ -106,9 +107,6 @@ class Problem(BaseProblem):
         # --- State ---
         self.state: mat.State = mat.State()
 
-        # --- Engine ---
-        self.engine: Optional[AMPLEngine] = engine
-
         # --- Miscellaneous ---
         self.__free_node_id: int = 0
 
@@ -116,10 +114,12 @@ class Problem(BaseProblem):
 
         BaseProblem.copy(self, source)
 
+        self.working_dir_path = source.working_dir_path
+
         self.run_script_literal = source.run_script_literal
         self.script_commands = dict(source.script_commands)
 
-        self.compound_script: Optional[CompoundScript] = CompoundScript()
+        self.compound_script: Optional[stm.CompoundScript] = stm.CompoundScript()
         self.compound_script.copy(source.compound_script)
 
         self.symbols = set(source.symbols)
@@ -138,23 +138,10 @@ class Problem(BaseProblem):
 
         self.state = source.state
 
-        self.engine = source.engine
-
         self.__free_node_id = source.__free_node_id
 
-    def generate_unique_symbol(self, base_symbol: str = None) -> str:
-        if base_symbol is None:
-            base_symbol = "ENTITY"
-        symbol = base_symbol
-        i = 0
-        while symbol in self.symbols:
-            i += 1
-            symbol = base_symbol + str(i)
-        return symbol
-
-    def add_subproblem(self, sp: BaseProblem):
-        self.symbols.add(sp.symbol)
-        self.subproblems[sp.symbol] = sp
+    # Checkers
+    # ------------------------------------------------------------------------------------------------------------------
 
     def is_meta_entity_in_model(self, meta_entity: mat.MetaEntity) -> bool:
         if isinstance(meta_entity, mat.MetaSet):
@@ -168,6 +155,15 @@ class Problem(BaseProblem):
         elif isinstance(meta_entity, mat.MetaConstraint):
             return meta_entity.symbol in self.model_meta_cons
         return False
+
+    def contains_script_command(self, symbol: str) -> bool:
+        if self.script_commands is not None:
+            return symbol in self.script_commands
+        else:
+            return False
+
+    # Accessors
+    # ------------------------------------------------------------------------------------------------------------------
 
     def get_meta_entity(self, symbol: str) -> Optional[mat.MetaEntity]:
         if symbol in self.meta_sets:
@@ -183,6 +179,13 @@ class Problem(BaseProblem):
         else:
             warnings.warn("Definition of entity '{0}' is unavailable".format(symbol))
             return None
+
+    # Addition
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def add_subproblem(self, sp: BaseProblem):
+        self.symbols.add(sp.symbol)
+        self.subproblems[sp.symbol] = sp
 
     def add_meta_entity(self, meta_entity: mat.MetaEntity, is_in_model: bool = True):
         if isinstance(meta_entity, mat.MetaSet):
@@ -232,11 +235,29 @@ class Problem(BaseProblem):
         else:
             self.script_commands[script_command.symbol] = [script_command]
 
-    def contains_script_command(self, symbol: str) -> bool:
-        if self.script_commands is not None:
-            return symbol in self.script_commands
-        else:
-            return False
+    # Identifier Generation
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def generate_unique_symbol(self, base_symbol: str = None) -> str:
+        if base_symbol is None:
+            base_symbol = "ENTITY"
+        symbol = base_symbol
+        i = 0
+        while symbol in self.symbols:
+            i += 1
+            symbol = base_symbol + str(i)
+        return symbol
+
+    def generate_free_node_id(self) -> int:
+        free_node_id = self.__free_node_id
+        self.__free_node_id += 1
+        return free_node_id
+
+    def seed_free_node_id(self, node_id: int):
+        self.__free_node_id = max(node_id, self.__free_node_id)
+
+    # File I/O
+    # ------------------------------------------------------------------------------------------------------------------
 
     def save(self, dir_path: str = ""):
         file_name = self.symbol.lower().replace(' ', '_')
@@ -250,10 +271,41 @@ class Problem(BaseProblem):
             problem = pickle.load(f)
         return problem
 
-    def generate_free_node_id(self) -> int:
-        free_node_id = self.__free_node_id
-        self.__free_node_id += 1
-        return free_node_id
+    def primal_to_dat(self,
+                      file_name: str,
+                      problem_symbol: str = None,
+                      problem_idx: mat.Element = None):
 
-    def seed_free_node_id(self, node_id: int):
-        self.__free_node_id = max(node_id, self.__free_node_id)
+        # TODO: filter variables by subproblem
+
+        dat_script = stm.Script(file_name)  # generate data script
+
+        for symbol, var_collection in self.state.var_collections.items():
+
+            # generate data statement
+            data_statement = stm.ParameterDataStatement(symbol=symbol,
+                                                        type="var",
+                                                        values=var_collection.generate_value_dict())
+
+            dat_script.statements.append(data_statement)  # append statement to script
+
+        return dat_script
+
+    def dual_to_dat(self,
+                    file_name: str,
+                    problem_symbol: str = None,
+                    problem_idx: mat.Element = None):
+
+        # TODO: filter variables by subproblem
+
+        dat_script = stm.Script(file_name)  # generate data script
+
+        for symbol, con_collection in self.state.con_collections.items():
+            # generate data statement
+            data_statement = stm.ParameterDataStatement(symbol=symbol,
+                                                        type="var",
+                                                        values=con_collection.generate_dual_dict())
+
+            dat_script.statements.append(data_statement)  # append statement to script
+
+        return dat_script

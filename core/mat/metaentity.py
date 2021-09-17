@@ -46,6 +46,9 @@ class MetaEntity(ABC):
     def get_reduced_dimension(self) -> int:
         return sum([meta_set.reduced_dimension for meta_set in self.idx_meta_sets])
 
+    def is_indexed(self) -> bool:
+        return self.idx_set_node is not None
+
     def is_indexed_with(self, meta_set: "MetaSet") -> bool:
         return any(map(lambda ms: ms.symbol == meta_set.symbol, self.idx_meta_sets))
 
@@ -85,10 +88,10 @@ class MetaEntity(ABC):
 
     def is_owner(self, entity: Entity, state: State):
         """
-        Returns True if the meta-entity is the owner of the entity argument.
+        Check whether the meta-entity owns the supplied entity.
         :param entity: algebraic entity
         :param state: problem state
-        :return: bool
+        :return: True if the meta-entity is the owner of the entity argument
         """
 
         # Check whether symbols are identical
@@ -98,7 +101,7 @@ class MetaEntity(ABC):
         # Check whether entity index is a member of the meta-entity indexing set
         if self.idx_set_node is not None:
             idx_set = self.idx_set_node.evaluate(state)[0]
-            if entity.indices not in idx_set:
+            if entity.idx not in idx_set:
                 return False
 
         return True

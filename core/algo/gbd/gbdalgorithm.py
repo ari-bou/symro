@@ -31,7 +31,7 @@ class GBDAlgorithm:
                  init_lb: float = -np.inf,
                  init_ub: float = np.inf,
                  before_mp_solve: Callable[[GBDProblem, int], None] = None,
-                 before_sp_solve: Callable[[GBDProblem, int, str, mat.IndexSetMember], None] = None,
+                 before_sp_solve: Callable[[GBDProblem, int, str, mat.Element], None] = None,
                  working_dir_path: str = None):
 
         # --- Problem ---
@@ -65,7 +65,7 @@ class GBDAlgorithm:
 
         # --- Callables ---
         self.before_mp_solve: Callable[[GBDProblem, int], None] = before_mp_solve
-        self.before_sp_solve: Callable[[GBDProblem, int, str, mat.IndexSetMember], None] = before_sp_solve
+        self.before_sp_solve: Callable[[GBDProblem, int, str, mat.Element], None] = before_sp_solve
 
         # --- Algorithmic Constructs ---
 
@@ -136,8 +136,8 @@ class GBDAlgorithm:
 
         self.__log_message("Running GBD")
 
-        self.gbd_problem.engine = AMPLEngine(working_dir_path=self.gbd_problem.working_dir_path)
-        self.__engine = self.gbd_problem.engine
+        self.__engine = AMPLEngine(self.gbd_problem)
+        self.__engine.can_store_soln = False
 
         self.__evaluate_script()
 
@@ -321,13 +321,14 @@ class GBDAlgorithm:
 
         self.__log_indexed_message("Solving master problem", iter)
 
-        solver_output = self.__engine.solve(solver_name=self.mp_solver_name,
-                                            solver_options=self.mp_solver_options)
+        self.__engine.solve(solver_name=self.mp_solver_name,
+                            solver_options=self.mp_solver_options)
+        solver_output = self.__engine.get_solver_output()
         self.__print_solver_output(solver_output)
 
-        solve_result = self.__engine.get_solve_result()
+        status = self.__engine.get_status()
 
-        if solve_result in ["infeasible", "failure"]:
+        if status in ["infeasible", "failure"]:
             self.__log_indexed_message("Master problem is infeasible", iter)
             return False, 0
         else:
@@ -361,7 +362,9 @@ class GBDAlgorithm:
                                    sp_sym=sp_container.primal_sp.symbol,
                                    sp_index=sp_container.sp_index)
 
-        solver_output = self.__engine.solve(self.sp_solver_name, self.sp_solver_options)
+        self.__engine.solve(solver_name=self.sp_solver_name,
+                            solver_options=self.sp_solver_options)
+        solver_output = self.__engine.get_solver_output()
         self.__print_solver_output(solver_output)
 
         if not self.__interpret_solver_result(solver_output,
@@ -405,7 +408,8 @@ class GBDAlgorithm:
                                    sp_sym=sp_container.fbl_sp.symbol,
                                    sp_index=sp_container.sp_index)
 
-        solver_output = self.__engine.solve(self.sp_solver_name, self.sp_solver_options)
+        self.__engine.solve(self.sp_solver_name, self.sp_solver_options)
+        solver_output = self.__engine.get_solver_output()
         self.__print_solver_output(solver_output)
 
         if not self.__interpret_solver_result(solver_output,
@@ -431,12 +435,12 @@ class GBDAlgorithm:
                                   solver_output: str,
                                   iter: int,
                                   sp_sym: str,
-                                  sp_index: mat.IndexSetMember) -> bool:
+                                  sp_index: mat.Element) -> bool:
 
         is_feasible = True
 
-        solve_result = self.__engine.get_solve_result()
-        if solve_result in ["infeasible", "failure"]:
+        status = self.__engine.get_status()
+        if status in ["infeasible", "failure"]:
             is_feasible = False
 
         # Conopt
@@ -465,7 +469,8 @@ class GBDAlgorithm:
                                                sp_sym=sp_sym,
                                                sp_index=sp_index)
                     conopt_options = self.sp_solver_options + " maxiter={0}".format(solver_iter)
-                    solver_output = self.__engine.solve(self.sp_solver_name, conopt_options)
+                    self.__engine.solve(self.sp_solver_name, conopt_options)
+                    solver_output = self.__engine.get_solver_output()
 
                     (is_feasible,
                      _,
@@ -491,11 +496,8 @@ class GBDAlgorithm:
                       problem_sym: str,
                       problem_idx: Union[List[Union[int, float, str]],
                                          Tuple[Union[int, float, str], ...]] = None):
-        problem_literal = problem_sym
-        if problem_idx is not None:
-            problem_idx = [mat.get_element_literal(s) for s in problem_idx]
-            problem_literal += "[{0}]".format(','.join(problem_idx))
-        self.__engine.api.eval("problem {0};".format(problem_literal))
+        self.__engine.set_active_problem(problem_symbol=problem_sym,
+                                         problem_idx=problem_idx)
 
     # Storage and Retrieval
     # ------------------------------------------------------------------------------------------------------------------
@@ -698,7 +700,7 @@ class GBDAlgorithm:
                               message: str,
                               iter: int,
                               sp_sym: str = None,
-                              sp_index: mat.IndexSetMember = None):
+                              sp_index: mat.Element = None):
 
         if sp_sym is not None and sp_index is not None:
             sp_str = "|sp {0}[{1}]".format(sp_sym, '-'.join([str(sp_i) for sp_i in sp_index]))
@@ -721,7 +723,7 @@ class GBDAlgorithm:
             print(entry)
 
     def __write_log_file(self):
-        util.write_file(dir_path=self.__engine.working_dir_path,
+        util.write_file(dir_path=self.gbd_problem.working_dir_path,
                         file_name="gbd.log",
                         text=self.log)
 
@@ -774,6 +776,6 @@ class GBDAlgorithm:
 
     def __get_sp_obj_value(self,
                            obj: mat.MetaObjective,
-                           sp_index: mat.IndexSetMember) -> float:
+                           sp_index: mat.Element) -> float:
         obj_idx = self.__gbd_problem_builder.generate_entity_sp_index(sp_index=sp_index, meta_entity=obj)
         return self.__engine.get_obj_value(obj.symbol, obj_idx)

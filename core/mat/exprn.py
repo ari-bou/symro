@@ -4,7 +4,7 @@ from ordered_set import OrderedSet
 from typing import Dict, List, Optional, Tuple, Union
 
 from symro.core.mat.entity import Parameter, Variable
-from symro.core.mat.util import IndexSet, IndexSetMember
+from symro.core.mat.util import IndexingSet, Element
 from symro.core.mat.state import State
 
 
@@ -34,19 +34,19 @@ class ExpressionNode(ABC):
     @abstractmethod
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None):
         pass
 
     def collect_declared_entities(self,
                                   state: State,
-                                  idx_set: IndexSet = None,
+                                  idx_set: IndexingSet = None,
                                   dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
         return {}
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
         pass
 
@@ -105,7 +105,7 @@ class LogicalExpressionNode(ExpressionNode, ABC):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None) -> List[bool]:
         return [False]
 
@@ -129,9 +129,9 @@ class SetExpressionNode(ExpressionNode, ABC):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[IndexSet]:
+                 ) -> List[IndexingSet]:
         return [OrderedSet()]
 
 
@@ -142,13 +142,13 @@ class ArithmeticExpressionNode(ExpressionNode, ABC):
 
     def collect_declared_entities(self,
                                   state: State,
-                                  idx_set: IndexSet = None,
+                                  idx_set: IndexingSet = None,
                                   dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
         return {}
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None) -> List[float]:
         return [0]
 
@@ -160,6 +160,6 @@ class StringExpressionNode(ExpressionNode, ABC):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None) -> List[str]:
         return [""]

@@ -705,7 +705,7 @@ class GBDProblemBuilder:
 
     def __verify_and_modify_complicating_expression(self,
                                                     node: mat.ArithmeticExpressionNode,
-                                                    idx_set: mat.IndexSet,
+                                                    idx_set: mat.IndexingSet,
                                                     dummy_syms: Tuple[Union[int, float, str, tuple, None], ...]
                                                     ) -> mat.ArithmeticExpressionNode:
         node = deepcopy(node)
@@ -716,7 +716,7 @@ class GBDProblemBuilder:
 
     def __verify_complicating_node(self,
                                    node: mat.ArithmeticExpressionNode,
-                                   idx_set: mat.IndexSet,
+                                   idx_set: mat.IndexingSet,
                                    dummy_syms: Tuple[Union[int, float, str, tuple, None], ...]) -> int:
 
         # Numeric constant or dummy
@@ -873,7 +873,7 @@ class GBDProblemBuilder:
 
     def __reformulate_node(self,
                            node: mat.ArithmeticExpressionNode,
-                           idx_set: mat.IndexSet,
+                           idx_set: mat.IndexingSet,
                            dummy_syms: Tuple[Union[int, float, str, tuple, None], ...]
                            ) -> Tuple[Union[mat.ArithmeticExpressionNode, mat.DummyNode], int]:
 
@@ -1029,7 +1029,7 @@ class GBDProblemBuilder:
 
     def __reformulate_complicating_entity_node(self,
                                                entity_node: mat.DeclaredEntityNode,
-                                               idx_set: mat.IndexSet,
+                                               idx_set: mat.IndexingSet,
                                                dummy_syms: Tuple[Union[int, float, str, tuple, None], ...]):
 
         # Retrieve all variable entities
@@ -1223,7 +1223,7 @@ class GBDProblemBuilder:
 
     def __build_complicating_subtraction_node(self,
                                               root_node: mat.ArithmeticExpressionNode,
-                                              idx_set: mat.IndexSet,
+                                              idx_set: mat.IndexingSet,
                                               dummy_syms: Tuple[Union[int, float, str, tuple, None], ...]):
 
         root_node.is_prioritized = True
@@ -1237,8 +1237,8 @@ class GBDProblemBuilder:
 
             node, idx_set, dummy_syms = queue.get()
             node: mat.ExpressionNode
-            idx_set: mat.IndexSet
-            dummy_syms: mat.IndexSetMember
+            idx_set: mat.IndexingSet
+            dummy_syms: mat.Element
 
             is_comp_var_node = False
 
@@ -1785,7 +1785,7 @@ class GBDProblemBuilder:
         return sp_entity_idx_sets
 
     def __partition_sp_entity_idx_sets_by_sp_index(self,
-                                                   sp_entity_idx_sets: Dict[str, Dict[str, Optional[mat.IndexSet]]]):
+                                                   sp_entity_idx_sets: Dict[str, Dict[str, Optional[mat.IndexingSet]]]):
 
         partitioned_entity_idx_sets = []
 
@@ -1833,8 +1833,8 @@ class GBDProblemBuilder:
         self.__build_model_scripts()
         self.__build_problem_declarations()
 
-        self.gbd_problem.compound_script.write(dir_path=self.gbd_problem.engine.working_dir_path,
-                                               main_file_name=self.gbd_problem.name + ".run")
+        self.gbd_problem.compound_script.write(dir_path=self.gbd_problem.working_dir_path,
+                                               main_file_name=self.gbd_problem.symbol + ".run")
 
     def __clean_script(self):
 
@@ -1910,7 +1910,7 @@ class GBDProblemBuilder:
         meta_cons = [gbd_cut for _, gbd_cut in self.gbd_problem.gbd_cuts.items()]
 
         script_builder = ScriptBuilder()
-        return script_builder.generate_model_script(model_file_name=self.gbd_problem.name,
+        return script_builder.generate_model_script(model_file_name=self.gbd_problem.symbol,
                                                     model_file_extension=".modm",
                                                     meta_sets_params=meta_sets_params,
                                                     meta_vars=meta_vars,
@@ -1922,7 +1922,7 @@ class GBDProblemBuilder:
         fbl_objs = [fp.model_meta_objs[0] for fp in self.gbd_problem.fbl_sps]
 
         script_builder = ScriptBuilder()
-        return script_builder.generate_model_script(model_file_name=self.gbd_problem.name,
+        return script_builder.generate_model_script(model_file_name=self.gbd_problem.symbol,
                                                     model_file_extension=".modrsl",
                                                     meta_vars=self.gbd_problem.slack_vars,
                                                     meta_objs=fbl_objs,
@@ -1983,7 +1983,7 @@ class GBDProblemBuilder:
         return meta_entities
 
     def generate_entity_sp_index(self,
-                                 sp_index: mat.IndexSetMember,
+                                 sp_index: mat.Element,
                                  meta_entity: mat.MetaEntity,
                                  entity_index: List[Union[int, float, str, None]] = None):
 

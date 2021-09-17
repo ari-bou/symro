@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Tuple, Union
 from symro.core.mat.entity import Parameter, Variable
 from symro.core.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode, ArithmeticExpressionNode, \
     StringExpressionNode
-from symro.core.mat.util import IndexSet, IndexSetMember
+from symro.core.mat.util import IndexingSet, Element
 from symro.core.mat.dummyn import BaseDummyNode, DummyNode
 from symro.core.mat.setn import CompoundSetNode
 from symro.core.mat.state import State
@@ -32,7 +32,7 @@ class RelationalOperationNode(LogicalExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None) -> List[bool]:
 
         lhs_arg = self.lhs_operand.evaluate(state, idx_set, dummy_symbols)
@@ -67,7 +67,7 @@ class RelationalOperationNode(LogicalExpressionNode):
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
 
         lhs_arg = self.lhs_operand.to_lambda(state, idx_set_member, dummy_symbols)
@@ -102,7 +102,7 @@ class RelationalOperationNode(LogicalExpressionNode):
 
     def collect_declared_entities(self,
                                   state: State,
-                                  idx_set: IndexSet = None,
+                                  idx_set: IndexingSet = None,
                                   dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
         entities = self.lhs_operand.collect_declared_entities(state, idx_set, dummy_symbols)
         entities.update(self.rhs_operand.collect_declared_entities(state, idx_set, dummy_symbols))
@@ -146,7 +146,7 @@ class SetMembershipOperationNode(LogicalExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None) -> List[bool]:
 
         if idx_set is None:
@@ -203,7 +203,7 @@ class SetComparisonOperationNode(LogicalExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None) -> List[bool]:
         raise NotImplementedError("evaluate method of Set Comparison Operation Node has not been implemented")
 
@@ -273,7 +273,7 @@ class UnaryLogicalOperationNode(LogicalExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None) -> List[bool]:
 
         arg = self.operand.evaluate(state, idx_set, dummy_symbols)
@@ -287,7 +287,7 @@ class UnaryLogicalOperationNode(LogicalExpressionNode):
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
 
         arg = self.operand.to_lambda(state, idx_set_member, dummy_symbols)
@@ -330,7 +330,7 @@ class BinaryLogicalOperationNode(LogicalExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None) -> List[bool]:
 
         lhs_arg = self.lhs_operand.evaluate(state, idx_set, dummy_symbols)
@@ -349,7 +349,7 @@ class BinaryLogicalOperationNode(LogicalExpressionNode):
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
 
         lhs_arg = self.lhs_operand.to_lambda(state, idx_set_member, dummy_symbols)
@@ -396,7 +396,7 @@ class MultiLogicalOperationNode(LogicalExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
                  ) -> List[float]:
 
@@ -421,7 +421,7 @@ class MultiLogicalOperationNode(LogicalExpressionNode):
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
 
         args_all = []

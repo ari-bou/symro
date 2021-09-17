@@ -7,7 +7,7 @@ from symro.core.mat.entity import Parameter, Variable
 from symro.core.mat.exprn import LogicalExpressionNode, ArithmeticExpressionNode
 from symro.core.mat.dummyn import CompoundDummyNode
 from symro.core.mat.setn import CompoundSetNode
-from symro.core.mat.util import IndexSet, IndexSetMember
+from symro.core.mat.util import IndexingSet, Element
 from symro.core.mat.util import cartesian_product
 from symro.core.mat.state import State
 import symro.core.constants as const
@@ -41,7 +41,7 @@ class NumericNode(ArithmeticExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
                  ) -> List[float]:
         mp = 1
@@ -51,7 +51,7 @@ class NumericNode(ArithmeticExpressionNode):
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
         return partial(lambda c: c, self.value)
 
@@ -104,7 +104,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
                  ) -> List[float]:
 
@@ -137,7 +137,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
         index = None
         if self.is_indexed():
@@ -147,7 +147,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
 
     def collect_declared_entities(self,
                                   state: State,
-                                  idx_set: IndexSet = None,
+                                  idx_set: IndexingSet = None,
                                   dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
         entities = {}
 
@@ -178,12 +178,12 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
 
             if not self.is_constant():
                 var = Variable(symbol=self.symbol,
-                               indices=entity_index,
+                               idx=entity_index,
                                is_dim_aggregated=is_dim_aggregated)
                 entities[var.entity_id] = var
             else:
                 param = Parameter(symbol=self.symbol,
-                                  indices=entity_index,
+                                  idx=entity_index,
                                   is_dim_aggregated=is_dim_aggregated)
                 entities[param.entity_id] = param
 
@@ -251,7 +251,7 @@ class FunctionNode(ArithmeticExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
                  ) -> List[float]:
         if self.is_reductive():
@@ -261,7 +261,7 @@ class FunctionNode(ArithmeticExpressionNode):
 
     def __evaluate_reductive_function(self,
                                       state: State,
-                                      idx_set: IndexSet = None,
+                                      idx_set: IndexingSet = None,
                                       dummy_symbols: Tuple[str, ...] = None) -> List[float]:
 
         combined_idx_sets = self.combine_indexing_sets(state, idx_set, dummy_symbols)  # length mp
@@ -287,7 +287,7 @@ class FunctionNode(ArithmeticExpressionNode):
 
     def __evaluate_non_reductive_function(self,
                                           state: State,
-                                          idx_set: IndexSet = None,
+                                          idx_set: IndexingSet = None,
                                           dummy_symbols: Tuple[str, ...] = None) -> List[float]:
 
         x_vec = [o.evaluate(state, idx_set, dummy_symbols) for o in self.operands]
@@ -323,7 +323,7 @@ class FunctionNode(ArithmeticExpressionNode):
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
 
         if self.is_reductive():
@@ -381,7 +381,7 @@ class FunctionNode(ArithmeticExpressionNode):
 
     def collect_declared_entities(self,
                                   state: State,
-                                  idx_set: IndexSet = None,
+                                  idx_set: IndexingSet = None,
                                   dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
 
         if self.is_reductive():
@@ -409,7 +409,7 @@ class FunctionNode(ArithmeticExpressionNode):
 
     def combine_indexing_sets(self,
                               state: State,
-                              idx_set: IndexSet = None,  # length mp
+                              idx_set: IndexingSet = None,  # length mp
                               dummy_symbols: Tuple[str, ...] = None):
 
         fcn_idx_sets = self.idx_set_node.evaluate(state, idx_set, dummy_symbols)  # length mp
@@ -483,7 +483,7 @@ class BinaryArithmeticOperationNode(ArithmeticExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
                  ) -> List[float]:
 
@@ -513,7 +513,7 @@ class BinaryArithmeticOperationNode(ArithmeticExpressionNode):
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
         x_lhs = self.lhs_operand.to_lambda(state, idx_set_member, dummy_symbols)
         x_rhs = self.rhs_operand.to_lambda(state, idx_set_member, dummy_symbols)
@@ -539,7 +539,7 @@ class BinaryArithmeticOperationNode(ArithmeticExpressionNode):
 
     def collect_declared_entities(self,
                                   state: State,
-                                  idx_set: IndexSet = None,
+                                  idx_set: IndexingSet = None,
                                   dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
         vars = {}
         vars.update(self.lhs_operand.collect_declared_entities(state, idx_set, dummy_symbols))
@@ -585,7 +585,7 @@ class MultiArithmeticOperationNode(ArithmeticExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
                  ) -> List[float]:
 
@@ -622,7 +622,7 @@ class MultiArithmeticOperationNode(ArithmeticExpressionNode):
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
 
         args_all = []
@@ -654,7 +654,7 @@ class MultiArithmeticOperationNode(ArithmeticExpressionNode):
 
     def collect_declared_entities(self,
                                   state: State,
-                                  idx_set: IndexSet = None,
+                                  idx_set: IndexingSet = None,
                                   dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
         vars = {}
         for operand in self.operands:
@@ -696,7 +696,7 @@ class UnaryArithmeticOperationNode(ArithmeticExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
                  ) -> List[float]:
         x = self.operand.evaluate(state, idx_set, dummy_symbols)
@@ -711,7 +711,7 @@ class UnaryArithmeticOperationNode(ArithmeticExpressionNode):
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
         arg = self.operand.evaluate(state, idx_set_member, dummy_symbols)
         if self.operator == self.UNARY_PLUS_OPERATOR:  # Unary Plus
@@ -724,7 +724,7 @@ class UnaryArithmeticOperationNode(ArithmeticExpressionNode):
 
     def collect_declared_entities(self,
                                   state: State,
-                                  idx_set: IndexSet = None,
+                                  idx_set: IndexingSet = None,
                                   dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
         return self.operand.collect_declared_entities(state, idx_set, dummy_symbols)
 
@@ -751,7 +751,7 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
                  ) -> List[float]:
 
@@ -785,7 +785,7 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
 
         clause_count = len(self.operands)
@@ -809,7 +809,7 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
 
     def collect_declared_entities(self,
                                   state: State,
-                                  idx_set: IndexSet = None,
+                                  idx_set: IndexingSet = None,
                                   dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Variable, Parameter]]:
         count_p = 1
         if idx_set is not None:

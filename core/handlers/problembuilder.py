@@ -16,7 +16,8 @@ def build_problem_from_ampl_script(file_name: str = None,
                                    script_literal: str = None,
                                    name: str = None,
                                    description: str = None,
-                                   working_dir_path: str = None) -> Optional[Problem]:
+                                   working_dir_path: str = None,
+                                   engine: AMPLEngine = None) -> Optional[Problem]:
 
     if file_name is None and script_literal is None:
         raise ValueError("Problem builder requires either a file name or a script literal.")
@@ -36,10 +37,13 @@ def build_problem_from_ampl_script(file_name: str = None,
 
     try:
 
-        problem.engine = AMPLEngine(working_dir_path)
+        if engine is None:
+            engine = AMPLEngine(problem)
+        else:
+            engine.setup_ampl_engine(problem)
 
-        __evaluate_ampl_script(problem, problem.engine)  # clean and evaluate script
-        __retrieve_problem_data_from_ampl_engine(problem, problem.engine)  # retrieve data
+        __evaluate_ampl_script(problem, engine)  # clean and evaluate script
+        __retrieve_problem_data_from_ampl_engine(problem, engine)  # retrieve data
 
     except SystemError as e:
         print(e)
@@ -119,7 +123,7 @@ def __retrieve_set_data_from_ampl_engine(problem: Problem,
         if ampl_set.indexarity() == 0:  # non-indexed set
             raw_elements = [m for m in ampl_set.members()]
             elements = __process_set_elements(raw_elements)
-            aset = mat.ASet(symbol=sym,
+            aset = mat.SSet(symbol=sym,
                             dim=ampl_set.arity(),
                             elements=elements)
             problem.state.add_set(aset)
@@ -131,8 +135,8 @@ def __retrieve_set_data_from_ampl_engine(problem: Problem,
                 raw_elements = [m for m in ampl_set_instance.getValues().toDict().keys()]
                 elements = __process_set_elements(raw_elements)
 
-                aset = mat.ASet(symbol=sym,
-                                indices=indices,
+                aset = mat.SSet(symbol=sym,
+                                idx=indices,
                                 dim=ampl_set.arity(),
                                 elements=elements)
                 problem.state.add_set(aset)
@@ -152,7 +156,7 @@ def __retrieve_param_data_from_ampl_engine(problem: Problem,
                 if value is None:
                     value = 0
                 problem.state.add_parameter(mat.Parameter(symbol=sym,
-                                                          indices=indices,
+                                                          idx=indices,
                                                           value=value))
 
 

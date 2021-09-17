@@ -320,6 +320,88 @@ class TableAccessStatement(BaseStatement):
 # Data Statements
 # ----------------------------------------------------------------------------------------------------------------------
 
+def clean_data_statement_element(sub_element: Union[int, float, str]):
+    if isinstance(sub_element, str):
+        if sub_element.isnumeric():
+            sub_element = "'{0}'".format(sub_element)
+    return sub_element
+
+
+class SetDataStatement(BaseStatement):
+
+    def __init__(self,
+                 symbol: str,
+                 elements: mat.IndexingSet):
+        super(SetDataStatement, self).__init__()
+        self.symbol: str = symbol
+        self.elements: mat.IndexingSet = elements
+
+    @staticmethod
+    def generate_element_literal(element: mat.Element):
+
+        sub_elements = [clean_data_statement_element(se) for se in element]
+
+        if len(sub_elements) == 0:
+            return ""
+        elif len(sub_elements) == 1:
+            return str(sub_elements[0])
+        else:
+            return "({0})".format(','.join(sub_elements))
+
+    def get_literal(self, indent_level: int = 0) -> str:
+        literal = "{0}set {1} :=\n".format(indent_level * '\t', self.symbol)
+
+        for element in self.elements:
+            literal += "{0}{1}\n".format((indent_level + 1) * '\t', self.generate_element_literal(element))
+
+        literal += ';'
+
+        return literal
+
+
+class ParameterDataStatement(BaseStatement):
+
+    def __init__(self,
+                 symbol: str,
+                 type: str = "param",
+                 default_value: Union[int, float, str] = None,
+                 values: Dict[mat.Element, Union[int, float, str]] = None):
+        super(ParameterDataStatement, self).__init__()
+        self.default_value: Union[int, float, str] = default_value
+        self.type: str = type  # param or var
+        self.symbol: str = symbol
+        self.values: Dict[mat.Element, Union[int, float, str]] = values if values is not None else {}
+
+    @staticmethod
+    def generate_element_value_pair_literal(element: mat.Element, value: Union[int, float, str]):
+
+        value = clean_data_statement_element(value)
+
+        # scalar entity
+        if element is None:
+            return value
+
+        # indexed entity
+        else:
+            sub_elements = [clean_data_statement_element(se) for se in element]
+            return "{0} {1}".format(' '.join(sub_elements), value)
+
+    def get_literal(self, indent_level: int = 0) -> str:
+
+        literal = "{0}{1} {2}".format(indent_level * '\t', self.type, self.symbol)
+
+        if self.default_value is not None:
+            literal += " default {0}".format(clean_data_statement_element(self.default_value))
+
+        literal += " :=\n"
+
+        for element, value in self.values.items():
+            literal += "{0}{1}\n".format((indent_level + 1) * '\t',
+                                         self.generate_element_value_pair_literal(element, value))
+
+        literal += ';'
+
+        return literal
 
 
 # Display Statement

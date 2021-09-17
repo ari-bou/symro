@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple, Union
 from symro.core.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode, ArithmeticExpressionNode, \
     StringExpressionNode
 from symro.core.mat.dummyn import BaseDummyNode, DummyNode, CompoundDummyNode
-from symro.core.mat.util import IndexSet
+from symro.core.mat.util import IndexingSet
 from symro.core.mat.util import cartesian_product, remove_set_dimensions
 from symro.core.mat.entity import Entity
 from symro.core.mat.state import State
@@ -47,9 +47,9 @@ class SetNode(BaseSetNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[IndexSet]:
+                 ) -> List[IndexingSet]:
 
         elements = OrderedSet()
         if self.symbol in state.sets:
@@ -130,9 +130,9 @@ class OrderedSetNode(BaseSetNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[IndexSet]:
+                 ) -> List[IndexingSet]:
 
         start_elements = self.start_node.evaluate(state, idx_set, dummy_symbols)
         end_elements = self.end_node.evaluate(state, idx_set, dummy_symbols)
@@ -184,9 +184,9 @@ class EnumeratedSet(BaseSetNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[IndexSet]:
+                 ) -> List[IndexingSet]:
 
         np = len(self.element_nodes)  # number of elements in the set
 
@@ -224,9 +224,9 @@ class IndexingSetNode(SetExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[IndexSet]:
+                 ) -> List[IndexingSet]:
 
         dim_c = self.dummy_node.get_dim()  # length nc
 
@@ -343,9 +343,9 @@ class CompoundSetNode(BaseSetNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[IndexSet]:
+                 ) -> List[IndexingSet]:
 
         combined_sets = self.combine_indexing_and_component_sets(state, idx_set, dummy_symbols)
 
@@ -374,7 +374,7 @@ class CompoundSetNode(BaseSetNode):
 
     def combine_indexing_and_component_sets(self,
                                             state: State,
-                                            idx_set: IndexSet = None,  # length mp
+                                            idx_set: IndexingSet = None,  # length mp
                                             dummy_symbols: Tuple[str, ...] = None):
         """
         Combine the indexing sets and the component sets together.
@@ -399,7 +399,7 @@ class CompoundSetNode(BaseSetNode):
                 combined_dummy_syms = combined_dummy_syms + component_dummy_syms
         self.combined_dummy_syms = tuple(combined_dummy_syms)
 
-        combine_idx_sets: List[IndexSet] = []  # length mp
+        combine_idx_sets: List[IndexingSet] = []  # length mp
         for ip in range(mp):
 
             idx_set_ip = None if idx_set is None else OrderedSet(idx_set[[ip]])
@@ -424,7 +424,7 @@ class CompoundSetNode(BaseSetNode):
 
     def __filter_set(self,
                      state: State,
-                     combined_set_ip: IndexSet):
+                     combined_set_ip: IndexingSet):
         in_set = self.constraint_node.evaluate(state,
                                                combined_set_ip,
                                                self.combined_dummy_syms)

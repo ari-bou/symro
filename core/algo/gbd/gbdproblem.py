@@ -33,12 +33,12 @@ class GBDSubproblemContainer:
     def __init__(self,
                  primal_sp: Optional[BaseProblem],
                  fbl_sp: Optional[BaseProblem],
-                 sp_index: Optional[mat.IndexSetMember]):
+                 sp_index: Optional[mat.Element]):
         self.primal_sp: Optional[BaseProblem] = primal_sp
         self.fbl_sp: Optional[BaseProblem] = fbl_sp
-        self.sp_index: Optional[mat.IndexSetMember] = sp_index
-        self.comp_var_idx_sets: Dict[str, Optional[mat.IndexSet]] = {}
-        self.mixed_comp_con_idx_set: Dict[str, Optional[mat.IndexSet]] = {}
+        self.sp_index: Optional[mat.Element] = sp_index
+        self.comp_var_idx_sets: Dict[str, Optional[mat.IndexingSet]] = {}
+        self.mixed_comp_con_idx_set: Dict[str, Optional[mat.IndexingSet]] = {}
 
     def get_primal_meta_obj(self) -> mat.MetaObjective:
         return self.primal_sp.model_meta_objs[0]
@@ -58,17 +58,13 @@ class GBDProblem(Problem):
                  init_lb: float,
                  working_dir_path: str = None):
 
-        super(GBDProblem, self).__init__(engine=None,
-                                         symbol=None,
-                                         description=problem.description)
+        super(GBDProblem, self).__init__(symbol=None,
+                                         description=problem.description,
+                                         working_dir_path=working_dir_path)
         Problem.copy(self, problem)
 
         # --- Name ---
-        self.name = problem.symbol + ".gbd"
-
-        # --- I/O ---
-        self.working_dir_path: str = working_dir_path if working_dir_path is not None \
-            else problem.engine.working_dir_path
+        self.symbol = problem.symbol + ".gbd"
 
         # --- Script ---
         self.compound_script.included_scripts.clear()

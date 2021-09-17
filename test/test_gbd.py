@@ -1,24 +1,27 @@
 import symro
 from symro.test.test_util import *
+from symro.core.execution.amplengine import AMPLEngine
 
 
 VERBOSITY = 1
 
 
 def run_gbd_test_group():
-    tests = [
-             ("Run GBD on an LP", gbd_lp),
+    tests = [("Run GBD on an LP", gbd_lp),
              ("Run scenario-wise GBD on an LP", gbd_scenario_wise_lp),
              ("Run scenario-wise GBD on a production problem (convex QCP)", gbd_scenario_wise_convex_qp_production)]
     return run_tests(tests)
 
 
 def gbd_lp() -> bool:
-    problem = symro.read_ampl("lp.run",
-                              working_dir_path=SCRIPT_DIR_PATH)
 
-    problem.engine.solve(solver_name="gurobi", solver_options="outlev=1")
-    v_benchmark = problem.engine.get_obj_value("OBJ")
+    engine = AMPLEngine()
+    problem = symro.read_ampl("lp.run",
+                              working_dir_path=SCRIPT_DIR_PATH,
+                              engine=engine)
+
+    engine.solve(solver_name="gurobi", solver_options="outlev=1")
+    v_benchmark = engine.get_obj_value("OBJ")
 
     gbd = symro.GBDAlgorithm(problem,
                              mp_symbol="Master",
@@ -36,11 +39,14 @@ def gbd_lp() -> bool:
 
 
 def gbd_scenario_wise_lp() -> bool:
-    problem = symro.read_ampl("lp_sce.run",
-                              working_dir_path=SCRIPT_DIR_PATH)
 
-    problem.engine.solve(solver_name="gurobi", solver_options="outlev=1")
-    v_benchmark = problem.engine.get_obj_value("OBJ")
+    engine = AMPLEngine()
+    problem = symro.read_ampl("lp_sce.run",
+                              working_dir_path=SCRIPT_DIR_PATH,
+                              engine=engine)
+
+    engine.solve(solver_name="gurobi", solver_options="outlev=1")
+    v_benchmark = engine.get_obj_value("OBJ")
 
     gbd = symro.GBDAlgorithm(problem,
                              mp_symbol="Master",
@@ -60,11 +66,14 @@ def gbd_scenario_wise_lp() -> bool:
 
 
 def gbd_scenario_wise_convex_qp_production() -> bool:
-    problem = symro.read_ampl("convex_qp.run",
-                              working_dir_path=SCRIPT_DIR_PATH)
 
-    problem.engine.solve(solver_name="gurobi", solver_options="outlev=1")
-    v_benchmark = -problem.engine.get_obj_value("OBJ")
+    engine = AMPLEngine()
+    problem = symro.read_ampl("convex_qp.run",
+                              working_dir_path=SCRIPT_DIR_PATH,
+                              engine=engine)
+
+    engine.solve(solver_name="gurobi", solver_options="outlev=1")
+    v_benchmark = -engine.get_obj_value("OBJ")
 
     gbd = symro.GBDAlgorithm(problem,
                              mp_symbol="Master",
@@ -85,11 +94,14 @@ def gbd_scenario_wise_convex_qp_production() -> bool:
 
 
 def gbd_scenario_wise_convex_qp_refinery() -> bool:
-    problem = symro.read_ampl("refinery.run",
-                              working_dir_path=SCRIPT_DIR_PATH)
 
-    problem.engine.solve(solver_name="gurobi", solver_options="outlev=1")
-    v_benchmark = -problem.engine.get_obj_value("TOTAL_PROFIT")
+    engine = AMPLEngine()
+    problem = symro.read_ampl("refinery.run",
+                              working_dir_path=SCRIPT_DIR_PATH,
+                              engine=engine)
+
+    engine.solve(solver_name="gurobi", solver_options="outlev=1")
+    v_benchmark = -engine.get_obj_value("TOTAL_PROFIT")
 
     gbd = symro.GBDAlgorithm(problem,
                              mp_symbol="Master",

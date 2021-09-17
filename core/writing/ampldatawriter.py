@@ -1,30 +1,6 @@
 import numpy as np
 from typing import Dict, List, Tuple, Union
 
-from symro.core.prob.problem import Problem
-import symro.core.util.util as util
-
-
-def write_initialization_data_file(problem: Problem,
-                                   data_init_dir_path: str,
-                                   data_init_file_name: str):
-
-    declarations = ""
-
-    for var_sym, var_collection in problem.state.var_collections.items():
-
-        meta_var = problem.meta_vars[var_sym]
-        var_map = var_collection.entity_map
-
-        param_sym = "{0}_INIT".format(var_sym)
-        param_dim = meta_var.get_reduced_dimension()
-        values = {k: v.value for k, v in var_map.items()}
-
-        declaration = generate_param_data_statement(param_sym, param_dim, values)
-        declarations += declaration + "\n\n"
-
-    util.write_file(data_init_dir_path, data_init_file_name, declarations)
-
 
 def generate_param_data_statement(param_sym: str,
                                   dim: int,

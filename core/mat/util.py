@@ -1,8 +1,8 @@
 from ordered_set import OrderedSet
 from typing import List, Optional, Tuple, Union
 
-IndexSetMember = Tuple[Union[int, float, str, None], ...]
-IndexSet = OrderedSet[Tuple[Union[int, float, str, None], ...]]
+Element = Tuple[Union[int, float, str, None], ...]
+IndexingSet = OrderedSet[Tuple[Union[int, float, str, None], ...]]
 
 
 # Element Operations
@@ -26,7 +26,7 @@ def get_element_literal(element: Union[int, float, str]):
 # Set Operations
 # ----------------------------------------------------------------------------------------------------------------------
 
-def cartesian_product(sets: List[IndexSet]) -> IndexSet:
+def cartesian_product(sets: List[IndexingSet]) -> IndexingSet:
     """
     Combine individual sets together. Each element of the combined set is a unique combination of 1 element from each
     of the constituent sets.
@@ -34,7 +34,7 @@ def cartesian_product(sets: List[IndexSet]) -> IndexSet:
     :return: ordered set of elements comprising the combined set
     """
 
-    combined_sets: IndexSet = OrderedSet()
+    combined_sets: IndexingSet = OrderedSet()
     set_count = len(sets)
 
     def combine(index: List[Union[int, float, str]] = None, set_index: int = 0):
@@ -63,7 +63,7 @@ def cartesian_product(sets: List[IndexSet]) -> IndexSet:
     return combined_sets
 
 
-def flatten_set(set_in: OrderedSet[Tuple[Optional[Tuple[Union[int, float, str], ...]], ...]]) -> IndexSet:
+def flatten_set(set_in: OrderedSet[Tuple[Optional[Tuple[Union[int, float, str], ...]], ...]]) -> IndexingSet:
     flattened_set = OrderedSet()
     for element in set_in:
         flattened_element = []
@@ -76,7 +76,7 @@ def flatten_set(set_in: OrderedSet[Tuple[Optional[Tuple[Union[int, float, str], 
     return flattened_set
 
 
-def aggregate_set(set_in: IndexSet,
+def aggregate_set(set_in: IndexingSet,
                   dim_positions: List[int],
                   agg_values: List[Union[int, float, str, None]]):
     agg_set = OrderedSet()
@@ -88,9 +88,9 @@ def aggregate_set(set_in: IndexSet,
     return agg_set
 
 
-def filter_set(set_in: IndexSet,
+def filter_set(set_in: IndexingSet,
                filter_element: Union[List[Union[int, float, str, None]],
-                                     Tuple[Union[int, float, str, None], ...]]) -> IndexSet:
+                                     Tuple[Union[int, float, str, None], ...]]) -> IndexingSet:
     filtered_set = OrderedSet()
     for element in set_in:
         is_in_filter = [e == f or f is None for e, f in zip(element, filter_element)]
@@ -99,7 +99,7 @@ def filter_set(set_in: IndexSet,
     return filtered_set
 
 
-def remove_set_dimensions(set_in: IndexSet, dim_positions: List[int]):
+def remove_set_dimensions(set_in: IndexingSet, dim_positions: List[int]):
     dim_positions.sort(reverse=True)
     set_out = OrderedSet()
     for element in set_in:

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from functools import partial
 from typing import List, Tuple, Union
 
-from symro.core.mat.util import IndexSet, IndexSetMember
+from symro.core.mat.util import IndexingSet, Element
 from symro.core.mat.state import State
 from symro.core.mat.exprn import ExpressionNode, ArithmeticExpressionNode, StringExpressionNode
 
@@ -42,7 +42,7 @@ class DummyNode(BaseDummyNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
                  ) -> List[Union[int, float, str]]:
 
@@ -57,13 +57,13 @@ class DummyNode(BaseDummyNode):
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
         dummy = self.__control_dummy(idx_set_member, dummy_symbols)
         return partial(lambda d: d, dummy)
 
     def __control_dummy(self,
-                        idx_set_member: IndexSetMember,
+                        idx_set_member: Element,
                         dummy_symbols: Tuple[str, ...]) -> Union[int, float, str]:
         if self.symbol in dummy_symbols:
             pos = dummy_symbols.index(self.symbol)
@@ -117,7 +117,7 @@ class CompoundDummyNode(BaseDummyNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
                  ) -> List[Tuple[Union[int, float, str], ...]]:
 
@@ -136,7 +136,7 @@ class CompoundDummyNode(BaseDummyNode):
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
         dummy = tuple([c.to_lambda(state, idx_set_member, dummy_symbols)() for c in self.component_nodes])
         return partial(lambda d: d, dummy)

@@ -2,7 +2,7 @@ from typing import List, Optional, Tuple, Union
 
 from symro.core.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode
 from symro.core.mat.setn import CompoundSetNode
-from symro.core.mat.util import IndexSet
+from symro.core.mat.util import IndexingSet
 from symro.core.mat.state import State
 
 
@@ -134,9 +134,9 @@ class BinarySetOperationNode(SetExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[IndexSet]:
+                 ) -> List[IndexingSet]:
 
         lhs_arg = self.lhs_operand.evaluate(state, idx_set, dummy_symbols)
         rhs_arg = self.lhs_operand.evaluate(state, idx_set, dummy_symbols)

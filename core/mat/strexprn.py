@@ -3,7 +3,7 @@ from typing import List, Tuple, Union
 
 from symro.core.mat.exprn import StringExpressionNode
 from symro.core.mat.dummyn import BaseDummyNode
-from symro.core.mat.util import IndexSet, IndexSetMember
+from symro.core.mat.util import IndexingSet, Element
 from symro.core.mat.state import State
 
 
@@ -16,14 +16,14 @@ class StringNode(StringExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None) -> List[str]:
         count_p = 1 if idx_set is None else len(idx_set)
         return [self.literal] * count_p
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
         return partial(lambda l: l, self.literal)
 
@@ -53,7 +53,7 @@ class MultiStringOperationNode(StringExpressionNode):
 
     def evaluate(self,
                  state: State,
-                 idx_set: IndexSet = None,
+                 idx_set: IndexingSet = None,
                  dummy_symbols: Tuple[str, ...] = None
                  ) -> List[str]:
 
@@ -76,7 +76,7 @@ class MultiStringOperationNode(StringExpressionNode):
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None,
+                  idx_set_member: Element = None,
                   dummy_symbols: Tuple[str, ...] = None):
 
         args_all = []

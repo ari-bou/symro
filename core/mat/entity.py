@@ -2,43 +2,47 @@ from abc import ABC
 import re
 from typing import Dict, List, Optional, Tuple, Union
 
-from symro.core.mat.util import IndexSet
+from symro.core.mat.util import IndexingSet, Element
 
 
 class Entity(ABC):
 
     def __init__(self,
                  symbol: str,
-                 indices: Tuple[Union[int, float, str], ...] = None,
-                 is_dim_aggregated: List[bool] = None,
-                 value: Union[float, str] = 0,
-                 lb: float = 0,
-                 ub: float = 0):
+                 idx: Element = None,
+                 is_dim_aggregated: List[bool] = None):
+        """
+        Constructor of the Entity class.
+        :param symbol: unique declared symbol that identifies the entity
+        :param idx: unique indexing set element that identifies the entity if indexed, None otherwise
+        :param is_dim_aggregated: list of Boolean flags that indicates which dimensions are aggregated
+        """
 
         self.symbol: str = symbol
-        self.indices: Tuple[Union[int, float, str], ...] = indices if indices is not None else tuple([])  # length: dim
-        self.entity_id: str = self.generate_entity_id(self.symbol, self.indices)
+        self.idx: Optional[Element] = idx  # length: dim
+        self.entity_id: str = self.generate_entity_id(self.symbol, self.idx)
         self.is_dim_aggregated: List[bool] = is_dim_aggregated  # length: dim
-        self.value: Union[float, str] = value
-        self.lb: float = float(lb)
-        self.ub: float = float(ub)
 
-        if self.indices is None:
-            self.indices = tuple([])
         if self.is_dim_aggregated is None:
-            self.is_dim_aggregated = [False] * len(self.indices)
+            self.is_dim_aggregated = [False] * self.get_dim()
 
     def is_aggregate(self) -> bool:
-        return any(self.is_dim_aggregated)
+        if self.get_dim() == 0:
+            return False
+        else:
+            return any(self.is_dim_aggregated)
 
     def get_dim(self) -> int:
-        return len(self.indices)
+        if self.idx is None:
+            return 0
+        else:
+            return len(self.idx)
 
     def __str__(self):
         literal = self.symbol
-        if len(self.indices) > 0:
+        if self.get_dim() > 0:
             index_literals = []
-            for j, idx in enumerate(self.indices):
+            for j, idx in enumerate(self.idx):
                 if isinstance(idx, int) or isinstance(idx, float):
                     index_literals.append(str(idx))
                 elif isinstance(idx, str):
@@ -159,22 +163,22 @@ class Entity(ABC):
         return tuple(indices)
 
 
-class ASet(Entity):
+class SSet(Entity):
 
     def __init__(self,
                  symbol: str,
-                 indices: Tuple[Union[int, float, str], ...] = None,
+                 idx: Element = None,
                  is_dim_aggregated: List[bool] = None,
                  dim: int = 0,
-                 elements: IndexSet = None):
-        super(ASet, self).__init__(symbol=symbol,
-                                   indices=indices,
+                 elements: IndexingSet = None):
+        super(SSet, self).__init__(symbol=symbol,
+                                   idx=idx,
                                    is_dim_aggregated=is_dim_aggregated)
         self.dim: int = dim
-        self.elements: IndexSet = elements
+        self.elements: IndexingSet = elements
 
     def __eq__(self, other):
-        if isinstance(other, ASet) and self.entity_id == other.entity_id:
+        if isinstance(other, SSet) and self.entity_id == other.entity_id:
             return True
         return False
 
@@ -186,13 +190,13 @@ class Parameter(Entity):
 
     def __init__(self,
                  symbol: str,
-                 indices: Tuple[Union[int, float, str], ...] = None,
+                 idx: Element = None,
                  is_dim_aggregated: List[bool] = None,
                  value: float = 0):
         super(Parameter, self).__init__(symbol=symbol,
-                                        indices=indices,
-                                        is_dim_aggregated=is_dim_aggregated,
-                                        value=value)
+                                        idx=idx,
+                                        is_dim_aggregated=is_dim_aggregated)
+        self.value: Union[float, str] = value
 
     def __eq__(self, other):
         if isinstance(other, Parameter) and self.entity_id == other.entity_id:
@@ -204,17 +208,17 @@ class Variable(Entity):
 
     def __init__(self,
                  symbol: str,
-                 indices: Tuple[Union[int, float, str], ...],
+                 idx: Element,
                  is_dim_aggregated: List[bool] = None,
                  value: float = 0,
                  lb: float = 0,
                  ub: float = 0):
         super(Variable, self).__init__(symbol=symbol,
-                                       indices=indices,
-                                       is_dim_aggregated=is_dim_aggregated,
-                                       value=value,
-                                       lb=lb,
-                                       ub=ub)
+                                       idx=idx,
+                                       is_dim_aggregated=is_dim_aggregated)
+        self.value: Union[float, str] = value
+        self.lb: float = float(lb)
+        self.ub: float = float(ub)
 
     def __eq__(self, other):
         if isinstance(other, Variable) and self.entity_id == other.entity_id:
@@ -226,13 +230,13 @@ class Objective(Entity):
 
     def __init__(self,
                  symbol: str,
-                 indices: Tuple[Union[int, float, str], ...],
+                 idx: Element,
                  is_dim_aggregated: List[bool] = None,
                  value: float = 0):
         super(Objective, self).__init__(symbol=symbol,
-                                        indices=indices,
-                                        is_dim_aggregated=is_dim_aggregated,
-                                        value=value)
+                                        idx=idx,
+                                        is_dim_aggregated=is_dim_aggregated)
+        self.value: Union[float, str] = value
 
     def __eq__(self, other):
         if isinstance(other, Objective) and self.entity_id == other.entity_id:
@@ -244,17 +248,19 @@ class Constraint(Entity):
 
     def __init__(self,
                  symbol: str,
-                 indices: Tuple[Union[int, float, str], ...],
+                 idx: Element,
                  is_dim_aggregated: List[bool] = None,
                  value: float = 0,
                  lb: float = 0,
-                 ub: float = 0):
+                 ub: float = 0,
+                 dual: float = 0):
         super(Constraint, self).__init__(symbol=symbol,
-                                         indices=indices,
-                                         is_dim_aggregated=is_dim_aggregated,
-                                         value=value,
-                                         lb=lb,
-                                         ub=ub)
+                                         idx=idx,
+                                         is_dim_aggregated=is_dim_aggregated)
+        self.value: Union[float, str] = value
+        self.lb: float = float(lb)
+        self.ub: float = float(ub)
+        self.dual: float = dual
 
     def __eq__(self, other):
         if isinstance(other, Constraint) and self.entity_id == other.entity_id:
@@ -268,9 +274,12 @@ class Constraint(Entity):
 class EntityCollection:
 
     def __init__(self, symbol):
+
         self.symbol: str = symbol  # name of entity collection
-        # Key: index of entity instance; Value: indexed entity.
-        self.entity_map: Dict[Tuple[Union[int, float, str], ...], Entity] = {}
+
+        # key: index of entity instance; value: entity.
+        # key is None if the entity is scalar
+        self.entity_map: Dict[Element, Entity] = {}
 
     def filter(self, indices_filter: Tuple[Optional[str], ...]):
 
@@ -288,3 +297,11 @@ class EntityCollection:
                 filtered_map[entity_indices] = entity
 
         return filtered_map
+
+    def generate_value_dict(self):
+        self.entity_map: Dict[Element, Union[Parameter, Variable, Objective, Constraint]]
+        return {k: v.value for k, v in self.entity_map.items()}
+
+    def generate_dual_dict(self):
+        self.entity_map: Dict[Element, Union[Constraint]]
+        return {k: v.dual for k, v in self.entity_map.items()}

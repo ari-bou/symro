@@ -4,7 +4,7 @@ from typing import List, Optional
 from symro.core.mat.exprn import ExpressionNode
 from symro.core.mat.setn import CompoundSetNode
 from symro.core.mat.aexprn import DeclaredEntityNode
-from symro.core.mat.util import IndexSetMember
+from symro.core.mat.util import Element
 from symro.core.mat.state import State
 
 
@@ -24,7 +24,7 @@ class Expression:
 
     def to_lambda(self,
                   state: State,
-                  idx_set_member: IndexSetMember = None):
+                  idx_set_member: Element = None):
 
         if idx_set_member is not None:
             if self.indexing_set_node is None:

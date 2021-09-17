@@ -1,4 +1,4 @@
-model "lp.modr";
+model "lp.gbd.modr";
 model "lp.gbd.modm";
 model "lp.gbd.modrsl";
 let p := 5;

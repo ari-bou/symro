@@ -1,4 +1,4 @@
-model "convex_qp.modr";
+model "convex_qp.gbd.modr";
 model "convex_qp.gbd.modm";
 model "convex_qp.gbd.modrsl";
 data convex_qp.dat;

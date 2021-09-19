@@ -1,4 +1,7 @@
+import warnings
+
 import amplpy as ampl
+import numpy as np
 import os
 from typing import List, Tuple, Union, Optional
 
@@ -161,15 +164,25 @@ class AMPLEngine(Engine):
             if not meta_var.is_indexed():
                 idx_set = [None]
             else:
-                idx_set = meta_var.idx_set_node.evaluate(self.problem.state)[0]
+                idx_set = meta_var.get_reduced_idx_set(self.problem.state)
 
             for idx in idx_set:
+
                 var = self.get_var(symbol=meta_var.symbol, idx=idx)
+
+                try:
+                    lb = var.lb()
+                    ub = var.ub()
+                except Exception as e:
+                    warnings.warn(str(e))
+                    lb = -np.inf
+                    ub = np.inf
+
                 self._store_var(symbol=meta_var.symbol,
                                 idx=idx,
                                 value=var.value(),
-                                lb=var.lb(),
-                                ub=var.ub())
+                                lb=lb,
+                                ub=ub)
 
         # retrieve objective data
         for meta_obj in p.model_meta_objs:
@@ -177,7 +190,7 @@ class AMPLEngine(Engine):
             if not meta_obj.is_indexed():
                 idx_set = [None]
             else:
-                idx_set = meta_obj.idx_set_node.evaluate(self.problem.state)[0]
+                idx_set = meta_obj.get_reduced_idx_set(self.problem.state)
 
             for idx in idx_set:
                 obj = self.get_obj(symbol=meta_obj.symbol, idx=idx)
@@ -191,15 +204,27 @@ class AMPLEngine(Engine):
             if not meta_con.is_indexed():
                 idx_set = [None]
             else:
-                idx_set = meta_con.idx_set_node.evaluate(self.problem.state)[0]
+                idx_set = meta_con.get_reduced_idx_set(self.problem.state)
 
             for idx in idx_set:
+
                 con = self.get_con(symbol=meta_con.symbol, idx=idx)
+
+                try:
+                    body = con.body()
+                    lb = con.lb()
+                    ub = con.ub()
+                except Exception as e:
+                    warnings.warn(str(e))
+                    body = 0
+                    lb = -np.inf
+                    ub = np.inf
+
                 self._store_con(symbol=meta_con.symbol,
                                 idx=idx,
-                                value=con.body(),
-                                lb=con.lb(),
-                                ub=con.ub(),
+                                body=body,
+                                lb=lb,
+                                ub=ub,
                                 dual=con.dual())
 
     def get_status(self) -> str:

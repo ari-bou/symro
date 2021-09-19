@@ -28,8 +28,8 @@ def get_element_literal(element: Union[int, float, str]):
 
 def cartesian_product(sets: List[IndexingSet]) -> IndexingSet:
     """
-    Combine individual sets together. Each element of the combined set is a unique combination of 1 element from each
-    of the constituent sets.
+    Evaluate the cartesian product of two or more sets. Each element of the combined set is a unique combination of 1
+    element from each of the constituent sets.
     :param sets: list of constituent ordered sets
     :return: ordered set of elements comprising the combined set
     """

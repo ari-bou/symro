@@ -8,6 +8,7 @@ from symro.core.mat.setn import BaseSetNode, CompoundSetNode
 from symro.core.mat.lexprn import RelationalOperationNode
 from symro.core.mat.exprn import ExpressionNode
 from symro.core.mat.expression import Expression
+from symro.core.mat.util import IndexingSet, remove_set_dimensions
 
 
 # TODO: consider assigning unique numeric ids to each meta-entity
@@ -46,11 +47,36 @@ class MetaEntity(ABC):
     def get_reduced_dimension(self) -> int:
         return sum([meta_set.reduced_dimension for meta_set in self.idx_meta_sets])
 
+    def get_reduced_idx_set(self, state: State) -> Optional[IndexingSet]:
+
+        if not self.is_indexed():  # scalar entity
+            return None
+
+        else:  # indexed entity
+
+            idx_set = self.idx_set_node.evaluate(state=state)[0]
+
+            if self.get_reduced_dimension() < self.get_dimension():
+                fixed_dim_flags = self.is_dim_fixed()
+                fixed_dim_pos = [i for i, is_fixed in enumerate(fixed_dim_flags) if is_fixed]
+                idx_set = remove_set_dimensions(set_in=idx_set, dim_positions=fixed_dim_pos)
+
+            return idx_set
+
     def is_indexed(self) -> bool:
         return self.idx_set_node is not None
 
     def is_indexed_with(self, meta_set: "MetaSet") -> bool:
         return any(map(lambda ms: ms.symbol == meta_set.symbol, self.idx_meta_sets))
+
+    def is_dim_fixed(self) -> List[bool]:
+
+        combined_fixed_dim_flags = []
+
+        for idx_meta_set in self.idx_meta_sets:
+            combined_fixed_dim_flags += idx_meta_set.is_dim_fixed
+
+        return combined_fixed_dim_flags
 
     def get_first_reduced_dim_index_of_idx_set(self, meta_set: "MetaSet") -> Optional[int]:
         """

@@ -142,7 +142,7 @@ class BinarySetOperationNode(SetExpressionNode):
                  ) -> List[IndexingSet]:
 
         lhs_arg = self.lhs_operand.evaluate(state, idx_set, dummy_symbols)
-        rhs_arg = self.lhs_operand.evaluate(state, idx_set, dummy_symbols)
+        rhs_arg = self.rhs_operand.evaluate(state, idx_set, dummy_symbols)
 
         if self.operator == "union":
             return [l.union(r) for l, r in zip(lhs_arg, rhs_arg)]

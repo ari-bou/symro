@@ -130,7 +130,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
                      state: State,
                      entity_index: Tuple[Union[int, float, str], ...] = None):
         if entity_index is None:
-            entity = state.get_entity(self.symbol, tuple([]))
+            entity = state.get_entity(self.symbol)
         else:
             entity = state.get_entity(self.symbol, entity_index)
         return entity

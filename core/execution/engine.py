@@ -95,14 +95,14 @@ class Engine(ABC):
     def _store_con(self,
                    symbol: str,
                    idx: Optional[mat.Element],
-                   value: Union[int, float],
+                   body: Union[int, float],
                    lb: Union[int, float],
                    ub: Union[int, float],
                    dual: Union[int, float]):
 
         if self.problem.state.entity_exists(symbol=symbol, idx=idx):
             con = self.problem.state.get_entity(symbol=symbol, idx=idx)
-            con.value = value
+            con.value = body
             con.ub = ub
             con.lb = lb
             con.dual = dual
@@ -110,7 +110,7 @@ class Engine(ABC):
         else:
             con = mat.Constraint(symbol=symbol,
                                  idx=idx,
-                                 value=value,
+                                 value=body,
                                  lb=lb,
                                  ub=ub,
                                  dual=dual)

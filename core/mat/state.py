@@ -47,7 +47,7 @@ class State:
     # Accessors
     # ------------------------------------------------------------------------------------------------------------------
 
-    def get_entity(self, symbol: str, idx: Element) -> Optional[Entity]:
+    def get_entity(self, symbol: str, idx: Element = None) -> Optional[Entity]:
         if symbol in self.set_collections:
             return self.set_collections[symbol].entity_map[idx]
         elif symbol in self.param_collections:

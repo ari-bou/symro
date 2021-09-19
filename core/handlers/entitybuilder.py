@@ -744,11 +744,12 @@ class EntityBuilder:
                     # compound dummy node
                     elif isinstance(dummy_node, mat.CompoundDummyNode):
                         for component_dummy_node in dummy_node.component_nodes:
-                            scope = handle_dummy_node(component_set_node.id, component_dummy_node)
-                            if scope == 1:
-                                is_middle = True
-                            elif scope == 0:
-                                is_inner = True
+                            if isinstance(component_dummy_node, mat.DummyNode):
+                                scope = handle_dummy_node(component_set_node.id, component_dummy_node)
+                                if scope == 1:
+                                    is_middle = True
+                                elif scope == 0:
+                                    is_inner = True
 
                     if is_inner:
                         inner_set_node_ids.add(component_set_node.id)

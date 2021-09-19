@@ -320,10 +320,21 @@ class TableAccessStatement(BaseStatement):
 # Data Statements
 # ----------------------------------------------------------------------------------------------------------------------
 
+SPECIAL_CHARS = "!@#$%^&*()-+?=,<>/ "
+
+
 def clean_data_statement_element(sub_element: Union[int, float, str]):
     if isinstance(sub_element, str):
+
         if sub_element.isnumeric():
             sub_element = "'{0}'".format(sub_element)
+
+        elif any(c in SPECIAL_CHARS for c in sub_element):
+            sub_element = "'{0}'".format(sub_element)
+
+    else:
+        sub_element = str(sub_element)
+
     return sub_element
 
 

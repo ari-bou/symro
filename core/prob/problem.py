@@ -94,8 +94,11 @@ class Problem(BaseProblem):
         self.compound_script: Optional[stm.CompoundScript] = None
         self.script_commands: Dict[str, List[SpecialCommand]] = {}  # Key: flag. Value: list of script commands.
 
-        # --- Meta-Entities ---
+        # --- Symbols ---
         self.symbols: Set[str] = set()
+        self.unbound_symbols: Set[str] = set()
+
+        # --- Meta-Entities ---
         self.meta_sets: Dict[str, Optional[mat.MetaSet]] = {}
         self.meta_params: Dict[str, Optional[mat.MetaParameter]] = {}
         self.meta_vars: Dict[str, Optional[mat.MetaVariable]] = {}
@@ -123,6 +126,7 @@ class Problem(BaseProblem):
         self.compound_script.copy(source.compound_script)
 
         self.symbols = set(source.symbols)
+        self.unbound_symbols = set(source.unbound_symbols)
 
         self.meta_sets = dict(source.meta_sets)
         self.meta_params = dict(source.meta_params)

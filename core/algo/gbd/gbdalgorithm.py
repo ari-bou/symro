@@ -7,6 +7,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 import symro.core.mat as mat
 from symro.core.prob.problem import Problem
 
+from symro.core.execution.engine import Engine
 from symro.core.execution.amplengine import AMPLEngine
 
 from symro.core.parsing import outputparser
@@ -40,7 +41,7 @@ class GBDAlgorithm:
 
         # --- Handlers ---
         self.__gbd_problem_builder: GBDProblemBuilder = GBDProblemBuilder(problem)
-        self.__engine: Optional[AMPLEngine] = None
+        self.__engine: Optional[Engine] = None
 
         # --- Options ---
 
@@ -134,12 +135,9 @@ class GBDAlgorithm:
 
         # --- Execution ---
 
+        self.__setup_engine()
+
         self.__log_message("Running GBD")
-
-        self.__engine = AMPLEngine(self.gbd_problem)
-        self.__engine.can_store_soln = False
-
-        self.__evaluate_script()
 
         try:
             v_ub, y = self.__run_algorithm()
@@ -156,10 +154,10 @@ class GBDAlgorithm:
 
         return v_ub, y
 
-    def __evaluate_script(self):
-        self.__log_message("Reading model and data")
-        script_literal = self.gbd_problem.compound_script.main_script.get_literal()
-        self.__engine.api.eval(script_literal + '\n')
+    def __setup_engine(self):
+        self.__log_message("Setting up engine")
+        self.__engine = AMPLEngine(self.gbd_problem)
+        self.__engine.can_store_soln = False
 
     def __run_algorithm(self):
 
@@ -538,7 +536,7 @@ class GBDAlgorithm:
         y = {}
         cut_count = self.__get_cut_count()
 
-        for _, comp_meta_var in self.gbd_problem.get_comp_meta_vars().items():
+        for _, comp_meta_var in self.gbd_problem.comp_meta_vars.items():
 
             var_sym = comp_meta_var.symbol
             storage_sym = var_sym + "_stored"
@@ -547,7 +545,7 @@ class GBDAlgorithm:
             if comp_meta_var.get_dimension() == 0:
                 value = self.__engine.get_var_value(var_sym)
                 value = modify_value(value, comp_meta_var)
-                self.__engine.set_param_value(storage_sym, [cut_count], value)
+                self.__engine.set_param_value(storage_sym, (cut_count,), value)
                 y[var_sym] = value
 
             # Indexed variable
@@ -564,7 +562,7 @@ class GBDAlgorithm:
                 for var_idx in var_idx_set:
                     value = self.__engine.get_var_value(var_sym, var_idx)
                     value = modify_value(value, comp_meta_var)
-                    self.__engine.set_param_value(storage_sym, list(var_idx) + [cut_count], value)
+                    self.__engine.set_param_value(storage_sym, var_idx + (cut_count,), value)
                     y_var[var_idx] = value
 
         return y
@@ -575,22 +573,18 @@ class GBDAlgorithm:
 
         for var_sym, idx_set in sp_container.comp_var_idx_sets.items():
 
-            storage_sym = var_sym + "_stored"
+            storage_sym = self.gbd_problem.stored_comp_decisions[var_sym].symbol
 
             # scalar variable
             if self.gbd_problem.meta_vars[var_sym].get_dimension() == 0:
-                value = self.__engine.get_param_value(storage_sym, [cut_count])
-                var = self.__engine.api.getVariable(var_sym)
-                var.fix(value)
+                value = self.__engine.get_param_value(storage_sym, (cut_count,))
+                self.__engine.fix_var(symbol=var_sym, value=value)
 
             # indexed variable
             else:
-
                 for var_index in idx_set:
-                    value = self.__engine.get_param_value(storage_sym, list(var_index) + [cut_count])
-                    var = self.__engine.api.getVariable(var_sym)
-                    var = var.get(var_index)
-                    var.fix(value)
+                    value = self.__engine.get_param_value(storage_sym, var_index + (cut_count,))
+                    self.__engine.fix_var(symbol=var_sym, idx=var_index, value=value)
 
     # Dual Solution
     # ------------------------------------------------------------------------------------------------------------------
@@ -635,14 +629,14 @@ class GBDAlgorithm:
             # scalar constraint
             if not isinstance(dual_mult_values[dual_mult.symbol], dict):
                 self.__engine.set_param_value(symbol=dual_mult.symbol,
-                                              indices=[cut_count],
+                                              idx=(cut_count,),
                                               value=dual_mult_values[dual_mult.symbol])
 
             # indexed constraint
             else:
                 for dual_index, value in dual_mult_values[dual_mult.symbol].items():
                     self.__engine.set_param_value(symbol=dual_mult.symbol,
-                                                  indices=list(dual_index) + [cut_count],
+                                                  idx=dual_index + (cut_count,),
                                                   value=value)
 
     @staticmethod
@@ -763,16 +757,16 @@ class GBDAlgorithm:
     def __set_is_feasible_flag(self, flag: bool):
         num_flag = 1 if flag else 0
         cut_count = self.__get_cut_count()
-        self.__engine.set_param_value(self.gbd_problem.is_feasible_sym, [cut_count], num_flag)
+        self.__engine.set_param_value(self.gbd_problem.is_feasible_sym, (cut_count,), num_flag)
 
     def __set_stored_obj_value(self, value: float):
         cut_count = self.__get_cut_count()
-        self.__engine.set_param_value(self.gbd_problem.stored_obj_sym, [cut_count], value)
+        self.__engine.set_param_value(self.gbd_problem.stored_obj_sym, (cut_count,), value)
 
     def __update_stored_obj_value(self, added_value: float):
         cut_count = self.__get_cut_count()
-        value = self.__engine.get_param_value(self.gbd_problem.stored_obj_sym, [cut_count])
-        self.__engine.set_param_value(self.gbd_problem.stored_obj_sym, [cut_count], value + added_value)
+        value = self.__engine.get_param_value(self.gbd_problem.stored_obj_sym, (cut_count,))
+        self.__engine.set_param_value(self.gbd_problem.stored_obj_sym, (cut_count,), value + added_value)
 
     def __get_sp_obj_value(self,
                            obj: mat.MetaObjective,

@@ -18,7 +18,8 @@ def gbd_lp() -> bool:
     engine = AMPLEngine()
     problem = symro.read_ampl("lp.run",
                               working_dir_path=SCRIPT_DIR_PATH,
-                              engine=engine)
+                              engine=engine,
+                              can_clean_script=True)
 
     engine.solve(solver_name="gurobi", solver_options="outlev=1")
     v_benchmark = engine.get_obj_value("OBJ")
@@ -43,7 +44,8 @@ def gbd_scenario_wise_lp() -> bool:
     engine = AMPLEngine()
     problem = symro.read_ampl("lp_sce.run",
                               working_dir_path=SCRIPT_DIR_PATH,
-                              engine=engine)
+                              engine=engine,
+                              can_clean_script=True)
 
     engine.solve(solver_name="gurobi", solver_options="outlev=1")
     v_benchmark = engine.get_obj_value("OBJ")
@@ -70,7 +72,8 @@ def gbd_scenario_wise_convex_qp_production() -> bool:
     engine = AMPLEngine()
     problem = symro.read_ampl("convex_qp.run",
                               working_dir_path=SCRIPT_DIR_PATH,
-                              engine=engine)
+                              engine=engine,
+                              can_clean_script=True)
 
     engine.solve(solver_name="gurobi", solver_options="outlev=1")
     v_benchmark = -engine.get_obj_value("OBJ")
@@ -98,7 +101,8 @@ def gbd_scenario_wise_convex_qp_refinery() -> bool:
     engine = AMPLEngine()
     problem = symro.read_ampl("refinery.run",
                               working_dir_path=SCRIPT_DIR_PATH,
-                              engine=engine)
+                              engine=engine,
+                              can_clean_script=True)
 
     engine.solve(solver_name="gurobi", solver_options="outlev=1")
     v_benchmark = -engine.get_obj_value("TOTAL_PROFIT")

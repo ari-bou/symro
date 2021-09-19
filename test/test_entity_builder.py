@@ -64,7 +64,7 @@ def sub_meta_entity_builder_test():
     sub_meta_entity = entity_builder.build_sub_meta_entity(idx_subset_node=idx_subset_node,
                                                            meta_entity=mv_1,
                                                            entity_idx_node=idx_node)
-    results.append(check_str_result(sub_meta_entity, "var VAR_1{i in NUM_SET: i in {i1 in EVEN_SET}}"))
+    results.append(check_str_result(sub_meta_entity, "var VAR_1{i in NUM_SET: i in {i2 in EVEN_SET}}"))
 
     # test 3: {i in NUM_SET} VAR_1[5]
     idx_node = ampl_parser.parse_entity_index("[5]")
@@ -79,7 +79,7 @@ def sub_meta_entity_builder_test():
     sub_meta_entity = entity_builder.build_sub_meta_entity(idx_subset_node=idx_subset_node,
                                                            meta_entity=mv_2,
                                                            entity_idx_node=idx_node)
-    s = "var VAR_2{i in NUM_SET, j in LETTER_SET: (i,j) in {i1 in EVEN_SET, j1 in VOWEL_SET}}"
+    s = "var VAR_2{i in NUM_SET, j in LETTER_SET: (i,j) in {i3 in EVEN_SET, j1 in VOWEL_SET}}"
     results.append(check_str_result(sub_meta_entity, s))
 
     # test 5: {i in NUM_SET, j in INDEXED_SET[i]} VAR_1[j]
@@ -88,7 +88,7 @@ def sub_meta_entity_builder_test():
     sub_meta_entity = entity_builder.build_sub_meta_entity(idx_subset_node=idx_subset_node,
                                                            meta_entity=mv_1,
                                                            entity_idx_node=idx_node)
-    s = "var VAR_1{i in NUM_SET: i in union{i1 in NUM_SET}{j1 in INDEXED_SET[i]}}"
+    s = "var VAR_1{i in NUM_SET: i in union{i4 in NUM_SET}{j2 in INDEXED_SET[i]}}"
     results.append(check_str_result(sub_meta_entity, s))
 
     # test 6: {i in NUM_SET, (j,k) in INDEXED_SET_2[i]} VAR_2[j,k]
@@ -97,7 +97,7 @@ def sub_meta_entity_builder_test():
     sub_meta_entity = entity_builder.build_sub_meta_entity(idx_subset_node=idx_subset_node,
                                                            meta_entity=mv_2,
                                                            entity_idx_node=idx_node)
-    s = "var VAR_2{i in NUM_SET, j in LETTER_SET: (i,j) in union{i1 in NUM_SET}{(j1,k1) in INDEXED_SET_2[i]}}"
+    s = "var VAR_2{i in NUM_SET, j in LETTER_SET: (i,j) in union{i5 in NUM_SET}{(j3,k1) in INDEXED_SET_2[i]}}"
     results.append(check_str_result(sub_meta_entity, s))
 
     # problem.engine.api.reset()

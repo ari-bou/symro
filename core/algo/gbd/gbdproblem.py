@@ -55,7 +55,6 @@ class GBDProblem(Problem):
                  default_primal_sp_symbol: str,
                  default_fbl_sp_symbol: str,
                  primal_sp_obj_sym: str,
-                 init_lb: float,
                  working_dir_path: str = None):
 
         super(GBDProblem, self).__init__(symbol=None,
@@ -72,73 +71,51 @@ class GBDProblem(Problem):
         # --- Symbols ---
 
         self.mp_symbol: str = mp_symbol if mp_symbol is not None else DEFAULT_MP_SYMBOL
+        self.mp_symbol = self.generate_unique_symbol(self.mp_symbol)
 
         self.default_primal_sp_sym: str = default_primal_sp_symbol if default_primal_sp_symbol is not None \
             else DEFAULT_PRIMAL_SP_SYMBOL
+        self.default_primal_sp_sym = self.generate_unique_symbol(self.default_primal_sp_sym)
 
         self.default_fbl_sp_sym: str = default_fbl_sp_symbol if default_fbl_sp_symbol is not None \
             else DEFAULT_FBL_SP_SYMBOL
+        self.default_fbl_sp_sym = self.generate_unique_symbol(self.default_fbl_sp_sym)
 
-        self.cuts_sym: str = CUTS_SET_SYMBOL
+        self.cuts_unb_sym: str = "ct"
+        self.cuts_sym: str = self.generate_unique_symbol(CUTS_SET_SYMBOL)
 
-        self.cut_count_sym = CUT_COUNT_PARAM_SYMBOL
-        self.is_feasible_sym = IS_FEASIBLE_PARAM_SYMBOL
-        self.stored_obj_sym = STORED_OBJ_PARAM_SYMBOL
+        self.cut_count_sym = self.generate_unique_symbol(CUT_COUNT_PARAM_SYMBOL)
+        self.is_feasible_sym = self.generate_unique_symbol(IS_FEASIBLE_PARAM_SYMBOL)
+        self.stored_obj_sym = self.generate_unique_symbol(STORED_OBJ_PARAM_SYMBOL)
 
-        self.eta_sym = ETA_VAR_SYMBOL
+        self.eta_sym = self.generate_unique_symbol(ETA_VAR_SYMBOL)
 
-        self.mp_obj_sym: str = MASTER_OBJ_SYMBOL
+        self.mp_obj_sym: str = self.generate_unique_symbol(MASTER_OBJ_SYMBOL)
         self.primal_sp_obj_sym: str = primal_sp_obj_sym
-        self.default_fbl_sp_obj_sym: str = FBL_OBJ_SYMBOL
+        self.default_fbl_sp_obj_sym: str = self.generate_unique_symbol(FBL_OBJ_SYMBOL)
 
-        self.opt_cut_con_sym = OPT_CUT_CON_SYMBOL
-        self.fbl_cut_con_sym = FBL_CUT_CON_SYMBOL
-        self.can_int_cut_con_sym = CAN_INT_CUT_CON_SYMBOL
+        self.opt_cut_con_sym = self.generate_unique_symbol(OPT_CUT_CON_SYMBOL)
+        self.fbl_cut_con_sym = self.generate_unique_symbol(FBL_CUT_CON_SYMBOL)
+        self.can_int_cut_con_sym = self.generate_unique_symbol(CAN_INT_CUT_CON_SYMBOL)
 
         # --- Algorithm Meta-Entities ---
 
-        entity_builder = EntityBuilder(problem)
-
-        # Meta-Sets and Meta-Parameters
-
+        # Meta-Sets
         self.idx_meta_sets: Dict[str, mat.MetaSet] = {}
+        self.cuts: Optional[mat.MetaSet] = None
 
-        self.cut_count = entity_builder.build_meta_param(symbol=self.cut_count_sym,
-                                                         default_value=0)
-        self.add_meta_parameter(self.cut_count, is_in_model=False)
-
-        cuts_idx_sym = "ct"
-        ord_set_node = mat.OrderedSetNode(mat.NumericNode(1),
-                                          mat.DeclaredEntityNode(self.cut_count_sym,
-                                                                 type=const.PARAM_TYPE))
-        self.cuts = entity_builder.build_meta_set(symbol=self.cuts_sym,
-                                                  dimension=1,
-                                                  dummy_symbols=[cuts_idx_sym],
-                                                  reduced_dummy_symbols=[cuts_idx_sym],
-                                                  set_node=ord_set_node)
-        self.add_meta_set(self.cuts, is_in_model=False)
-
-        self.is_feasible = entity_builder.build_meta_param(symbol=self.is_feasible_sym,
-                                                           idx_meta_sets=[self.cuts],
-                                                           default_value=0)
-        self.add_meta_parameter(self.is_feasible, is_in_model=False)
-
-        self.stored_obj = entity_builder.build_meta_param(symbol=self.stored_obj_sym,
-                                                          idx_meta_sets=[self.cuts],
-                                                          default_value=0)
-        self.add_meta_parameter(self.stored_obj, is_in_model=False)
-
+        # Meta-Parameters
+        self.cut_count: Optional[mat.MetaParameter] = None
+        self.is_feasible: Optional[mat.MetaParameter] = None
+        self.stored_obj: Optional[mat.MetaParameter] = None
         self.stored_comp_decisions: Dict[str, mat.MetaParameter] = {}
-
         self.duality_multipliers: Dict[int, mat.MetaParameter] = {}
 
         # Meta-Variables
 
         self.comp_meta_vars: Dict[str, mat.MetaVariable] = {}
 
-        self.eta = entity_builder.build_meta_var(symbol=self.eta_sym,
-                                                 lower_bound=init_lb)
-        self.add_meta_variable(self.eta, is_in_model=False)
+        self.eta: Optional[mat.MetaVariable] = None
 
         self.slack_vars: Dict[str, mat.MetaVariable] = {}
 
@@ -174,14 +151,44 @@ class GBDProblem(Problem):
 
         self.mp: Optional[BaseProblem] = None
 
+    def build_mp_constructs(self, init_lb: float):
+
+        entity_builder = EntityBuilder(self)
+
+        self.cut_count = entity_builder.build_meta_param(symbol=self.cut_count_sym,
+                                                         default_value=0)
+        self.add_meta_parameter(self.cut_count, is_in_model=False)
+
+        self.cuts_unb_sym = self.generate_unique_symbol("ct")
+        ord_set_node = mat.OrderedSetNode(id=self.generate_free_node_id(),
+                                          start_node=mat.NumericNode(id=self.generate_free_node_id(), value=1),
+                                          end_node=mat.DeclaredEntityNode(self.cut_count_sym,
+                                                                          type=const.PARAM_TYPE))
+        self.cuts = entity_builder.build_meta_set(symbol=self.cuts_sym,
+                                                  dimension=1,
+                                                  dummy_symbols=[self.cuts_unb_sym],
+                                                  reduced_dummy_symbols=[self.cuts_unb_sym],
+                                                  set_node=ord_set_node)
+        self.add_meta_set(self.cuts, is_in_model=False)
+
+        self.is_feasible = entity_builder.build_meta_param(symbol=self.is_feasible_sym,
+                                                           idx_meta_sets=[self.cuts],
+                                                           default_value=0)
+        self.add_meta_parameter(self.is_feasible, is_in_model=False)
+
+        self.stored_obj = entity_builder.build_meta_param(symbol=self.stored_obj_sym,
+                                                          idx_meta_sets=[self.cuts],
+                                                          default_value=0)
+        self.add_meta_parameter(self.stored_obj, is_in_model=False)
+
+        # Meta-Variables
+
+        self.eta = entity_builder.build_meta_var(symbol=self.eta_sym,
+                                                 lower_bound=init_lb)
+        self.add_meta_variable(self.eta, is_in_model=False)
+
     def get_idx_meta_sets(self) -> List[mat.MetaSet]:
         return [ms for ms in self.idx_meta_sets.values()]
 
-    def get_lvl_idx_set_dim(self) -> int:
-        return sum([ms.get_reduced_dimension() for ms in self.idx_meta_sets.values()])
-
     def get_comp_var_syms(self) -> List[str]:
         return [mv.symbol for mv in self.comp_meta_vars.values()]
-
-    def get_comp_meta_vars(self) -> Dict[str, mat.MetaVariable]:
-        return self.comp_meta_vars

@@ -15,7 +15,7 @@ param lambda_CON1{ct in CUTS} default 0;
 # beginregion
 var eta >= -100000;
 var GBD_F{ct in CUTS} = ((10 * p * y) - (10 * p * y_stored[ct]));
-var GBD_G_0{ct in CUTS} = ((p * y) - (p * y_stored[ct]));
+var GBD_G_0{ct in CUTS} = ((-1 * p * y) - (-1 * p * y_stored[ct]));
 # endregion 
 
 

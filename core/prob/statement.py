@@ -688,11 +688,11 @@ class Script:
 
     def __init__(self,
                  id: str = "main",
-                 literal: str = None,
+                 raw_literal: str = None,
                  tokens: List[str] = None,
                  statements: List[BaseStatement] = None):
         self.id: str = id
-        self.literal: str = literal
+        self.raw_literal: str = raw_literal
         self.tokens: List[str] = tokens
         self.token_index: int = 0
         self.statements: List[BaseStatement] = statements if statements is not None else []
@@ -705,7 +705,7 @@ class Script:
 
     def copy(self, source: "Script"):
         self.id = source.id
-        self.literal = source.literal
+        self.raw_literal = source.raw_literal
         self.tokens = list(source.tokens)
         self.token_index = source.token_index
         self.statements = list(source.statements)

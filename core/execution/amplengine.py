@@ -2,8 +2,10 @@ import amplpy as ampl
 import os
 from typing import List, Tuple, Union, Optional
 
+import symro.core.constants as const
 import symro.core.mat as mat
-from symro.core.prob.problem import Problem, BaseProblem
+from symro.core.prob.problem import Problem
+import symro.core.prob.statement as stm
 from symro.core.execution.engine import Engine
 
 
@@ -21,7 +23,12 @@ class AMPLEngine(Engine):
         if problem is not None:
             self.setup_ampl_engine(problem)
 
-    def setup_ampl_engine(self, problem: Problem):
+    # Setup
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def setup_ampl_engine(self,
+                          problem: Problem,
+                          can_clean_script: bool = False):
 
         self.problem = problem
         self.api = ampl.AMPL()
@@ -37,6 +44,48 @@ class AMPLEngine(Engine):
             self.api.cd(working_dir_path)
 
         self.api.reset()
+
+        self.__evaluate_ampl_script(can_clean_script=can_clean_script)
+
+    def __evaluate_ampl_script(self, can_clean_script: bool = False):
+        if can_clean_script:
+            script_literal = self.__clean_script(self.problem.compound_script.main_script)
+        else:
+            script_literal = self.problem.compound_script.main_script.get_literal()
+        self.api.eval(script_literal + '\n')
+
+    @staticmethod
+    def __clean_script(script: stm.Script) -> str:
+
+        def validate(sta: stm.BaseStatement):
+            if isinstance(sta, stm.SolveStatement):
+                return False
+            elif isinstance(sta, stm.DisplayStatement):
+                return False
+            elif isinstance(sta, stm.Comment):
+                return False
+            elif isinstance(sta, stm.SpecialCommandStatement):
+                return False
+            else:
+                return True
+
+        cleaned_statements = []
+        can_omit = False
+        for statement in script.statements:
+
+            # TODO: handle nested @OMIT commands
+            if isinstance(statement, stm.SpecialCommandStatement):
+                if statement.special_command.symbol == const.SPECIAL_COMMAND_NOEVAL:
+                    can_omit = True
+                elif statement.special_command.symbol == const.SPECIAL_COMMAND_EVAL:
+                    can_omit = False
+
+            else:
+                if not can_omit:
+                    cleaned_statements.append(statement)
+
+        cleaned_script = stm.Script(statements=cleaned_statements)
+        return cleaned_script.get_validated_literal(validator=validate)
 
     # Modelling
     # ------------------------------------------------------------------------------------------------------------------
@@ -66,6 +115,13 @@ class AMPLEngine(Engine):
 
         self.api.eval("problem {0};".format(problem_literal))
 
+    def fix_var(self,
+                symbol: str,
+                idx: Optional[mat.Element] = None,
+                value: Union[int, float, str] = None):
+        var = self.get_var(symbol=symbol, idx=idx)
+        var.fix(value)
+
     # Solve
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -83,6 +139,9 @@ class AMPLEngine(Engine):
 
         if self.can_store_soln:
             self.__store_solution()
+
+    # Storage
+    # ------------------------------------------------------------------------------------------------------------------
 
     def __store_solution(self):
 
@@ -222,78 +281,59 @@ class AMPLEngine(Engine):
 
     def get_param_value(self,
                         symbol: str,
-                        indices: Union[Tuple, List] = None):
+                        idx: Optional[mat.Element] = None):
         param = self.api.getParameter(symbol)
         if param.indexarity() > 0:
-            param.get(indices)
+            param.get(idx)
         else:
             return param.value()
 
     def get_var_value(self,
                       symbol: str,
-                      indices: Union[Tuple, List] = None):
+                      idx: Optional[mat.Element] = None):
         var = self.api.getVariable(symbol)
-        var = self.get_entity_instance(var, indices)
+        var = self.get_entity_instance(var, idx)
         return var.value()
 
     def get_obj_value(self,
                       symbol: str,
-                      indices: Union[Tuple, List] = None):
+                      idx: Optional[mat.Element] = None):
         obj = self.api.getObjective(symbol)
-        obj = self.get_entity_instance(obj, indices)
+        obj = self.get_entity_instance(obj, idx)
         return obj.value()
 
     def get_con_value(self,
                       symbol: str,
-                      indices: Union[Tuple, List] = None):
+                      idx: Optional[mat.Element] = None):
         con = self.api.getConstraint(symbol)
-        con = self.get_entity_instance(con, indices)
+        con = self.get_entity_instance(con, idx)
         return con.value()
 
-    def get_entity_value(self,
-                         symbol: str,
-                         indices: Union[Tuple, List],
-                         etype: str) -> float:
-        if etype == "param":
-            return self.get_param_value(symbol, indices)
-        elif etype == "var":
-            return self.get_var_value(symbol, indices)
-        elif etype == "obj":
-            return self.get_obj_value(symbol, indices)
-        elif etype == "con":
-            return self.get_con_value(symbol, indices)
-        else:
-            raise ValueError("Encountered unexpected symbol.")
-
-    def get_con_dual(self, symbol: str, indices: Union[Tuple, List] = None) -> float:
+    def get_con_dual(self,
+                     symbol: str,
+                     idx: Optional[mat.Element] = None) -> float:
         con = self.api.getConstraint(symbol)
         if con.indexarity() == 1:
-            return con.getValues().toDict()[indices[0]]
+            return con.getValues().toDict()[idx[0]]
         elif con.indexarity() > 1:
-            return con.getValues().toDict()[tuple(indices)]
+            return con.getValues().toDict()[tuple(idx)]
         else:
             return con.dual()
 
-    def set_param_value(self, symbol: str, indices: Optional[Union[tuple, list]], value: float):
+    def set_param_value(self,
+                        symbol: str,
+                        idx: Optional[mat.Element],
+                        value: Union[int, float, str]):
         param = self.api.getParameter(symbol)
         if param.indexarity() > 0:
-            param.set(indices, value)
+            param.set(idx, value)
         else:
             param.set(value)
 
-    def set_var_value(self, symbol: str, indices: Union[tuple, list], value: float):
+    def set_var_value(self,
+                      symbol: str,
+                      idx: Optional[mat.Element],
+                      value: float):
         var = self.api.getVariable(symbol)
-        var = self.get_entity_instance(var, indices)
+        var = self.get_entity_instance(var, idx)
         var.set(value)
-
-    def set_entity_value(self,
-                         symbol: str,
-                         indices: list,
-                         value: float,
-                         etype: str):
-        if etype == "param":
-            self.set_param_value(symbol, indices, value)
-        elif etype == "var":
-            self.set_var_value(symbol, indices, value)
-        else:
-            raise ValueError("Encountered unexpected symbol.")

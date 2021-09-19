@@ -19,6 +19,12 @@ class NodeBuilder:
     def generate_unique_symbol(self,
                                base_symbol: str = None,
                                symbol_blacklist: Iterable[str] = None):
+        """
+        Generate a unique entity symbol that has not been assigned to a previously declared entity.
+        :param base_symbol: prefix of the symbol
+        :param symbol_blacklist: string literals to omit when eliciting a unique symbol
+        :return:
+        """
 
         if base_symbol is None:
             base_symbol = "ENTITY"
@@ -27,7 +33,7 @@ class NodeBuilder:
 
         i = 1
         sym = base_symbol
-        while sym in symbol_blacklist or sym in self._problem.symbols:
+        while sym in symbol_blacklist or sym in self._problem.symbols or sym in self._problem.unbound_symbols:
             sym = base_symbol + str(i)
             i += 1
 
@@ -237,7 +243,9 @@ class NodeBuilder:
         defined_symbols = set(outer_scope_unbound_syms) | current_scope_unbound_syms  # union
         defined_symbols = defined_symbols | set(blacklisted_unbound_syms)  # union
         for non_unique_unbound_sym in mapping:
-            unique_unbound_sym = self.generate_unique_symbol(non_unique_unbound_sym, defined_symbols)
+            unique_unbound_sym = self.generate_unique_symbol(base_symbol=non_unique_unbound_sym,
+                                                             symbol_blacklist=defined_symbols)
+            self._problem.unbound_symbols.add(unique_unbound_sym)
             mapping[non_unique_unbound_sym] = unique_unbound_sym
 
         return mapping
@@ -570,16 +578,7 @@ class NodeBuilder:
                                                  rhs_operand=den)
 
     def add_negative_unity_coefficient(self, node: mat.ArithmeticExpressionNode):
-        if isinstance(node, mat.NumericNode):
-            node.value *= -1
-            return node
-        else:
-            coeff_node = mat.NumericNode(id=self.generate_free_node_id(), value=-1)
-            mult_node = mat.BinaryArithmeticOperationNode(id=self.generate_free_node_id(),
-                                                          operator='*',
-                                                          lhs_operand=coeff_node,
-                                                          rhs_operand=node)
-            return mult_node
+        return AMPLParser.add_negative_unity_coefficient(node, self.generate_free_node_id)
 
     # Utility
     # ------------------------------------------------------------------------------------------------------------------

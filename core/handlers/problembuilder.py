@@ -14,10 +14,11 @@ import symro.core.util.util as util
 
 def build_problem_from_ampl_script(file_name: str = None,
                                    script_literal: str = None,
+                                   working_dir_path: str = None,
                                    name: str = None,
                                    description: str = None,
-                                   working_dir_path: str = None,
-                                   engine: AMPLEngine = None) -> Optional[Problem]:
+                                   engine: AMPLEngine = None,
+                                   can_clean_script: bool = False) -> Optional[Problem]:
 
     if file_name is None and script_literal is None:
         raise ValueError("Problem builder requires either a file name or a script literal.")
@@ -40,9 +41,9 @@ def build_problem_from_ampl_script(file_name: str = None,
         if engine is None:
             engine = AMPLEngine(problem)
         else:
-            engine.setup_ampl_engine(problem)
+            engine.setup_ampl_engine(problem,
+                                     can_clean_script=can_clean_script)
 
-        __evaluate_ampl_script(problem, engine)  # clean and evaluate script
         __retrieve_problem_data_from_ampl_engine(problem, engine)  # retrieve data
 
     except SystemError as e:
@@ -52,50 +53,6 @@ def build_problem_from_ampl_script(file_name: str = None,
     __complete_meta_entity_construction(problem)  # construct indexing meta-sets and subproblems
 
     return problem
-
-
-# AMPL Evaluation
-# ----------------------------------------------------------------------------------------------------------------------
-
-def __evaluate_ampl_script(problem: Problem,
-                           ampl_engine: AMPLEngine):
-    cleaned_script_literal = __clean_script(problem.compound_script.main_script)
-    ampl_engine.api.eval(cleaned_script_literal)
-
-
-def __clean_script(script: stm.Script) -> str:
-
-    def validate(sta: stm.BaseStatement):
-        if isinstance(sta, stm.SolveStatement):
-            return False
-        elif isinstance(sta, stm.ProblemStatement):
-            return False
-        elif isinstance(sta, stm.DisplayStatement):
-            return False
-        elif isinstance(sta, stm.Comment):
-            return False
-        elif isinstance(sta, stm.SpecialCommandStatement):
-            return False
-        else:
-            return True
-
-    cleaned_statements = []
-    can_omit = False
-    for statement in script.statements:
-
-        # TODO: handle nested @OMIT commands
-        if isinstance(statement, stm.SpecialCommandStatement):
-            if statement.special_command.symbol == const.SPECIAL_COMMAND_NOEVAL:
-                can_omit = True
-            elif statement.special_command.symbol == const.SPECIAL_COMMAND_EVAL:
-                can_omit = False
-
-        else:
-            if not can_omit:
-                cleaned_statements.append(statement)
-
-    cleaned_script = stm.Script(statements=cleaned_statements)
-    return cleaned_script.get_validated_literal(validator=validate)
 
 
 # Problem Data

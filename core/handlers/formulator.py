@@ -85,10 +85,9 @@ class Formulator:
                                  " while reformulating an objective function")
 
             operand.is_prioritized = True
-            unary_op = mat.UnaryArithmeticOperationNode(id=self.generate_free_node_id(),
-                                                        operator='-',
-                                                        operand=operand)
-            expression.expression_node = unary_op
+            neg_op = self._node_builder.add_negative_unity_coefficient(operand)
+
+            expression.expression_node = neg_op
             expression.link_nodes()
 
     def __standardize_constraint(self, meta_con: mat.MetaConstraint):
@@ -143,15 +142,17 @@ class Formulator:
 
         eq_op_node = meta_con.expression.expression_node
         if not isinstance(eq_op_node, mat.RelationalOperationNode):
-            raise ValueError("Encountered unexpected expression node.")
+            raise ValueError("Formulator encountered unexpected expression node"
+                             + " while standardizing equality constraint '{0}'".format(meta_con))
 
-        bin_ari_op_node = mat.BinaryArithmeticOperationNode(id=self.generate_free_node_id(),
-                                                            operator='-')
-        bin_ari_op_node.lhs_operand = eq_op_node.lhs_operand
-        bin_ari_op_node.rhs_operand = eq_op_node.rhs_operand
-        bin_ari_op_node.rhs_operand.is_prioritized = True
+        rhs_operand = self._node_builder.add_negative_unity_coefficient(eq_op_node.rhs_operand)
 
-        eq_op_node.lhs_operand = bin_ari_op_node
+        sub_node = mat.MultiArithmeticOperationNode(id=self.generate_free_node_id(),
+                                                    operator='+',
+                                                    operands=[eq_op_node.lhs_operand,
+                                                              rhs_operand])
+
+        eq_op_node.lhs_operand = sub_node
         eq_op_node.rhs_operand = mat.NumericNode(id=self.generate_free_node_id(), value=0)
 
         meta_con.expression.link_nodes()
@@ -162,28 +163,34 @@ class Formulator:
 
         ineq_op_node = meta_con.expression.expression_node
         if not isinstance(ineq_op_node, mat.RelationalOperationNode):
-            raise ValueError("Encountered unexpected expression node.")
+            raise ValueError("Formulator encountered unexpected expression node"
+                             + " while standardizing inequality constraint '{0}'".format(meta_con))
 
         operator = ineq_op_node.operator
 
-        bin_ari_op_node = mat.BinaryArithmeticOperationNode(id=self.generate_free_node_id(), operator='-')
         if operator == "<=":
-            bin_ari_op_node.lhs_operand = ineq_op_node.lhs_operand
-            bin_ari_op_node.rhs_operand = ineq_op_node.rhs_operand
+            lhs_operand = ineq_op_node.lhs_operand
+            rhs_operand = ineq_op_node.rhs_operand
         else:
-            bin_ari_op_node.lhs_operand = ineq_op_node.rhs_operand
-            bin_ari_op_node.rhs_operand = ineq_op_node.lhs_operand
-        bin_ari_op_node.rhs_operand.is_prioritized = True
+            lhs_operand = ineq_op_node.rhs_operand
+            rhs_operand = ineq_op_node.lhs_operand
 
-        ineq_op_node.lhs_operand = bin_ari_op_node
-        ineq_op_node.rhs_operand = mat.NumericNode(id=self.generate_free_node_id(), value='0')
+        rhs_operand = self._node_builder.add_negative_unity_coefficient(rhs_operand)
+
+        sub_node = mat.MultiArithmeticOperationNode(id=self.generate_free_node_id(),
+                                                    operator='+',
+                                                    operands=[lhs_operand, rhs_operand])
+
+        ineq_op_node.lhs_operand = sub_node
+        ineq_op_node.rhs_operand = mat.NumericNode(id=self.generate_free_node_id(), value=0)
         ineq_op_node.operator = "<="
 
         meta_con.expression.link_nodes()
 
         return [meta_con]
 
-    def __standardize_double_inequality_constraint(self, meta_con: mat.MetaConstraint) -> List[mat.MetaConstraint]:
+    def __standardize_double_inequality_constraint(self,
+                                                   meta_con: mat.MetaConstraint) -> List[mat.MetaConstraint]:
 
         ref_meta_cons = []
 
@@ -192,43 +199,53 @@ class Formulator:
             mc_clone = deepcopy(meta_con)
             expr_clone = deepcopy(meta_con.expression)
 
-            mc_clone.symbol = "{0}_I{1}".format(meta_con.symbol, i + 1)
+            mc_clone.symbol = self._problem.generate_unique_symbol("{0}_I{1}".format(meta_con.symbol, i + 1))
 
             ineq_op_node = expr_clone.expression_node
             self.seed_free_node_id(ineq_op_node)
 
             if not isinstance(ineq_op_node, mat.RelationalOperationNode):
-                raise ValueError("Encountered unexpected expression node.")
+                raise ValueError("Formulator encountered unexpected expression node"
+                                 + " while standardizing double inequality constraint '{0}'".format(meta_con))
 
             child_ineq_op_node = ineq_op_node.rhs_operand
             if not isinstance(child_ineq_op_node, mat.RelationalOperationNode):
-                raise ValueError("Encountered unexpected expression node.")
-
-            ref_ineq_op_node = mat.RelationalOperationNode(id=ineq_op_node.id, operator="<=")
-
-            bin_ari_op_node = mat.BinaryArithmeticOperationNode(id=self.generate_free_node_id(),
-                                                                operator='-')
-            ref_ineq_op_node.add_operand(bin_ari_op_node)
-            ref_ineq_op_node.add_operand(mat.NumericNode(id=self.generate_free_node_id(), value='0'))
+                raise ValueError("Formulator encountered unexpected expression node"
+                                 + " while standardizing double inequality constraint '{0}'".format(meta_con))
 
             if i == 0:
+
                 body_node = child_ineq_op_node.lhs_operand
                 if ineq_op_node.operator == "<=":
                     lb_node = ineq_op_node.lhs_operand
                 else:
                     lb_node = child_ineq_op_node.rhs_operand
-                bin_ari_op_node.lhs_operand = lb_node
-                bin_ari_op_node.rhs_operand = body_node
+
+                lhs_operand = lb_node
+                rhs_operand = body_node
+
             else:
+
                 body_node = child_ineq_op_node.lhs_operand
                 if ineq_op_node.operator == "<=":
                     ub_node = child_ineq_op_node.rhs_operand
                 else:
                     ub_node = ineq_op_node.lhs_operand
-                bin_ari_op_node.lhs_operand = body_node
-                bin_ari_op_node.rhs_operand = ub_node
 
-            bin_ari_op_node.rhs_operand.is_prioritized = True
+                lhs_operand = body_node
+                rhs_operand = ub_node
+
+            rhs_operand = self._node_builder.add_negative_unity_coefficient(rhs_operand)
+
+            sub_node = mat.MultiArithmeticOperationNode(id=self.generate_free_node_id(),
+                                                        operator='+',
+                                                        operands=[lhs_operand, rhs_operand])
+
+            ref_ineq_op_node = mat.RelationalOperationNode(id=ineq_op_node.id,
+                                                           operator="<=",
+                                                           lhs_operand=sub_node,
+                                                           rhs_operand=mat.NumericNode(id=self.generate_free_node_id(),
+                                                                                       value=0))
 
             expr_clone.expression_node = ref_ineq_op_node
             expr_clone.link_nodes()
@@ -273,22 +290,23 @@ class Formulator:
 
         else:
             raise ValueError("Formulator encountered an unexpected constraint type"
-                             + " while building a slackened constraint")
+                             + " while building a slackened constraint for '{0}'".format(meta_con))
 
         sl_meta_con = deepcopy(meta_con)
         expr_clone = deepcopy(meta_con.expression)
 
-        con_sym = "{0}_F".format(meta_con.symbol)
+        con_sym = self._problem.generate_unique_symbol("{0}_F".format(meta_con.symbol))
         sl_meta_con.symbol = con_sym
 
         rel_op_node = expr_clone.expression_node
         if not isinstance(rel_op_node, mat.RelationalOperationNode):
-            raise ValueError("Formulator encountered unexpected expression node.")
+            raise ValueError("Formulator encountered unexpected expression node"
+                             + " while building a slackened constraint for '{0}'".format(meta_con))
 
-        rel_op_node.lhs_operand = mat.BinaryArithmeticOperationNode(id=self.generate_free_node_id(),
-                                                                    operator='-',
-                                                                    lhs_operand=rel_op_node.lhs_operand,
-                                                                    rhs_operand=slack_node)
+        rhs_node = self._node_builder.add_negative_unity_coefficient(slack_node)
+        rel_op_node.lhs_operand = mat.MultiArithmeticOperationNode(id=self.generate_free_node_id(),
+                                                                   operator='+',
+                                                                   operands=[rel_op_node.lhs_operand, rhs_node])
 
         expr_clone.link_nodes()
         sl_meta_con.expression = expr_clone
@@ -299,7 +317,7 @@ class Formulator:
                              meta_con: mat.MetaConstraint,
                              symbol_suffix: str = ""):
 
-        sym = "{0}_SL{1}".format(meta_con.symbol, symbol_suffix)
+        sym = self._problem.generate_unique_symbol("{0}_SL{1}".format(meta_con.symbol, symbol_suffix))
         sl_meta_var = mat.MetaVariable(symbol=sym,
                                        idx_meta_sets=deepcopy(meta_con.idx_meta_sets),
                                        idx_set_node=meta_con.idx_set_node,
@@ -577,7 +595,7 @@ class Formulator:
                 return node
 
         else:
-            raise ValueError("Problem Formulator encountered an unexpected node"
+            raise ValueError("Formulator encountered an unexpected node"
                              + " while reformulating unary arithmetic operations")
 
     def expand_factors(self,

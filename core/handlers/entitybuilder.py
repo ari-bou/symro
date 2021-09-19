@@ -389,18 +389,26 @@ class EntityBuilder:
                     unb_syms_blacklist.add(de)
 
                 else:  # dummy element is undeclared (None); will never be fixed
+                    # generate a unique unbound symbol for the component indexing set
 
+                    # elicit a base symbol
                     unb_sym_base = ''
                     for c in component_set_syms[i]:
-                        if c.isalpha():
+                        if c.isalpha():  # base symbol must be a letter
                             unb_sym_base = c[0].lower()
                     if unb_sym_base == '':
-                        unb_sym_base = 'i'
+                        unb_sym_base = 'i'  # default base symbol is 'i'
 
+                    # retrieve unbound symbols declared in the current scope
                     cmpt_unb_syms = self._node_builder.retrieve_unbound_symbols(component_set_node)
+
+                    # generate unique unbound symbol
                     unb_sym = self._node_builder.generate_unique_symbol(
                         base_symbol=unb_sym_base,
                         symbol_blacklist=cmpt_unb_syms | unb_syms_blacklist)
+
+                    # add unbound symbol to problem
+                    self._problem.unbound_symbols.add(unb_sym)
 
                     component_dummy.append(unb_sym)
                     reduced_component_dummy.append(unb_sym)

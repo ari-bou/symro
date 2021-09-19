@@ -15,7 +15,8 @@ def read_ampl(file_path: str = None,
               name: str = None,
               description: str = None,
               working_dir_path: str = None,
-              engine: AMPLEngine = None):
+              engine: AMPLEngine = None,
+              can_clean_script: bool = False):
     if working_dir_path is None:
         working_dir_path = DEFAULT_WORKING_DIR_PATH
     return __problem_builder.build_problem_from_ampl_script(name=name,
@@ -23,7 +24,8 @@ def read_ampl(file_path: str = None,
                                                             file_name=file_path,
                                                             script_literal=script_literal,
                                                             working_dir_path=working_dir_path,
-                                                            engine=engine)
+                                                            engine=engine,
+                                                            can_clean_script=can_clean_script)
 
 
 def solve_problem(problem: Problem,

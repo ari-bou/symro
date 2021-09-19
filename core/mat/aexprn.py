@@ -3,7 +3,7 @@ import numpy as np
 from ordered_set import OrderedSet
 from typing import Dict, List, Optional, Tuple, Union
 
-from symro.core.mat.entity import Parameter, Variable
+from symro.core.mat.entity import Parameter, Variable, Objective, Constraint
 from symro.core.mat.exprn import LogicalExpressionNode, ArithmeticExpressionNode
 from symro.core.mat.dummyn import CompoundDummyNode
 from symro.core.mat.setn import CompoundSetNode
@@ -121,7 +121,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
             index = None
             if indices is not None:
                 index = indices[ip]
-            entity = self.__get_entity(state, index)
+            entity: Union[Parameter, Variable, Objective, Constraint] = self.__get_entity(state, index)
             values.append(entity.value)
 
         return values
@@ -231,13 +231,13 @@ class FunctionNode(ArithmeticExpressionNode):
 
     def __init__(self,
                  symbol: str,
-                 idx_set_node: CompoundSetNode,
+                 idx_set_node: CompoundSetNode = None,
                  operands: Union[ArithmeticExpressionNode, List[ArithmeticExpressionNode]] = None,
                  id: int = 0):
 
         super().__init__(id)
         self.symbol: str = symbol
-        self.idx_set_node: CompoundSetNode = idx_set_node
+        self.idx_set_node: Optional[CompoundSetNode] = idx_set_node
         self.operands: List[ArithmeticExpressionNode] = []
 
         if self.symbol in ["sum", "prod"]:
@@ -747,7 +747,7 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
     def __init__(self, id: int = 0):
         super().__init__(id)
         self.operands: List[ArithmeticExpressionNode] = []
-        self.conditions: List[Optional[LogicalExpressionNode]] = []
+        self.conditions: List[LogicalExpressionNode] = []
 
     def evaluate(self,
                  state: State,

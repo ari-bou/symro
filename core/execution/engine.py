@@ -29,6 +29,13 @@ class Engine(ABC):
         self._active_problem_sym = problem_symbol
         self._active_problem_idx = problem_idx
 
+    @abstractmethod
+    def fix_var(self,
+                symbol: str,
+                idx: Optional[mat.Element] = None,
+                value: Union[int, float, str] = None):
+        pass
+
     # Solve
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -36,6 +43,14 @@ class Engine(ABC):
     def solve(self,
               solver_name: str = None,
               solver_options: str = None):
+        pass
+
+    @abstractmethod
+    def get_status(self) -> str:
+        pass
+
+    @abstractmethod
+    def get_solver_output(self) -> str:
         pass
 
     # Storage
@@ -100,3 +115,50 @@ class Engine(ABC):
                                  ub=ub,
                                  dual=dual)
             self.problem.state.add_constraint(con)
+
+    # Accessors and Mutators
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @abstractmethod
+    def get_param_value(self,
+                        symbol: str,
+                        idx: Optional[mat.Element] = None):
+        pass
+
+    @abstractmethod
+    def get_var_value(self,
+                      symbol: str,
+                      idx: Optional[mat.Element] = None):
+        pass
+
+    @abstractmethod
+    def get_obj_value(self,
+                      symbol: str,
+                      idx: Optional[mat.Element] = None):
+        pass
+
+    @abstractmethod
+    def get_con_value(self,
+                      symbol: str,
+                      idx: Optional[mat.Element] = None):
+        pass
+
+    @abstractmethod
+    def get_con_dual(self,
+                     symbol: str,
+                     idx: Optional[mat.Element] = None) -> float:
+        pass
+
+    @abstractmethod
+    def set_param_value(self,
+                        symbol: str,
+                        idx: Optional[mat.Element],
+                        value: Union[int, float, str]):
+        pass
+
+    @abstractmethod
+    def set_var_value(self,
+                      symbol: str,
+                      idx: Optional[mat.Element],
+                      value: float):
+        pass

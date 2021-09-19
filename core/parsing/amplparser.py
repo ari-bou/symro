@@ -1,4 +1,5 @@
-from typing import Dict, List, Optional, Union
+from copy import deepcopy
+from typing import Callable, Dict, List, Optional, Union
 import numpy as np
 
 import symro.core.constants as const
@@ -177,12 +178,12 @@ class AMPLParser:
         tokens = self._lexer.tokenize(literal)
         if script_id is None:
             main_script = stm.Script(id="main",
-                                     literal=literal,
+                                     raw_literal=literal,
                                      tokens=tokens)
             self.compound_script = stm.CompoundScript(main_script=main_script)
             return main_script
         else:
-            script = stm.Script(id=script_id, literal=literal, tokens=tokens)
+            script = stm.Script(id=script_id, raw_literal=literal, tokens=tokens)
             self.compound_script.included_scripts[script_id] = script
             return script
 
@@ -200,63 +201,106 @@ class AMPLParser:
     # Conditional Expression Parsing
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __parse_conditional_expression(self) -> Union[mat.ConditionalArithmeticExpressionNode,
+    def __parse_conditional_expression(self) -> Union[mat.MultiArithmeticOperationNode,
                                                       mat.ConditionalSetExpressionNode]:
 
-        # start at 'if'
-        self._next_token()  # skip 'if'
-        condition_node = self._parse_logical_expression()
+        operands = []
+        conditions = []
 
-        self._enforce_token_value("then")
-        self._next_token()  # skip 'then'
-
-        operand = self._parse_set_expression()
-
-        if isinstance(operand, mat.ArithmeticExpressionNode) or isinstance(operand, mat.BaseDummyNode):
-            expr_type = "expr"
-            conditional_node = mat.ConditionalArithmeticExpressionNode(id=self._generate_free_node_id())
-        else:
-            expr_type = "sexpr"
-            conditional_node = mat.ConditionalSetExpressionNode(id=self._generate_free_node_id())
-
-        conditional_node.add_condition(condition_node)
-        conditional_node.add_operand(operand)
-
-        is_else_clause = False
-        while True:
-
-            condition_node = None
+        while self.get_token() in ("if", "else"):
 
             if self.get_token() == "else":
+                self._next_token()  # skip 'else'
 
-                self._next_token()
+            # condition
+            if self.get_token() == "if":
 
-                # Else If
-                if self.get_token() == "if":
-                    self._next_token()
-                    condition_node = self._parse_logical_expression()
-                    self._enforce_token_value("then")
-                    self._next_token()  # skip 'then'
+                self._next_token()  # skip 'if'
 
-                # Else
-                else:
-                    is_else_clause = True
+                conditions.append(self._parse_logical_expression())
 
-                conditional_node.add_condition(condition_node)
+                self._enforce_token_value("then")
+                self._next_token()  # skip 'then'
 
-                if expr_type == "expr":
-                    operand = self._parse_arithmetic_expression()
-                else:
-                    operand = self._parse_set_expression()
-                conditional_node.add_operand(operand)
+            operands.append(self._parse_set_expression())
 
-                if is_else_clause:
-                    break
+        if isinstance(operands[0], mat.SetExpressionNode):
+            return mat.ConditionalSetExpressionNode(id=self._generate_free_node_id(),
+                                                    operands=operands,
+                                                    conditions=conditions)
+
+        else:
+            return self.__convert_conditional_arithmetic_expression_to_addition_operation(operands, conditions)
+
+    def __convert_conditional_arithmetic_expression_to_addition_operation(self,
+                                                                          operands: List[mat.ArithmeticExpressionNode],
+                                                                          conditions: List[mat.LogicalExpressionNode]):
+
+        add_operands = []
+        conj_node: Optional[mat.MultiLogicalOperationNode] = None
+
+        # assign operation priority to all condition nodes
+        for condition in conditions:
+            condition.is_prioritized = True
+
+        for i, operand in enumerate(operands):
+
+            ord_set_node = mat.OrderedSetNode(id=self._generate_free_node_id(),
+                                              start_node=mat.NumericNode(id=self._generate_free_node_id(), value=1),
+                                              end_node=mat.NumericNode(id=self._generate_free_node_id(), value=1))
+
+            if i == 0:
+                constraint_node = conditions[i]
 
             else:
-                break
 
-        return conditional_node
+                if i == 1:
+
+                    prev_condition = deepcopy(conditions[i - 1])
+
+                    neg_prev_condition = mat.UnaryLogicalOperationNode(id=self._generate_free_node_id(),
+                                                                       operator='!',
+                                                                       operand=prev_condition)
+                    neg_prev_condition.is_prioritized = True
+
+                    conj_node = mat.MultiLogicalOperationNode(id=self._generate_free_node_id(),
+                                                              operator="and",
+                                                              operands=[neg_prev_condition])
+                    constraint_node = conj_node
+
+                else:
+
+                    conj_node = deepcopy(conj_node)
+
+                    prev_condition = conj_node.operands[i - 1]
+
+                    neg_prev_condition = mat.UnaryLogicalOperationNode(id=self._generate_free_node_id(),
+                                                                       operator='!',
+                                                                       operand=prev_condition)
+                    neg_prev_condition.is_prioritized = True
+
+                    conj_node.operands[i - 1] = neg_prev_condition
+
+                    constraint_node = conj_node
+
+                if i < len(conditions):
+                    conj_node.operands.append(conditions[i])
+
+            idx_set_node = mat.CompoundSetNode(id=self._generate_free_node_id(),
+                                               set_nodes=[ord_set_node],
+                                               constraint_node=constraint_node)
+
+            operand.is_prioritized = True
+            sum_node = mat.FunctionNode(id=self._generate_free_node_id(),
+                                        symbol="sum",
+                                        idx_set_node=idx_set_node,
+                                        operands=operand)
+
+            add_operands.append(sum_node)
+
+        return mat.MultiArithmeticOperationNode(id=self._generate_free_node_id(),
+                                                operator='+',
+                                                operands=add_operands)
 
     # Logical Expression Parsing
     # ------------------------------------------------------------------------------------------------------------------
@@ -273,7 +317,6 @@ class AMPLParser:
                                                  mat.BaseDummyNode]:
 
         root_operation = self.__parse_logical_operand()
-        log_operation: Optional[mat.BinaryLogicalOperationNode] = None
 
         # parse next logical operation
         while self.get_token() in self.LOGIC_BIN_OPR_SYMBOLS:
@@ -284,27 +327,11 @@ class AMPLParser:
             # parse next logical operand
             rhs_operand = self.__parse_logical_operand()
 
-            # retrieve LHS operation node of the child logical operation node
-            if log_operation is None:
-                lhs_operand = root_operation  # LHS operand defaults to the first operand node
-            else:  # otherwise, the LHS operand is the logical operand node from the previous iteration
-                lhs_operand = log_operation.rhs_operand
-
-            # build child logical operation node
-            child_log_operation = mat.BinaryLogicalOperationNode(id=self._generate_free_node_id(),
-                                                                 operator=operator,
-                                                                 lhs_operand=lhs_operand,
-                                                                 rhs_operand=rhs_operand)
-
-            if log_operation is None:
-                # child logical operation is the first logical operation in the current scope
-                root_operation = child_log_operation
-
-            else:
-                # child logical operation is not the first logical operation in the current scope
-                log_operation.rhs_operand = child_log_operation
-
-            log_operation = child_log_operation  # store the newest logical operation node
+            # build logical operation node
+            root_operation = mat.BinaryLogicalOperationNode(id=self._generate_free_node_id(),
+                                                            operator=operator,
+                                                            lhs_operand=root_operation,
+                                                            rhs_operand=rhs_operand)
 
         return root_operation
 
@@ -404,37 +431,20 @@ class AMPLParser:
                                                     mat.StringExpressionNode,
                                                     mat.BaseDummyNode]:
 
-        root_operation = None
-        rel_operation: Optional[mat.RelationalOperationNode] = None
+        root_operation = self._parse_set_expression()
 
-        while True:
+        while self.get_token() in self.REL_OPR_SYMBOLS:
 
-            operand = self._parse_set_expression()
-            operator = ""
+            operator = self.get_token()
+            self._next_token()  # skip operator
 
-            # Relational Operator
-            if self.get_token() in self.REL_OPR_SYMBOLS:
-                operator = self.get_token()
-                self._next_token()
+            rhs_operand = self._parse_set_expression()  # parse next operand
 
-            if operator != "":
-                if rel_operation is None:
-                    rel_operation = mat.RelationalOperationNode(id=self._generate_free_node_id(),
-                                                                operator=operator)
-                    root_operation = rel_operation
-                    rel_operation.add_operand(operand)
-                else:
-                    child_rel_operation = mat.RelationalOperationNode(id=self._generate_free_node_id(),
-                                                                      operator=operator)
-                    child_rel_operation.add_operand(operand)
-                    rel_operation.rhs_operand = child_rel_operation
-                    rel_operation = child_rel_operation
-            else:
-                if rel_operation is not None:
-                    rel_operation.rhs_operand = operand
-                else:
-                    root_operation = operand
-                break
+            # build relational operation node
+            root_operation = mat.RelationalOperationNode(id=self._generate_free_node_id(),
+                                                         operator=operator,
+                                                         lhs_operand=root_operation,
+                                                         rhs_operand=rhs_operand)
 
         return root_operation
 
@@ -459,24 +469,16 @@ class AMPLParser:
         else:
             root_operation = self.__parse_set()
 
-        set_operation: Optional[mat.BinarySetOperationNode] = None
-
         if precedence == 8:  # precedence level 8
             operators = self.SET_OPR_SYMBOLS_8
         else:  # precedence level 9
             operators = self.SET_OPR_SYMBOLS_9
 
         # parse next set operation
-        while self.get_token() in operators:  # union, diff, symdiff
+        while self.get_token() in operators:
 
             operator = self.get_token()
             self._next_token()  # skip operator
-
-            # retrieve LHS operand
-            if set_operation is None:
-                lhs_operand = root_operation
-            else:
-                lhs_operand = set_operation.rhs_operand
 
             # parse next RHS operand
             if precedence == 8:  # precedence level 8
@@ -485,20 +487,10 @@ class AMPLParser:
                 rhs_operand = self.__parse_set()
 
             # build a new binary set operation node
-            child_set_operation = mat.BinarySetOperationNode(id=self._generate_free_node_id(),
-                                                             operator=operator,
-                                                             lhs_operand=lhs_operand,
-                                                             rhs_operand=rhs_operand)
-
-            if set_operation is None:
-                # assign current set operation as the root operation
-                root_operation = child_set_operation
-            else:
-                # assign set operation of the current iteration
-                # as the RHS operand of the set operation of the previous iteration
-                set_operation.rhs_operand = child_set_operation
-
-            set_operation = child_set_operation  # update right-most operand node
+            root_operation = mat.BinarySetOperationNode(id=self._generate_free_node_id(),
+                                                        operator=operator,
+                                                        lhs_operand=root_operation,
+                                                        rhs_operand=rhs_operand)
 
         return root_operation
 
@@ -618,7 +610,20 @@ class AMPLParser:
                                      element_nodes=nodes)
 
     def __parse_indexing_set(self, dummy_node: mat.BaseDummyNode) -> mat.IndexingSetNode:
-        set_node = self._parse_set_expression()
+
+        # add unbound symbol(s) to problem
+
+        if isinstance(dummy_node, mat.DummyNode):
+            self.problem.unbound_symbols.add(dummy_node.symbol)
+
+        elif isinstance(dummy_node, mat.CompoundDummyNode):
+            for cmpt_node in dummy_node.component_nodes:
+                if isinstance(cmpt_node, mat.DummyNode):
+                    self.problem.unbound_symbols.add(cmpt_node.symbol)
+
+        set_node = self._parse_set_expression()  # parse set expression
+
+        # build indexing set node
         return mat.IndexingSetNode(id=self._generate_free_node_id(),
                                    dummy_node=dummy_node,
                                    set_node=set_node)
@@ -685,11 +690,18 @@ class AMPLParser:
             # - modulus
             # - exponentiation
             if operator in ["less", "div", "mod", '^', "**"]:
-                root_operation, arith_operation = self.__parse_binary_operand_arithmetic_expression(
-                    root_operation=root_operation,
-                    arith_operation=arith_operation,
-                    operator=operator,
-                    rhs_operand=rhs_operand)
+
+                if operator == "less":
+                    root_operation = self.__convert_less_operation_to_non_negative_max(lhs_operand=root_operation,
+                                                                                       rhs_operand=rhs_operand)
+
+                else:
+                    root_operation = mat.BinaryArithmeticOperationNode(id=self._generate_free_node_id(),
+                                                                       operator=operator,
+                                                                       lhs_operand=root_operation,
+                                                                       rhs_operand=rhs_operand)
+
+                arith_operation = None
 
             # build a multi arithmetic operation node for the following operations:
             # - addition
@@ -697,92 +709,74 @@ class AMPLParser:
             # - multiplication
             # - division
             else:
-                root_operation, arith_operation = self.__parse_multi_operand_arithmetic_expression(
-                    root_operation=root_operation,
-                    arith_operation=arith_operation,
-                    operator=operator,
-                    rhs_operand=rhs_operand)
+
+                # convert subtraction operation to addition operation
+                if operator == '-':
+                    operator = '+'  # change the operator
+                    rhs_operand = self.__negate_subtrahend(rhs_operand)
+
+                # convert division operation to multiplication operation
+                elif operator == '/':
+                    operator = '*'  # change the operator
+                    rhs_operand = self.__convert_divisor_to_fraction(divisor=rhs_operand)
+
+                # build a new arithmetic operation node if it does not exist yet
+                if arith_operation is None:
+                    arith_operation = mat.MultiArithmeticOperationNode(id=self._generate_free_node_id(),
+                                                                       operator=operator,
+                                                                       operands=[root_operation, rhs_operand])
+                    root_operation = arith_operation
+
+                # otherwise, add the RHS operand to the existing arithmetic operation node
+                else:
+                    arith_operation.operands.append(rhs_operand)
 
         return root_operation
 
-    def __parse_binary_operand_arithmetic_expression(self,
-                                                     root_operation: mat.ArithmeticExpressionNode,
-                                                     arith_operation: Optional[mat.BinaryArithmeticOperationNode],
-                                                     operator: str,
+    def __convert_less_operation_to_non_negative_max(self,
+                                                     lhs_operand: mat.ArithmeticExpressionNode,
                                                      rhs_operand: mat.ArithmeticExpressionNode):
+        zero_node = mat.NumericNode(id=self._generate_free_node_id(), value=0)
+        sub_node = mat.BinaryArithmeticOperationNode(id=self._generate_free_node_id(),
+                                                     operator='-',
+                                                     lhs_operand=lhs_operand,
+                                                     rhs_operand=rhs_operand)
+        return mat.FunctionNode(id=self._generate_free_node_id(),
+                                symbol="max",
+                                idx_set_node=None,
+                                operands=[sub_node, zero_node])
 
-        # retrieve LHS operand
-        if arith_operation is None:
-            lhs_operand = root_operation
+    def __negate_subtrahend(self, subtrahend: mat.ArithmeticExpressionNode):
+
+        # build a numeric node with value -1
+        neg_one_node = mat.NumericNode(id=self._generate_free_node_id(), value=-1)
+
+        # special case: RHS operand is a multi-operand multiplication operation node
+        if isinstance(subtrahend, mat.MultiArithmeticOperationNode) and subtrahend.operator == '*':
+            # add the -1 node to the list of operands
+            subtrahend.operands.insert(0, neg_one_node)
+
+        # otherwise, build a new multi-operand multiplication operation node
         else:
-            lhs_operand = arith_operation.rhs_operand
+            subtrahend = mat.MultiArithmeticOperationNode(id=self._generate_free_node_id(),
+                                                          operator='*',
+                                                          operands=[neg_one_node, subtrahend])
 
-        child_arith_operation = mat.BinaryArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                                  operator=operator,
-                                                                  lhs_operand=lhs_operand,
-                                                                  rhs_operand=rhs_operand)
+        return subtrahend
 
-        if arith_operation is None:
-            root_operation = child_arith_operation
-        else:
-            arith_operation.rhs_operand = child_arith_operation
+    def __convert_divisor_to_fraction(self, divisor: mat.ArithmeticExpressionNode):
 
-        arith_operation = child_arith_operation
+        # build a numeric node with value 1
+        one_node = mat.NumericNode(id=self._generate_free_node_id(), value=1)
 
-        return root_operation, arith_operation
+        # build a division operation node
+        fraction = mat.BinaryArithmeticOperationNode(id=self._generate_free_node_id(),
+                                                     operator='/',
+                                                     lhs_operand=one_node,
+                                                     rhs_operand=divisor)
+        fraction.is_prioritized = True
 
-    def __parse_multi_operand_arithmetic_expression(self,
-                                                    root_operation: mat.ArithmeticExpressionNode,
-                                                    arith_operation: Optional[mat.MultiArithmeticOperationNode],
-                                                    operator: str,
-                                                    rhs_operand: mat.ArithmeticExpressionNode):
-
-        # convert subtraction operation to addition operation
-        if operator == '-':
-
-            operator = '+'  # change the operator
-
-            # build a numeric node with value -1
-            neg_one_node = mat.NumericNode(id=self._generate_free_node_id(), value=-1)
-
-            # special case: RHS operand is a multi-operand multiplication operation node
-            if isinstance(rhs_operand, mat.MultiArithmeticOperationNode) and rhs_operand.operator == '*':
-                # add the -1 node to the list of operands
-                rhs_operand.operands.insert(0, neg_one_node)
-
-            # otherwise, build a new multi-operand multiplication operation node
-            else:
-                rhs_operand = mat.MultiArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                               operator='*',
-                                                               operands=[neg_one_node, rhs_operand])
-
-        # convert division operation to multiplication operation
-        elif operator == '/':
-
-            operator = '*'  # change the operator
-
-            # build a numeric node with value 1
-            one_node = mat.NumericNode(id=self._generate_free_node_id(), value=1)
-
-            # build a division operation node
-            rhs_operand = mat.BinaryArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                            operator='/',
-                                                            lhs_operand=one_node,
-                                                            rhs_operand=rhs_operand)
-            rhs_operand.is_prioritized = True
-
-        # build a new arithmetic operation node if it does not exist yet
-        if arith_operation is None:
-            arith_operation = mat.MultiArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                               operator=operator,
-                                                               operands=[root_operation, rhs_operand])
-            root_operation = arith_operation
-
-        # otherwise, add the RHS operand to the existing arithmetic operation node
-        else:
-            arith_operation.operands.append(rhs_operand)
-
-        return root_operation, arith_operation
+        return fraction
 
     def __parse_unary_arithmetic_operation(self) -> Union[mat.ArithmeticExpressionNode,
                                                           mat.SetExpressionNode,
@@ -793,17 +787,48 @@ class AMPLParser:
 
         # Unary operator
         if token in self.ARITH_UNA_OPR_SYMBOLS:
-            operator = self.get_token()
-            node = mat.UnaryArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                    operator=operator)
 
-            self._next_token()
-            operand = self._parse_arithmetic_expression(precedence=16)
-            node.operand = operand
+            operator = self.get_token()
+            self._next_token()  # skip operator
+
+            operand = self._parse_arithmetic_expression(precedence=16)  # parse operand
+
+            # special case: unary negation
+            if operator == '-':
+                node = self.add_negative_unity_coefficient(operand, self._generate_free_node_id)
+
+            else:
+                node = mat.UnaryArithmeticOperationNode(id=self._generate_free_node_id(),
+                                                        operator=operator,
+                                                        operand=operand)
+
             return node
 
         else:
             return self._parse_arithmetic_expression(precedence=16)
+
+    @staticmethod
+    def add_negative_unity_coefficient(node: mat.ArithmeticExpressionNode,
+                                       free_node_id_generator: Callable[[], int]):
+
+        # special case 1: node is numeric
+        if isinstance(node, mat.NumericNode):
+            node.value *= -1
+            return node
+
+        # special case 2: node is a multi-operand multiplication node
+        elif isinstance(node, mat.MultiArithmeticOperationNode) and node.operator == '*':
+            coeff_node = mat.NumericNode(id=free_node_id_generator(), value=-1)
+            node.operands.insert(0, coeff_node)
+            return node
+
+        # generic case
+        else:
+            coeff_node = mat.NumericNode(id=free_node_id_generator(), value=-1)
+            mult_node = mat.MultiArithmeticOperationNode(id=free_node_id_generator(),
+                                                         operator='*',
+                                                         operands=[coeff_node, node])
+            return mult_node
 
     def __parse_arithmetic_operand(self) -> Union[mat.ArithmeticExpressionNode,
                                                   mat.SetExpressionNode,

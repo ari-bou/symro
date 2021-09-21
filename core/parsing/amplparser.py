@@ -1293,23 +1293,35 @@ class AMPLLexer:
                     self.__add_token()
 
             elif self.__is_commented_single:
+
+                # closing delimiter: new line character
                 if c in ['\n', '\r'] or self.__is_last_char():
                     self.__is_commented_single = False
                     self.__add_comment_token()
                     self.__add_comment_token('\n')
                     if not self.__is_mid_statement:
                         self.__add_comment_tokens()
+
+                # not a closing delimiter
                 else:
                     self.__token += c
 
             elif self.__is_commented_multi:
+
+                # closing delimiter '*/'
                 if c == '/' and literal[self.__index - 1] == '*':
+
                     self.__is_commented_multi = False
-                    self.__token = self.__token[:len(self.__token) - 1]
+
+                    self.__token = self.__token[:len(self.__token) - 1]  # remove '*' from the comment token
+
                     self.__add_comment_token()
                     self.__add_comment_token("*/")
+
                     if not self.__is_mid_statement:
                         self.__add_comment_tokens()
+
+                # not a closing delimiter
                 else:
                     self.__token += c
 

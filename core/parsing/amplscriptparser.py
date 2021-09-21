@@ -216,15 +216,30 @@ class AMPLScriptParser(AMPLParser):
     # A.1
     def __parse_comment(self):
 
-        delimiter = self.get_token()
-        self._next_token()  # skip opening delimiter
-        comment = self.get_token()
-        self._next_token()  # skip comment
-        self._next_token()  # skip closing delimiter
+        opening_delimiter = self.get_token()
+        self._next_token(can_skip_whitespace=False)  # skip opening delimiter
 
         is_multi = True
-        if delimiter == '#':
+        if opening_delimiter == '#':
             is_multi = False
+
+        token = self.get_token()
+
+        if is_multi:
+            if token == "*/":
+                comment = ""
+            else:
+                comment = token
+                self._next_token()  # skip comment
+
+        else:
+            if token == '\n':
+                comment = ""
+            else:
+                comment = token
+                self._next_token()  # skip comment
+
+        self._next_token()  # skip closing delimiter
 
         statements = [stm.Comment(comment, is_multi=is_multi)]
         statements.extend(self.__parse_special_commands(comment))

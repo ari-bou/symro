@@ -491,52 +491,10 @@ class NodeBuilder:
     # ------------------------------------------------------------------------------------------------------------------
 
     def build_addition_node(self, terms: List[mat.ArithmeticExpressionNode]):
-        if len(terms) == 1:
-            return terms[0]
-        else:
-            all_terms = []
-            for term in terms:
-                if isinstance(term, mat.MultiArithmeticOperationNode):
-                    if term.operator == '+':
-                        all_terms.extend(term.operands)
-                    else:
-                        all_terms.append(term)
-                elif isinstance(term, mat.BinaryArithmeticOperationNode):
-                    if term.operator == '+':
-                        all_terms.append(term.lhs_operand)
-                        all_terms.append(term.rhs_operand)
-                    else:
-                        all_terms.append(term)
-                else:
-                    all_terms.append(term)
-            sum_node = mat.MultiArithmeticOperationNode(id=self.generate_free_node_id(),
-                                                        operator='+',
-                                                        operands=all_terms)
-            return sum_node
+        return mat.AdditionNode(id=self.generate_free_node_id(), operands=terms)
 
     def build_multiplication_node(self, factors: List[mat.ArithmeticExpressionNode]):
-        if len(factors) == 1:
-            return factors[0]
-        else:
-            all_factors = []
-            for factor in factors:
-                if isinstance(factor, mat.MultiArithmeticOperationNode):
-                    if factor.operator == '*':
-                        all_factors.extend(factor.operands)
-                    else:
-                        all_factors.append(factor)
-                elif isinstance(factor, mat.BinaryArithmeticOperationNode):
-                    if factor.operator == '*':
-                        all_factors.append(factor.lhs_operand)
-                        all_factors.append(factor.rhs_operand)
-                    else:
-                        all_factors.append(factor)
-                else:
-                    all_factors.append(factor)
-            mult_node = mat.MultiArithmeticOperationNode(id=self.generate_free_node_id(),
-                                                         operator='*',
-                                                         operands=all_factors)
-            return mult_node
+        return mat.MultiplicationNode(id=self.generate_free_node_id(), operands=factors)
 
     def build_fractional_node(self,
                               numerator: mat.ArithmeticExpressionNode,
@@ -572,13 +530,12 @@ class NodeBuilder:
         elif den_2 is not None:
             den = den_2
 
-        return mat.BinaryArithmeticOperationNode(id=self.generate_free_node_id(),
-                                                 operator='/',
-                                                 lhs_operand=num,
-                                                 rhs_operand=den)
+        return mat.DivisionNode(id=self.generate_free_node_id(),
+                                lhs_operand=num,
+                                rhs_operand=den)
 
-    def add_negative_unity_coefficient(self, node: mat.ArithmeticExpressionNode):
-        return AMPLParser.add_negative_unity_coefficient(node, self.generate_free_node_id)
+    def append_negative_unity_coefficient(self, node: mat.ArithmeticExpressionNode):
+        return AMPLParser.append_negative_unity_coefficient(node, self.generate_free_node_id)
 
     # Utility
     # ------------------------------------------------------------------------------------------------------------------

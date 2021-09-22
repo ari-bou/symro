@@ -1,8 +1,8 @@
-import warnings
 from copy import deepcopy
 from queue import Queue
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
+import numpy as np
 import symro.core.constants as const
 import symro.core.mat as mat
 from symro.core.prob.problem import Problem
@@ -85,7 +85,7 @@ class Formulator:
                                  " while reformulating an objective function")
 
             operand.is_prioritized = True
-            neg_op = self._node_builder.add_negative_unity_coefficient(operand)
+            neg_op = self._node_builder.append_negative_unity_coefficient(operand)
 
             expression.expression_node = neg_op
             expression.link_nodes()
@@ -145,7 +145,7 @@ class Formulator:
             raise ValueError("Formulator encountered unexpected expression node"
                              + " while standardizing equality constraint '{0}'".format(meta_con))
 
-        rhs_operand = self._node_builder.add_negative_unity_coefficient(eq_op_node.rhs_operand)
+        rhs_operand = self._node_builder.append_negative_unity_coefficient(eq_op_node.rhs_operand)
 
         sub_node = mat.MultiArithmeticOperationNode(id=self.generate_free_node_id(),
                                                     operator='+',
@@ -175,7 +175,7 @@ class Formulator:
             lhs_operand = ineq_op_node.rhs_operand
             rhs_operand = ineq_op_node.lhs_operand
 
-        rhs_operand = self._node_builder.add_negative_unity_coefficient(rhs_operand)
+        rhs_operand = self._node_builder.append_negative_unity_coefficient(rhs_operand)
 
         sub_node = mat.MultiArithmeticOperationNode(id=self.generate_free_node_id(),
                                                     operator='+',
@@ -235,7 +235,7 @@ class Formulator:
                 lhs_operand = body_node
                 rhs_operand = ub_node
 
-            rhs_operand = self._node_builder.add_negative_unity_coefficient(rhs_operand)
+            rhs_operand = self._node_builder.append_negative_unity_coefficient(rhs_operand)
 
             sub_node = mat.MultiArithmeticOperationNode(id=self.generate_free_node_id(),
                                                         operator='+',
@@ -303,7 +303,7 @@ class Formulator:
             raise ValueError("Formulator encountered unexpected expression node"
                              + " while building a slackened constraint for '{0}'".format(meta_con))
 
-        rhs_node = self._node_builder.add_negative_unity_coefficient(slack_node)
+        rhs_node = self._node_builder.append_negative_unity_coefficient(slack_node)
         rel_op_node.lhs_operand = mat.MultiArithmeticOperationNode(id=self.generate_free_node_id(),
                                                                    operator='+',
                                                                    operands=[rel_op_node.lhs_operand, rhs_node])
@@ -358,10 +358,10 @@ class Formulator:
                 if idx_set_node is None:
                     operand = slack_node
                 else:
-                    operand = mat.FunctionNode(id=self.generate_free_node_id(),
-                                               symbol="sum",
-                                               idx_set_node=idx_set_node,
-                                               operands=slack_node)
+                    operand = mat.ArithmeticTransformationNode(id=self.generate_free_node_id(),
+                                                               symbol="sum",
+                                                               idx_set_node=idx_set_node,
+                                                               operands=slack_node)
 
             operands.append(operand)
 
@@ -474,269 +474,208 @@ class Formulator:
     # Miscellaneous Reformulation
     # ------------------------------------------------------------------------------------------------------------------
 
-    def reformulate_subtraction_ops(self,
-                                    expr: Union[mat.Expression, mat.ExpressionNode]):
-        if isinstance(expr, mat.Expression):
-            node = expr.expression_node
-            expr.expression_node = self.__reformulate_subtraction_ops(node)
-            expr.link_nodes()
-            return expr
-        else:
-            return self.__reformulate_subtraction_ops(expr)
+    def reformulate_subtraction_and_unary_negation(self, root_node: mat.ExpressionNode):
 
-    def __reformulate_subtraction_ops(self,
-                                      node: mat.ExpressionNode
-                                      ) -> Union[mat.ArithmeticExpressionNode,
-                                                 mat.RelationalOperationNode]:
+        def reformulate(n: mat.ExpressionNode):
 
-        if isinstance(node, mat.RelationalOperationNode):
-            node.lhs_operand = self.__reformulate_subtraction_ops(node.lhs_operand)
-            node.rhs_operand = self.__reformulate_subtraction_ops(node.rhs_operand)
-            return node
+            if isinstance(n, mat.BinaryArithmeticOperationNode) and n.operator == '-':
+                rhs_operand = self._node_builder.append_negative_unity_coefficient(n.rhs_operand)
+                n = mat.AdditionNode(id=self.generate_free_node_id(),
+                                     operands=[n.lhs_operand, rhs_operand])
 
-        elif isinstance(node, mat.ArithmeticExpressionNode):
+            elif isinstance(n, mat.UnaryArithmeticOperationNode) and n.operator == '-':
+                n = self._node_builder.append_negative_unity_coefficient(n.operand)
 
-            if isinstance(node, mat.NumericNode) or isinstance(node, mat.DeclaredEntityNode):
-                return node
+            return n
 
-            elif isinstance(node, mat.FunctionNode):
-                for i, operand in enumerate(node.operands):
-                    node.operands[i] = self.__reformulate_subtraction_ops(operand)
+        root_node = reformulate(root_node)
 
-            elif isinstance(node, mat.UnaryArithmeticOperationNode):
-                return self.__reformulate_subtraction_ops(node.operand)
+        queue = Queue()
+        queue.put(root_node)
 
-            elif isinstance(node, mat.BinaryArithmeticOperationNode):
+        while not queue.empty():
 
-                node.lhs_operand = self.__reformulate_subtraction_ops(node.lhs_operand)
-                node.rhs_operand = self.__reformulate_subtraction_ops(node.rhs_operand)
+            node = queue.get()
 
-                if node.operator == '-':
-                    node.operator = '+'
-                    node.rhs_operand = self._node_builder.add_negative_unity_coefficient(node.rhs_operand)
-                elif node.operator == "less":
-                    warnings.warn("Problem Formulator unable to reformulate a 'less' operation node")
+            ref_children = []
+            for child in node.get_children():
 
-                return node
+                if isinstance(child, mat.RelationalOperationNode) or isinstance(child, mat.ArithmeticExpressionNode):
+                    child = reformulate(child)
+                    queue.put(child)
 
-            elif isinstance(node, mat.MultiArithmeticOperationNode):
+                ref_children.append(child)
 
-                for i, operand in enumerate(node.operands):
-                    node.operands[i] = self.__reformulate_subtraction_ops(operand)
+            node.set_children(ref_children)
 
-                if node.operator == '-':
-                    node.operator = '+'
-                    for i in range(1, len(node.operands)):
-                        operand = node.operands[i]
-                        node.operands[i] = self._node_builder.add_negative_unity_coefficient(operand)
-                elif node.operator == "less":
-                    warnings.warn("Problem Formulator unable to reformulate a 'less' operation node")
+        return root_node
 
-                return node
+    def expand_multiplication(self, root_node: mat.ExpressionNode):
 
-            elif isinstance(node, mat.ConditionalArithmeticExpressionNode):
-                for i, operand in enumerate(node.operands):
-                    node.operands[i] = self.__reformulate_subtraction_ops(operand)
-                return node
-
-        else:
-            raise ValueError("Problem Formulator encountered an unexpected node"
-                             + " while reformulating subtraction operations")
-
-    def reformulate_unary_ops(self,
-                              expr: Union[mat.Expression, mat.ExpressionNode]):
-        if isinstance(expr, mat.Expression):
-            node = expr.expression_node
-            expr.expression_node = self.__reformulate_unary_ops(node)
-            expr.link_nodes()
-            return expr
-        else:
-            return self.__reformulate_unary_ops(expr)
-
-    def __reformulate_unary_ops(self,
-                                node: mat.ExpressionNode
-                                ) -> Union[mat.ArithmeticExpressionNode,
-                                           mat.RelationalOperationNode]:
-
-        if isinstance(node, mat.RelationalOperationNode):
-            node.lhs_operand = self.__reformulate_unary_ops(node.lhs_operand)
-            node.rhs_operand = self.__reformulate_unary_ops(node.rhs_operand)
-            return node
-
-        elif isinstance(node, mat.ArithmeticExpressionNode):
-
-            if isinstance(node, mat.NumericNode) or isinstance(node, mat.DeclaredEntityNode):
-                return node
-
-            elif isinstance(node, mat.FunctionNode):
-                for i, operand in enumerate(node.operands):
-                    node.operands[i] = self.__reformulate_unary_ops(operand)
-
-            elif isinstance(node, mat.UnaryArithmeticOperationNode):
-                operand = self.__reformulate_unary_ops(node.operand)
-                if node.operator == '+':
-                    return operand
-                else:
-                    return self._node_builder.add_negative_unity_coefficient(operand)
-
-            elif isinstance(node, mat.BinaryArithmeticOperationNode):
-                node.lhs_operand = self.__reformulate_unary_ops(node.lhs_operand)
-                node.rhs_operand = self.__reformulate_unary_ops(node.rhs_operand)
-                return node
-
-            elif isinstance(node, mat.MultiArithmeticOperationNode):
-                for i, operand in enumerate(node.operands):
-                    node.operands[i] = self.__reformulate_unary_ops(operand)
-                return node
-
-            elif isinstance(node, mat.ConditionalArithmeticExpressionNode):
-                for i, operand in enumerate(node.operands):
-                    node.operands[i] = self.__reformulate_unary_ops(operand)
-                return node
-
-        else:
-            raise ValueError("Formulator encountered an unexpected node"
-                             + " while reformulating unary arithmetic operations")
-
-    def expand_factors(self,
-                       expr: Union[mat.Expression, mat.ExpressionNode]):
-        if isinstance(expr, mat.Expression):
-            node = expr.expression_node
-            terms = self.__expand_factors(node)
-            expr.expression_node = self._node_builder.build_addition_node(terms)
-            expr.link_nodes()
-            return expr
-        else:
-            terms = self.__expand_factors(expr)
+        if isinstance(root_node, mat.ArithmeticExpressionNode):
+            terms = self.__expand_multiplication(root_node)
             return self._node_builder.build_addition_node(terms)
 
-    def __expand_factors(self,
-                         node: mat.ExpressionNode
-                         ) -> List[Union[mat.ArithmeticExpressionNode,
-                                         mat.RelationalOperationNode]]:
+        elif isinstance(root_node, mat.RelationalOperationNode):
 
-        # Relational Operation
-        if isinstance(node, mat.RelationalOperationNode):
-            ref_operands = []
-            for operand in [node.lhs_operand, node.rhs_operand]:
-                terms = self.__expand_factors(operand)
-                ref_operands.append(self._node_builder.build_addition_node(terms))
-            node.lhs_operand = ref_operands[0]
-            node.rhs_operand = ref_operands[1]
-            return [node]
+            queue = Queue()
+            queue.put(root_node)
 
-        # Arithmetic Operation
-        elif isinstance(node, mat.ArithmeticExpressionNode):
+            while not queue.empty():
 
-            # Constant or Declared Entity
+                node = queue.get()
+
+                ref_children = []
+
+                for child in node.get_children():
+
+                    if isinstance(child, mat.ArithmeticExpressionNode):
+                        terms = self.__expand_multiplication(node)
+                        child = self._node_builder.build_addition_node(terms)
+
+                    else:
+                        queue.put(child)
+
+                    ref_children.append(child)
+
+                node.set_children(ref_children)
+
+    def __expand_multiplication(self, node: mat.ExpressionNode) -> List[mat.ArithmeticExpressionNode]:
+
+        # arithmetic operation
+        if isinstance(node, mat.ArithmeticExpressionNode):
+
+            # constant or declared entity
             if isinstance(node, mat.NumericNode) or isinstance(node, mat.DeclaredEntityNode):
                 return [node]
 
-            # Function
-            elif isinstance(node, mat.FunctionNode):
+            # transformation
+            elif isinstance(node, mat.ArithmeticTransformationNode):
                 for i, operand in enumerate(node.operands):
-                    terms = self.__expand_factors(operand)
+                    terms = self.__expand_multiplication(operand)
                     node.operands[i] = self._node_builder.build_addition_node(terms)
 
-            # Unary Operation
+            # unary operation
             elif isinstance(node, mat.UnaryArithmeticOperationNode):
-                node = self.__reformulate_unary_ops(node)
-                return self.__expand_factors(node)
+                if node.operator == '-':
+                    node = self.reformulate_subtraction_and_unary_negation(node)
+                return self.__expand_multiplication(node)
 
-            # Binary Operation
+            # binary operation
             elif isinstance(node, mat.BinaryArithmeticOperationNode):
 
-                lhs_terms = self.__expand_factors(node.lhs_operand)
-                rhs_terms = self.__expand_factors(node.rhs_operand)
+                lhs_terms = self.__expand_multiplication(node.lhs_operand)
+                rhs_terms = self.__expand_multiplication(node.rhs_operand)
 
-                # Addition
+                # addition
                 if node.operator == '+':
                     return lhs_terms + rhs_terms
 
-                # Subtraction
+                # subtraction
                 elif node.operator == '-':
-                    rhs_terms = [self._node_builder.add_negative_unity_coefficient(t) for t in rhs_terms]
+                    rhs_terms = [self._node_builder.append_negative_unity_coefficient(t) for t in rhs_terms]
                     return lhs_terms + rhs_terms
 
-                # Multiplication
+                # multiplication
                 elif node.operator == '*':
-                    terms = []
-                    for lhs_term in lhs_terms:
-                        for rhs_term in rhs_terms:
-                            factors = [deepcopy(lhs_term), deepcopy(rhs_term)]
-                            term = self._node_builder.build_multiplication_node(factors)
-                            terms.append(term)
-                    return terms
+                    return self.expand_factors(lhs_terms, rhs_terms)
 
-                # Division
+                # division
                 elif node.operator == '/':
-                    if len(lhs_terms) == 1:
-                        node.lhs_operand = self._node_builder.build_addition_node(lhs_terms)
-                        node.rhs_operand = self._node_builder.build_addition_node(rhs_terms)
-                        return [node]
-                    else:
-                        terms = []
-                        den = self._node_builder.build_addition_node(rhs_terms)
-                        for num_term in lhs_terms:
-                            term = self._node_builder.build_fractional_node(num_term, deepcopy(den))
-                            terms.append(term)
-                        return terms
 
-                # Other
+                    if len(lhs_terms) == 1:
+
+                        numerator = lhs_terms[0]
+
+                        # special case: numerator is 0
+                        if isinstance(numerator, mat.NumericNode) and numerator.value == 0:
+                            return [numerator]
+
+                        # special case: numerator is 1
+                        if isinstance(numerator, mat.NumericNode) and numerator.value == 1:
+                            node.rhs_operand = self._node_builder.build_addition_node(rhs_terms)
+                            return [node]
+
+                    node.lhs_operand = mat.NumericNode(id=self.generate_free_node_id(), value=1)
+                    node.rhs_operand = rhs_terms
+                    rhs_terms = [node]
+
+                    return self.expand_factors(lhs_terms, rhs_terms)
+
+                # exponentiation
                 else:
-                    if node.operator == "less":
-                        warnings.warn("Problem Formulator unable to reformulate a 'less' operation node")
                     node.lhs_operand = self._node_builder.build_addition_node(lhs_terms)
                     node.rhs_operand = self._node_builder.build_addition_node(rhs_terms)
+                    node.lhs_operand.is_prioritized = True
+                    node.rhs_operand.is_prioritized = True
                     return [node]
 
-            # Multi Operation
+            # multi-operand operation
             elif isinstance(node, mat.MultiArithmeticOperationNode):
 
-                # Addition
+                # addition
                 if node.operator == '+':
                     terms = []
                     for operand in node.operands:
-                        terms.extend(self.__expand_factors(operand))
+                        terms.extend(self.__expand_multiplication(operand))
                     return terms
 
-                # Multiplication
+                # multiplication
                 elif node.operator == '*':
-                    operand_count = len(node.operands)
-                    term_lists = [self.__expand_factors(o) for o in node.operands]
+                    term_lists = [self.__expand_multiplication(o) for o in node.operands]
+                    return self.expand_factors_n(term_lists)
 
-                    def assemble_factor_lists(f: list = None, j: int = 0):
-                        f_list = []
-                        if f is None:
-                            f = []
-                        for t in term_lists[j]:
-                            f_new = deepcopy(f)
-                            f_new.append(t)
-                            if j == operand_count - 1:
-                                f_list.append(f_new)
-                            else:
-                                f_list.extend(assemble_factor_lists(f_new, j + 1))
-                        return f_list
-
-                    factor_lists = assemble_factor_lists()
-
-                    terms = []
-                    for factors in factor_lists:
-                        term = self._node_builder.build_multiplication_node(factors)
-                        terms.append(term)
-
-                    return terms
-
-            # Conditional Operation
+            # conditional operation
             elif isinstance(node, mat.ConditionalArithmeticExpressionNode):
                 for i, operand in enumerate(node.operands):
-                    terms = self.__expand_factors(operand)
+                    terms = self.__expand_multiplication(operand)
                     node.operands[i] = self._node_builder.build_addition_node(terms)
                 return [node]
 
         else:
-            raise ValueError("Problem formulator encountered an unexpected node"
-                             + " while expanding factors")
+            raise ValueError("Formulator encountered an unexpected node while expanding factors")
+
+    def expand_factors(self,
+                       lhs_terms: List[mat.ArithmeticExpressionNode],
+                       rhs_terms: List[mat.ArithmeticExpressionNode]):
+        terms = []
+
+        for lhs_term in lhs_terms:
+            for rhs_term in rhs_terms:
+
+                factors = [deepcopy(lhs_term), deepcopy(rhs_term)]
+                term = self._node_builder.build_multiplication_node(factors)
+                terms.append(term)
+
+        return terms
+
+    def expand_factors_n(self, factors: List[List[mat.ArithmeticExpressionNode]]):
+
+        terms = []
+
+        factor_count = len(factors)
+        terms_per_factor_count = [len(f) for f in factors]  # length factor_count
+        expanded_term_count = np.prod(terms_per_factor_count)  # total number of terms after expansion
+
+        term_indices = np.zeros(shape=(factor_count,))  # length factor_count
+
+        for _ in range(expanded_term_count):
+
+            # retrieve a term from each supplied factor according to the current indices
+            factor_terms = [factors[i][j] for i, j in enumerate(term_indices)]  # unique combination of terms
+
+            # increment indices
+            for i in range(factor_count, -1, -1):
+                term_indices[i] += 1  # increment term index of current factor
+                if term_indices[i] == terms_per_factor_count[i]:  # processed last term in factor
+                    term_indices[i] = 0  # reset term index to 0 and proceed to previous factor index
+                else:  # otherwise, break loop
+                    break
+
+            term = self._node_builder.build_multiplication_node(factor_terms)  # build term node
+            terms.append(term)  # add node to term list
+
+        return terms
 
     # Utility
     # ------------------------------------------------------------------------------------------------------------------

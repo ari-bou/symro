@@ -175,10 +175,10 @@ class GBDProblemBuilder:
                                          + " while generating a new primal subproblem meta-objective")
 
                     # embed the original function in a reductive summation operation
-                    sum_node = mat.FunctionNode(id=self.gbd_problem.generate_free_node_id(),
-                                                symbol="sum",
-                                                idx_set_node=sum_idx_set_node,
-                                                operands=obj_exp_node)
+                    sum_node = mat.ArithmeticTransformationNode(id=self.gbd_problem.generate_free_node_id(),
+                                                                symbol="sum",
+                                                                idx_set_node=sum_idx_set_node,
+                                                                operands=obj_exp_node)
 
                     expr_node = sum_node
 
@@ -708,7 +708,7 @@ class GBDProblemBuilder:
                 return self.MIXED_NODE
 
         # Function
-        elif isinstance(node, mat.FunctionNode):
+        elif isinstance(node, mat.ArithmeticTransformationNode):
 
             if node.is_reductive():
                 inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_syms)
@@ -858,7 +858,7 @@ class GBDProblemBuilder:
                     return self.__reformulate_complicating_entity_node(node, idx_set, dummy_syms), self.PURE_Y_NODE
 
         # Function
-        elif isinstance(node, mat.FunctionNode):
+        elif isinstance(node, mat.ArithmeticTransformationNode):
 
             if node.is_reductive():
                 inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_syms)
@@ -898,7 +898,7 @@ class GBDProblemBuilder:
                     return lhs_operand, lhs_status
                 elif rhs_status in self.COMP_STATUSES:
                     if node.operator == '-':
-                        rhs_operand = self.node_builder.add_negative_unity_coefficient(rhs_operand)
+                        rhs_operand = self.node_builder.append_negative_unity_coefficient(rhs_operand)
                         return rhs_operand, rhs_status
                     else:
                         return rhs_operand, rhs_status
@@ -928,18 +928,19 @@ class GBDProblemBuilder:
         # Multi Operation
         elif isinstance(node, mat.MultiArithmeticOperationNode):
 
-            node = self.formulator.reformulate_subtraction_ops(node)
             ref_results = [self.__reformulate_node(o, idx_set, dummy_syms) for o in node.operands]
             statuses = [r[1] for r in ref_results]
 
             if all([s == self.CONST_NODE for s in statuses]):
                 return node, self.CONST_NODE
+
             elif all([s not in self.COMP_STATUSES for s in statuses]):
                 return node, self.PURE_X_NODE
+
             else:
 
                 # Linearly separable
-                if node.operator in ['+', '-']:
+                if node.operator == '+':
                     comp_ref_results = [r for r in ref_results if r[1] in self.COMP_STATUSES]
                     comp_ref_nodes = [r[0] for r in comp_ref_results]
                     comp_statuses = [r[1] for r in comp_ref_results]
@@ -1011,10 +1012,10 @@ class GBDProblemBuilder:
         # Build summation node
         sum_idx_set_node = self.__build_idx_set_node_for_mixed_comp_entity_node(entity_node,
                                                                                 sub_comp_meta_vars)
-        sum_node = mat.FunctionNode(id=self.generate_free_node_id(),
-                                    symbol="sum",
-                                    idx_set_node=sum_idx_set_node,
-                                    operands=entity_node)
+        sum_node = mat.ArithmeticTransformationNode(id=self.generate_free_node_id(),
+                                                    symbol="sum",
+                                                    idx_set_node=sum_idx_set_node,
+                                                    operands=entity_node)
 
         return sum_node
 
@@ -1222,7 +1223,7 @@ class GBDProblemBuilder:
                         node.idx_node = storage_param_idx_node
                         node.set_type(const.PARAM_TYPE)
 
-            elif isinstance(node, mat.FunctionNode):
+            elif isinstance(node, mat.ArithmeticTransformationNode):
                 if node.is_reductive():
                     # add the indexing set of the current scope to that of the outer scope
                     inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_syms)
@@ -1236,11 +1237,10 @@ class GBDProblemBuilder:
                     queue.put((child, idx_set, dummy_syms))
 
         # build subtraction node
-        subtraction_node = mat.BinaryArithmeticOperationNode(id=self.generate_free_node_id(),
-                                                             operator='-',
-                                                             lhs_operand=root_node,
-                                                             rhs_operand=root_node_clone,
-                                                             is_prioritized=True)
+        subtraction_node = mat.SubtractionNode(id=self.generate_free_node_id(),
+                                               lhs_operand=root_node,
+                                               rhs_operand=root_node_clone,
+                                               is_prioritized=True)
 
         return subtraction_node
 
@@ -1431,10 +1431,10 @@ class GBDProblemBuilder:
             idx_set_node = deepcopy(self.gbd_problem.aux_f_meta_var.idx_set_node)
             idx_set_node.set_nodes.pop()  # Remove cuts set from indexing set node
 
-            sum_f_node = mat.FunctionNode(id=self.generate_free_node_id(),
-                                          symbol="sum",
-                                          idx_set_node=idx_set_node,
-                                          operands=aux_f_node)
+            sum_f_node = mat.ArithmeticTransformationNode(id=self.generate_free_node_id(),
+                                                          symbol="sum",
+                                                          idx_set_node=idx_set_node,
+                                                          operands=aux_f_node)
             return sum_f_node
 
     def __build_aux_g_summation_node(self, g_id: int):
@@ -1455,10 +1455,8 @@ class GBDProblemBuilder:
                                                 type=const.PARAM_TYPE)
 
         # build (lambda * G(y)) node
-        prod_node = mat.BinaryArithmeticOperationNode(id=self.generate_free_node_id(),
-                                                      operator='*',
-                                                      lhs_operand=dual_mult_node,
-                                                      rhs_operand=aux_g_node)
+        prod_node = mat.MultiplicationNode(id=self.generate_free_node_id(),
+                                           operands=[dual_mult_node, aux_g_node])
 
         # auxiliary variable is only indexed with respect to the cuts set
         if aux_g_meta_var.get_reduced_dimension() <= 1:
@@ -1470,10 +1468,10 @@ class GBDProblemBuilder:
             # build sum (lambda * G(y)) node
             idx_set_node = deepcopy(aux_g_meta_var.idx_set_node)
             idx_set_node.set_nodes.pop()  # Remove CUTS set from indexing set node
-            sum_g_node = mat.FunctionNode(id=self.generate_free_node_id(),
-                                          symbol="sum",
-                                          idx_set_node=idx_set_node,
-                                          operands=prod_node)
+            sum_g_node = mat.ArithmeticTransformationNode(id=self.generate_free_node_id(),
+                                                          symbol="sum",
+                                                          idx_set_node=idx_set_node,
+                                                          operands=prod_node)
 
             return sum_g_node
 
@@ -1532,10 +1530,10 @@ class GBDProblemBuilder:
                 operand_node.is_prioritized = True
 
                 # Build summation node
-                var_sum_node = mat.FunctionNode(id=self.generate_free_node_id(),
-                                                symbol="sum",
-                                                idx_set_node=idx_set_node,
-                                                operands=operand_node)
+                var_sum_node = mat.ArithmeticTransformationNode(id=self.generate_free_node_id(),
+                                                                symbol="sum",
+                                                                idx_set_node=idx_set_node,
+                                                                operands=operand_node)
 
                 operands.append(var_sum_node)
 
@@ -1556,25 +1554,23 @@ class GBDProblemBuilder:
             sum_node = build_sum_node(bin_value, build_comp_var_node)
             sum_nodes.append(sum_node)
 
-        lhs_node = mat.BinaryArithmeticOperationNode(id=self.generate_free_node_id(),
-                                                     operator='-',
-                                                     lhs_operand=sum_nodes[0],
-                                                     rhs_operand=sum_nodes[1])
+        lhs_node = mat.SubtractionNode(id=self.generate_free_node_id(),
+                                       lhs_operand=sum_nodes[0],
+                                       rhs_operand=sum_nodes[1])
 
         # RHS
 
         def build_one_node(_):
             return mat.NumericNode(id=self.generate_free_node_id(),
-                                   value='1')
+                                   value=1)
 
         sum_node = build_sum_node(1, build_one_node)
         one_node = mat.NumericNode(id=self.generate_free_node_id(),
-                                   value='1')
+                                   value=1)
 
-        rhs_node = mat.BinaryArithmeticOperationNode(id=self.generate_free_node_id(),
-                                                     operator='-',
-                                                     lhs_operand=sum_node,
-                                                     rhs_operand=one_node)
+        rhs_node = mat.SubtractionNode(id=self.generate_free_node_id(),
+                                       lhs_operand=sum_node,
+                                       rhs_operand=one_node)
 
         # Inequality node
         ineq_op_node = mat.RelationalOperationNode(id=self.generate_free_node_id(), operator="<=")

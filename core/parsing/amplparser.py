@@ -291,10 +291,10 @@ class AMPLParser:
                                                constraint_node=constraint_node)
 
             operand.is_prioritized = True
-            sum_node = mat.FunctionNode(id=self._generate_free_node_id(),
-                                        symbol="sum",
-                                        idx_set_node=idx_set_node,
-                                        operands=operand)
+            sum_node = mat.ArithmeticTransformationNode(id=self._generate_free_node_id(),
+                                                        symbol="sum",
+                                                        idx_set_node=idx_set_node,
+                                                        operands=operand)
 
             add_operands.append(sum_node)
 
@@ -691,15 +691,22 @@ class AMPLParser:
             # - exponentiation
             if operator in ["less", "div", "mod", '^', "**"]:
 
+                # less
                 if operator == "less":
                     root_operation = self.__convert_less_operation_to_non_negative_max(lhs_operand=root_operation,
                                                                                        rhs_operand=rhs_operand)
 
+                # div or mod
+                elif operator == "div" or operator == "mod":
+                    root_operation = mat.ArithmeticTransformationNode(id=self._generate_free_node_id(),
+                                                                      symbol=operator,
+                                                                      operands=[root_operation, rhs_operand])
+
+                # exponentiation
                 else:
-                    root_operation = mat.BinaryArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                                       operator=operator,
-                                                                       lhs_operand=root_operation,
-                                                                       rhs_operand=rhs_operand)
+                    root_operation = mat.ExponentiationNode(id=self._generate_free_node_id(),
+                                                            lhs_operand=root_operation,
+                                                            rhs_operand=rhs_operand)
 
                 arith_operation = None
 
@@ -737,14 +744,13 @@ class AMPLParser:
                                                      lhs_operand: mat.ArithmeticExpressionNode,
                                                      rhs_operand: mat.ArithmeticExpressionNode):
         zero_node = mat.NumericNode(id=self._generate_free_node_id(), value=0)
-        sub_node = mat.BinaryArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                     operator='-',
-                                                     lhs_operand=lhs_operand,
-                                                     rhs_operand=rhs_operand)
-        return mat.FunctionNode(id=self._generate_free_node_id(),
-                                symbol="max",
-                                idx_set_node=None,
-                                operands=[sub_node, zero_node])
+        rhs_operand = self.append_negative_unity_coefficient(rhs_operand, self._generate_free_node_id)
+        sub_node = mat.AdditionNode(id=self._generate_free_node_id(),
+                                    operands=[lhs_operand, rhs_operand])
+        return mat.ArithmeticTransformationNode(id=self._generate_free_node_id(),
+                                                symbol="max",
+                                                idx_set_node=None,
+                                                operands=[sub_node, zero_node])
 
     def __negate_subtrahend(self, subtrahend: mat.ArithmeticExpressionNode):
 
@@ -770,10 +776,9 @@ class AMPLParser:
         one_node = mat.NumericNode(id=self._generate_free_node_id(), value=1)
 
         # build a division operation node
-        fraction = mat.BinaryArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                     operator='/',
-                                                     lhs_operand=one_node,
-                                                     rhs_operand=divisor)
+        fraction = mat.DivisionNode(id=self._generate_free_node_id(),
+                                    lhs_operand=one_node,
+                                    rhs_operand=divisor)
         fraction.is_prioritized = True
 
         return fraction
@@ -795,7 +800,7 @@ class AMPLParser:
 
             # special case: unary negation
             if operator == '-':
-                node = self.add_negative_unity_coefficient(operand, self._generate_free_node_id)
+                node = self.append_negative_unity_coefficient(operand, self._generate_free_node_id)
 
             else:
                 node = mat.UnaryArithmeticOperationNode(id=self._generate_free_node_id(),
@@ -808,8 +813,8 @@ class AMPLParser:
             return self._parse_arithmetic_expression(precedence=16)
 
     @staticmethod
-    def add_negative_unity_coefficient(node: mat.ArithmeticExpressionNode,
-                                       free_node_id_generator: Callable[[], int]):
+    def append_negative_unity_coefficient(node: mat.ArithmeticExpressionNode,
+                                          free_node_id_generator: Callable[[], int]):
 
         # special case 1: node is numeric
         if isinstance(node, mat.NumericNode):
@@ -894,10 +899,10 @@ class AMPLParser:
 
             self._next_token()  # skip closing parenthesis ')'
 
-        function_operation = mat.FunctionNode(id=self._generate_free_node_id(),
-                                              symbol=function_sym,
-                                              idx_set_node=idx_set_node,
-                                              operands=operands)
+        function_operation = mat.ArithmeticTransformationNode(id=self._generate_free_node_id(),
+                                                              symbol=function_sym,
+                                                              idx_set_node=idx_set_node,
+                                                              operands=operands)
 
         return function_operation
 

@@ -227,7 +227,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
         return literal
 
 
-class FunctionNode(ArithmeticExpressionNode):
+class ArithmeticTransformationNode(ArithmeticExpressionNode):
 
     def __init__(self,
                  symbol: str,
@@ -290,21 +290,26 @@ class FunctionNode(ArithmeticExpressionNode):
                                           idx_set: IndexingSet = None,
                                           dummy_symbols: Tuple[str, ...] = None) -> List[float]:
 
-        x_vec = [o.evaluate(state, idx_set, dummy_symbols) for o in self.operands]
+        x = [o.evaluate(state, idx_set, dummy_symbols) for o in self.operands]
 
         # Single Argument
         if len(self.operands) == 1:
-            x = x_vec[0]
-            if self.symbol == "sin":  # Sine
-                y = np.sin(x)
+            x_0 = x[0]
+            if self.symbol == "div":
+                y = np.divide(x[0], x[1])
+                y = np.around(y)
+            elif self.symbol == "mod":
+                y = np.mod(x[0], x[1])
+            elif self.symbol == "sin":  # Sine
+                y = np.sin(x_0)
             elif self.symbol == "cos":  # Cosine
-                y = np.cos(x)
+                y = np.cos(x_0)
             elif self.symbol == "exp":  # Exponential
-                y = np.exp(x)
+                y = np.exp(x_0)
             elif self.symbol == "log":  # Natural Logarithm
-                y = np.log(x)
+                y = np.log(x_0)
             elif self.symbol == "log10":  # Logarithm Base 10
-                y = np.log10(x)
+                y = np.log10(x_0)
             else:
                 raise ValueError("Unable to resolve symbol '{0}'"
                                  " as a single-argument arithmetic function".format(self.symbol))
@@ -312,9 +317,9 @@ class FunctionNode(ArithmeticExpressionNode):
         # Multiple Arguments
         else:
             if self.symbol == "max":  # Maximum
-                y = max(*x_vec)
+                y = max(*x)
             elif self.symbol == "min":  # Minimum
-                y = min(*x_vec)
+                y = min(*x)
             else:
                 raise ValueError("Unable to resolve symbol '{0}'"
                                  " as a multi-argument arithmetic function".format(self.symbol))
@@ -335,37 +340,41 @@ class FunctionNode(ArithmeticExpressionNode):
             combined_idx_sets = self.combine_indexing_sets(state, idx_set, dummy_symbols)  # length 1
             combined_dummy_syms = self.idx_set_node.combined_dummy_syms
 
-            args = []
+            arg_0 = []
             for combined_idx_set_member in combined_idx_sets[0]:
-                args.append(self.operands[0].to_lambda(state,
-                                                       combined_idx_set_member,
-                                                       combined_dummy_syms))
+                arg_0.append(self.operands[0].to_lambda(state,
+                                                        combined_idx_set_member,
+                                                        combined_dummy_syms))
 
             if self.symbol == "sum":  # Reductive Summation
-                return partial(lambda x: sum([x_i() for x_i in x]), args)
+                return partial(lambda x: sum([x_i() for x_i in x]), arg_0)
             elif self.symbol == "prod":  # Reductive Multiplication
-                return partial(lambda x: np.prod([x_i() for x_i in x]), args)
+                return partial(lambda x: np.prod([x_i() for x_i in x]), arg_0)
             else:
                 raise ValueError("Unable to resolve symbol '{0}'"
                                  " as a reductive arithmetic function".format(self.symbol))
 
         else:
 
-            args_vec = [o.to_lambda(state, idx_set_member, dummy_symbols) for o in self.operands]
+            args = [o.to_lambda(state, idx_set_member, dummy_symbols) for o in self.operands]
 
             # Single Argument
             if len(self.operands) == 1:
-                args = args_vec[0]
-                if self.symbol == "sin":  # Sin
-                    return partial(lambda x: np.sin(x()), args)
+                arg_0 = args[0]
+                if self.symbol == "div":
+                    return partial(lambda x1, x2: int(x1() / x2()), arg_0, args[1])
+                elif self.symbol == "mod":
+                    return partial(lambda x1, x2: x1() % x2(), arg_0, args[1])
+                elif self.symbol == "sin":  # Sin
+                    return partial(lambda x: np.sin(x()), arg_0)
                 elif self.symbol == "cos":  # Cos
-                    return partial(lambda x: np.cos(x()), args)
+                    return partial(lambda x: np.cos(x()), arg_0)
                 elif self.symbol == "exp":  # Exponential
-                    return partial(lambda x: np.exp(x()), args)
+                    return partial(lambda x: np.exp(x()), arg_0)
                 elif self.symbol == "log":  # Natural Logarithm
-                    return partial(lambda x: np.log(x()), args)
+                    return partial(lambda x: np.log(x()), arg_0)
                 elif self.symbol == "log10":  # Logarithm Base 10
-                    return partial(lambda x: np.log10(x()), args)
+                    return partial(lambda x: np.log10(x()), arg_0)
                 else:
                     raise ValueError("Unable to resolve symbol '{0}'"
                                      " as a single-argument arithmetic function".format(self.symbol))
@@ -373,9 +382,9 @@ class FunctionNode(ArithmeticExpressionNode):
             # Multiple Arguments
             else:
                 if self.symbol == "max":  # Maximum
-                    return partial(lambda x: max(*[x_i() for x_i in x]), args_vec)
+                    return partial(lambda x: max(*[x_i() for x_i in x]), args)
                 elif self.symbol == "min":  # Minimum
-                    return partial(lambda x: min(*[x_i() for x_i in x]), args_vec)
+                    return partial(lambda x: min(*[x_i() for x_i in x]), args)
                 raise ValueError("Unable to resolve symbol '{0}'"
                                  " as a multi-argument arithmetic function".format(self.symbol))
 
@@ -448,13 +457,25 @@ class FunctionNode(ArithmeticExpressionNode):
                 self.operands.append(operand)
 
     def get_literal(self) -> str:
-        if self.idx_set_node is not None:
+
+        # reductive transformation
+        if self.is_reductive():
             literal = "{0} {1} {2}".format(self.symbol, self.idx_set_node, self.operands[0])
+
+        # non-reductive transformation
         else:
-            arguments = [o.get_literal() for o in self.operands]
-            literal = "{0}({1})".format(self.symbol, ', '.join(arguments))
+
+            if self.symbol == "div" or self.symbol == "mod":
+                arguments = [o.get_literal() for o in self.operands]
+                literal = "{0} {1} {2}".format(arguments[0], self.symbol, arguments[1])
+
+            else:
+                arguments = [o.get_literal() for o in self.operands]
+                literal = "{0}({1})".format(self.symbol, ', '.join(arguments))
+
         if self.is_prioritized:
             literal = '(' + literal + ')'
+
         return literal
 
 
@@ -462,11 +483,8 @@ class BinaryArithmeticOperationNode(ArithmeticExpressionNode):
 
     ADDITION_OPERATOR = '+'
     SUBTRACTION_OPERATOR = '-'
-    LESS_OPERATOR = "less"
     MULTIPLICATION_OPERATOR = '*'
     DIVISION_OPERATOR = '/'
-    INTEGER_DIVISION_OPERATOR = "div"
-    MODULUS_OPERATOR = "mod"
     EXPONENTIATION_OPERATOR = '^'
 
     def __init__(self,
@@ -494,16 +512,10 @@ class BinaryArithmeticOperationNode(ArithmeticExpressionNode):
             y = [x_lhs_i + x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
         elif self.operator == self.SUBTRACTION_OPERATOR:  # Subtraction
             y = [x_lhs_i - x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-        elif self.operator == self.LESS_OPERATOR:  # Less
-            y = [max(x_lhs_i - x_rhs_i, 0) for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
         elif self.operator == self.MULTIPLICATION_OPERATOR:  # Multiplication
             y = [x_lhs_i * x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
         elif self.operator == self.DIVISION_OPERATOR:  # Division
             y = [x_lhs_i / x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-        elif self.operator == self.INTEGER_DIVISION_OPERATOR:  # Integer Division
-            y = [np.trunc(x_lhs_i / x_rhs_i) for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-        elif self.operator == self.MODULUS_OPERATOR:  # Modulus
-            y = [x_lhs_i % x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
         elif self.operator == self.EXPONENTIATION_OPERATOR:  # Exponentiation
             y = [x_lhs_i ** x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
         else:
@@ -521,16 +533,10 @@ class BinaryArithmeticOperationNode(ArithmeticExpressionNode):
             return partial(lambda l, r: l() + r(), x_lhs, x_rhs)
         elif self.operator == self.SUBTRACTION_OPERATOR:  # Subtraction
             return partial(lambda l, r: l() - r(), x_lhs, x_rhs)
-        elif self.operator == self.LESS_OPERATOR:  # Less
-            return partial(lambda l, r: max(l() - r(), 0), x_lhs, x_rhs)
         elif self.operator == self.MULTIPLICATION_OPERATOR:  # Multiplication
             return partial(lambda l, r: l() * r(), x_lhs, x_rhs)
         elif self.operator == self.DIVISION_OPERATOR:  # Division
             return partial(lambda l, r: l() / r(), x_lhs, x_rhs)
-        elif self.operator == self.INTEGER_DIVISION_OPERATOR:  # Integer Division
-            return partial(lambda l, r: np.trunc(l() / r()), x_lhs, x_rhs)
-        elif self.operator == self.MODULUS_OPERATOR:  # Modulus
-            return partial(lambda l, r: l() % r(), x_lhs, x_rhs)
         elif self.operator == self.EXPONENTIATION_OPERATOR:  # Exponentiation
             return partial(lambda l, r: l() ** r(), x_lhs, x_rhs)
         else:
@@ -567,13 +573,7 @@ class BinaryArithmeticOperationNode(ArithmeticExpressionNode):
 class MultiArithmeticOperationNode(ArithmeticExpressionNode):
 
     ADDITION_OPERATOR = '+'
-    SUBTRACTION_OPERATOR = '-'
-    LESS_OPERATOR = "less"
     MULTIPLICATION_OPERATOR = '*'
-    DIVISION_OPERATOR = '/'
-    INTEGER_DIVISION_OPERATOR = "div"
-    MODULUS_OPERATOR = "mod"
-    EXPONENTIATION_OPERATOR = '^'
 
     def __init__(self,
                  operator: str,
@@ -598,20 +598,8 @@ class MultiArithmeticOperationNode(ArithmeticExpressionNode):
 
             if self.operator == self.ADDITION_OPERATOR:  # Addition
                 y = [x_lhs_i + x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-            elif self.operator == self.SUBTRACTION_OPERATOR:  # Subtraction
-                y = [x_lhs_i - x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-            elif self.operator == self.LESS_OPERATOR:  # Less
-                y = [max(x_lhs_i - x_rhs_i, 0) for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
             elif self.operator == self.MULTIPLICATION_OPERATOR:  # Multiplication
                 y = [x_lhs_i * x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-            elif self.operator == self.DIVISION_OPERATOR:  # Division
-                y = [x_lhs_i / x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-            elif self.operator == self.INTEGER_DIVISION_OPERATOR:  # Integer Division
-                y = [np.trunc(x_lhs_i / x_rhs_i) for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-            elif self.operator == self.MODULUS_OPERATOR:  # Modulus
-                y = [x_lhs_i % x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-            elif self.operator == self.EXPONENTIATION_OPERATOR:  # Exponentiation
-                y = [x_lhs_i ** x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
             else:
                 raise ValueError("Unable to resolve symbol '{0}'"
                                  " as a multi arithmetic operator".format(self.operator))
@@ -626,28 +614,13 @@ class MultiArithmeticOperationNode(ArithmeticExpressionNode):
                   dummy_symbols: Tuple[str, ...] = None):
 
         args_all = []
-        args_trail = []
         for operand in self.operands:
             args_all.append(operand.to_lambda(state, idx_set_member, dummy_symbols))
-        if len(args_all) > 1:
-            args_trail = args_all[1:]
 
         if self.operator == self.ADDITION_OPERATOR:  # Addition
             return partial(lambda x: sum([x_i() for x_i in x]), args_all)
-        elif self.operator == self.SUBTRACTION_OPERATOR:  # Subtraction
-            return partial(lambda x_1, x_rest: x_1() - sum([x_i() for x_i in x_rest]),
-                           args_all[0], args_trail)
-        elif self.operator == self.LESS_OPERATOR:  # Less
-            return partial(lambda x_1, x_rest: max(x_1() - sum([x_i() for x_i in x_rest]), 0),
-                           args_all[0], args_trail)
         elif self.operator == self.MULTIPLICATION_OPERATOR:  # Multiplication
             return partial(lambda x: np.prod([x_i() for x_i in x]), args_all)
-        elif self.operator == self.DIVISION_OPERATOR:  # Division
-            return partial(lambda x_1, x_rest: x_1() / np.prod([x_i() for x_i in x_rest]),
-                           args_all[0], args_trail)
-        elif self.operator == self.INTEGER_DIVISION_OPERATOR:  # Integer Division
-            return partial(lambda x_1, x_rest: np.trunc(x_1() / np.prod([x_i() for x_i in x_rest])),
-                           args_all[0], args_trail)
         else:
             raise ValueError("Unable to resolve symbol '{0}'"
                              " as a multi arithmetic operator".format(self.operator))
@@ -679,6 +652,68 @@ class MultiArithmeticOperationNode(ArithmeticExpressionNode):
             return '(' + s + ')'
         else:
             return s
+
+
+class AdditionNode(MultiArithmeticOperationNode):
+
+    def __init__(self,
+                 operands: List[ArithmeticExpressionNode],
+                 id: int = 0):
+        super().__init__(id=id,
+                         operator='+',
+                         operands=operands)
+
+
+class SubtractionNode(BinaryArithmeticOperationNode):
+
+    def __init__(self,
+                 lhs_operand: ArithmeticExpressionNode = None,
+                 rhs_operand: ArithmeticExpressionNode = None,
+                 is_prioritized: bool = False,
+                 id: int = 0):
+        super().__init__(id=id,
+                         operator='-',
+                         lhs_operand=lhs_operand,
+                         rhs_operand=rhs_operand,
+                         is_prioritized=is_prioritized)
+
+
+class MultiplicationNode(MultiArithmeticOperationNode):
+
+    def __init__(self,
+                 operands: List[ArithmeticExpressionNode],
+                 id: int = 0):
+        super().__init__(id=id,
+                         operator='*',
+                         operands=operands)
+
+
+class DivisionNode(BinaryArithmeticOperationNode):
+
+    def __init__(self,
+                 lhs_operand: ArithmeticExpressionNode = None,
+                 rhs_operand: ArithmeticExpressionNode = None,
+                 is_prioritized: bool = False,
+                 id: int = 0):
+        super().__init__(id=id,
+                         operator='/',
+                         lhs_operand=lhs_operand,
+                         rhs_operand=rhs_operand,
+                         is_prioritized=is_prioritized)
+
+
+class ExponentiationNode(BinaryArithmeticOperationNode):
+
+    def __init__(self,
+                 lhs_operand: ArithmeticExpressionNode = None,
+                 rhs_operand: ArithmeticExpressionNode = None,
+                 is_prioritized: bool = False,
+                 id: int = 0):
+        super().__init__(id=id,
+                         operator='^',
+                         lhs_operand=lhs_operand,
+                         rhs_operand=rhs_operand,
+                         is_prioritized=is_prioritized)
 
 
 class UnaryArithmeticOperationNode(ArithmeticExpressionNode):

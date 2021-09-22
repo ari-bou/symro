@@ -242,15 +242,28 @@ class Problem(BaseProblem):
     # Identifier Generation
     # ------------------------------------------------------------------------------------------------------------------
 
-    def generate_unique_symbol(self, base_symbol: str = None) -> str:
+    def generate_unique_symbol(self,
+                               base_symbol: str = None,
+                               symbol_blacklist: Iterable[str] = None) -> str:
+        """
+        Generate a unique entity symbol that has not been assigned to a previously declared entity.
+        :param base_symbol: prefix of the symbol
+        :param symbol_blacklist: string literals to omit when eliciting a unique symbol
+        :return:
+        """
+
         if base_symbol is None:
             base_symbol = "ENTITY"
-        symbol = base_symbol
-        i = 0
-        while symbol in self.symbols:
+        if symbol_blacklist is None:
+            symbol_blacklist = set()
+
+        i = 1
+        sym = base_symbol
+        while sym in symbol_blacklist or sym in self.symbols or sym in self.unbound_symbols:
+            sym = base_symbol + str(i)
             i += 1
-            symbol = base_symbol + str(i)
-        return symbol
+
+        return sym
 
     def generate_free_node_id(self) -> int:
         free_node_id = self.__free_node_id

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from ordered_set import OrderedSet
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Set, Tuple, Union
 
 from symro.core.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode, ArithmeticExpressionNode, \
     StringExpressionNode
@@ -450,6 +450,34 @@ class CompoundSetNode(BaseSetNode):
         for set_node in self.set_nodes:
             dummy_syms.extend(set_node.get_dummy_elements(state))
         return tuple(dummy_syms)
+
+    def get_defined_unbound_symbols(self, outer_unb_syms: Set[str] = None) -> Set[str]:
+        """
+        Retrieve unbound symbols defined by the compound set node.
+        :param outer_unb_syms: set of unbound symbols defined in the outer scope
+        :return: set of unbound symbols
+        """
+
+        unb_syms = set()
+
+        if outer_unb_syms is None:
+            outer_unb_syms = set()
+
+        for cmpt_set_node in self.set_nodes:
+
+            if isinstance(cmpt_set_node, IndexingSetNode):
+                dummy_node = cmpt_set_node.dummy_node
+
+                if isinstance(dummy_node, DummyNode):
+                    if dummy_node.symbol not in outer_unb_syms:
+                        unb_syms.add(dummy_node.symbol)
+
+                elif isinstance(dummy_node, CompoundDummyNode):
+                    for cmpt_node in dummy_node.component_nodes:
+                        if cmpt_node.symbol not in outer_unb_syms:
+                            unb_syms.add(cmpt_node.symbol)
+
+        return unb_syms
 
     def get_children(self) -> List[ExpressionNode]:
         children = []

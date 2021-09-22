@@ -403,7 +403,7 @@ class EntityBuilder:
                     cmpt_unb_syms = self._node_builder.retrieve_unbound_symbols(component_set_node)
 
                     # generate unique unbound symbol
-                    unb_sym = self._node_builder.generate_unique_symbol(
+                    unb_sym = self._problem.generate_unique_symbol(
                         base_symbol=unb_sym_base,
                         symbol_blacklist=cmpt_unb_syms | unb_syms_blacklist)
 
@@ -802,7 +802,7 @@ class EntityBuilder:
 
                 middle_rep_map = self.node_builder.generate_unbound_symbol_clash_replacement_map(
                     middle_idx_set_node,
-                    blacklisted_unbound_syms=outer_unb_syms)
+                    blacklisted_unb_syms=outer_unb_syms)
 
                 tfm_middle_scope_unbound_syms = OrderedSet()
                 for unbound_sym in middle_unb_syms:
@@ -863,8 +863,8 @@ class EntityBuilder:
 
             inner_rep_map = self.node_builder.generate_unbound_symbol_clash_replacement_map(
                 inner_idx_set_node,
-                outer_scope_unbound_syms=tfm_middle_unb_syms,
-                blacklisted_unbound_syms=tfm_inner_unb_syms | set(outer_unb_syms))
+                outer_unb_syms=tfm_middle_unb_syms,
+                blacklisted_unb_syms=tfm_inner_unb_syms | set(outer_unb_syms))
 
             self.node_builder.replace_unbound_symbols(inner_idx_set_node, inner_rep_map)
 

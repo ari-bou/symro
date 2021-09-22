@@ -13,32 +13,6 @@ class NodeBuilder:
         self.unb_sym_map: Optional[Dict[str, str]] = None  # mapping of unbound symbols created by certain methods
         self.__free_node_id: int = 0
 
-    # Symbol Generation
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def generate_unique_symbol(self,
-                               base_symbol: str = None,
-                               symbol_blacklist: Iterable[str] = None):
-        """
-        Generate a unique entity symbol that has not been assigned to a previously declared entity.
-        :param base_symbol: prefix of the symbol
-        :param symbol_blacklist: string literals to omit when eliciting a unique symbol
-        :return:
-        """
-
-        if base_symbol is None:
-            base_symbol = "ENTITY"
-        if symbol_blacklist is None:
-            symbol_blacklist = set()
-
-        i = 1
-        sym = base_symbol
-        while sym in symbol_blacklist or sym in self._problem.symbols or sym in self._problem.unbound_symbols:
-            sym = base_symbol + str(i)
-            i += 1
-
-        return sym
-
     # Unbound Symbols
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -160,16 +134,22 @@ class NodeBuilder:
 
     @staticmethod
     def map_unbound_symbols_to_controlling_sets(set_nodes: List[mat.SetExpressionNode],
-                                                outer_scope_unbound_syms: Iterable[str] = None
+                                                outer_unb_syms: Iterable[str] = None
                                                 ) -> Dict[str, mat.IndexingSetNode]:
+        """
+        Generate a mapping of unbound symbols to their corresponding defining set nodes
+        :param set_nodes: list of set expression nodes
+        :param outer_unb_syms: unbound symbols defined in the outer scope
+        :return: dictionary of unbound symbols mapped to indexing set nodes
+        """
 
-        if outer_scope_unbound_syms is None:
-            outer_scope_unbound_syms = set()
+        if outer_unb_syms is None:
+            outer_unb_syms = set()
 
         mapping = {}
 
         def assign_set_node_to_unbound_symbol(unbound_sym: str, sn: mat.IndexingSetNode):
-            if unbound_sym not in mapping and unbound_sym not in outer_scope_unbound_syms:
+            if unbound_sym not in mapping and unbound_sym not in outer_unb_syms:
                 mapping[unbound_sym] = sn
 
         for set_node in set_nodes:
@@ -190,15 +170,17 @@ class NodeBuilder:
 
     def generate_unbound_symbol_clash_replacement_map(self,
                                                       node: mat.ExpressionNode,
-                                                      outer_scope_unbound_syms: Iterable[str] = None,
-                                                      blacklisted_unbound_syms: Iterable[str] = None):
+                                                      outer_unb_syms: Iterable[str] = None,
+                                                      blacklisted_unb_syms: Iterable[str] = None):
+
+        # TODO: consider moving this method to the entity builder
 
         mapping = {}
         current_scope_unbound_syms = set()
-        if outer_scope_unbound_syms is None:
-            outer_scope_unbound_syms = set()
-        if blacklisted_unbound_syms is None:
-            blacklisted_unbound_syms = set()
+        if outer_unb_syms is None:
+            outer_unb_syms = set()
+        if blacklisted_unb_syms is None:
+            blacklisted_unb_syms = set()
 
         queue = Queue()
         queue.put(node)
@@ -208,7 +190,7 @@ class NodeBuilder:
             node = queue.get()
 
             if isinstance(node, mat.DummyNode):
-                if node.symbol not in outer_scope_unbound_syms:
+                if node.symbol not in outer_unb_syms:
                     # add the unbound symbol to the set of unique unbound symbols defined in the current scope
                     current_scope_unbound_syms.add(node.symbol)
 
@@ -220,9 +202,9 @@ class NodeBuilder:
                     dummy_node = node.dummy_node
 
                     if isinstance(dummy_node, mat.DummyNode):  # scalar dummy node
-                        if dummy_node.symbol not in outer_scope_unbound_syms:
+                        if dummy_node.symbol not in outer_unb_syms:
                             if dummy_node.symbol in current_scope_unbound_syms \
-                                    or dummy_node.symbol in blacklisted_unbound_syms:
+                                    or dummy_node.symbol in blacklisted_unb_syms:
                                 mapping[dummy_node.symbol] = ""
                         else:
                             raise ValueError("Node builder encountered an indexing set node '{0}'".format(node)
@@ -231,20 +213,20 @@ class NodeBuilder:
                     elif isinstance(dummy_node, mat.CompoundDummyNode):  # compound dummy node
                         for component_node in dummy_node.component_nodes:
                             if isinstance(component_node, mat.DummyNode):
-                                if component_node.symbol not in outer_scope_unbound_syms:
+                                if component_node.symbol not in outer_unb_syms:
                                     if component_node.symbol in current_scope_unbound_syms \
-                                            or component_node.symbol in blacklisted_unbound_syms:
+                                            or component_node.symbol in blacklisted_unb_syms:
                                         mapping[component_node.symbol] = ""
 
                 children = node.get_children()
                 for child in children:
                     queue.put(child)
 
-        defined_symbols = set(outer_scope_unbound_syms) | current_scope_unbound_syms  # union
-        defined_symbols = defined_symbols | set(blacklisted_unbound_syms)  # union
+        defined_symbols = set(outer_unb_syms) | current_scope_unbound_syms  # union
+        defined_symbols = defined_symbols | set(blacklisted_unb_syms)  # union
         for non_unique_unbound_sym in mapping:
-            unique_unbound_sym = self.generate_unique_symbol(base_symbol=non_unique_unbound_sym,
-                                                             symbol_blacklist=defined_symbols)
+            unique_unbound_sym = self._problem.generate_unique_symbol(base_symbol=non_unique_unbound_sym,
+                                                                      symbol_blacklist=defined_symbols)
             self._problem.unbound_symbols.add(unique_unbound_sym)
             mapping[non_unique_unbound_sym] = unique_unbound_sym
 

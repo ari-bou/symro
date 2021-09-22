@@ -471,7 +471,7 @@ class Formulator:
                 mc.expression.expression_node = self.substitute(root_node=mc.expression.expression_node,
                                                                 sub_map=sub_map)
 
-    # Miscellaneous Reformulation
+    # Subtraction and Arithmetic Negation
     # ------------------------------------------------------------------------------------------------------------------
 
     def reformulate_subtraction_and_unary_negation(self, root_node: mat.ExpressionNode):
@@ -509,6 +509,9 @@ class Formulator:
             node.set_children(ref_children)
 
         return root_node
+
+    # Expansion
+    # ------------------------------------------------------------------------------------------------------------------
 
     def expand_multiplication(self, root_node: mat.ExpressionNode):
 
@@ -551,9 +554,53 @@ class Formulator:
 
             # transformation
             elif isinstance(node, mat.ArithmeticTransformationNode):
-                for i, operand in enumerate(node.operands):
-                    terms = self.__expand_multiplication(operand)
-                    node.operands[i] = self._node_builder.build_addition_node(terms)
+
+                # reductive summation
+                if node.is_reductive() and node.symbol == "sum":
+
+                    terms = self.__expand_multiplication(node.operands[0])
+
+                    # single term
+                    if len(terms) == 1:  # return the summation node
+                        node.operands[0] = terms[0]
+                        return [node]
+
+                    # multiple terms
+                    else:  # distribute the summation to each term
+
+                        # retrieve the unbound symbols of the indexing set node of the summation node
+                        unb_syms = node.idx_set_node.get_defined_unbound_symbols()
+
+                        node.operands.clear()  # clear the list of operands of the summation node
+
+                        dist_terms = []  # list of terms onto which the summation node was distributed
+
+                        for term in terms:
+
+                            # retrieve the set of unbound symbols present in the term
+                            term_unb_syms = self._node_builder.retrieve_unbound_symbols(root_node=term,
+                                                                                        in_filter=unb_syms)
+
+                            # if any defined unbound symbols are present in the term, then the term is controlled by
+                            # the indexing set of the summation node
+                            if len(term_unb_syms) > 0:  # the term is controlled by the indexing set node
+                                sum_node = deepcopy(node)
+                                sum_node.operands.append(term)
+                                dist_terms.append(sum_node)
+
+                            else:  # the term is not controlled by the indexing set node
+                                dist_terms.append(term)  # append the term without a summation transformation
+
+                        return dist_terms
+
+                # other
+                else:
+
+                    for i, operand in enumerate(node.operands):
+                        terms = self.__expand_multiplication(operand)
+                        node.operands[i] = self._node_builder.build_addition_node(terms)
+
+                    return [node]
 
             # unary operation
             elif isinstance(node, mat.UnaryArithmeticOperationNode):
@@ -676,6 +723,87 @@ class Formulator:
             terms.append(term)  # add node to term list
 
         return terms
+
+    # Summation Combination
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def combine_summation_factor_nodes(self, nodes: List[mat.ArithmeticExpressionNode]):
+
+        cmpt_set_nodes = []  # component set nodes of the combined indexing set node
+        conj_operands = []  # conjunctive operands of the constraint node of the combined indexing set node
+        factors = []  # factors subject to the combined summation node
+
+        def_unb_syms = set()  # previously defined unbound symbols
+
+        for node in nodes:
+
+            unb_syms = self._node_builder.retrieve_unbound_symbols(node)
+            clashing_unb_syms = def_unb_syms.intersection(unb_syms)
+            def_unb_syms = def_unb_syms.union(unb_syms)
+
+            if len(clashing_unb_syms) > 0:  # one or more unbound symbol conflicts
+
+                # generate mapping of old conflicting symbols to new unique symbols
+                mapping = {}
+                for unb_sym in clashing_unb_syms:
+                    mapping[unb_sym] = self._problem.generate_unique_symbol(unb_sym)
+
+                # replace the conflicting symbols with unique symbols
+                self._node_builder.replace_unbound_symbols(node=node, mapping=mapping)
+
+            # reductive summation node
+            if isinstance(node, mat.ArithmeticTransformationNode) and node.symbol == "sum":
+
+                # collect set nodes of the current indexing set node
+                cmpt_set_nodes.extend(node.idx_set_node.set_nodes)
+
+                # collect constraint node of the current indexing set node
+                if node.idx_set_node.constraint_node is not None:
+                    conj_operands.append(node.idx_set_node.constraint_node)
+
+                # designate the operand of the current summation node as the factorable node
+                factorable_node = node.operands[0]
+
+            # other
+            else:
+                # designate the current node as the factorable node
+                factorable_node = node
+
+            # retrieve underlying factors of the factorable node
+
+            # multiple factors
+            if isinstance(factorable_node, mat.MultiArithmeticOperationNode) and factorable_node.operator == '*':
+                factors.extend(factorable_node.operands)
+
+            # single factor
+            else:
+                factors.append(factorable_node)
+
+        # build multiplication node with collected factors
+        multiplication_node = self._node_builder.build_multiplication_node(factors)
+
+        # indexing set of the combined summation node is empty
+        if len(cmpt_set_nodes) == 0:
+            return multiplication_node
+
+        # indexing set of the combined summation node is not empty
+        else:
+
+            # build a conjunctive constraint node for the combined indexing set node
+            constraint_node = None
+            if len(conj_operands) > 0:
+                constraint_node = self._node_builder.build_conjunction_node(conj_operands)
+
+            # build the combined indexing set node
+            idx_set_node = mat.CompoundSetNode(id=self._problem.generate_free_node_id(),
+                                               set_nodes=cmpt_set_nodes,
+                                               constraint_node=constraint_node)
+
+            # build the combined summation node
+            return mat.ArithmeticTransformationNode(id=self._problem.generate_free_node_id(),
+                                                    symbol="sum",
+                                                    idx_set_node=idx_set_node,
+                                                    operands=multiplication_node)
 
     # Utility
     # ------------------------------------------------------------------------------------------------------------------

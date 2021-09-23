@@ -1,3 +1,4 @@
+from copy import copy, deepcopy
 import os
 import pickle
 from typing import Any, Dict, Iterable, List, Optional, Set, Union
@@ -6,7 +7,6 @@ import warnings
 import symro.core.mat as mat
 from symro.core.prob.specialcommand import SpecialCommand
 import symro.core.prob.statement as stm
-import symro.core.util.util as util
 
 
 class BaseProblem:
@@ -31,15 +31,39 @@ class BaseProblem:
             for me in model_meta_entities:
                 self.add_meta_entity_to_model(me)
 
-    def copy(self, source: "BaseProblem"):
+    def __copy__(self):
+        clone = BaseProblem()
+        self.copy(self, clone)
+        return clone
 
-        self.symbol = source.symbol
-        self.description = source.description
+    def __deepcopy__(self):
+        clone = BaseProblem()
+        self.deepcopy(self, clone)
+        return clone
 
-        self.model_meta_sets_params = list(source.model_meta_sets_params)
-        self.model_meta_vars = list(source.model_meta_vars)
-        self.model_meta_objs = list(source.model_meta_objs)
-        self.model_meta_cons = list(source.model_meta_cons)
+    @staticmethod
+    def copy(source: "BaseProblem", clone: "BaseProblem"):
+
+        clone.symbol = source.symbol
+        clone.description = source.description
+        clone.idx_set_node = source.idx_set_node
+
+        clone.model_meta_sets_params = list(source.model_meta_sets_params)
+        clone.model_meta_vars = list(source.model_meta_vars)
+        clone.model_meta_objs = list(source.model_meta_objs)
+        clone.model_meta_cons = list(source.model_meta_cons)
+
+    @staticmethod
+    def deepcopy(source: "BaseProblem", clone: "BaseProblem"):
+
+        clone.symbol = source.symbol
+        clone.description = source.description
+        clone.idx_set_node = deepcopy(source.idx_set_node)
+
+        clone.model_meta_sets_params = deepcopy(source.model_meta_sets_params)
+        clone.model_meta_vars = deepcopy(source.model_meta_vars)
+        clone.model_meta_objs = deepcopy(source.model_meta_objs)
+        clone.model_meta_cons = deepcopy(source.model_meta_cons)
 
     def add_meta_entity_to_model(self, meta_entity: mat.MetaEntity):
         if isinstance(meta_entity, mat.MetaSet):
@@ -76,13 +100,7 @@ class Problem(BaseProblem):
     def __init__(self,
                  symbol: str = None,
                  description: str = None,
-                 file_name: str = None,
                  working_dir_path: str = None):
-
-        # --- Name ---
-        if symbol is None and file_name is not None:
-            file_name = os.path.basename(file_name)
-            symbol = os.path.splitext(file_name)[0]
 
         super(Problem, self).__init__(symbol, description)
 
@@ -113,36 +131,117 @@ class Problem(BaseProblem):
         # --- Miscellaneous ---
         self.__free_node_id: int = 0
 
-    def copy(self, source: "Problem"):
+    def __copy__(self):
+        clone = Problem()
+        self.copy(self, clone)
+        return clone
 
-        BaseProblem.copy(self, source)
+    def __deepcopy__(self):
+        clone = Problem()
+        self.deepcopy(self, clone)
+        return clone
 
-        self.working_dir_path = source.working_dir_path
+    @staticmethod
+    def copy(source: "Problem", clone: "Problem"):
 
-        self.run_script_literal = source.run_script_literal
-        self.script_commands = dict(source.script_commands)
+        BaseProblem.copy(source, clone)
 
-        self.compound_script: Optional[stm.CompoundScript] = stm.CompoundScript()
-        self.compound_script.copy(source.compound_script)
+        clone.working_dir_path = source.working_dir_path
 
-        self.symbols = set(source.symbols)
-        self.unbound_symbols = set(source.unbound_symbols)
+        clone.run_script_literal = source.run_script_literal
+        clone.script_commands = dict(source.script_commands)
 
-        self.meta_sets = dict(source.meta_sets)
-        self.meta_params = dict(source.meta_params)
-        self.meta_vars = dict(source.meta_vars)
-        self.meta_objs = dict(source.meta_objs)
-        self.meta_cons = dict(source.meta_cons)
-        self.meta_tables = dict(source.meta_tables)
+        clone.compound_script = stm.CompoundScript()
+        clone.compound_script.copy(source.compound_script)
 
-        self.subproblems = {}
-        for sym, sp in source.subproblems.items():
-            self.subproblems[sym] = BaseProblem()
-            self.subproblems[sym].copy(sp)
+        clone.symbols = set(source.symbols)
+        clone.unbound_symbols = set(source.unbound_symbols)
 
-        self.state = source.state
+        clone.meta_sets = dict(source.meta_sets)
+        clone.meta_params = dict(source.meta_params)
+        clone.meta_vars = dict(source.meta_vars)
+        clone.meta_objs = dict(source.meta_objs)
+        clone.meta_cons = dict(source.meta_cons)
+        clone.meta_tables = dict(source.meta_tables)
 
-        self.__free_node_id = source.__free_node_id
+        clone.subproblems = {sym: copy(sp) for sym, sp in source.subproblems.items()}
+
+        clone.state = source.state
+
+        clone.__free_node_id = source.__free_node_id
+
+    @staticmethod
+    def deepcopy(source: "Problem", clone: "Problem"):
+
+        clone.symbol = source.symbol
+        clone.description = source.description
+
+        clone.working_dir_path = source.working_dir_path
+
+        clone.run_script_literal = source.run_script_literal
+        clone.script_commands = deepcopy(source.script_commands)
+
+        clone.compound_script = stm.CompoundScript()
+        clone.compound_script.copy(source.compound_script)
+
+        clone.symbols = deepcopy(source.symbols)
+        clone.unbound_symbols = deepcopy(source.unbound_symbols)
+
+        clone.meta_sets = deepcopy(source.meta_sets)
+        clone.meta_params = deepcopy(source.meta_params)
+        clone.meta_vars = deepcopy(source.meta_vars)
+        clone.meta_objs = deepcopy(source.meta_objs)
+        clone.meta_cons = deepcopy(source.meta_cons)
+        clone.meta_tables = deepcopy(source.meta_tables)
+
+        for me in source.model_meta_sets_params:
+            if isinstance(me, mat.MetaSet):
+                clone.model_meta_sets_params.append(clone.meta_sets[me.symbol])
+            elif isinstance(me, mat.MetaParameter):
+                clone.model_meta_sets_params.append(clone.meta_params[me.symbol])
+
+        for me in source.model_meta_vars:
+            clone.model_meta_vars.append(clone.meta_vars[me.symbol])
+
+        for me in source.model_meta_objs:
+            clone.model_meta_objs.append(clone.meta_objs[me.symbol])
+
+        for me in source.model_meta_cons:
+            clone.model_meta_cons.append(clone.meta_cons[me.symbol])
+
+        for sym, sp_source in source.subproblems.items():
+
+            sp_clone = BaseProblem(symbol=sym,
+                                   description=sp_source.description,
+                                   idx_set_node=deepcopy(sp_source.idx_set_node))
+
+            for me in sp_source.model_meta_sets_params:
+                if isinstance(me, mat.MetaSet):
+                    sp_clone.model_meta_sets_params.append(clone.meta_sets[me.symbol])
+                elif isinstance(me, mat.MetaParameter):
+                    sp_clone.model_meta_sets_params.append(clone.meta_params[me.symbol])
+
+            for me in source.model_meta_vars:
+                if not me.is_sub:
+                    sp_clone.model_meta_vars.append(clone.meta_vars[me.symbol])
+                else:
+                    sp_clone.model_meta_vars.append(deepcopy(me))
+
+            for me in source.model_meta_objs:
+                if not me.is_sub:
+                    sp_clone.model_meta_objs.append(clone.meta_objs[me.symbol])
+                else:
+                    sp_clone.model_meta_objs.append(deepcopy(me))
+
+            for me in source.model_meta_cons:
+                if not me.is_sub:
+                    sp_clone.model_meta_cons.append(clone.meta_cons[me.symbol])
+                else:
+                    sp_clone.model_meta_cons.append(deepcopy(me))
+
+        clone.state = mat.State()
+
+        clone.__free_node_id = source.__free_node_id
 
     # Checkers
     # ------------------------------------------------------------------------------------------------------------------

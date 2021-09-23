@@ -96,24 +96,19 @@ VAR_TYPE = "var"
 OBJ_TYPE = "obj"
 CON_TYPE = "con"
 TABLE_TYPE = "table"
-PROB_TYPE = "handlers"
+PROB_TYPE = "prob"
 ENV_TYPE = "env"
 
-# Term Identifiers
+# Term Types
 # ----------------------------------------------------------------------------------------------------------------------
-CONSTANT_TERM = 'C'
-LINEAR_TERM = 'L'
-BILINEAR_TERM = 'B'
-TRILINEAR_TERM = 'T'
-RATIO_TERM = 'R'
-MONOMIAL_POWER_TERM = "MP"
-BINOMIAL_POWER_TERM = "BP"
-TRINOMIAL_POWER_TERM = "TP"
-RATIO_POWER_TERM = "RP"
-EXPONENTIAL_TERM = "EXP"
-LOGARITHMIC_TERM = "LN"
-SIN_TERM = "SIN"
-COS_TERM = "COS"
+CONSTANT_TERM = 0
+LINEAR_TERM = 1
+BILINEAR_TERM = 2
+TRILINEAR_TERM = 3
+FRACTIONAL_TERM = 4
+FRACTIONAL_TRILINEAR_TERM = 5
+UNVARIATE_CONCAVE_TERM = 6
+GENERAL_NONCONVEX_TERM = 7
 
 # Data Sheet
 # ----------------------------------------------------------------------------------------------------------------------

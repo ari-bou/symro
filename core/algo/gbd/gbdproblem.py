@@ -60,7 +60,7 @@ class GBDProblem(Problem):
         super(GBDProblem, self).__init__(symbol=None,
                                          description=problem.description,
                                          working_dir_path=working_dir_path)
-        Problem.copy(self, problem)
+        Problem.copy(problem, self)
 
         # --- Name ---
         self.symbol = problem.symbol + ".gbd"

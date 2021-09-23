@@ -1,8 +1,8 @@
-from typing import List, Optional, Tuple, Union
 from ordered_set import OrderedSet
+import os
+from typing import List, Optional, Tuple, Union
 import warnings
 
-import symro.core.constants as const
 import symro.core.mat as mat
 from symro.core.prob.problem import Problem
 import symro.core.prob.statement as stm
@@ -23,9 +23,12 @@ def build_problem_from_ampl_script(file_name: str = None,
     if file_name is None and script_literal is None:
         raise ValueError("Problem builder requires either a file name or a script literal.")
 
+    if name is None and file_name is not None:
+        file_name = os.path.basename(file_name)
+        name = os.path.splitext(file_name)[0]
+
     problem = Problem(symbol=name,
                       description=description,
-                      file_name=file_name,
                       working_dir_path=working_dir_path)
 
     if script_literal is None:

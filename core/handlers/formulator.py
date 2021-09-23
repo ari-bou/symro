@@ -513,37 +513,7 @@ class Formulator:
     # Expansion
     # ------------------------------------------------------------------------------------------------------------------
 
-    def expand_multiplication(self, root_node: mat.ExpressionNode):
-
-        if isinstance(root_node, mat.ArithmeticExpressionNode):
-            terms = self.__expand_multiplication(root_node)
-            return self._node_builder.build_addition_node(terms)
-
-        elif isinstance(root_node, mat.RelationalOperationNode):
-
-            queue = Queue()
-            queue.put(root_node)
-
-            while not queue.empty():
-
-                node = queue.get()
-
-                ref_children = []
-
-                for child in node.get_children():
-
-                    if isinstance(child, mat.ArithmeticExpressionNode):
-                        terms = self.__expand_multiplication(node)
-                        child = self._node_builder.build_addition_node(terms)
-
-                    else:
-                        queue.put(child)
-
-                    ref_children.append(child)
-
-                node.set_children(ref_children)
-
-    def __expand_multiplication(self, node: mat.ExpressionNode) -> List[mat.ArithmeticExpressionNode]:
+    def expand_multiplication(self, node: mat.ExpressionNode) -> List[mat.ArithmeticExpressionNode]:
 
         # arithmetic operation
         if isinstance(node, mat.ArithmeticExpressionNode):
@@ -558,7 +528,7 @@ class Formulator:
                 # reductive summation
                 if node.is_reductive() and node.symbol == "sum":
 
-                    terms = self.__expand_multiplication(node.operands[0])
+                    terms = self.expand_multiplication(node.operands[0])
 
                     # single term
                     if len(terms) == 1:  # return the summation node
@@ -597,7 +567,7 @@ class Formulator:
                 else:
 
                     for i, operand in enumerate(node.operands):
-                        terms = self.__expand_multiplication(operand)
+                        terms = self.expand_multiplication(operand)
                         node.operands[i] = self._node_builder.build_addition_node(terms)
 
                     return [node]
@@ -606,13 +576,13 @@ class Formulator:
             elif isinstance(node, mat.UnaryArithmeticOperationNode):
                 if node.operator == '-':
                     node = self.reformulate_subtraction_and_unary_negation(node)
-                return self.__expand_multiplication(node)
+                return self.expand_multiplication(node)
 
             # binary operation
             elif isinstance(node, mat.BinaryArithmeticOperationNode):
 
-                lhs_terms = self.__expand_multiplication(node.lhs_operand)
-                rhs_terms = self.__expand_multiplication(node.rhs_operand)
+                lhs_terms = self.expand_multiplication(node.lhs_operand)
+                rhs_terms = self.expand_multiplication(node.rhs_operand)
 
                 # addition
                 if node.operator == '+':
@@ -664,18 +634,18 @@ class Formulator:
                 if node.operator == '+':
                     terms = []
                     for operand in node.operands:
-                        terms.extend(self.__expand_multiplication(operand))
+                        terms.extend(self.expand_multiplication(operand))
                     return terms
 
                 # multiplication
                 elif node.operator == '*':
-                    term_lists = [self.__expand_multiplication(o) for o in node.operands]
+                    term_lists = [self.expand_multiplication(o) for o in node.operands]
                     return self.expand_factors_n(term_lists)
 
             # conditional operation
             elif isinstance(node, mat.ConditionalArithmeticExpressionNode):
                 for i, operand in enumerate(node.operands):
-                    terms = self.__expand_multiplication(operand)
+                    terms = self.expand_multiplication(operand)
                     node.operands[i] = self._node_builder.build_addition_node(terms)
                 return [node]
 

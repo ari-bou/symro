@@ -1,0 +1,7 @@
+set I = {0, 1};
+param p{i in I} = 2 * i;
+var x binary;
+maximize OBJ: p[x];
+
+option solver cplex;
+solve;

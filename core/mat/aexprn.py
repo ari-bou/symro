@@ -1,13 +1,13 @@
 from functools import partial
 import numpy as np
 from ordered_set import OrderedSet
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from symro.core.mat.entity import Parameter, Variable, Objective, Constraint
 from symro.core.mat.exprn import LogicalExpressionNode, ArithmeticExpressionNode
 from symro.core.mat.dummyn import CompoundDummyNode
 from symro.core.mat.setn import CompoundSetNode
-from symro.core.mat.util import IndexingSet, Element
+from symro.core.mat.util import Element, IndexingSet
 from symro.core.mat.util import cartesian_product
 from symro.core.mat.state import State
 import symro.core.constants as const
@@ -42,17 +42,17 @@ class NumericNode(ArithmeticExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[float]:
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
         mp = 1
         if idx_set is not None:
             mp = len(idx_set)
-        return [self.value] * mp
+        return np.full(shape=mp, fill_value=self.value)
 
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
+                  dummy_element: Element = None):
         return partial(lambda c: c, self.value)
 
     def is_constant(self) -> bool:
@@ -105,55 +105,52 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[float]:
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
 
         indices = None
         if self.is_indexed():
-            indices = self.idx_node.evaluate(state, idx_set, dummy_symbols)
+            indices = self.idx_node.evaluate(state, idx_set, dummy_element)
 
-        count_p = 1
+        mp = 1
         if idx_set is not None:
-            count_p = len(idx_set)
+            mp = len(idx_set)
 
-        values = []
-        for ip in range(count_p):
+        y = np.zeros(shape=mp)
+
+        for ip in range(mp):
             index = None
             if indices is not None:
                 index = indices[ip]
-            entity: Union[Parameter, Variable, Objective, Constraint] = self.__get_entity(state, index)
-            values.append(entity.value)
+            entity: Union[Parameter, Variable, Objective, Constraint] = state.get_entity(self.symbol, index)
+            y[ip] = entity.value
 
-        return values
-
-    def __get_entity(self,
-                     state: State,
-                     entity_index: Tuple[Union[int, float, str], ...] = None):
-        if entity_index is None:
-            entity = state.get_entity(self.symbol)
-        else:
-            entity = state.get_entity(self.symbol, entity_index)
-        return entity
+        return y
 
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
-        index = None
+                  dummy_element: Element = None) -> Callable:
+
+        idx = None
         if self.is_indexed():
-            index = self.idx_node.to_lambda(state, idx_set_member, dummy_symbols)()
-        entity = self.__get_entity(state, index)
+            idx = self.idx_node.evaluate(state=state,
+                                         idx_set=OrderedSet([idx_set_member]),
+                                         dummy_element=dummy_element)
+
+        entity = state.get_entity(symbol=self.symbol, idx=idx)
+
         return partial(lambda e: e.value, entity)
 
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
+                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
         entities = {}
 
         entity_indices = None
         if self.is_indexed():
-            entity_indices = self.idx_node.evaluate(state, idx_set, dummy_symbols)
+            entity_indices = self.idx_node.evaluate(state, idx_set, dummy_element)
 
         mp = 1
         if idx_set is not None:
@@ -252,45 +249,46 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[float]:
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
         if self.is_reductive():
-            return self.__evaluate_reductive_function(state, idx_set, dummy_symbols)
+            return self.__evaluate_reductive_function(state, idx_set, dummy_element)
         else:
-            return self.__evaluate_non_reductive_function(state, idx_set, dummy_symbols)
+            return self.__evaluate_non_reductive_function(state, idx_set, dummy_element)
 
     def __evaluate_reductive_function(self,
                                       state: State,
                                       idx_set: IndexingSet = None,
-                                      dummy_symbols: Tuple[str, ...] = None) -> List[float]:
+                                      dummy_symbols: Element = None) -> np.ndarray:
 
         combined_idx_sets = self.combine_indexing_sets(state, idx_set, dummy_symbols)  # length mp
-        combined_dummy_syms = self.idx_set_node.combined_dummy_syms
+        combined_dummy_syms = self.idx_set_node.combined_dummy_element
 
         mp = 1
         if idx_set is not None:
             mp = len(idx_set)
 
-        result_values = []
+        y = np.zeros(shape=mp)
 
         for ip in range(mp):
             x = self.operands[0].evaluate(state, combined_idx_sets[ip], combined_dummy_syms)
             if self.symbol == "sum":  # Reductive Summation
-                y = sum(x)
+                y_ip = sum(x)
             elif self.symbol == "prod":  # Reductive Multiplication
-                y = np.prod(x)
+                y_ip = np.prod(x)
             else:
                 raise ValueError("Unable to resolve symbol '{0}'"
-                                 " as a reductive arithmetic function".format(self.symbol))
-            result_values.append(y)
-        return result_values
+                                 " as a reductive arithmetic transformation".format(self.symbol))
+            y[ip] = y_ip
+
+        return y
 
     def __evaluate_non_reductive_function(self,
                                           state: State,
                                           idx_set: IndexingSet = None,
-                                          dummy_symbols: Tuple[str, ...] = None) -> List[float]:
+                                          dummy_symbols: Element = None) -> np.ndarray:
 
-        x = [o.evaluate(state, idx_set, dummy_symbols) for o in self.operands]
+        x = np.array([o.evaluate(state, idx_set, dummy_symbols) for o in self.operands])
 
         # Single Argument
         if len(self.operands) == 1:
@@ -317,19 +315,19 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
         # Multiple Arguments
         else:
             if self.symbol == "max":  # Maximum
-                y = max(*x)
+                y = np.max(x, axis=0)
             elif self.symbol == "min":  # Minimum
-                y = min(*x)
+                y = np.min(x, axis=0)
             else:
                 raise ValueError("Unable to resolve symbol '{0}'"
                                  " as a multi-argument arithmetic function".format(self.symbol))
 
-        return list(y)
+        return y
 
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
+                  dummy_element: Element = None) -> Callable:
 
         if self.is_reductive():
 
@@ -337,26 +335,23 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
                 idx_set = None
             else:
                 idx_set = OrderedSet([idx_set_member])
-            combined_idx_sets = self.combine_indexing_sets(state, idx_set, dummy_symbols)  # length 1
-            combined_dummy_syms = self.idx_set_node.combined_dummy_syms
+            combined_idx_set = self.combine_indexing_sets(state, idx_set, dummy_element)[0]  # length mc
+            combined_dummy_syms = self.idx_set_node.combined_dummy_element
 
-            arg_0 = []
-            for combined_idx_set_member in combined_idx_sets[0]:
-                arg_0.append(self.operands[0].to_lambda(state,
-                                                        combined_idx_set_member,
-                                                        combined_dummy_syms))
+            arg_0 = np.array([self.operands[0].to_lambda(state, idx, combined_dummy_syms)
+                              for idx in combined_idx_set])
 
-            if self.symbol == "sum":  # Reductive Summation
-                return partial(lambda x: sum([x_i() for x_i in x]), arg_0)
-            elif self.symbol == "prod":  # Reductive Multiplication
+            if self.symbol == "sum":  # reductive summation
+                return partial(lambda x: np.sum([x_i() for x_i in x]), arg_0)
+            elif self.symbol == "prod":  # reductive multiplication
                 return partial(lambda x: np.prod([x_i() for x_i in x]), arg_0)
             else:
-                raise ValueError("Unable to resolve symbol '{0}'"
-                                 " as a reductive arithmetic function".format(self.symbol))
+                raise ValueError("Unable to resolve symbol '{0}'".format(self.symbol)
+                                 + " as a reductive arithmetic transformation")
 
         else:
 
-            args = [o.to_lambda(state, idx_set_member, dummy_symbols) for o in self.operands]
+            args = np.array([o.to_lambda(state, idx_set_member, dummy_element) for o in self.operands])
 
             # Single Argument
             if len(self.operands) == 1:
@@ -376,27 +371,27 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
                 elif self.symbol == "log10":  # Logarithm Base 10
                     return partial(lambda x: np.log10(x()), arg_0)
                 else:
-                    raise ValueError("Unable to resolve symbol '{0}'"
-                                     " as a single-argument arithmetic function".format(self.symbol))
+                    raise ValueError("Unable to resolve symbol '{0}'".format(self.symbol)
+                                     + " as a single-argument arithmetic transformation")
 
             # Multiple Arguments
             else:
                 if self.symbol == "max":  # Maximum
-                    return partial(lambda x: max(*[x_i() for x_i in x]), args)
+                    return partial(lambda x: np.max([x_i() for x_i in x]), args)
                 elif self.symbol == "min":  # Minimum
-                    return partial(lambda x: min(*[x_i() for x_i in x]), args)
-                raise ValueError("Unable to resolve symbol '{0}'"
-                                 " as a multi-argument arithmetic function".format(self.symbol))
+                    return partial(lambda x: np.min([x_i() for x_i in x]), args)
+                raise ValueError("Unable to resolve symbol '{0}'".format(self.symbol)
+                                 + " as a multi-argument arithmetic transformation")
 
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
+                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
 
         if self.is_reductive():
 
-            combined_idx_sets = self.combine_indexing_sets(state, idx_set, dummy_symbols)  # length mp
-            combined_dummy_syms = self.idx_set_node.combined_dummy_syms  # length mp
+            combined_idx_sets = self.combine_indexing_sets(state, idx_set, dummy_element)  # length mp
+            combined_dummy_syms = self.idx_set_node.combined_dummy_element  # length mp
 
             mp = 1
             if idx_set is not None:
@@ -413,13 +408,13 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
         else:
             entities = {}
             for o in self.operands:
-                entities.update(o.collect_declared_entities(state, idx_set, dummy_symbols))
+                entities.update(o.collect_declared_entities(state, idx_set, dummy_element))
             return entities
 
     def combine_indexing_sets(self,
                               state: State,
                               idx_set: IndexingSet = None,  # length mp
-                              dummy_symbols: Tuple[str, ...] = None):
+                              dummy_symbols: Element = None):
 
         fcn_idx_sets = self.idx_set_node.evaluate(state, idx_set, dummy_symbols)  # length mp
 
@@ -502,54 +497,56 @@ class BinaryArithmeticOperationNode(ArithmeticExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[float]:
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
 
-        x_lhs = self.lhs_operand.evaluate(state, idx_set, dummy_symbols)
-        x_rhs = self.rhs_operand.evaluate(state, idx_set, dummy_symbols)
+        x_lhs = self.lhs_operand.evaluate(state, idx_set, dummy_element)
+        x_rhs = self.rhs_operand.evaluate(state, idx_set, dummy_element)
 
-        if self.operator == self.ADDITION_OPERATOR:  # Addition
-            y = [x_lhs_i + x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-        elif self.operator == self.SUBTRACTION_OPERATOR:  # Subtraction
-            y = [x_lhs_i - x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-        elif self.operator == self.MULTIPLICATION_OPERATOR:  # Multiplication
-            y = [x_lhs_i * x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-        elif self.operator == self.DIVISION_OPERATOR:  # Division
-            y = [x_lhs_i / x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-        elif self.operator == self.EXPONENTIATION_OPERATOR:  # Exponentiation
-            y = [x_lhs_i ** x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
+        if self.operator == self.ADDITION_OPERATOR:  # addition
+            y = x_lhs + x_rhs
+        elif self.operator == self.SUBTRACTION_OPERATOR:  # subtraction
+            y = x_lhs - x_rhs
+        elif self.operator == self.MULTIPLICATION_OPERATOR:  # multiplication
+            y = x_lhs * x_rhs
+        elif self.operator == self.DIVISION_OPERATOR:  # division
+            y = x_lhs / x_rhs
+        elif self.operator == self.EXPONENTIATION_OPERATOR:  # exponentiation
+            y = x_lhs ** x_rhs
         else:
-            raise ValueError("Unable to resolve symbol '{0}'"
-                             " as a binary arithmetic operator".format(self.operator))
+            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
+                             + " as a binary arithmetic operator")
         return y
 
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
-        x_lhs = self.lhs_operand.to_lambda(state, idx_set_member, dummy_symbols)
-        x_rhs = self.rhs_operand.to_lambda(state, idx_set_member, dummy_symbols)
-        if self.operator == self.ADDITION_OPERATOR:  # Addition
+                  dummy_element: Element = None) -> Callable:
+
+        x_lhs = self.lhs_operand.to_lambda(state, idx_set_member, dummy_element)
+        x_rhs = self.rhs_operand.to_lambda(state, idx_set_member, dummy_element)
+
+        if self.operator == self.ADDITION_OPERATOR:  # addition
             return partial(lambda l, r: l() + r(), x_lhs, x_rhs)
-        elif self.operator == self.SUBTRACTION_OPERATOR:  # Subtraction
+        elif self.operator == self.SUBTRACTION_OPERATOR:  # subtraction
             return partial(lambda l, r: l() - r(), x_lhs, x_rhs)
-        elif self.operator == self.MULTIPLICATION_OPERATOR:  # Multiplication
+        elif self.operator == self.MULTIPLICATION_OPERATOR:  # multiplication
             return partial(lambda l, r: l() * r(), x_lhs, x_rhs)
-        elif self.operator == self.DIVISION_OPERATOR:  # Division
+        elif self.operator == self.DIVISION_OPERATOR:  # division
             return partial(lambda l, r: l() / r(), x_lhs, x_rhs)
-        elif self.operator == self.EXPONENTIATION_OPERATOR:  # Exponentiation
+        elif self.operator == self.EXPONENTIATION_OPERATOR:  # exponentiation
             return partial(lambda l, r: l() ** r(), x_lhs, x_rhs)
         else:
-            raise ValueError("Unable to resolve symbol '{0}'"
-                             " as a binary arithmetic operator".format(self.operator))
+            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
+                             + " as a binary arithmetic operator")
 
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
+                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
         vars = {}
-        vars.update(self.lhs_operand.collect_declared_entities(state, idx_set, dummy_symbols))
-        vars.update(self.rhs_operand.collect_declared_entities(state, idx_set, dummy_symbols))
+        vars.update(self.lhs_operand.collect_declared_entities(state, idx_set, dummy_element))
+        vars.update(self.rhs_operand.collect_declared_entities(state, idx_set, dummy_element))
         return vars
 
     def get_children(self) -> List:
@@ -586,23 +583,23 @@ class MultiArithmeticOperationNode(ArithmeticExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[float]:
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
 
-        x_lhs = self.operands[0].evaluate(state, idx_set, dummy_symbols)
+        x_lhs = self.operands[0].evaluate(state, idx_set, dummy_element)
         y = x_lhs
 
         for i in range(1, len(self.operands)):
 
-            x_rhs = self.operands[i].evaluate(state, idx_set, dummy_symbols)
+            x_rhs = self.operands[i].evaluate(state, idx_set, dummy_element)
 
             if self.operator == self.ADDITION_OPERATOR:  # Addition
-                y = [x_lhs_i + x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
+                y = x_lhs + x_rhs
             elif self.operator == self.MULTIPLICATION_OPERATOR:  # Multiplication
-                y = [x_lhs_i * x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
+                y = x_lhs * x_rhs
             else:
-                raise ValueError("Unable to resolve symbol '{0}'"
-                                 " as a multi arithmetic operator".format(self.operator))
+                raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
+                                 + " as a multi arithmetic operator")
 
             x_lhs = y
 
@@ -611,27 +608,27 @@ class MultiArithmeticOperationNode(ArithmeticExpressionNode):
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
+                  dummy_element: Element = None) -> Callable:
 
         args_all = []
         for operand in self.operands:
-            args_all.append(operand.to_lambda(state, idx_set_member, dummy_symbols))
+            args_all.append(operand.to_lambda(state, idx_set_member, dummy_element))
 
         if self.operator == self.ADDITION_OPERATOR:  # Addition
             return partial(lambda x: sum([x_i() for x_i in x]), args_all)
         elif self.operator == self.MULTIPLICATION_OPERATOR:  # Multiplication
             return partial(lambda x: np.prod([x_i() for x_i in x]), args_all)
         else:
-            raise ValueError("Unable to resolve symbol '{0}'"
-                             " as a multi arithmetic operator".format(self.operator))
+            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
+                             + " as a multi arithmetic operator")
 
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
+                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
         vars = {}
         for operand in self.operands:
-            vars.update(operand.collect_declared_entities(state, idx_set, dummy_symbols))
+            vars.update(operand.collect_declared_entities(state, idx_set, dummy_element))
         return vars
 
     def get_children(self) -> List:
@@ -732,36 +729,40 @@ class UnaryArithmeticOperationNode(ArithmeticExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[float]:
-        x = self.operand.evaluate(state, idx_set, dummy_symbols)
-        if self.operator == self.UNARY_PLUS_OPERATOR:  # Unary Plus
+                 dummy_element: Tuple[str, ...] = None
+                 ) -> np.ndarray:
+
+        x = self.operand.evaluate(state, idx_set, dummy_element)
+
+        if self.operator == self.UNARY_PLUS_OPERATOR:  # unary plus
             y = x
-        elif self.operator == self.UNARY_NEGATION_OPERATOR:  # Unary Negation
-            y = [-x_i for x_i in x]
+        elif self.operator == self.UNARY_NEGATION_OPERATOR:  # unary negation
+            y = -x
         else:
-            raise ValueError("Unable to resolve symbol '{0}'"
-                             " as a unary arithmetic operator".format(self.operator))
+            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
+                             + " as a unary arithmetic operator")
         return y
 
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
-        arg = self.operand.evaluate(state, idx_set_member, dummy_symbols)
-        if self.operator == self.UNARY_PLUS_OPERATOR:  # Unary Plus
+                  dummy_element: Element = None) -> Callable:
+
+        arg = self.operand.to_lambda(state, idx_set_member, dummy_element)
+
+        if self.operator == self.UNARY_PLUS_OPERATOR:  # unary plus
             return arg
-        elif self.operator == self.UNARY_NEGATION_OPERATOR:  # Unary Negation
+        elif self.operator == self.UNARY_NEGATION_OPERATOR:  # unary negation
             return partial(lambda x: -x(), arg)
         else:
-            raise ValueError("Unable to resolve symbol '{0}'"
-                             " as a unary arithmetic operator".format(self.operator))
+            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
+                             + " as a unary arithmetic operator")
 
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
-        return self.operand.collect_declared_entities(state, idx_set, dummy_symbols)
+                                  dummy_element: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
+        return self.operand.collect_declared_entities(state, idx_set, dummy_element)
 
     def get_children(self) -> List:
         return [self.operand]
@@ -787,41 +788,43 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[float]:
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
 
-        count_p = 1
+        mp = 1
         if idx_set is not None:
-            count_p = len(idx_set)
+            mp = len(idx_set)
 
         clause_count = len(self.operands)
-        results = []
-        for ip in range(count_p):
+
+        y = np.zeros(shape=mp)
+
+        for ip in range(mp):
 
             sub_idx_set = None
             if idx_set is not None:
                 sub_idx_set = OrderedSet(idx_set[[ip]])
 
-            result = 0
+            y_ip = 0
             for k in range(clause_count):
 
                 can_evaluate_operand = True
 
                 if k < clause_count - 1 or not self.has_trailing_else_clause():
-                    can_evaluate_operand = self.conditions[k].evaluate(state, sub_idx_set, dummy_symbols)[0]
+                    can_evaluate_operand = self.conditions[k].evaluate(state, sub_idx_set, dummy_element)[0]
 
                 if can_evaluate_operand:
-                    result = self.operands[k].evaluate(state, sub_idx_set, dummy_symbols)[0]
+                    y_ip = self.operands[k].evaluate(state, sub_idx_set, dummy_element)[0]
                     break
 
-            results.append(result)
+            y[ip] = y_ip
 
-        return results
+        return y
 
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
+                  dummy_element: Element = None) -> Callable:
 
         clause_count = len(self.operands)
 
@@ -834,18 +837,19 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
             can_evaluate_operand = True
 
             if k < clause_count - 1 or not self.has_trailing_else_clause():
-                can_evaluate_operand = self.conditions[k].evaluate(state, idx_set, dummy_symbols)[0]
+                can_evaluate_operand = self.conditions[k].evaluate(state, idx_set, dummy_element)[0]
 
             if can_evaluate_operand:
-                arg = self.operands[k].to_lambda(state, idx_set_member, dummy_symbols)
+                arg = self.operands[k].to_lambda(state, idx_set_member, dummy_element)
                 return partial(lambda o: o(), arg)
 
+        # else
         return lambda: 0
 
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Variable, Parameter]]:
+                                  dummy_element: Element = None) -> Dict[str, Union[Variable, Parameter]]:
         count_p = 1
         if idx_set is not None:
             count_p = len(idx_set)
@@ -864,10 +868,10 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
                 can_evaluate_operand = True
 
                 if k < clause_count - 1 or not self.has_trailing_else_clause():
-                    can_evaluate_operand = self.conditions[k].evaluate(state, sub_idx_set, dummy_symbols)[0]
+                    can_evaluate_operand = self.conditions[k].evaluate(state, sub_idx_set, dummy_element)[0]
 
                 if can_evaluate_operand:
-                    entities_ip = self.operands[k].collect_declared_entities(state, sub_idx_set, dummy_symbols)
+                    entities_ip = self.operands[k].collect_declared_entities(state, sub_idx_set, dummy_element)
                     break
 
             entities.update(entities_ip)

@@ -2,7 +2,7 @@ from ordered_set import OrderedSet
 from typing import List, Optional, Tuple, Union
 
 Element = Tuple[Union[int, float, str, None], ...]
-IndexingSet = OrderedSet[Tuple[Union[int, float, str, None], ...]]
+IndexingSet = OrderedSet[Element]
 
 
 # Element Operations

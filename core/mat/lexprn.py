@@ -1,5 +1,6 @@
 from functools import partial
-from typing import Dict, List, Optional, Tuple, Union
+import numpy as np
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from symro.core.mat.entity import Parameter, Variable
 from symro.core.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode, ArithmeticExpressionNode, \
@@ -33,34 +34,34 @@ class RelationalOperationNode(LogicalExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None) -> List[bool]:
+                 dummy_element: Element = None) -> np.ndarray:
 
-        lhs_arg = self.lhs_operand.evaluate(state, idx_set, dummy_symbols)
-        rhs_arg = self.rhs_operand.evaluate(state, idx_set, dummy_symbols)
+        x_lhs = self.lhs_operand.evaluate(state, idx_set, dummy_element)
+        x_rhs = self.rhs_operand.evaluate(state, idx_set, dummy_element)
 
-        # Equality
+        # equality
         if self.operator in ['=', "=="]:
-            return [l == r for l, r in zip(lhs_arg, rhs_arg)]
+            return x_lhs == x_rhs
 
-        # Inequality
+        # strict inequality
         elif self.operator in ['!=', "<>"]:
-            return [l != r for l, r in zip(lhs_arg, rhs_arg)]
+            return x_lhs != x_rhs
 
-        # Greater than
+        # greater than
         elif self.operator == '>':
-            return [l > r for l, r in zip(lhs_arg, rhs_arg)]
+            return x_lhs > x_rhs
 
-        # Greater than or equal to
+        # greater than or equal to
         elif self.operator == '>=':
-            return [l >= r for l, r in zip(lhs_arg, rhs_arg)]
+            return x_lhs >= x_rhs
 
-        # Less than
+        # less than
         elif self.operator == '<':
-            return [l < r for l, r in zip(lhs_arg, rhs_arg)]
+            return x_lhs < x_rhs
 
-        # Less than or equal to
+        # less than or equal to
         elif self.operator == '<=':
-            return [l <= r for l, r in zip(lhs_arg, rhs_arg)]
+            return x_lhs <= x_rhs
 
         else:
             raise ValueError("Unable to resolve operator '{0}' as a relational operator".format(self.operator))
@@ -68,34 +69,34 @@ class RelationalOperationNode(LogicalExpressionNode):
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
+                  dummy_element: Element = None) -> Callable:
 
-        lhs_arg = self.lhs_operand.to_lambda(state, idx_set_member, dummy_symbols)
-        rhs_arg = self.rhs_operand.to_lambda(state, idx_set_member, dummy_symbols)
+        x_lhs = self.lhs_operand.to_lambda(state, idx_set_member, dummy_element)
+        x_rhs = self.rhs_operand.to_lambda(state, idx_set_member, dummy_element)
 
-        # Equality
+        # equality
         if self.operator in ['=', "=="]:
-            return partial(lambda l, r: l() == r(), lhs_arg, rhs_arg)
+            return partial(lambda l, r: l() == r(), x_lhs, x_rhs)
 
-        # Inequality
+        # strict inequality
         elif self.operator in ['!=', "<>"]:
-            return partial(lambda l, r: l() != r(), lhs_arg, rhs_arg)
+            return partial(lambda l, r: l() != r(), x_lhs, x_rhs)
 
-        # Greater than
+        # greater than
         elif self.operator == '>':
-            return partial(lambda l, r: l() > r(), lhs_arg, rhs_arg)
+            return partial(lambda l, r: l() > r(), x_lhs, x_rhs)
 
-        # Greater than or equal to
+        # greater than or equal to
         elif self.operator == '>=':
-            return partial(lambda l, r: l() >= r(), lhs_arg, rhs_arg)
+            return partial(lambda l, r: l() >= r(), x_lhs, x_rhs)
 
-        # Less than
+        # less than
         elif self.operator == '<':
-            return partial(lambda l, r: l() < r(), lhs_arg, rhs_arg)
+            return partial(lambda l, r: l() < r(), x_lhs, x_rhs)
 
-        # Less than or equal to
+        # less than or equal to
         elif self.operator == '<=':
-            return partial(lambda l, r: l() <= r(), lhs_arg, rhs_arg)
+            return partial(lambda l, r: l() <= r(), x_lhs, x_rhs)
 
         else:
             raise ValueError("Unable to resolve operator '{0}' as a relational operator".format(self.operator))
@@ -103,9 +104,9 @@ class RelationalOperationNode(LogicalExpressionNode):
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
-        entities = self.lhs_operand.collect_declared_entities(state, idx_set, dummy_symbols)
-        entities.update(self.rhs_operand.collect_declared_entities(state, idx_set, dummy_symbols))
+                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
+        entities = self.lhs_operand.collect_declared_entities(state, idx_set, dummy_element)
+        entities.update(self.rhs_operand.collect_declared_entities(state, idx_set, dummy_element))
         return entities
 
     def add_operand(self, operand: Union[ArithmeticExpressionNode,
@@ -147,25 +148,30 @@ class SetMembershipOperationNode(LogicalExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None) -> List[bool]:
+                 dummy_element: Element = None) -> np.ndarray:
 
         if idx_set is None:
             raise ValueError("Indexing set of a set membership operation cannot be null")
 
-        challenge_elements = self.member_node.evaluate(state, idx_set, dummy_symbols)
+        challenge_elements = self.member_node.evaluate(state, idx_set, dummy_element)
         if self.member_node.get_dim() == 1:
-            challenge_elements = [tuple([e]) for e in challenge_elements]
+            challenge_elements = np.array([tuple([e]) for e in challenge_elements])
 
-        sets_c = self.set_node.evaluate(state, idx_set, dummy_symbols)
+        sets_c = self.set_node.evaluate(state, idx_set, dummy_element)
 
-        result = []
-        for chlg_element, set_c in zip(challenge_elements, sets_c):
-            result.append(chlg_element in set_c)
+        mp = 1
+        if idx_set is not None:
+            mp = len(idx_set)
+
+        y = np.ndarray(shape=(mp,), dtype=bool)
+
+        for ip in range(mp):
+            y[ip] = challenge_elements[ip] in sets_c[ip]
 
         if self.operator == "not in":
-            result = [not r for r in result]
+            y = ~y
 
-        return result
+        return y
 
     def add_operand(self, operand: Optional[ExpressionNode]):
         if self.member_node is None:
@@ -204,7 +210,7 @@ class SetComparisonOperationNode(LogicalExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None) -> List[bool]:
+                 dummy_element: Element = None) -> np.ndarray:
         raise NotImplementedError("evaluate method of Set Comparison Operation Node has not been implemented")
 
     def add_operand(self, operand: Optional[ExpressionNode]):
@@ -274,13 +280,13 @@ class UnaryLogicalOperationNode(LogicalExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None) -> List[bool]:
+                 dummy_element: Element = None) -> np.ndarray:
 
-        arg = self.operand.evaluate(state, idx_set, dummy_symbols)
+        x = self.operand.evaluate(state, idx_set, dummy_element)
 
-        # Logical Negation
+        # logical negation
         if self.operator in ['!', "not"]:
-            return [not r for r in arg]
+            return ~x
 
         else:
             raise ValueError("Unable to resolve operator '{0}' as a unary logical operator".format(self.operator))
@@ -288,13 +294,13 @@ class UnaryLogicalOperationNode(LogicalExpressionNode):
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
+                  dummy_element: Element = None) -> Callable:
 
-        arg = self.operand.to_lambda(state, idx_set_member, dummy_symbols)
+        x = self.operand.to_lambda(state, idx_set_member, dummy_element)
 
-        # Logical Negation
+        # logical negation
         if self.operator in ['!', "not"]:
-            return partial(lambda o: not o(), arg)
+            return partial(lambda o: not o(), x)
 
         else:
             raise ValueError("Unable to resolve operator '{0}' as a unary logical operator".format(self.operator))
@@ -331,18 +337,18 @@ class BinaryLogicalOperationNode(LogicalExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None) -> List[bool]:
+                 dummy_element: Element = None) -> np.ndarray:
 
-        lhs_arg = self.lhs_operand.evaluate(state, idx_set, dummy_symbols)
-        rhs_arg = self.rhs_operand.evaluate(state, idx_set, dummy_symbols)
+        x_lhs = self.lhs_operand.evaluate(state, idx_set, dummy_element)
+        x_rhs = self.rhs_operand.evaluate(state, idx_set, dummy_element)
 
-        # Logical Conjunction
+        # logical conjunction
         if self.operator in ["&&", "and"]:
-            return [l and r for l, r in zip(lhs_arg, rhs_arg)]
+            return x_lhs & x_rhs
 
-        # Logical Disjunction
+        # logical disjunction
         elif self.operator in ["||", "or"]:
-            return [l or r for l, r in zip(lhs_arg, rhs_arg)]
+            return x_lhs | x_rhs
 
         else:
             raise ValueError("Unable to resolve operator '{0}' as a binary logical operator".format(self.operator))
@@ -350,15 +356,15 @@ class BinaryLogicalOperationNode(LogicalExpressionNode):
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
+                  dummy_element: Tuple[str, ...] = None):
 
-        lhs_arg = self.lhs_operand.to_lambda(state, idx_set_member, dummy_symbols)
-        rhs_arg = self.rhs_operand.to_lambda(state, idx_set_member, dummy_symbols)
+        x_lhs = self.lhs_operand.to_lambda(state, idx_set_member, dummy_element)
+        x_rhs = self.rhs_operand.to_lambda(state, idx_set_member, dummy_element)
 
-        if self.operator in ["&&", "and"]:  # Logical Conjunction
-            return partial(lambda l, r: l() and r(), lhs_arg, rhs_arg)
-        elif self.operator in ["||", "or"]:  # Logical Disjunction
-            return partial(lambda l, r: l() or r(), lhs_arg, rhs_arg)
+        if self.operator in ["&&", "and"]:  # logical conjunction
+            return partial(lambda l, r: l() and r(), x_lhs, x_rhs)
+        elif self.operator in ["||", "or"]:  # logical disjunction
+            return partial(lambda l, r: l() or r(), x_lhs, x_rhs)
         else:
             raise ValueError("Unable to resolve operator '{0}' as a binary logical operator".format(self.operator))
 
@@ -397,23 +403,23 @@ class MultiLogicalOperationNode(LogicalExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[float]:
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
 
-        x_lhs = self.operands[0].evaluate(state, idx_set, dummy_symbols)
+        x_lhs = self.operands[0].evaluate(state, idx_set, dummy_element)
         y = x_lhs
 
         for i in range(1, len(self.operands)):
 
-            x_rhs = self.operands[i].evaluate(state, idx_set, dummy_symbols)
+            x_rhs = self.operands[i].evaluate(state, idx_set, dummy_element)
 
-            if self.operator in ["&&", "and"]:  # Logical Conjunction
-                y = [x_lhs_i and x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
-            elif self.operator in ["||", "or"]:  # Logical Disjunction
-                y = [x_lhs_i or x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
+            if self.operator in ["&&", "and"]:  # logical conjunction
+                y = x_lhs & x_rhs
+            elif self.operator in ["||", "or"]:  # logical disjunction
+                y = x_lhs | x_rhs
             else:
-                raise ValueError("Unable to resolve symbol '{0}'"
-                                 " as a multi logical operator".format(self.operator))
+                raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
+                                 + " as a multi logical operator")
 
             x_lhs = y
 
@@ -422,19 +428,17 @@ class MultiLogicalOperationNode(LogicalExpressionNode):
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
+                  dummy_element: Element = None) -> Callable:
 
-        args_all = []
-        for operand in self.operands:
-            args_all.append(operand.to_lambda(state, idx_set_member, dummy_symbols))
+        args = np.array([o.to_lambda(state, idx_set_member, dummy_element) for o in self.operands])
 
-        if self.operator in ["&&", "and"]:  # Logical Conjunction
-            return partial(lambda x: all([x_i() for x_i in x]), args_all)
-        elif self.operator in ["||", "or"]:  # Logical Disjunction
-            return partial(lambda x: any([x_i() for x_i in x]), args_all)
+        if self.operator in ["&&", "and"]:  # logical conjunction
+            return partial(lambda x: all([x_i() for x_i in x]), args)
+        elif self.operator in ["||", "or"]:  # logical disjunction
+            return partial(lambda x: any([x_i() for x_i in x]), args)
         else:
-            raise ValueError("Unable to resolve symbol '{0}'"
-                             " as a multi logical operator".format(self.operator))
+            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
+                             + " as a multi logical operator")
 
     def get_children(self) -> List[ExpressionNode]:
         return self.operands

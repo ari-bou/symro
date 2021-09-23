@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
+import numpy as np
 from ordered_set import OrderedSet
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 from symro.core.mat.entity import Parameter, Variable
-from symro.core.mat.util import IndexingSet, Element
+from symro.core.mat.util import Element, IndexingSet
 from symro.core.mat.state import State
 
 
@@ -35,19 +36,27 @@ class ExpressionNode(ABC):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None):
+                 dummy_element: Element = None) -> np.ndarray:
         pass
 
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
+                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
         return {}
 
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
+                  dummy_element: Tuple[str, ...] = None) -> Callable:
+        """
+        Generate an anonymous function that evaluates the expression at a unique static indexing set member.
+        :param state: object containing the state of the problem
+        :param idx_set_member: member of the indexing set for which the anonymous function will be generated; 
+        None if scalar
+        :param dummy_element: the unbound symbols of the indexing set of an indexed expression; None if scalar
+        :return: callable
+        """
         pass
 
     def is_constant(self) -> bool:
@@ -58,14 +67,14 @@ class ExpressionNode(ABC):
         are_operands_null = [o.is_null() for o in self.get_children()]
         return all(are_operands_null)
 
-    def is_controlled(self, dummy_syms: List[str] = None) -> bool:
+    def is_controlled(self, dummy_element: List[str] = None) -> bool:
         """
         Returns True if the node contains a dummy node whose symbol is in the dummy_syms argument. If dummy_syms is
         None, then returns True if the node contains a dummy node with any symbol.
-        :param dummy_syms: list of dummy symbols
+        :param dummy_element: list of dummy symbols
         :return: bool
         """
-        return any([o.is_controlled(dummy_syms) for o in self.get_children()])
+        return any([o.is_controlled(dummy_element) for o in self.get_children()])
 
     def get_node(self, id: int):
         if self.id == id:
@@ -106,8 +115,8 @@ class LogicalExpressionNode(ExpressionNode, ABC):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None) -> List[bool]:
-        return [False]
+                 dummy_element: Element = None) -> np.ndarray:
+        return np.array([False])
 
 
 class SetExpressionNode(ExpressionNode, ABC):
@@ -123,16 +132,16 @@ class SetExpressionNode(ExpressionNode, ABC):
         dummy_nodes = [None] * self.get_dim(state)
         return dummy_nodes
 
-    def get_dummy_elements(self, state: State) -> Tuple[Union[int, float, str, tuple, None], ...]:
+    def get_dummy_elements(self, state: State) -> Element:
         dummy_syms = [None] * self.get_dim(state)
         return tuple(dummy_syms)
 
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[IndexingSet]:
-        return [OrderedSet()]
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
+        return np.array([OrderedSet()])
 
 
 class ArithmeticExpressionNode(ExpressionNode, ABC):
@@ -143,14 +152,14 @@ class ArithmeticExpressionNode(ExpressionNode, ABC):
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_symbols: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
+                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
         return {}
 
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None) -> List[float]:
-        return [0]
+                 dummy_element: Element = None) -> np.ndarray:
+        return np.array([0])
 
 
 class StringExpressionNode(ExpressionNode, ABC):
@@ -161,5 +170,5 @@ class StringExpressionNode(ExpressionNode, ABC):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None) -> List[str]:
-        return [""]
+                 dummy_element: Element = None) -> np.ndarray:
+        return np.array([""])

@@ -1,5 +1,6 @@
 from functools import partial
-from typing import List, Tuple, Union
+import numpy as np
+from typing import Callable, List, Tuple, Union
 
 from symro.core.mat.exprn import StringExpressionNode
 from symro.core.mat.dummyn import BaseDummyNode
@@ -17,14 +18,14 @@ class StringNode(StringExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None) -> List[str]:
-        count_p = 1 if idx_set is None else len(idx_set)
-        return [self.literal] * count_p
+                 dummy_element: Element = None) -> np.ndarray:
+        mp = 1 if idx_set is None else len(idx_set)
+        return np.full(shape=mp, fill_value=self.literal)
 
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
+                  dummy_element: Element = None) -> Callable:
         return partial(lambda l: l, self.literal)
 
     def get_children(self) -> List:
@@ -54,21 +55,21 @@ class MultiStringOperationNode(StringExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[str]:
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
 
-        x_lhs = self.operands[0].evaluate(state, idx_set, dummy_symbols)
+        x_lhs = self.operands[0].evaluate(state, idx_set, dummy_element)
         y = x_lhs
 
         for i in range(1, len(self.operands)):
 
-            x_rhs = self.operands[i].evaluate(state, idx_set, dummy_symbols)
+            x_rhs = self.operands[i].evaluate(state, idx_set, dummy_element)
 
-            if self.operator == self.CONCAT_OPERATOR:  # Concatenation
-                y = [x_lhs_i + x_rhs_i for x_lhs_i, x_rhs_i in zip(x_lhs, x_rhs)]
+            if self.operator == self.CONCAT_OPERATOR:  # concatenation
+                y = np.char.add(x_lhs, x_rhs)
             else:
-                raise ValueError("Unable to resolve symbol '{0}'"
-                                 " as a string operator".format(self.operator))
+                raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
+                                 + " as a string operator")
 
             x_lhs = y
 
@@ -77,14 +78,12 @@ class MultiStringOperationNode(StringExpressionNode):
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
+                  dummy_element: Element = None) -> Callable:
 
-        args_all = []
-        for operand in self.operands:
-            args_all.append(operand.to_lambda(state, idx_set_member, dummy_symbols))
+        args = np.array([o.to_lambda(state, idx_set_member, dummy_element) for o in self.operands])
 
-        if self.operator == self.CONCAT_OPERATOR:  # Concatenation
-            return partial(lambda x: ''.join([x_i() for x_i in x]), args_all)
+        if self.operator == self.CONCAT_OPERATOR:  # concatenation
+            return partial(lambda x: ''.join([x_i() for x_i in x]), args)
         else:
             raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
                              + " as a string operator")

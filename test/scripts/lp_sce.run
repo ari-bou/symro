@@ -37,4 +37,3 @@ display 4.5 + sum {s in S} (- 10 * p[s] * (y_soln - 0) + lambda_1[s,1] * p[s] * 
 print "Cut 2 (fbl): 0 >= ...";
 display 9955.75 + sum {s in S} (lambda_1[s,2] * p[s] * (y_soln - 200.009));
 */
-

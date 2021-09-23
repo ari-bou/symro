@@ -39,7 +39,7 @@ class Expression:
         dummy_symbols = None
         if self.indexing_set_node is not None:
             self.indexing_set_node.combine_indexing_and_component_sets(state)
-            dummy_symbols = self.indexing_set_node.combined_dummy_syms
+            dummy_symbols = self.indexing_set_node.combined_dummy_element
 
         if idx_set is None:
             return [self.expression_node.to_lambda(state)]

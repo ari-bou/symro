@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
+import numpy as np
 from ordered_set import OrderedSet
 from typing import List, Optional, Set, Tuple, Union
 
 from symro.core.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode, ArithmeticExpressionNode, \
     StringExpressionNode
 from symro.core.mat.dummyn import BaseDummyNode, DummyNode, CompoundDummyNode
-from symro.core.mat.util import IndexingSet
+from symro.core.mat.util import Element, IndexingSet
 from symro.core.mat.util import cartesian_product, remove_set_dimensions
 from symro.core.mat.entity import Entity
 from symro.core.mat.state import State
@@ -48,8 +49,8 @@ class SetNode(BaseSetNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[IndexingSet]:
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
 
         elements = OrderedSet()
         if self.symbol in state.sets:
@@ -61,7 +62,11 @@ class SetNode(BaseSetNode):
         if idx_set is not None:
             mp = len(idx_set)
 
-        return [elements] * mp
+        y = np.ndarray(shape=(mp,), dtype=object)
+        for ip in range(mp):
+            y[ip] = elements
+
+        return y
 
     def is_indexed(self) -> bool:
         return self.entity_index_node is not None
@@ -103,17 +108,41 @@ class SetNode(BaseSetNode):
 class OrderedSetNode(BaseSetNode):
 
     def __init__(self,
-                 start_node: ExpressionNode = None,
-                 end_node: ExpressionNode = None,
+                 start_node: ArithmeticExpressionNode = None,
+                 end_node: ArithmeticExpressionNode = None,
                  id: int = 0):
         super().__init__(id)
-        self.start_node: ExpressionNode = start_node
-        self.end_node: ExpressionNode = end_node
+        self.start_node: ArithmeticExpressionNode = start_node
+        self.end_node: ArithmeticExpressionNode = end_node
+
+    def evaluate(self,
+                 state: State,
+                 idx_set: IndexingSet = None,
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
+
+        start_elements = self.start_node.evaluate(state, idx_set, dummy_element)
+        end_elements = self.end_node.evaluate(state, idx_set, dummy_element)
+
+        mp = 1
+        if idx_set is not None:
+            mp = len(idx_set)
+
+        y = np.ndarray(shape=(mp,), dtype=object)
+
+        for ip in range(mp):
+            x_start = start_elements[ip]
+            x_end = end_elements[ip]
+            x = list(range(x_start, x_end + 1))
+            elements = OrderedSet([(x_i,) for x_i in x])
+            y[ip] = elements
+
+        return y
 
     def get_dim(self, state: State) -> int:
         return 1
 
-    def get_children(self) -> list:
+    def get_children(self) -> List[ArithmeticExpressionNode]:
         return [self.start_node, self.end_node]
 
     def set_children(self, operands: list):
@@ -128,29 +157,6 @@ class OrderedSetNode(BaseSetNode):
             literal = '(' + literal + ')'
         return literal
 
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[IndexingSet]:
-
-        start_elements = self.start_node.evaluate(state, idx_set, dummy_symbols)
-        end_elements = self.end_node.evaluate(state, idx_set, dummy_symbols)
-
-        mp = 1
-        if idx_set is not None:
-            mp = len(idx_set)
-
-        idx_sets = []
-        for ip in range(mp):
-            x_start = start_elements[ip]
-            x_end = end_elements[ip]
-            x = list(range(x_start, x_end + 1))
-            elements = OrderedSet([(x_i,) for x_i in x])
-            idx_sets.append(elements)
-
-        return idx_sets
-
 
 class EnumeratedSet(BaseSetNode):
 
@@ -159,6 +165,36 @@ class EnumeratedSet(BaseSetNode):
                  id: int = 0):
         super().__init__(id)
         self.element_nodes: List[Union[BaseDummyNode, ArithmeticExpressionNode, StringExpressionNode]] = element_nodes
+
+    def evaluate(self,
+                 state: State,
+                 idx_set: IndexingSet = None,
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
+
+        _np = len(self.element_nodes)  # number of elements in the set
+
+        elements = [e.evaluate(state, idx_set, dummy_element) for e in self.element_nodes]
+
+        mp = 1  # number of elements in the parent set
+        if idx_set is not None:
+            mp = len(idx_set)
+
+        y = np.ndarray(shape=(mp,), dtype=object)
+
+        for ip in range(mp):
+
+            elements_ip = OrderedSet()
+
+            for jp in range(_np):
+                e = elements[jp][ip]
+                if not isinstance(e, tuple):
+                    e = tuple([e])  # each element must be a tuple
+                elements_ip.add(e)
+
+            y[ip] = elements_ip
+
+        return y
 
     def get_dim(self, state: State) -> int:
         if len(self.element_nodes) > 0:
@@ -170,7 +206,7 @@ class EnumeratedSet(BaseSetNode):
         else:
             return 0
 
-    def get_children(self) -> list:
+    def get_children(self) -> List[Union[BaseDummyNode, ArithmeticExpressionNode, StringExpressionNode]]:
         return list(self.element_nodes)
 
     def set_children(self, operands: list):
@@ -181,35 +217,6 @@ class EnumeratedSet(BaseSetNode):
         if self.is_prioritized:
             literal = '(' + literal + ')'
         return literal
-
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[IndexingSet]:
-
-        np = len(self.element_nodes)  # number of elements in the set
-
-        elements = [e.evaluate(state, idx_set, dummy_symbols) for e in self.element_nodes]
-
-        mp = 1  # number of elements in the parent set
-        if idx_set is not None:
-            mp = len(idx_set)
-
-        idx_sets = []
-        for ip in range(mp):
-
-            elements_ip = OrderedSet()
-
-            for jp in range(np):
-                e = elements[jp][ip]
-                if not isinstance(e, tuple):
-                    e = tuple([e])  # each element must be a tuple
-                elements_ip.add(e)
-
-            idx_sets.append(elements_ip)
-
-        return idx_sets
 
 
 class IndexingSetNode(SetExpressionNode):
@@ -225,18 +232,18 @@ class IndexingSetNode(SetExpressionNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[IndexingSet]:
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
 
         dim_c = self.dummy_node.get_dim()  # length nc
 
-        challenge_elements = self.dummy_node.evaluate(state, idx_set, dummy_symbols)
+        challenge_elements = self.dummy_node.evaluate(state, idx_set, dummy_element)
         if self.dummy_node.get_dim() == 1:
             challenge_elements = [tuple([e]) for e in challenge_elements]
 
-        sets_c = self.set_node.evaluate(state, idx_set, dummy_symbols)
+        sets_c = self.set_node.evaluate(state, idx_set, dummy_element)
 
-        # Identify fixed dimensions
+        # identify fixed dimensions
         is_dim_fixed = []
         if self.dummy_node.get_dim() > 1:
 
@@ -246,28 +253,29 @@ class IndexingSetNode(SetExpressionNode):
                                  " while processing the dummy node of an indexed set")
 
             for jc, cmpt in enumerate(dummy_node.component_nodes):
-                if isinstance(cmpt, DummyNode):  # Component is a dummy node
-                    if dummy_symbols is not None:
-                        if cmpt.symbol in dummy_symbols:
+                if isinstance(cmpt, DummyNode):  # component is a dummy node
+                    if dummy_element is not None:
+                        if cmpt.symbol in dummy_element:
                             is_dim_fixed.append(True)  # dummy is controlled
                         else:
                             is_dim_fixed.append(False)  # dummy is not controlled
                     else:
                         is_dim_fixed.append(False)  # dummy is not controlled
                 else:
-                    is_dim_fixed.append(True)  # Component is a numeric constant or a string node
+                    is_dim_fixed.append(True)  # component is a numeric constant or a string node
 
         mp = 1
         if idx_set is not None:
             mp = len(idx_set)
-        result_sets = []
+
+        y = np.ndarray(shape=(mp,), dtype=object)
 
         for ip in range(mp):
 
             set_c_ip = sets_c[ip]
 
             if self.dummy_node.get_dim() == 1:
-                result_sets.append(set_c_ip)
+                y[ip] = set_c_ip
 
             else:
 
@@ -283,9 +291,9 @@ class IndexingSetNode(SetExpressionNode):
                     if is_member:
                         filtered_set.add(element_c_ip_ic)
 
-                result_sets.append(filtered_set)
+                y[ip] = filtered_set
 
-        return result_sets
+        return y
 
     def is_constant(self) -> bool:
         return True
@@ -339,21 +347,21 @@ class CompoundSetNode(BaseSetNode):
         super().__init__(id)
         self.set_nodes: List[SetExpressionNode] = set_nodes if set_nodes is not None else []  # length o
         self.constraint_node: LogicalExpressionNode = constraint_node
-        self.combined_dummy_syms: Optional[Tuple[Union[int, float, str, tuple, None], ...]] = None
+        self.combined_dummy_element: Optional[Tuple[Union[int, float, str, tuple, None], ...]] = None
 
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[IndexingSet]:
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
 
-        combined_sets = self.combine_indexing_and_component_sets(state, idx_set, dummy_symbols)
+        combined_sets = self.combine_indexing_and_component_sets(state, idx_set, dummy_element)
 
         mp = 1
         if idx_set is not None:
             mp = len(idx_set)
 
-        result_sets = []
+        y = np.ndarray(shape=(mp,), dtype=object)
 
         for ip in range(mp):
 
@@ -362,63 +370,63 @@ class CompoundSetNode(BaseSetNode):
             if self.constraint_node is not None:
                 filtered_set = self.__filter_set(state, combined_set_ip)
                 if idx_set is not None:
-                    filtered_set = remove_set_dimensions(filtered_set, list(range(len(dummy_symbols))))
-                result_sets.append(filtered_set)
+                    filtered_set = remove_set_dimensions(filtered_set, list(range(len(dummy_element))))
+                y[ip] = filtered_set
 
             else:
                 if idx_set is not None:
-                    combined_set_ip = remove_set_dimensions(combined_set_ip, list(range(len(dummy_symbols))))
-                result_sets.append(combined_set_ip)
+                    combined_set_ip = remove_set_dimensions(combined_set_ip, list(range(len(dummy_element))))
+                y[ip] = combined_set_ip
 
-        return result_sets
+        return y
 
     def combine_indexing_and_component_sets(self,
                                             state: State,
                                             idx_set: IndexingSet = None,  # length mp
-                                            dummy_symbols: Tuple[str, ...] = None):
+                                            dummy_element: Element = None):
         """
         Combine the indexing sets and the component sets together.
         Note that the indexing set constraint is not applied.
         :param state: State
         :param idx_set: IndexSet of length mp
-        :param dummy_symbols: tuple of dummy symbols of length np
-        :return:
+        :param dummy_element: tuple of unbound symbols of length np
+        :return: combined indexing sets for each index of the outer scope
         """
 
         mp = 1
         if idx_set is not None:
             mp = len(idx_set)
 
-        # Combine dummy symbols from indexing set and each component set
-        combined_dummy_syms = None if dummy_symbols is None else list(dummy_symbols)
+        # Combine dummy sub-elements from the indexing set and each component set
+        combined_dummy_sub_elements = None if dummy_element is None else list(dummy_element)
         for set_node in self.set_nodes:
             component_dummy_syms = list(set_node.get_dummy_elements(state))
-            if combined_dummy_syms is None:
-                combined_dummy_syms = component_dummy_syms
+            if combined_dummy_sub_elements is None:
+                combined_dummy_sub_elements = component_dummy_syms
             else:
-                combined_dummy_syms = combined_dummy_syms + component_dummy_syms
-        self.combined_dummy_syms = tuple(combined_dummy_syms)
+                combined_dummy_sub_elements = combined_dummy_sub_elements + component_dummy_syms
+        self.combined_dummy_element = tuple(combined_dummy_sub_elements)
 
-        combine_idx_sets: List[IndexingSet] = []  # length mp
+        combine_idx_sets = np.ndarray(shape=(mp,), dtype=object)  # length mp
         for ip in range(mp):
 
             idx_set_ip = None if idx_set is None else OrderedSet(idx_set[[ip]])
-            sub_combined_dummy_syms = dummy_symbols
+            sub_combined_unb_syms = dummy_element
 
             # Retrieve and combine indexing sets for each component set
             for set_node in self.set_nodes:
 
-                component_idx_sets_ip = set_node.evaluate(state, idx_set_ip, sub_combined_dummy_syms)
+                component_idx_sets_ip = set_node.evaluate(state, idx_set_ip, sub_combined_unb_syms)
                 component_idx_set_ip = OrderedSet().union(*component_idx_sets_ip)
 
                 if idx_set_ip is None:
                     idx_set_ip = component_idx_set_ip
-                    sub_combined_dummy_syms = set_node.get_dummy_elements(state)
+                    sub_combined_unb_syms = set_node.get_dummy_elements(state)
                 else:
                     idx_set_ip = cartesian_product([idx_set_ip, component_idx_set_ip])
-                    sub_combined_dummy_syms += set_node.get_dummy_elements(state)
+                    sub_combined_unb_syms += set_node.get_dummy_elements(state)
 
-            combine_idx_sets.append(idx_set_ip)
+            combine_idx_sets[ip] = idx_set_ip
 
         return combine_idx_sets
 
@@ -427,7 +435,7 @@ class CompoundSetNode(BaseSetNode):
                      combined_set_ip: IndexingSet):
         in_set = self.constraint_node.evaluate(state,
                                                combined_set_ip,
-                                               self.combined_dummy_syms)
+                                               self.combined_dummy_element)
         filtered_set = OrderedSet()
         for element, b in zip(combined_set_ip, in_set):
             if b:

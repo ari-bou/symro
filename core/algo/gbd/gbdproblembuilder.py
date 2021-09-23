@@ -714,7 +714,7 @@ class GBDProblemBuilder:
                 inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_syms)
                 inner_idx_set = OrderedSet().union(*inner_idx_sets)
                 idx_set = mat.cartesian_product([idx_set, inner_idx_set])
-                dummy_syms = node.idx_set_node.combined_dummy_syms
+                dummy_syms = node.idx_set_node.combined_dummy_element
 
             statuses = []
             for operand in node.operands:
@@ -864,7 +864,7 @@ class GBDProblemBuilder:
                 inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_syms)
                 inner_idx_set = OrderedSet().union(*inner_idx_sets)
                 idx_set = mat.cartesian_product([idx_set, inner_idx_set])
-                dummy_syms = node.idx_set_node.combined_dummy_syms
+                dummy_syms = node.idx_set_node.combined_dummy_element
 
             statuses = []
             for i, operand in enumerate(node.operands):
@@ -1229,7 +1229,7 @@ class GBDProblemBuilder:
                     inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_syms)
                     inner_idx_set = OrderedSet().union(*inner_idx_sets)
                     idx_set = mat.cartesian_product([idx_set, inner_idx_set])
-                    dummy_syms = node.idx_set_node.combined_dummy_syms
+                    dummy_syms = node.idx_set_node.combined_dummy_element
 
             if not is_comp_var_node:
                 children = node.get_children()

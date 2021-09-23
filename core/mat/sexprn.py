@@ -1,8 +1,9 @@
+import numpy as np
 from typing import List, Optional, Tuple, Union
 
 from symro.core.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode
 from symro.core.mat.setn import CompoundSetNode
-from symro.core.mat.util import IndexingSet
+from symro.core.mat.util import Element, IndexingSet
 from symro.core.mat.state import State
 
 
@@ -13,8 +14,8 @@ class ConditionalSetExpressionNode(SetExpressionNode):
                  conditions: List[Optional[LogicalExpressionNode]],
                  id: int = 0):
         super().__init__(id)
-        self.operands: List[SetExpressionNode] = []
-        self.conditions: List[Optional[LogicalExpressionNode]] = []
+        self.operands: List[SetExpressionNode] = operands
+        self.conditions: List[Optional[LogicalExpressionNode]] = conditions
 
     @staticmethod
     def generate_negated_combined_condition(conditions: List[str]):
@@ -111,6 +112,30 @@ class BinarySetOperationNode(SetExpressionNode):
         self.lhs_operand: SetExpressionNode = lhs_operand
         self.rhs_operand: SetExpressionNode = rhs_operand
 
+    def evaluate(self,
+                 state: State,
+                 idx_set: IndexingSet = None,
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
+
+        x_lhs = self.lhs_operand.evaluate(state, idx_set, dummy_element)
+        x_rhs = self.rhs_operand.evaluate(state, idx_set, dummy_element)
+
+        if self.operator == "union":
+            return x_lhs | x_rhs
+
+        elif self.operator == "inter":
+            return x_lhs & x_rhs
+
+        elif self.operator == "diff":
+            return x_lhs - x_rhs
+
+        elif self.operator == "symdiff":
+            return x_lhs ^ x_rhs
+
+        else:
+            raise ValueError("Unable to resolve operator '{0}' as a binary set operator".format(self.operator))
+
     def is_constant(self) -> bool:
         return True
 
@@ -134,24 +159,3 @@ class BinarySetOperationNode(SetExpressionNode):
         if self.is_prioritized:
             return '(' + literal + ')'
         return literal
-
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[IndexingSet]:
-
-        lhs_arg = self.lhs_operand.evaluate(state, idx_set, dummy_symbols)
-        rhs_arg = self.rhs_operand.evaluate(state, idx_set, dummy_symbols)
-
-        if self.operator == "union":
-            return [l.union(r) for l, r in zip(lhs_arg, rhs_arg)]
-
-        elif self.operator == "inter":
-            return [l.intersection(r) for l, r in zip(lhs_arg, rhs_arg)]
-
-        elif self.operator == "diff":
-            return [l.difference(r) for l, r in zip(lhs_arg, rhs_arg)]
-
-        else:
-            raise ValueError("Unable to resolve operator '{0}' as a binary set operator".format(self.operator))

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from functools import partial
-from typing import List, Tuple, Union
+import numpy as np
+from typing import Callable, List, Tuple, Union
 
 from symro.core.mat.util import IndexingSet, Element
 from symro.core.mat.state import State
@@ -43,28 +44,29 @@ class DummyNode(BaseDummyNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[Union[int, float, str]]:
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
 
         if idx_set is None:
-            return [self.symbol]
+            return np.array([self.symbol])
 
         else:
-            results = []
-            for element_ip in idx_set:
-                results.append(self.__control_dummy(element_ip, dummy_symbols))
-            return results
+            mp = len(idx_set)
+            y = np.ndarray(shape=(mp,), dtype=object)
+            for ip in range(mp):
+                y[ip] = self.__control_dummy(idx_set[ip], dummy_element)
+            return y
 
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
-        dummy = self.__control_dummy(idx_set_member, dummy_symbols)
+                  dummy_element: Element = None) -> Callable:
+        dummy = self.__control_dummy(idx_set_member, dummy_element)
         return partial(lambda d: d, dummy)
 
     def __control_dummy(self,
                         idx_set_member: Element,
-                        dummy_symbols: Tuple[str, ...]) -> Union[int, float, str]:
+                        dummy_symbols: Element) -> Union[int, float, str]:
         if self.symbol in dummy_symbols:
             pos = dummy_symbols.index(self.symbol)
             return idx_set_member[pos]
@@ -77,11 +79,11 @@ class DummyNode(BaseDummyNode):
     def is_null(self) -> bool:
         return False
 
-    def is_controlled(self, dummy_syms: List[str] = None) -> bool:
-        if dummy_syms is None:
+    def is_controlled(self, dummy_element: List[str] = None) -> bool:
+        if dummy_element is None:
             return True
         else:
-            return self.symbol in dummy_syms
+            return self.symbol in dummy_element
 
     @staticmethod
     def get_dim() -> int:
@@ -118,28 +120,28 @@ class CompoundDummyNode(BaseDummyNode):
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
-                 dummy_symbols: Tuple[str, ...] = None
-                 ) -> List[Tuple[Union[int, float, str], ...]]:
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
 
-        component_sub_elements = [c.evaluate(state, idx_set, dummy_symbols) for c in self.component_nodes]
+        component_sub_elements = [c.evaluate(state, idx_set, dummy_element) for c in self.component_nodes]
 
-        count_ip = 1
+        mp = 1
         if idx_set is not None:
-            count_ip = len(idx_set)
+            mp = len(idx_set)
 
-        results = []
-        for ip in range(count_ip):
+        y = np.ndarray(shape=(mp,), dtype=object)
+        for ip in range(mp):
             element_ic = tuple([component[ip] for component in component_sub_elements])
-            results.append(element_ic)
+            y[ip] = element_ic
 
-        return results
+        return y
 
     def to_lambda(self,
                   state: State,
                   idx_set_member: Element = None,
-                  dummy_symbols: Tuple[str, ...] = None):
-        dummy = tuple([c.to_lambda(state, idx_set_member, dummy_symbols)() for c in self.component_nodes])
-        return partial(lambda d: d, dummy)
+                  dummy_element: Element = None):
+        x = tuple([c.to_lambda(state, idx_set_member, dummy_element) for c in self.component_nodes])
+        return partial(lambda d: tuple([x_i() for x_i in x]), x)
 
     def is_constant(self) -> bool:
         return True
@@ -147,8 +149,8 @@ class CompoundDummyNode(BaseDummyNode):
     def is_null(self) -> bool:
         return False
 
-    def is_controlled(self, dummy_syms: List[str] = None) -> bool:
-        return any([c.is_controlled(dummy_syms) for c in self.component_nodes])
+    def is_controlled(self, dummy_element: List[str] = None) -> bool:
+        return any([c.is_controlled(dummy_element) for c in self.component_nodes])
 
     def get_dim(self) -> int:
         return len(self.component_nodes)

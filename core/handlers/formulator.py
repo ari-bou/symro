@@ -90,7 +90,7 @@ class Formulator:
             expression.expression_node = neg_op
             expression.link_nodes()
 
-    def __standardize_constraint(self, meta_con: mat.MetaConstraint):
+    def __standardize_constraint(self, meta_con: mat.MetaConstraint) -> List[mat.MetaConstraint]:
 
         ctype = meta_con.elicit_constraint_type()  # elicit constraint type
 
@@ -99,9 +99,9 @@ class Formulator:
 
         else:
             if ctype == mat.MetaConstraint.EQUALITY_TYPE:
-                ref_meta_cons = self.__standardize_equality_constraint(meta_con)
+                ref_meta_cons = [self.__standardize_equality_constraint(meta_con)]
             elif ctype == mat.MetaConstraint.INEQUALITY_TYPE:
-                ref_meta_cons = self.__standardize_inequality_constraint(meta_con)
+                ref_meta_cons = [self.__standardize_inequality_constraint(meta_con)]
             elif ctype == mat.MetaConstraint.DOUBLE_INEQUALITY_TYPE:
                 ref_meta_cons = self.__standardize_double_inequality_constraint(meta_con)
             else:
@@ -138,7 +138,7 @@ class Formulator:
                 else:
                     return True
 
-    def __standardize_equality_constraint(self, meta_con: mat.MetaConstraint) -> List[mat.MetaConstraint]:
+    def __standardize_equality_constraint(self, meta_con: mat.MetaConstraint) -> mat.MetaConstraint:
 
         eq_op_node = meta_con.expression.expression_node
         if not isinstance(eq_op_node, mat.RelationalOperationNode):
@@ -157,9 +157,9 @@ class Formulator:
 
         meta_con.expression.link_nodes()
 
-        return [meta_con]
+        return meta_con
 
-    def __standardize_inequality_constraint(self, meta_con: mat.MetaConstraint) -> List[mat.MetaConstraint]:
+    def __standardize_inequality_constraint(self, meta_con: mat.MetaConstraint) -> mat.MetaConstraint:
 
         ineq_op_node = meta_con.expression.expression_node
         if not isinstance(ineq_op_node, mat.RelationalOperationNode):
@@ -187,7 +187,7 @@ class Formulator:
 
         meta_con.expression.link_nodes()
 
-        return [meta_con]
+        return meta_con
 
     def __standardize_double_inequality_constraint(self,
                                                    meta_con: mat.MetaConstraint) -> List[mat.MetaConstraint]:
@@ -256,6 +256,12 @@ class Formulator:
             ref_meta_cons.append(mc_clone)
 
         return ref_meta_cons
+
+    # Constraint Reformulation
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def __convert_equality_to_inequality_constraint(self, meta_con: mat.MetaConstraint):
+        pass
 
     # Slack Variables
     # ------------------------------------------------------------------------------------------------------------------
@@ -513,7 +519,7 @@ class Formulator:
     # Expansion
     # ------------------------------------------------------------------------------------------------------------------
 
-    def expand_multiplication(self, node: mat.ExpressionNode) -> List[mat.ArithmeticExpressionNode]:
+    def expand_multiplication(self, node: mat.ArithmeticExpressionNode) -> List[mat.ArithmeticExpressionNode]:
 
         # arithmetic operation
         if isinstance(node, mat.ArithmeticExpressionNode):
@@ -697,17 +703,17 @@ class Formulator:
     # Summation Combination
     # ------------------------------------------------------------------------------------------------------------------
 
-    def combine_summation_factor_nodes(self, nodes: List[mat.ArithmeticExpressionNode]):
+    def combine_summation_factor_nodes(self, factors: Iterable[mat.ArithmeticExpressionNode]):
 
         cmpt_set_nodes = []  # component set nodes of the combined indexing set node
         conj_operands = []  # conjunctive operands of the constraint node of the combined indexing set node
-        factors = []  # factors subject to the combined summation node
+        ref_factors = []  # factors subject to the combined summation node
 
         def_unb_syms = set()  # previously defined unbound symbols
 
-        for node in nodes:
+        for factor in factors:
 
-            unb_syms = self._node_builder.retrieve_unbound_symbols(node)
+            unb_syms = self._node_builder.retrieve_unbound_symbols(factor)
             clashing_unb_syms = def_unb_syms.intersection(unb_syms)
             def_unb_syms = def_unb_syms.union(unb_syms)
 
@@ -719,38 +725,38 @@ class Formulator:
                     mapping[unb_sym] = self._problem.generate_unique_symbol(unb_sym)
 
                 # replace the conflicting symbols with unique symbols
-                self._node_builder.replace_unbound_symbols(node=node, mapping=mapping)
+                self._node_builder.replace_unbound_symbols(node=factor, mapping=mapping)
 
             # reductive summation node
-            if isinstance(node, mat.ArithmeticTransformationNode) and node.symbol == "sum":
+            if isinstance(factor, mat.ArithmeticTransformationNode) and factor.symbol == "sum":
 
                 # collect set nodes of the current indexing set node
-                cmpt_set_nodes.extend(node.idx_set_node.set_nodes)
+                cmpt_set_nodes.extend(factor.idx_set_node.set_nodes)
 
                 # collect constraint node of the current indexing set node
-                if node.idx_set_node.constraint_node is not None:
-                    conj_operands.append(node.idx_set_node.constraint_node)
+                if factor.idx_set_node.constraint_node is not None:
+                    conj_operands.append(factor.idx_set_node.constraint_node)
 
                 # designate the operand of the current summation node as the factorable node
-                factorable_node = node.operands[0]
+                factorable_node = factor.operands[0]
 
             # other
             else:
                 # designate the current node as the factorable node
-                factorable_node = node
+                factorable_node = factor
 
             # retrieve underlying factors of the factorable node
 
             # multiple factors
             if isinstance(factorable_node, mat.MultiArithmeticOperationNode) and factorable_node.operator == '*':
-                factors.extend(factorable_node.operands)
+                ref_factors.extend(factorable_node.operands)
 
             # single factor
             else:
-                factors.append(factorable_node)
+                ref_factors.append(factorable_node)
 
         # build multiplication node with collected factors
-        multiplication_node = self._node_builder.build_multiplication_node(factors)
+        multiplication_node = self._node_builder.build_multiplication_node(ref_factors)
 
         # indexing set of the combined summation node is empty
         if len(cmpt_set_nodes) == 0:

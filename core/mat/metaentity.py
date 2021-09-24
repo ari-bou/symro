@@ -463,10 +463,12 @@ class MetaConstraint(MetaEntity):
             if expr_node.operator in ['=', "=="]:
                 self.ctype = self.EQUALITY_TYPE
             elif expr_node.operator in ['<', '<=', '>=', '>']:
-                if not isinstance(expr_node.rhs_operand, RelationalOperationNode):
-                    self.ctype = self.INEQUALITY_TYPE
-                else:
+                if isinstance(expr_node.lhs_operand, RelationalOperationNode):
                     self.ctype = self.DOUBLE_INEQUALITY_TYPE
+                elif isinstance(expr_node.rhs_operand, RelationalOperationNode):
+                    self.ctype = self.DOUBLE_INEQUALITY_TYPE
+                else:
+                    self.ctype = self.INEQUALITY_TYPE
             return self.ctype
         raise ValueError("Meta-constraint '{0}' expected an equality or an inequality expression".format(self.symbol)
                          + " while eliciting the constraint type from the expression node '{0}'".format(expr_node))

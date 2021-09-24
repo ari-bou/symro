@@ -1,4 +1,6 @@
+import symro.core.mat as mat
 from symro.core.prob.problem import Problem
+from symro.core.handlers.nodebuilder import NodeBuilder
 from symro.core.handlers.formulator import Formulator
 
 # See the following paper for convexification techniques
@@ -29,4 +31,25 @@ def convexify(problem: Problem,
     formulator = Formulator(convex_relaxation)
 
     formulator.substitute_defined_variables()
+
+    formulator.standardize_model()
+
+    return convex_relaxation
+
+
+def __convexify_expression(root_node: mat.ArithmeticExpressionNode,
+                           formulator: Formulator):
+
+    root_node = formulator.reformulate_subtraction_and_unary_negation(root_node)
+
+    terms = formulator.expand_multiplication(root_node)
+
+    ref_terms = []
+    for term in terms:
+        if isinstance(term, mat.MultiplicationNode):
+            term = formulator.combine_summation_factor_nodes(term.operands)
+            ref_terms.append(term)
+        else:
+            ref_terms.append(term)
+
 

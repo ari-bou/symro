@@ -168,7 +168,7 @@ class AMPLEngine(Engine):
 
             for idx in idx_set:
 
-                var = self.get_var(symbol=meta_var.symbol, idx=idx)
+                var = self.get_var(symbol=meta_var.get_symbol(), idx=idx)
 
                 try:
                     lb = var.lb()
@@ -178,7 +178,7 @@ class AMPLEngine(Engine):
                     lb = -np.inf
                     ub = np.inf
 
-                self._store_var(symbol=meta_var.symbol,
+                self._store_var(symbol=meta_var.get_symbol(),
                                 idx=idx,
                                 value=var.value(),
                                 lb=lb,
@@ -193,8 +193,8 @@ class AMPLEngine(Engine):
                 idx_set = meta_obj.get_reduced_idx_set(self.problem.state)
 
             for idx in idx_set:
-                obj = self.get_obj(symbol=meta_obj.symbol, idx=idx)
-                self._store_obj(symbol=meta_obj.symbol,
+                obj = self.get_obj(symbol=meta_obj.get_symbol(), idx=idx)
+                self._store_obj(symbol=meta_obj.get_symbol(),
                                 idx=idx,
                                 value=obj.value())
 
@@ -208,7 +208,7 @@ class AMPLEngine(Engine):
 
             for idx in idx_set:
 
-                con = self.get_con(symbol=meta_con.symbol, idx=idx)
+                con = self.get_con(symbol=meta_con.get_symbol(), idx=idx)
 
                 try:
                     body = con.body()
@@ -220,7 +220,7 @@ class AMPLEngine(Engine):
                     lb = -np.inf
                     ub = np.inf
 
-                self._store_con(symbol=meta_con.symbol,
+                self._store_con(symbol=meta_con.get_symbol(),
                                 idx=idx,
                                 body=body,
                                 lb=lb,

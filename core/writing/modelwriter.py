@@ -126,7 +126,7 @@ class ModelWriter:
                 self.__add_entity_declaration(meta_entity)
 
     def __add_entity_declaration(self, meta_entity: mat.MetaEntity):
-        statement = meta_entity.get_declaration()
+        statement = meta_entity.generate_declaration()
         self.__add_statement(statement)
 
     def __add_statement(self, statement: str):

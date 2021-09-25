@@ -525,7 +525,7 @@ class GBDAlgorithm:
     def __store_complicating_variables(self) -> Dict[str, Union[float, Dict[tuple, float]]]:
 
         def modify_value(v: float, mv: mat.MetaVariable) -> float:
-            if mv.is_binary:
+            if mv.is_binary():
                 if v < 0.5:
                     return 0
                 else:
@@ -538,11 +538,11 @@ class GBDAlgorithm:
 
         for _, comp_meta_var in self.gbd_problem.comp_meta_vars.items():
 
-            var_sym = comp_meta_var.symbol
+            var_sym = comp_meta_var.get_symbol()
             storage_sym = var_sym + "_stored"
 
             # Scalar variable
-            if comp_meta_var.get_dimension() == 0:
+            if comp_meta_var.get_idx_set_dim() == 0:
                 value = self.__engine.get_var_value(var_sym)
                 value = modify_value(value, comp_meta_var)
                 self.__engine.set_param_value(storage_sym, (cut_count,), value)
@@ -573,10 +573,10 @@ class GBDAlgorithm:
 
         for var_sym, idx_set in sp_container.comp_var_idx_sets.items():
 
-            storage_sym = self.gbd_problem.stored_comp_decisions[var_sym].symbol
+            storage_sym = self.gbd_problem.stored_comp_decisions[var_sym].get_symbol()
 
             # scalar variable
-            if self.gbd_problem.meta_vars[var_sym].get_dimension() == 0:
+            if self.gbd_problem.meta_vars[var_sym].get_idx_set_dim() == 0:
                 value = self.__engine.get_param_value(storage_sym, (cut_count,))
                 self.__engine.fix_var(symbol=var_sym, value=value)
 
@@ -610,7 +610,7 @@ class GBDAlgorithm:
                     mod_con_sym += "_F"
 
             # scalar constraint
-            if self.gbd_problem.meta_cons[con_sym].get_dimension() == 0:
+            if self.gbd_problem.meta_cons[con_sym].get_idx_set_dim() == 0:
                 dual_soln[dual_mult_sym] = retrieve_dual_value(mod_con_sym)
 
             # indexed constraint
@@ -627,15 +627,15 @@ class GBDAlgorithm:
         for dual_id, dual_mult in self.gbd_problem.duality_multipliers.items():
 
             # scalar constraint
-            if not isinstance(dual_mult_values[dual_mult.symbol], dict):
-                self.__engine.set_param_value(symbol=dual_mult.symbol,
+            if not isinstance(dual_mult_values[dual_mult.get_symbol()], dict):
+                self.__engine.set_param_value(symbol=dual_mult.get_symbol(),
                                               idx=(cut_count,),
-                                              value=dual_mult_values[dual_mult.symbol])
+                                              value=dual_mult_values[dual_mult.get_symbol()])
 
             # indexed constraint
             else:
-                for dual_index, value in dual_mult_values[dual_mult.symbol].items():
-                    self.__engine.set_param_value(symbol=dual_mult.symbol,
+                for dual_index, value in dual_mult_values[dual_mult.get_symbol()].items():
+                    self.__engine.set_param_value(symbol=dual_mult.get_symbol(),
                                                   idx=dual_index + (cut_count,),
                                                   value=value)
 
@@ -730,16 +730,16 @@ class GBDAlgorithm:
                                    sp_index: List[Union[int, float, str]] = None):
 
         if entity_index is None:
-            entity_index = list(meta_entity.get_dummy_symbols())  # retrieve default entity index
+            entity_index = list(meta_entity.get_idx_set_dummy_element())  # retrieve default entity index
 
         sp_idx_pos = 0  # first index position of the current indexing meta-set
         for idx_meta_set in self.gbd_problem.idx_meta_sets.values():
 
-            idx_syms = sp_index[sp_idx_pos:sp_idx_pos + idx_meta_set.reduced_dimension]
-            sp_idx_pos += idx_meta_set.reduced_dimension  # update position of the subproblem index
+            idx_syms = sp_index[sp_idx_pos:sp_idx_pos + idx_meta_set.get_reduced_dim()]
+            sp_idx_pos += idx_meta_set.get_reduced_dim()  # update position of the subproblem index
 
             ent_idx_pos = meta_entity.get_first_reduced_dim_index_of_idx_set(idx_meta_set)
-            entity_index[ent_idx_pos:ent_idx_pos + idx_meta_set.reduced_dimension] = idx_syms  # update entity index
+            entity_index[ent_idx_pos:ent_idx_pos + idx_meta_set.get_reduced_dim()] = idx_syms  # update entity index
 
         return entity_index
 
@@ -772,4 +772,4 @@ class GBDAlgorithm:
                            obj: mat.MetaObjective,
                            sp_index: mat.Element) -> float:
         obj_idx = self.__gbd_problem_builder.generate_entity_sp_index(sp_index=sp_index, meta_entity=obj)
-        return self.__engine.get_obj_value(obj.symbol, obj_idx)
+        return self.__engine.get_obj_value(obj.get_symbol(), obj_idx)

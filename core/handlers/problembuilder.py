@@ -74,7 +74,7 @@ def __retrieve_set_data_from_ampl_engine(problem: Problem,
 
         # set the dimension of the meta-set
         meta_set = problem.meta_sets[sym]
-        meta_set.dimension = ampl_set.arity()
+        meta_set.set_dim(ampl_set.arity())
         if not meta_set.is_init:
             meta_set.initialize()
 

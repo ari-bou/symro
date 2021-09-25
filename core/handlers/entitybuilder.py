@@ -32,9 +32,8 @@ class EntityBuilder:
                        set_node: mat.BaseSetNode = None):
 
         if idx_meta_sets is None and idx_set_node is not None:
-            self._build_idx_meta_sets_of_meta_set(idx_set_node,
-                                                  super_set_node,
-                                                  set_node)
+            self._build_idx_meta_sets_of_meta_entity(idx_set_node,
+                                                     expr_nodes=[super_set_node, set_node])
 
         if idx_set_node is None:
             idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
@@ -67,11 +66,9 @@ class EntityBuilder:
         default_value_node = self._build_value_node(default_value)
 
         if idx_meta_sets is None and idx_set_node is not None:
-            idx_meta_sets = self._build_idx_meta_sets_of_meta_param(
+            idx_meta_sets = self._build_idx_meta_sets_of_meta_entity(
                 idx_set_node=idx_set_node,
-                default_value_node=default_value,
-                super_set_node=super_set_node,
-                relational_constraints=relational_constraints)
+                expr_nodes=[default_value, super_set_node] + list(relational_constraints.values()))
 
         if idx_set_node is None:
             idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
@@ -108,11 +105,9 @@ class EntityBuilder:
         upper_bound_node = self._build_value_node(upper_bound)
 
         if idx_meta_sets is None and idx_set_node is not None:
-            idx_meta_sets = self._build_idx_meta_sets_of_meta_var(
+            idx_meta_sets = self._build_idx_meta_sets_of_meta_entity(
                 idx_set_node=idx_set_node,
-                default_value_node=default_value,
-                lower_bound_node=lower_bound,
-                upper_bound_node=upper_bound)
+                expr_nodes=[default_value, default_value_node, lower_bound, upper_bound])
 
         if idx_set_node is None:
             idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
@@ -140,9 +135,9 @@ class EntityBuilder:
                        expression: mat.Expression = None):
 
         if idx_meta_sets is None and idx_set_node is not None:
-            idx_meta_sets = self._build_idx_meta_sets_of_meta_obj(
+            idx_meta_sets = self._build_idx_meta_sets_of_meta_entity(
                 idx_set_node=idx_set_node,
-                expression=expression)
+                expr_nodes=[expression.expression_node])
 
         if idx_set_node is None:
             idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
@@ -164,9 +159,9 @@ class EntityBuilder:
                        expression: mat.Expression = None):
 
         if idx_meta_sets is None and idx_set_node is not None:
-            idx_meta_sets = self._build_idx_meta_sets_of_meta_con(
+            idx_meta_sets = self._build_idx_meta_sets_of_meta_entity(
                 idx_set_node=idx_set_node,
-                expression=expression)
+                expr_nodes=[expression.expression_node])
 
         if idx_set_node is None:
             idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
@@ -206,83 +201,19 @@ class EntityBuilder:
 
     def _build_idx_meta_sets_of_problem(self, problem: BaseProblem):
 
-        for me in problem.model_meta_sets_params:
-            if isinstance(me, mat.MetaSet):
-                me.idx_meta_sets = self._build_idx_meta_sets_of_meta_set(idx_set_node=me.idx_set_node,
-                                                                         super_set_node=me.super_set_node,
-                                                                         set_node=me.set_node)
+        for me_iterable in (problem.model_meta_sets_params,
+                            problem.model_meta_vars,
+                            problem.model_meta_objs,
+                            problem.model_meta_cons):
+            for me in me_iterable:
+                me.set_idx_meta_sets(
+                    self._build_idx_meta_sets_of_meta_entity(idx_set_node=me.idx_set_node,
+                                                             expr_nodes=me.get_expression_nodes()))
 
-            elif isinstance(me, mat.MetaParameter):
-                me.idx_meta_sets = self._build_idx_meta_sets_of_meta_param(
-                    idx_set_node=me.idx_set_node,
-                    default_value_node=me.default_value,
-                    super_set_node=me.super_set_node,
-                    relational_constraints=me.relational_constraints)
-
-        for me in problem.model_meta_vars:
-            me.idx_meta_sets = self._build_idx_meta_sets_of_meta_var(
-                idx_set_node=me.idx_set_node,
-                default_value_node=me.default_value,
-                lower_bound_node=me.lower_bound,
-                upper_bound_node=me.upper_bound)
-
-        for me in problem.model_meta_objs:
-            me.idx_meta_sets = self._build_idx_meta_sets_of_meta_obj(
-                idx_set_node=me.idx_set_node,
-                expression=me.expression)
-
-        for me in problem.model_meta_cons:
-            me.idx_meta_sets = self._build_idx_meta_sets_of_meta_con(
-                idx_set_node=me.idx_set_node,
-                expression=me.expression)
-
-    def _build_idx_meta_sets_of_meta_set(self,
-                                         idx_set_node: mat.CompoundSetNode,
-                                         super_set_node: mat.BaseSetNode = None,
-                                         set_node: mat.BaseSetNode = None):
-        blacklist = self._node_builder.retrieve_unbound_symbols_of_nodes([super_set_node, set_node])
-        return self.build_idx_meta_sets(idx_set_node, unb_syms_blacklist=blacklist)
-
-    def _build_idx_meta_sets_of_meta_param(self,
-                                           idx_set_node: mat.CompoundSetNode,
-                                           default_value_node: mat.ExpressionNode = None,
-                                           super_set_node: mat.BaseSetNode = None,
-                                           relational_constraints: Dict[str, mat.ExpressionNode] = None):
-
-        bl_nodes = [default_value_node, super_set_node]
-        if relational_constraints is not None:
-            bl_nodes.extend(relational_constraints.values())
-        blacklist = self._node_builder.retrieve_unbound_symbols_of_nodes(bl_nodes)
-        return self.build_idx_meta_sets(idx_set_node, unb_syms_blacklist=blacklist)
-
-    def _build_idx_meta_sets_of_meta_var(self,
-                                         idx_set_node: mat.CompoundSetNode,
-                                         default_value_node: mat.ExpressionNode = None,
-                                         defined_value_node: mat.ExpressionNode = None,
-                                         lower_bound_node: mat.ExpressionNode = None,
-                                         upper_bound_node: mat.ExpressionNode = None):
-        blacklist = self._node_builder.retrieve_unbound_symbols_of_nodes([default_value_node,
-                                                                          defined_value_node,
-                                                                          lower_bound_node,
-                                                                          upper_bound_node])
-        return self.build_idx_meta_sets(idx_set_node, unb_syms_blacklist=blacklist)
-
-    def _build_idx_meta_sets_of_meta_obj(self,
-                                         idx_set_node: mat.CompoundSetNode,
-                                         expression: mat.Expression = None):
-        if expression is not None:
-            blacklist = self._node_builder.retrieve_unbound_symbols_of_nodes([expression.expression_node])
-        else:
-            blacklist = set()
-        return self.build_idx_meta_sets(idx_set_node, unb_syms_blacklist=blacklist)
-
-    def _build_idx_meta_sets_of_meta_con(self,
-                                         idx_set_node: mat.CompoundSetNode,
-                                         expression: mat.Expression = None):
-        if expression is not None:
-            blacklist = self._node_builder.retrieve_unbound_symbols_of_nodes([expression.expression_node])
-        else:
-            blacklist = set()
+    def _build_idx_meta_sets_of_meta_entity(self,
+                                            idx_set_node: mat.CompoundSetNode,
+                                            expr_nodes: Iterable[mat.ExpressionNode]):
+        blacklist = self._node_builder.retrieve_unbound_symbols_of_nodes(expr_nodes)
         return self.build_idx_meta_sets(idx_set_node, unb_syms_blacklist=blacklist)
 
     def build_idx_meta_sets(self,
@@ -339,7 +270,7 @@ class EntityBuilder:
             # Component set is declared
             if isinstance(component_set_node, mat.SetNode):
 
-                dummy_elements = list(self._problem.meta_sets[component_set_node.symbol].dummy_symbols)
+                dummy_elements = list(self._problem.meta_sets[component_set_node.symbol].get_dummy_element())
                 for j, de in enumerate(dummy_elements):
                     if de not in all_defined_indexing_dummies:
                         all_defined_indexing_dummies.add(de)
@@ -424,8 +355,8 @@ class EntityBuilder:
             indexing_meta_set = mat.MetaSet(symbol=component_set_sym,
                                             dimension=component_dims[i],
                                             reduced_dimension=reduced_component_dim,
-                                            dummy_symbols=component_dummy,
-                                            reduced_dummy_symbols=reduced_component_dummy,
+                                            dummy_symbols=tuple(component_dummy),
+                                            reduced_dummy_symbols=tuple(reduced_component_dummy),
                                             is_dim_fixed=is_dim_fixed)
             idx_meta_sets.append(indexing_meta_set)
 
@@ -487,16 +418,14 @@ class EntityBuilder:
 
             # return the parent meta-entity if it is scalar
             # return the parent meta-entity if no indexing subset is provided
-            if idx_subset_node is None or meta_entity.get_reduced_dimension() == 0:
+            if idx_subset_node is None or meta_entity.get_idx_set_reduced_dim() == 0:
                 return meta_entity
 
             idx_subset_node = self.__build_sub_meta_entity_idx_set_node(idx_subset_node,
                                                                         meta_entity,
                                                                         entity_idx_node)
 
-            sub_meta_entity = deepcopy(meta_entity)
-            sub_meta_entity.is_sub = True  # set is_sub flag to True to designate the object as a sub-meta-entity
-            sub_meta_entity.idx_set_node = idx_subset_node
+            sub_meta_entity = meta_entity.build_sub_entity(idx_set_node=idx_subset_node)
 
             return sub_meta_entity
 
@@ -506,8 +435,8 @@ class EntityBuilder:
                                                  entity_idx_node: mat.CompoundDummyNode):
 
             # check if the dimension of the entity index node matches that of the parent meta-entity's indexing set
-            if entity_idx_node.get_dim() != meta_entity.get_reduced_dimension():
-                sub_entity_decl = "{0} {1}{2}".format(idx_subset_node, meta_entity.symbol, entity_idx_node)
+            if entity_idx_node.get_dim() != meta_entity.get_idx_set_reduced_dim():
+                sub_entity_decl = "{0} {1}{2}".format(idx_subset_node, meta_entity.get_symbol(), entity_idx_node)
                 raise ValueError("Entity builder encountered an incorrect entity declaration"
                                  + " '{0}' while building a sub-meta-entity:".format(sub_entity_decl)
                                  + " the dimension of the entity index does not match that of the parent entity")
@@ -523,7 +452,7 @@ class EntityBuilder:
                 idx_set_con_operands.append(idx_set_node.constraint_node)
 
             # retrieve standard dummy symbols of the indexing set
-            outer_unb_syms = meta_entity.get_dummy_symbols()
+            outer_unb_syms = meta_entity.get_idx_set_dummy_element()
 
             # process the index node of the sub-meta-entity
             (is_sub_membership_op_required,

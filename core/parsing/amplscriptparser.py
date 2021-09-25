@@ -308,22 +308,14 @@ class AMPLScriptParser(AMPLParser):
 
         # Meta-Set
 
-        if symbol in self.problem.meta_sets:
-            meta_set = self.problem.meta_sets[symbol]
-            meta_set.alias = alias
-            meta_set.idx_set_node = idx_set_node
-            meta_set.super_set_node = super_set_node
-            meta_set.set_node = set_node
+        meta_set = mat.MetaSet(symbol=symbol,
+                               alias=alias,
+                               idx_set_node=idx_set_node,
+                               super_set_node=super_set_node,
+                               set_node=set_node)
 
-        else:
-            meta_set = mat.MetaSet(symbol=symbol,
-                                   alias=alias,
-                                   idx_set_node=idx_set_node,
-                                   super_set_node=super_set_node,
-                                   set_node=set_node)
-
-            is_in_model = self._can_include_in_model and self._can_evaluate
-            self.problem.add_meta_set(meta_set, is_in_model=is_in_model)
+        is_in_model = self._can_include_in_model and self._can_evaluate
+        self.problem.add_meta_set(meta_set, is_in_model=is_in_model)
 
         # Statement
         return stm.ModelEntityDeclaration(meta_set)
@@ -393,31 +385,18 @@ class AMPLScriptParser(AMPLParser):
 
         # Meta-Parameter
 
-        if symbol in self.problem.meta_params:
+        meta_param = mat.MetaParameter(symbol=symbol,
+                                       alias=alias,
+                                       idx_set_node=idx_set_node,
+                                       is_binary=is_binary,
+                                       is_integer=is_integer,
+                                       is_symbolic=is_symbolic,
+                                       relational_constraints=relational_constraints,
+                                       default_value=default_node,
+                                       super_set_node=super_set_node)
 
-            meta_param = self.problem.meta_params[symbol]
-            meta_param.alias = alias
-            meta_param.idx_set_node = idx_set_node
-            meta_param.is_binary = is_binary
-            meta_param.is_integer = is_integer
-            meta_param.is_symbolic = is_symbolic
-            meta_param.relational_constraints = relational_constraints
-            meta_param.default_value = default_node
-            meta_param.super_set_node = super_set_node
-
-        else:
-            meta_param = mat.MetaParameter(symbol=symbol,
-                                           alias=alias,
-                                           idx_set_node=idx_set_node,
-                                           is_binary=is_binary,
-                                           is_integer=is_integer,
-                                           is_symbolic=is_symbolic,
-                                           relational_constraints=relational_constraints,
-                                           default_value=default_node,
-                                           super_set_node=super_set_node)
-
-            is_in_model = self._can_include_in_model and self._can_evaluate
-            self.problem.add_meta_parameter(meta_param, is_in_model=is_in_model)
+        is_in_model = self._can_include_in_model and self._can_evaluate
+        self.problem.add_meta_parameter(meta_param, is_in_model=is_in_model)
 
         # Statement
         return stm.ModelEntityDeclaration(meta_param)
@@ -500,33 +479,19 @@ class AMPLScriptParser(AMPLParser):
 
         # Meta-Variable
 
-        if symbol in self.problem.meta_vars:
+        meta_var = mat.MetaVariable(symbol=symbol,
+                                    alias=alias,
+                                    idx_set_node=idx_set_node,
+                                    is_binary=is_binary,
+                                    is_integer=is_integer,
+                                    is_symbolic=is_symbolic,
+                                    default_value=default_value_node,
+                                    defined_value=fixed_value_node,
+                                    lower_bound=lower_bound_node,
+                                    upper_bound=upper_bound_node)
 
-            meta_var = self.problem.meta_vars[symbol]
-            meta_var.alias = alias
-            meta_var.idx_set_node = idx_set_node
-            meta_var.is_binary = is_binary
-            meta_var.is_integer = is_integer
-            meta_var.is_symbolic = is_symbolic
-            meta_var.default_value = default_value_node
-            meta_var.defined_value = fixed_value_node
-            meta_var.lower_bound = lower_bound_node
-            meta_var.upper_bound = upper_bound_node
-
-        else:
-            meta_var = mat.MetaVariable(symbol=symbol,
-                                        alias=alias,
-                                        idx_set_node=idx_set_node,
-                                        is_binary=is_binary,
-                                        is_integer=is_integer,
-                                        is_symbolic=is_symbolic,
-                                        default_value=default_value_node,
-                                        defined_value=fixed_value_node,
-                                        lower_bound=lower_bound_node,
-                                        upper_bound=upper_bound_node)
-
-            is_in_model = self._can_include_in_model and self._can_evaluate
-            self.problem.add_meta_variable(meta_var, is_in_model=is_in_model)
+        is_in_model = self._can_include_in_model and self._can_evaluate
+        self.problem.add_meta_variable(meta_var, is_in_model=is_in_model)
 
         # Statement
         return stm.ModelEntityDeclaration(meta_var)
@@ -569,22 +534,14 @@ class AMPLScriptParser(AMPLParser):
 
         # Meta-Objective
 
-        if symbol in self.problem.meta_objs:
-            meta_obj = self.problem.meta_objs[symbol]
-            meta_obj.direction = direction
-            meta_obj.alias = alias
-            meta_obj.idx_set_node = idx_set_node
-            meta_obj.expression = expression
+        meta_obj = mat.MetaObjective(symbol=symbol,
+                                     alias=alias,
+                                     idx_set_node=idx_set_node,
+                                     direction=direction,
+                                     expression=expression)
 
-        else:
-            meta_obj = mat.MetaObjective(symbol=symbol,
-                                         alias=alias,
-                                         idx_set_node=idx_set_node,
-                                         direction=direction,
-                                         expression=expression)
-
-            is_in_model = self._can_include_in_model and self._can_evaluate
-            self.problem.add_meta_objective(meta_obj, is_in_model=is_in_model)
+        is_in_model = self._can_include_in_model and self._can_evaluate
+        self.problem.add_meta_objective(meta_obj, is_in_model=is_in_model)
 
         # Statement
         return stm.ModelEntityDeclaration(meta_obj)
@@ -624,20 +581,13 @@ class AMPLScriptParser(AMPLParser):
 
         # Meta-Constraint
 
-        if symbol in self.problem.meta_cons:
-            meta_con = self.problem.meta_cons[symbol]
-            meta_con.alias = alias
-            meta_con.idx_set_node = idx_set_node
-            meta_con.expression = expression
+        meta_con = mat.MetaConstraint(symbol=symbol,
+                                      alias=alias,
+                                      idx_set_node=idx_set_node,
+                                      expression=expression)
 
-        else:
-            meta_con = mat.MetaConstraint(symbol=symbol,
-                                          alias=alias,
-                                          idx_set_node=idx_set_node,
-                                          expression=expression)
-
-            is_in_model = self._can_include_in_model and self._can_evaluate
-            self.problem.add_meta_constraint(meta_con, is_in_model=is_in_model)
+        is_in_model = self._can_include_in_model and self._can_evaluate
+        self.problem.add_meta_constraint(meta_con, is_in_model=is_in_model)
 
         meta_con.elicit_constraint_type()
 

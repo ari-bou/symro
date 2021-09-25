@@ -191,4 +191,4 @@ class GBDProblem(Problem):
         return [ms for ms in self.idx_meta_sets.values()]
 
     def get_comp_var_syms(self) -> List[str]:
-        return [mv.symbol for mv in self.comp_meta_vars.values()]
+        return [mv.get_symbol() for mv in self.comp_meta_vars.values()]

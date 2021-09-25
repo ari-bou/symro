@@ -113,7 +113,7 @@ class ModelEntityDeclaration(BaseStatement):
         self.meta_entity: mat.MetaEntity = meta_entity
 
     def get_literal(self, indent_level: int = 0) -> str:
-        return "{0}".format(indent_level * '\t') + self.meta_entity.get_declaration()
+        return "{0}".format(indent_level * '\t') + self.meta_entity.generate_declaration()
 
 
 # Problem Statement

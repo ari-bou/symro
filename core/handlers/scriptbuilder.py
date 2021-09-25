@@ -123,7 +123,7 @@ class ScriptBuilder:
         idx_set_node = node_builder.build_idx_set_node(idx_meta_sets=idx_meta_sets)  # problem indexing set
         custom_dummy_syms = None
         if idx_meta_sets is not None:
-            custom_dummy_syms = {ms.symbol: tuple(ms.dummy_symbols) for ms in idx_meta_sets}
+            custom_dummy_syms = {ms.get_symbol(): ms.get_dummy_element() for ms in idx_meta_sets}
 
         # collect the meta-variables, meta-objectives, and meta-constraints of the problem in a single list
         meta_entities = []
@@ -138,16 +138,14 @@ class ScriptBuilder:
             if node_builder.unb_sym_map is not None:
                 node_builder.replace_unbound_symbols(entity_idx_node, node_builder.unb_sym_map)
 
-            entity_node = mat.DeclaredEntityNode(symbol=meta_entity.symbol,
+            entity_node = mat.DeclaredEntityNode(symbol=meta_entity.get_symbol(),
                                                  entity_index_node=entity_idx_node,
                                                  type=meta_entity.get_type())
 
-            if meta_entity.get_reduced_dimension() == 0:
+            if meta_entity.get_idx_set_reduced_dim() == 0:
                 return None, entity_node
             else:
                 # build a new indexing set node with modified dummy symbols
-                if meta_entity.symbol == "LINKAGE_MASS_BALANCES":
-                    x = 2
                 entity_idx_set_node = node_builder.build_entity_idx_set_node(meta_entity=meta_entity,
                                                                              remove_sets=idx_meta_sets,
                                                                              custom_dummy_syms=custom_dummy_syms)

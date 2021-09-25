@@ -237,18 +237,18 @@ class NodeBuilder:
 
     def build_default_entity_node(self, meta_entity: mat.MetaEntity) -> mat.DeclaredEntityNode:
         entity_index_node = self.build_default_entity_index_node(meta_entity)
-        return mat.DeclaredEntityNode(symbol=meta_entity.symbol,
+        return mat.DeclaredEntityNode(symbol=meta_entity.get_symbol(),
                                       entity_index_node=entity_index_node,
                                       type=meta_entity.get_type())
 
     def build_default_entity_index_node(self,
                                         meta_entity: mat.MetaEntity) -> Optional[mat.CompoundDummyNode]:
 
-        if meta_entity.get_reduced_dimension() == 0:
+        if meta_entity.get_idx_set_reduced_dim() == 0:
             return None
 
         component_nodes = []
-        dummy_symbols = meta_entity.get_dummy_symbols()
+        dummy_symbols = meta_entity.get_idx_set_dummy_element()
         for ds in dummy_symbols:
             component_nodes.append(mat.DummyNode(id=self.generate_free_node_id(),
                                                  symbol=ds))
@@ -279,19 +279,19 @@ class NodeBuilder:
             if isinstance(s, str):
                 return s
             elif isinstance(s, mat.MetaSet):
-                return s.symbol
+                return s.get_symbol()
 
-        if meta_entity.get_dimension() == 0:
+        if meta_entity.get_idx_set_dim() == 0:
             return None
 
-        idx_meta_sets = list(meta_entity.idx_meta_sets)
+        idx_meta_sets = list(meta_entity.get_idx_meta_sets())
 
         # Remove controlled sets
         if remove_sets is not None:
             if isinstance(remove_sets, dict):
                 remove_sets = [ms for ms in remove_sets.values()]
             remove_sets = [get_set_sym(s) for s in remove_sets]
-            idx_meta_sets = [ms for ms in idx_meta_sets if ms.symbol not in remove_sets]
+            idx_meta_sets = [ms for ms in idx_meta_sets if ms.get_symbol() not in remove_sets]
 
         return self.build_idx_set_node(idx_meta_sets,
                                        meta_entity.get_idx_set_con_literal(),
@@ -329,13 +329,13 @@ class NodeBuilder:
             # add all custom dummy symbols to the mapping
             for idx_meta_set in idx_meta_sets:
 
-                if idx_meta_set.symbol in custom_dummy_syms:
+                if idx_meta_set.get_symbol() in custom_dummy_syms:
 
                     # retrieve the default dummy symbols of the component set
-                    default_dummy_syms_i = idx_meta_set.dummy_symbols
+                    default_dummy_syms_i = idx_meta_set.get_dummy_element()
 
                     # retrieve the custom dummy symbols of the indexing meta-set
-                    custom_dummy_syms_i = custom_dummy_syms[idx_meta_set.symbol]
+                    custom_dummy_syms_i = custom_dummy_syms[idx_meta_set.get_symbol()]
 
                     # convert the custom dummy symbols to a list
                     if isinstance(custom_dummy_syms_i, int) or isinstance(custom_dummy_syms_i, float) \
@@ -351,10 +351,10 @@ class NodeBuilder:
             # identify non-unique default dummy symbols and generate unique replacement symbols
             for idx_meta_set in idx_meta_sets:
 
-                if idx_meta_set.symbol not in custom_dummy_syms:
+                if idx_meta_set.get_symbol() not in custom_dummy_syms:
 
                     # retrieve the default dummy symbols of the component set
-                    default_dummy_syms_i = idx_meta_set.dummy_symbols
+                    default_dummy_syms_i = idx_meta_set.get_dummy_element()
 
                     for dummy_sym in default_dummy_syms_i:
 
@@ -378,7 +378,7 @@ class NodeBuilder:
         # build component set nodes
         for idx_meta_set in idx_meta_sets:
 
-            dummy_syms = idx_meta_set.dummy_symbols  # retrieve the dummy symbols of the component set
+            dummy_syms = idx_meta_set.get_dummy_element()  # retrieve the dummy symbols of the component set
 
             if len(dummy_sym_mapping) > 0:
                 dummy_syms = [dummy_sym_mapping.get(d, d) for d in dummy_syms]  # replace selected dummy symbols
@@ -392,7 +392,7 @@ class NodeBuilder:
                 dummy_node = mat.CompoundDummyNode(id=self.generate_free_node_id(),
                                                    component_nodes=dummy_element_nodes)
 
-            set_node = ampl_parser.parse_set_expression(idx_meta_set.symbol)
+            set_node = ampl_parser.parse_set_expression(idx_meta_set.get_symbol())
 
             # replace selected dummy nodes belonging to the set node
             if len(dummy_sym_mapping) > 0:

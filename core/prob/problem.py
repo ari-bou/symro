@@ -65,6 +65,9 @@ class BaseProblem:
         clone.model_meta_objs = deepcopy(source.model_meta_objs)
         clone.model_meta_cons = deepcopy(source.model_meta_cons)
 
+    def get_symbol(self) -> str:
+        return self.symbol
+
     def add_meta_entity_to_model(self, meta_entity: mat.MetaEntity):
         if isinstance(meta_entity, mat.MetaSet):
             self.add_meta_set_to_model(meta_entity)
@@ -196,18 +199,18 @@ class Problem(BaseProblem):
 
         for me in source.model_meta_sets_params:
             if isinstance(me, mat.MetaSet):
-                clone.model_meta_sets_params.append(clone.meta_sets[me.symbol])
+                clone.model_meta_sets_params.append(clone.meta_sets[me.get_symbol()])
             elif isinstance(me, mat.MetaParameter):
-                clone.model_meta_sets_params.append(clone.meta_params[me.symbol])
+                clone.model_meta_sets_params.append(clone.meta_params[me.get_symbol()])
 
         for me in source.model_meta_vars:
-            clone.model_meta_vars.append(clone.meta_vars[me.symbol])
+            clone.model_meta_vars.append(clone.meta_vars[me.get_symbol()])
 
         for me in source.model_meta_objs:
-            clone.model_meta_objs.append(clone.meta_objs[me.symbol])
+            clone.model_meta_objs.append(clone.meta_objs[me.get_symbol()])
 
         for me in source.model_meta_cons:
-            clone.model_meta_cons.append(clone.meta_cons[me.symbol])
+            clone.model_meta_cons.append(clone.meta_cons[me.get_symbol()])
 
         for sym, sp_source in source.subproblems.items():
 
@@ -217,25 +220,25 @@ class Problem(BaseProblem):
 
             for me in sp_source.model_meta_sets_params:
                 if isinstance(me, mat.MetaSet):
-                    sp_clone.model_meta_sets_params.append(clone.meta_sets[me.symbol])
+                    sp_clone.model_meta_sets_params.append(clone.meta_sets[me.get_symbol()])
                 elif isinstance(me, mat.MetaParameter):
-                    sp_clone.model_meta_sets_params.append(clone.meta_params[me.symbol])
+                    sp_clone.model_meta_sets_params.append(clone.meta_params[me.get_symbol()])
 
             for me in source.model_meta_vars:
-                if not me.is_sub:
-                    sp_clone.model_meta_vars.append(clone.meta_vars[me.symbol])
+                if not me.is_sub():
+                    sp_clone.model_meta_vars.append(clone.meta_vars[me.get_symbol()])
                 else:
                     sp_clone.model_meta_vars.append(deepcopy(me))
 
             for me in source.model_meta_objs:
-                if not me.is_sub:
-                    sp_clone.model_meta_objs.append(clone.meta_objs[me.symbol])
+                if not me.is_sub():
+                    sp_clone.model_meta_objs.append(clone.meta_objs[me.get_symbol()])
                 else:
                     sp_clone.model_meta_objs.append(deepcopy(me))
 
             for me in source.model_meta_cons:
-                if not me.is_sub:
-                    sp_clone.model_meta_cons.append(clone.meta_cons[me.symbol])
+                if not me.is_sub():
+                    sp_clone.model_meta_cons.append(clone.meta_cons[me.get_symbol()])
                 else:
                     sp_clone.model_meta_cons.append(deepcopy(me))
 
@@ -248,15 +251,15 @@ class Problem(BaseProblem):
 
     def is_meta_entity_in_model(self, meta_entity: mat.MetaEntity) -> bool:
         if isinstance(meta_entity, mat.MetaSet):
-            return meta_entity.symbol in self.model_meta_sets_params
+            return meta_entity.get_symbol() in self.model_meta_sets_params
         elif isinstance(meta_entity, mat.MetaParameter):
-            return meta_entity.symbol in self.model_meta_sets_params
+            return meta_entity.get_symbol() in self.model_meta_sets_params
         elif isinstance(meta_entity, mat.MetaVariable):
-            return meta_entity.symbol in self.model_meta_vars
+            return meta_entity.get_symbol() in self.model_meta_vars
         elif isinstance(meta_entity, mat.MetaObjective):
-            return meta_entity.symbol in self.model_meta_objs
+            return meta_entity.get_symbol() in self.model_meta_objs
         elif isinstance(meta_entity, mat.MetaConstraint):
-            return meta_entity.symbol in self.model_meta_cons
+            return meta_entity.get_symbol() in self.model_meta_cons
         return False
 
     def contains_script_command(self, symbol: str) -> bool:
@@ -303,32 +306,32 @@ class Problem(BaseProblem):
             self.add_meta_constraint(meta_entity, is_in_model)
 
     def add_meta_set(self, meta_set: mat.MetaSet, is_in_model: bool = True):
-        self.symbols.add(meta_set.symbol)
-        self.meta_sets[meta_set.symbol] = meta_set
+        self.symbols.add(meta_set.get_symbol())
+        self.meta_sets[meta_set.get_symbol()] = meta_set
         if is_in_model:
             BaseProblem.add_meta_set_to_model(self, meta_set)
 
     def add_meta_parameter(self, meta_param: mat.MetaParameter, is_in_model: bool = True):
-        self.symbols.add(meta_param.symbol)
-        self.meta_params[meta_param.symbol] = meta_param
+        self.symbols.add(meta_param.get_symbol())
+        self.meta_params[meta_param.get_symbol()] = meta_param
         if is_in_model:
             BaseProblem.add_meta_parameter_to_model(self, meta_param)
 
     def add_meta_variable(self, meta_var: mat.MetaVariable, is_in_model: bool = True):
-        self.symbols.add(meta_var.symbol)
-        self.meta_vars[meta_var.symbol] = meta_var
+        self.symbols.add(meta_var.get_symbol())
+        self.meta_vars[meta_var.get_symbol()] = meta_var
         if is_in_model:
             BaseProblem.add_meta_variable_to_model(self, meta_var)
 
     def add_meta_objective(self, meta_obj: mat.MetaObjective, is_in_model: bool = True):
-        self.symbols.add(meta_obj.symbol)
-        self.meta_objs[meta_obj.symbol] = meta_obj
+        self.symbols.add(meta_obj.get_symbol())
+        self.meta_objs[meta_obj.get_symbol()] = meta_obj
         if is_in_model:
             BaseProblem.add_meta_objective_to_model(self, meta_obj)
 
     def add_meta_constraint(self, meta_con: mat.MetaConstraint, is_in_model: bool = True):
-        self.symbols.add(meta_con.symbol)
-        self.meta_cons[meta_con.symbol] = meta_con
+        self.symbols.add(meta_con.get_symbol())
+        self.meta_cons[meta_con.get_symbol()] = meta_con
         if is_in_model:
             BaseProblem.add_meta_constraint_to_model(self, meta_con)
 

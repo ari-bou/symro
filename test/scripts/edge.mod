@@ -13,6 +13,10 @@ var VAR_3{INDEXED_SET[1]};
 
 minimize OBJ: 0;
 
+CON_1{i in NUM_SET}: VAR_1[i] <= 10;
+
+var VAR_FROM_VAR{i in NUM_SET} = VAR_1[i];
+
 display INDEXED_SET_2;
 display union {i in {1,2}} {i1 in {1,2}, j in INDEXED_SET_2[i]: i = i1};
 

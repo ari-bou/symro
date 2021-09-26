@@ -672,7 +672,7 @@ class GBDProblemBuilder:
     def __verify_complicating_node(self,
                                    node: mat.ArithmeticExpressionNode,
                                    idx_set: mat.IndexingSet,
-                                   dummy_syms: Tuple[Union[int, float, str, tuple, None], ...]) -> int:
+                                   dummy_element: mat.Element) -> int:
 
         # Numeric constant or dummy
         if isinstance(node, mat.NumericNode) or isinstance(node, mat.DummyNode):
@@ -687,7 +687,7 @@ class GBDProblemBuilder:
             if node.symbol not in [mv.get_symbol() for mv in self.gbd_problem.comp_meta_vars.values()]:
                 return self.PURE_X_NODE
 
-            entities = node.collect_declared_entities(self.gbd_problem.state, idx_set, dummy_syms)
+            entities = node.collect_declared_entities(self.gbd_problem.state, idx_set, dummy_element)
             vars = {k: v for k, v in entities.items() if isinstance(v, mat.Variable)}
 
             has_x = False
@@ -711,14 +711,14 @@ class GBDProblemBuilder:
         elif isinstance(node, mat.ArithmeticTransformationNode):
 
             if node.is_reductive():
-                inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_syms)
+                inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_element)
                 inner_idx_set = OrderedSet().union(*inner_idx_sets)
                 idx_set = mat.cartesian_product([idx_set, inner_idx_set])
-                dummy_syms = node.idx_set_node.combined_dummy_element
+                dummy_element = node.idx_set_node.combined_dummy_element
 
             statuses = []
             for operand in node.operands:
-                statuses.append(self.__verify_complicating_node(operand, idx_set, dummy_syms))
+                statuses.append(self.__verify_complicating_node(operand, idx_set, dummy_element))
             status = self.__combine_node_statuses(statuses)
 
             # Node is either non-complicating or pure complicating
@@ -748,13 +748,13 @@ class GBDProblemBuilder:
 
         # Unary Operation
         elif isinstance(node, mat.UnaryArithmeticOperationNode):
-            return self.__verify_complicating_node(node.operand, idx_set, dummy_syms)
+            return self.__verify_complicating_node(node.operand, idx_set, dummy_element)
 
         # Binary Operation
         elif isinstance(node, mat.BinaryArithmeticOperationNode):
 
-            lhs_status = self.__verify_complicating_node(node.lhs_operand, idx_set, dummy_syms)
-            rhs_status = self.__verify_complicating_node(node.rhs_operand, idx_set, dummy_syms)
+            lhs_status = self.__verify_complicating_node(node.lhs_operand, idx_set, dummy_element)
+            rhs_status = self.__verify_complicating_node(node.rhs_operand, idx_set, dummy_element)
             statuses = [lhs_status, rhs_status]
 
             if self.CONST_NODE in statuses:
@@ -780,7 +780,7 @@ class GBDProblemBuilder:
         # Multi Operation
         elif isinstance(node, mat.MultiArithmeticOperationNode):
 
-            statuses = [self.__verify_complicating_node(o, idx_set, dummy_syms) for o in node.operands]
+            statuses = [self.__verify_complicating_node(o, idx_set, dummy_element) for o in node.operands]
 
             if all([s == self.CONST_NODE for s in statuses]):
                 return self.CONST_NODE
@@ -799,7 +799,7 @@ class GBDProblemBuilder:
         elif isinstance(node, mat.ConditionalArithmeticExpressionNode):
             statuses = []
             for op_node in node.operands:
-                statuses.append(self.__verify_complicating_node(op_node, idx_set, dummy_syms))
+                statuses.append(self.__verify_complicating_node(op_node, idx_set, dummy_element))
             return self.__combine_node_statuses(statuses)
 
         else:
@@ -829,7 +829,7 @@ class GBDProblemBuilder:
     def __reformulate_node(self,
                            node: mat.ArithmeticExpressionNode,
                            idx_set: mat.IndexingSet,
-                           dummy_syms: Tuple[Union[int, float, str, tuple, None], ...]
+                           dummy_element: mat.Element
                            ) -> Tuple[Union[mat.ArithmeticExpressionNode, mat.DummyNode], int]:
 
         # Numeric constant
@@ -842,7 +842,7 @@ class GBDProblemBuilder:
             if node.get_type() == const.PARAM_TYPE:
                 return node, self.CONST_NODE
 
-            status = self.__verify_complicating_node(node, idx_set, dummy_syms)
+            status = self.__verify_complicating_node(node, idx_set, dummy_element)
 
             if status == self.PURE_X_NODE:
                 return node, status
@@ -855,20 +855,20 @@ class GBDProblemBuilder:
 
                 # indexed variable node
                 else:
-                    return self.__reformulate_complicating_entity_node(node, idx_set, dummy_syms), self.PURE_Y_NODE
+                    return self.__reformulate_complicating_entity_node(node, idx_set, dummy_element), self.PURE_Y_NODE
 
         # Function
         elif isinstance(node, mat.ArithmeticTransformationNode):
 
             if node.is_reductive():
-                inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_syms)
+                inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_element)
                 inner_idx_set = OrderedSet().union(*inner_idx_sets)
                 idx_set = mat.cartesian_product([idx_set, inner_idx_set])
-                dummy_syms = node.idx_set_node.combined_dummy_element
+                dummy_element = node.idx_set_node.combined_dummy_element
 
             statuses = []
             for i, operand in enumerate(node.operands):
-                ref_operand, status = self.__reformulate_node(operand, idx_set, dummy_syms)
+                ref_operand, status = self.__reformulate_node(operand, idx_set, dummy_element)
                 statuses.append(status)
                 node.operands[i] = ref_operand
 
@@ -876,13 +876,13 @@ class GBDProblemBuilder:
 
         # Unary Operation
         elif isinstance(node, mat.UnaryArithmeticOperationNode):
-            return self.__reformulate_node(node.operand, idx_set, dummy_syms)
+            return self.__reformulate_node(node.operand, idx_set, dummy_element)
 
         # Binary Operation
         elif isinstance(node, mat.BinaryArithmeticOperationNode):
 
-            lhs_operand, lhs_status = self.__reformulate_node(node.lhs_operand, idx_set, dummy_syms)
-            rhs_operand, rhs_status = self.__reformulate_node(node.rhs_operand, idx_set, dummy_syms)
+            lhs_operand, lhs_status = self.__reformulate_node(node.lhs_operand, idx_set, dummy_element)
+            rhs_operand, rhs_status = self.__reformulate_node(node.rhs_operand, idx_set, dummy_element)
 
             node.lhs_operand = lhs_operand
             node.rhs_operand = rhs_operand
@@ -928,7 +928,7 @@ class GBDProblemBuilder:
         # Multi Operation
         elif isinstance(node, mat.MultiArithmeticOperationNode):
 
-            ref_results = [self.__reformulate_node(o, idx_set, dummy_syms) for o in node.operands]
+            ref_results = [self.__reformulate_node(o, idx_set, dummy_element) for o in node.operands]
             statuses = [r[1] for r in ref_results]
 
             if all([s == self.CONST_NODE for s in statuses]):
@@ -965,7 +965,7 @@ class GBDProblemBuilder:
 
             for i, op_node in enumerate(node.operands):
 
-                ref_op_node, status = self.__reformulate_node(op_node, idx_set, dummy_syms)
+                ref_op_node, status = self.__reformulate_node(op_node, idx_set, dummy_element)
 
                 if status == self.PURE_X_NODE:
                     ref_op_node = mat.NumericNode(id=self.generate_free_node_id(),

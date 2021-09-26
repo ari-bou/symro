@@ -8,6 +8,39 @@ from symro.core.mat.util import Element
 from symro.core.mat.state import State
 
 
+# Node Utility Functions
+# ----------------------------------------------------------------------------------------------------------------------
+
+def get_param_nodes(expression_node: ExpressionNode) -> List[DeclaredEntityNode]:
+    param_nodes = []
+
+    def descend(node: ExpressionNode):
+        if isinstance(node, DeclaredEntityNode):
+            if node.is_constant():
+                param_nodes.append(node)
+        for child in node.get_children():
+            descend(child)
+
+    descend(expression_node)
+    return param_nodes
+
+
+def get_var_nodes(expression_node: ExpressionNode) -> List[DeclaredEntityNode]:
+    var_nodes = []
+
+    def descend(node: ExpressionNode):
+        if isinstance(node, DeclaredEntityNode):
+            if not node.is_constant():
+                var_nodes.append(node)
+        for child in node.get_children():
+            descend(child)
+
+    descend(expression_node)
+    return var_nodes
+
+
+# Expression
+# ----------------------------------------------------------------------------------------------------------------------
 class Expression:
 
     def __init__(self,
@@ -84,30 +117,10 @@ class Expression:
         return nodes
 
     def get_param_nodes(self) -> List[DeclaredEntityNode]:
-        param_nodes = []
-
-        def descend(node: ExpressionNode):
-            if isinstance(node, DeclaredEntityNode):
-                if node.is_constant():
-                    param_nodes.append(node)
-            for child in node.get_children():
-                descend(child)
-
-        descend(self.expression_node)
-        return param_nodes
+        return get_param_nodes(self.expression_node)
 
     def get_var_nodes(self) -> List[DeclaredEntityNode]:
-        var_nodes = []
-
-        def descend(node: ExpressionNode):
-            if isinstance(node, DeclaredEntityNode):
-                if not node.is_constant():
-                    var_nodes.append(node)
-            for child in node.get_children():
-                descend(child)
-
-        descend(self.expression_node)
-        return var_nodes
+        return get_var_nodes(self.expression_node)
 
     def get_declared_entity_syms(self) -> List[str]:
         return [n.symbol for n in self.get_declared_entity_nodes()]

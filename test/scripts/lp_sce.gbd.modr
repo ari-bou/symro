@@ -21,9 +21,9 @@ var y{S} := 500, >= 0, <= 1000;
 # OBJECTIVES
 # --------------------------------------------------------------------------------------------------
 # beginregion
-minimize OBJ: (sum {s in S} (x1[s] + x2[s] + -1 * 10 * p[s] * y[s]));
-minimize OBJ_SUB{s in S}: (x1[s] + x2[s] + -1 * 10 * p[s] * y[s]);
-minimize OBJ_SUB_PrimalSubproblem{s in S}: (x1[s] + x2[s] + -1 * 10 * p[s] * y[s]);
+minimize OBJ: (sum {s in S} (x1[s] + x2[s] + -10 * p[s] * y[s]));
+minimize OBJ_SUB{s in S}: (x1[s] + x2[s] + -10 * p[s] * y[s]);
+minimize OBJ_SUB_PrimalSubproblem{s in S}: (x1[s] + x2[s] + -10 * p[s] * y[s]);
 # endregion 
 
 
@@ -31,7 +31,7 @@ minimize OBJ_SUB_PrimalSubproblem{s in S}: (x1[s] + x2[s] + -1 * 10 * p[s] * y[s
 # --------------------------------------------------------------------------------------------------
 # beginregion
 CON1{s in S}: p[s] * y[s] + -1 * x1[s] <= 0;
-CON2{s in S}: p[s] * x2[s] + x1[s] + -1 * 15 = 0;
+CON2{s in S}: p[s] * x2[s] + x1[s] + -15 = 0;
 CON3{s in S}: 0.1 + -1 * x2[s] <= 0;
 NON_ANT{s in S}: y[s] + -1 * y[1] = 0;
 # endregion 

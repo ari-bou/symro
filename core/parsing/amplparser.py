@@ -720,7 +720,7 @@ class AMPLParser:
                 # convert subtraction operation to addition operation
                 if operator == '-':
                     operator = '+'  # change the operator
-                    rhs_operand = self.__negate_subtrahend(rhs_operand)
+                    rhs_operand = self.append_negative_unity_coefficient(rhs_operand, self._generate_free_node_id)
 
                 # convert division operation to multiplication operation
                 elif operator == '/':
@@ -729,9 +729,12 @@ class AMPLParser:
 
                 # build a new arithmetic operation node if it does not exist yet
                 if arith_operation is None:
-                    arith_operation = mat.MultiArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                                       operator=operator,
-                                                                       operands=[root_operation, rhs_operand])
+                    if operator == '+':
+                        arith_operation = mat.AdditionNode(id=self._generate_free_node_id(),
+                                                           operands=[root_operation, rhs_operand])
+                    else:
+                        arith_operation = mat.MultiplicationNode(id=self._generate_free_node_id(),
+                                                                 operands=[root_operation, rhs_operand])
                     root_operation = arith_operation
 
                 # otherwise, add the RHS operand to the existing arithmetic operation node
@@ -823,9 +826,24 @@ class AMPLParser:
 
         # special case 2: node is a multi-operand multiplication node
         elif isinstance(node, mat.MultiArithmeticOperationNode) and node.operator == '*':
-            coeff_node = mat.NumericNode(id=free_node_id_generator(), value=-1)
-            node.operands.insert(0, coeff_node)
-            return node
+
+            has_numeric_factor_node = False
+
+            # look for existing numeric factor nodes in the multiplication node
+            for factor in node.operands:
+                if isinstance(factor, mat.NumericNode):
+                    factor.value *= -1  # negate the coefficient
+                    has_numeric_factor_node = True
+                    break
+
+            if has_numeric_factor_node:
+                return node
+
+            # add -1 coefficient to the node
+            else:
+                coeff_node = mat.NumericNode(id=free_node_id_generator(), value=-1)
+                node.operands.insert(0, coeff_node)
+                return node
 
         # generic case
         else:

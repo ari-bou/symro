@@ -1,4 +1,5 @@
 from copy import deepcopy
+from ordered_set import OrderedSet
 from queue import Queue
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
@@ -169,66 +170,99 @@ class Formulator:
 
         ref_meta_cons = []
 
+        lb_operand, mid_operand, ub_operand = self.__extract_operands_from_double_inequality(meta_con)
+
         for i in range(2):
 
-            mc_clone = deepcopy(meta_con)
-            expr_clone = deepcopy(meta_con.get_expression())
-
-            new_sym = self._problem.generate_unique_symbol("{0}_I{1}".format(meta_con.get_symbol(), i + 1))
-            mc_clone.set_symbol(new_sym)
-
-            ineq_op_node = expr_clone.expression_node
-
-            if not isinstance(ineq_op_node, mat.RelationalOperationNode):
-                raise ValueError("Formulator encountered unexpected expression node"
-                                 + " while standardizing double inequality constraint '{0}'".format(meta_con))
-
-            child_ineq_op_node = ineq_op_node.rhs_operand
-            if not isinstance(child_ineq_op_node, mat.RelationalOperationNode):
-                raise ValueError("Formulator encountered unexpected expression node"
-                                 + " while standardizing double inequality constraint '{0}'".format(meta_con))
-
             if i == 0:
-
-                body_node = child_ineq_op_node.lhs_operand
-                if ineq_op_node.operator == "<=":
-                    lb_node = ineq_op_node.lhs_operand
-                else:
-                    lb_node = child_ineq_op_node.rhs_operand
-
-                lhs_operand = lb_node
-                rhs_operand = body_node
+                lhs_operand = lb_operand
+                rhs_operand = mid_operand
 
             else:
-
-                body_node = child_ineq_op_node.lhs_operand
-                if ineq_op_node.operator == "<=":
-                    ub_node = child_ineq_op_node.rhs_operand
-                else:
-                    ub_node = ineq_op_node.lhs_operand
-
-                lhs_operand = body_node
-                rhs_operand = ub_node
+                lhs_operand = deepcopy(mid_operand)
+                rhs_operand = ub_operand
 
             rhs_operand = self._node_builder.append_negative_unity_coefficient(rhs_operand)
 
             sub_node = self._node_builder.build_addition_node([lhs_operand, rhs_operand])
 
-            ref_ineq_op_node = mat.RelationalOperationNode(id=ineq_op_node.id,
+            ref_ineq_op_node = mat.RelationalOperationNode(id=self.generate_free_node_id(),
                                                            operator="<=",
                                                            lhs_operand=sub_node,
                                                            rhs_operand=mat.NumericNode(id=self.generate_free_node_id(),
                                                                                        value=0))
 
+            mc_clone = deepcopy(meta_con)
+
+            new_sym = self._problem.generate_unique_symbol("{0}_I{1}".format(meta_con.get_symbol(), i + 1))
+            mc_clone.set_symbol(new_sym)
+
+            expr_clone = mc_clone.get_expression()
             expr_clone.expression_node = ref_ineq_op_node
             expr_clone.link_nodes()
 
-            mc_clone.set_expression(expr_clone)
             mc_clone.elicit_constraint_type()
 
             ref_meta_cons.append(mc_clone)
 
         return ref_meta_cons
+
+    @staticmethod
+    def __extract_operands_from_double_inequality(meta_con: mat.MetaConstraint):
+
+        ineq_op_node = meta_con.get_expression().expression_node
+
+        if not isinstance(ineq_op_node, mat.RelationalOperationNode):
+            raise ValueError("Formulator encountered unexpected expression node"
+                             + " while standardizing double inequality constraint '{0}'".format(meta_con))
+
+        # (L --- M) --- R
+        if isinstance(ineq_op_node.lhs_operand, mat.RelationalOperationNode):
+
+            child_ineq_op_node = ineq_op_node.lhs_operand
+
+            # (L <= M) <= R
+            if ineq_op_node.operator == "<=" and child_ineq_op_node.operator == "<=":
+                lb_operand = child_ineq_op_node.lhs_operand  # L
+                mid_operand = child_ineq_op_node.rhs_operand  # M
+                ub_operand = ineq_op_node.rhs_operand  # R
+
+            # (L >= M) >= R
+            elif ineq_op_node.operator == ">=" and child_ineq_op_node.operator == ">=":
+                lb_operand = ineq_op_node.rhs_operand  # R
+                mid_operand = child_ineq_op_node.rhs_operand  # M
+                ub_operand = child_ineq_op_node.lhs_operand  # L
+
+            else:
+                raise ValueError("Formulator encountered unexpected expression structure"
+                                 + " while standardizing double inequality constraint '{0}'".format(meta_con))
+
+        # L --- (M --- R)
+        elif isinstance(ineq_op_node.rhs_operand, mat.RelationalOperationNode):
+
+            child_ineq_op_node = ineq_op_node.rhs_operand
+
+            # L <= (M <= R)
+            if ineq_op_node.operator == "<=" and child_ineq_op_node.operator == "<=":
+                lb_operand = ineq_op_node.lhs_operand  # L
+                mid_operand = child_ineq_op_node.lhs_operand  # M
+                ub_operand = child_ineq_op_node.rhs_operand  # R
+
+            # L >= (M >= R)
+            elif ineq_op_node.operator == ">=" and child_ineq_op_node.operator == ">=":
+                lb_operand = child_ineq_op_node.rhs_operand  # R
+                mid_operand = child_ineq_op_node.lhs_operand  # M
+                ub_operand = ineq_op_node.lhs_operand  # L
+
+            else:
+                raise ValueError("Formulator encountered unexpected expression structure"
+                                 + " while standardizing double inequality constraint '{0}'".format(meta_con))
+
+        else:
+            raise ValueError("Formulator encountered unexpected expression node"
+                             + " while standardizing double inequality constraint '{0}'".format(meta_con))
+
+        return lb_operand, mid_operand, ub_operand
 
     # Constraint Reformulation
     # ------------------------------------------------------------------------------------------------------------------
@@ -252,8 +286,39 @@ class Formulator:
         rel_op_node.lhs_operand = sub_node
         rel_op_node.rhs_operand = mat.NumericNode(id=self.generate_free_node_id(), value=0)
 
-    def __convert_equality_to_inequality_constraint(self, meta_con: mat.MetaConstraint):
-        pass
+    def convert_equality_to_inequality_constraint(self, meta_con: mat.MetaConstraint):
+
+        ref_meta_cons = []
+        old_sym = meta_con.get_symbol()
+
+        for i in range(2):
+
+            if i == 0:
+                ref_meta_con = meta_con
+            else:
+                ref_meta_con = deepcopy(meta_con)
+
+            new_sym = self._problem.generate_unique_symbol("{0}_E{1}".format(old_sym, i + 1))
+            ref_meta_con.set_symbol(new_sym)
+
+            eq_op_node = ref_meta_con.get_expression().expression_node
+            if not isinstance(eq_op_node, mat.RelationalOperationNode):
+                raise ValueError("Formulator encountered unexpected expression node"
+                                 + " while converting equality constraint '{0}'".format(meta_con)
+                                 + " into inequality constraints")
+
+            eq_op_node.operator = "<="
+
+            if i == 1:
+                eq_op_node.lhs_operand = self._node_builder.append_negative_unity_coefficient(eq_op_node.lhs_operand)
+                eq_op_node.rhs_operand = self._node_builder.append_negative_unity_coefficient(eq_op_node.rhs_operand)
+
+            ref_meta_cons.append(ref_meta_con)
+
+        self._problem.replace_model_meta_constraint(old_symbol=old_sym,
+                                                    new_meta_cons=ref_meta_cons)
+
+        return ref_meta_cons
 
     # Slack Variables
     # ------------------------------------------------------------------------------------------------------------------
@@ -462,7 +527,7 @@ class Formulator:
             # modify meta-objective expressions
             for mo in self._problem.model_meta_objs:
                 mo.get_expression().expression_node = self.substitute(root_node=mo.get_expression().expression_node,
-                                                                 sub_map=sub_map)
+                                                                      sub_map=sub_map)
 
             # modify meta-constraint expressions
             for mc in self._problem.model_meta_cons:
@@ -474,19 +539,7 @@ class Formulator:
 
     def reformulate_subtraction_and_unary_negation(self, root_node: mat.ExpressionNode):
 
-        def reformulate(n: mat.ExpressionNode):
-
-            if isinstance(n, mat.BinaryArithmeticOperationNode) and n.operator == '-':
-                rhs_operand = self._node_builder.append_negative_unity_coefficient(n.rhs_operand)
-                n = mat.AdditionNode(id=self.generate_free_node_id(),
-                                     operands=[n.lhs_operand, rhs_operand])
-
-            elif isinstance(n, mat.UnaryArithmeticOperationNode) and n.operator == '-':
-                n = self._node_builder.append_negative_unity_coefficient(n.operand)
-
-            return n
-
-        root_node = reformulate(root_node)
+        root_node = self.__reformulate_subtraction_or_unary_negation_node(root_node)
 
         queue = Queue()
         queue.put(root_node)
@@ -499,7 +552,7 @@ class Formulator:
             for child in node.get_children():
 
                 if isinstance(child, mat.RelationalOperationNode) or isinstance(child, mat.ArithmeticExpressionNode):
-                    child = reformulate(child)
+                    child = self.__reformulate_subtraction_or_unary_negation_node(child)
                     queue.put(child)
 
                 ref_children.append(child)
@@ -508,10 +561,136 @@ class Formulator:
 
         return root_node
 
+    def __reformulate_subtraction_or_unary_negation_node(self, node: mat.ExpressionNode):
+
+        if isinstance(node, mat.BinaryArithmeticOperationNode) and node.operator == '-':
+            rhs_operand = self._node_builder.append_negative_unity_coefficient(node.rhs_operand)
+            node = mat.AdditionNode(id=self.generate_free_node_id(),
+                                    operands=[node.lhs_operand, rhs_operand])
+
+        elif isinstance(node, mat.UnaryArithmeticOperationNode) and node.operator == '-':
+            node = self._node_builder.append_negative_unity_coefficient(node.operand)
+
+        return node
+
+    # Exponentiation
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def __factorize_exponentiation(self,
+                                   exp_op_node: mat.ExponentiationNode,
+                                   exponents: Iterable[int],
+                                   idx_set: mat.IndexingSet = None,
+                                   dummy_element: mat.Element = None):
+
+        factors = []
+
+        if isinstance(exp_op_node.rhs_operand, mat.NumericNode):
+            is_exp_const = True
+            exp_val = exp_op_node.rhs_operand.value
+
+        else:
+            is_exp_const, exp_vals = self.__evaluate_exponent_node(
+                exponent_node=exp_op_node.rhs_operand,
+                idx_set=idx_set,
+                dummy_element=dummy_element)
+
+            if is_exp_const:
+                exp_val = exp_vals[0]
+            else:
+                exp_val = None
+
+        if is_exp_const:
+
+            if exp_val == 0:
+                factors.append(mat.NumericNode(id=self.generate_free_node_id(), value=1))
+
+            elif exp_val == 1:
+                factors.append(exp_op_node.lhs_operand)
+
+            else:
+
+                # TODO: account for negative exponents by moving the base node to the denominator of a division node
+
+                if exp_val in exponents:
+
+                    exp_op_node.lhs_operand.is_prioritized = True
+                    factors = [exp_op_node.lhs_operand]
+
+                    for i in range(2, exp_val + 1):
+                        factors.append(deepcopy(exp_op_node.lhs_operand))
+
+                else:
+                    factors.append(exp_op_node)
+
+        else:
+            factors.append(exp_op_node)
+
+        return factors
+
+    def __distribute_exponent(self,
+                              base_node: mat.ArithmeticExpressionNode,
+                              exponent_node: mat.ArithmeticExpressionNode):
+
+        if isinstance(base_node, mat.MultiplicationNode):
+
+            factors = []
+            for factor in base_node.operands:
+                factor.is_prioritized = True
+                factors.append(mat.ExponentiationNode(id=self.generate_free_node_id(),
+                                                      lhs_operand=factor,
+                                                      rhs_operand=deepcopy(exponent_node),
+                                                      is_prioritized=True))
+
+        else:
+            exp_op_node = mat.ExponentiationNode(id=self.generate_free_node_id(),
+                                                 lhs_operand=base_node,
+                                                 rhs_operand=exponent_node,
+                                                 is_prioritized=True)
+            factors = [exp_op_node]
+
+        return factors
+
+    def __evaluate_exponent_node(self,
+                                 exponent_node: mat.ArithmeticExpressionNode,
+                                 idx_set: mat.IndexingSet,
+                                 dummy_element: mat.Element):
+
+        exponent_var_nodes = mat.get_var_nodes(exponent_node)
+
+        is_exponent_const = True
+        exponent_values = None
+
+        if len(exponent_var_nodes) == 0:
+
+            exponent_values = exponent_node.evaluate(state=self._problem.state,
+                                                     idx_set=idx_set,
+                                                     dummy_element=dummy_element)
+
+            for i in range(1, len(exponent_values)):
+                if exponent_values[0] != exponent_values[i]:
+                    is_exponent_const = False
+                    break
+
+        return is_exponent_const, exponent_values
+
     # Expansion
     # ------------------------------------------------------------------------------------------------------------------
 
-    def expand_multiplication(self, node: mat.ArithmeticExpressionNode) -> List[mat.ArithmeticExpressionNode]:
+    def expand_multiplication(self,
+                              node: mat.ArithmeticExpressionNode,
+                              idx_set: mat.IndexingSet,
+                              dummy_element: mat.Element) -> List[mat.ArithmeticExpressionNode]:
+        terms = self.__expand_multiplication(node=node,
+                                             idx_set=idx_set,
+                                             dummy_element=dummy_element)
+        for term in terms:
+            term.is_prioritized = True
+        return terms
+
+    def __expand_multiplication(self,
+                                node: mat.ArithmeticExpressionNode,
+                                idx_set: mat.IndexingSet,
+                                dummy_element: mat.Element) -> List[mat.ArithmeticExpressionNode]:
 
         # arithmetic operation
         if isinstance(node, mat.ArithmeticExpressionNode):
@@ -526,7 +705,12 @@ class Formulator:
                 # reductive summation
                 if node.is_reductive() and node.symbol == "sum":
 
-                    terms = self.expand_multiplication(node.operands[0])
+                    inner_idx_sets = node.idx_set_node.evaluate(self._problem.state, idx_set, dummy_element)
+                    inner_idx_set = OrderedSet().union(*inner_idx_sets)
+                    idx_set = mat.cartesian_product([idx_set, inner_idx_set])
+                    dummy_element = node.idx_set_node.combined_dummy_element
+
+                    terms = self.__expand_multiplication(node.operands[0], idx_set, dummy_element)
 
                     # single term
                     if len(terms) == 1:  # return the summation node
@@ -565,7 +749,7 @@ class Formulator:
                 else:
 
                     for i, operand in enumerate(node.operands):
-                        terms = self.expand_multiplication(operand)
+                        terms = self.__expand_multiplication(operand, idx_set, dummy_element)
                         node.operands[i] = self._node_builder.build_addition_node(terms)
 
                     return [node]
@@ -574,13 +758,13 @@ class Formulator:
             elif isinstance(node, mat.UnaryArithmeticOperationNode):
                 if node.operator == '-':
                     node = self.reformulate_subtraction_and_unary_negation(node)
-                return self.expand_multiplication(node)
+                return self.__expand_multiplication(node, idx_set, dummy_element)
 
             # binary operation
             elif isinstance(node, mat.BinaryArithmeticOperationNode):
 
-                lhs_terms = self.expand_multiplication(node.lhs_operand)
-                rhs_terms = self.expand_multiplication(node.rhs_operand)
+                lhs_terms = self.__expand_multiplication(node.lhs_operand, idx_set, dummy_element)
+                rhs_terms = self.__expand_multiplication(node.rhs_operand, idx_set, dummy_element)
 
                 # addition
                 if node.operator == '+':
@@ -619,11 +803,35 @@ class Formulator:
 
                 # exponentiation
                 else:
-                    node.lhs_operand = self._node_builder.build_addition_node(lhs_terms)
-                    node.rhs_operand = self._node_builder.build_addition_node(rhs_terms)
-                    node.lhs_operand.is_prioritized = True
-                    node.rhs_operand.is_prioritized = True
-                    return [node]
+
+                    exponent_node = self._node_builder.build_addition_node(rhs_terms)
+                    if len(rhs_terms) > 1:
+                        exponent_node.is_prioritized = True
+
+                    if len(lhs_terms) == 1:
+                        # distribute exponent to each LHS factor
+                        exp_op_factor_nodes = self.__distribute_exponent(lhs_terms[0], exponent_node)
+                    else:
+                        exp_op_factor_nodes = [node]
+
+                    expanded_factors = []
+
+                    for i, factor in enumerate(exp_op_factor_nodes):
+                        expanded_factors.extend(self.__factorize_exponentiation(
+                            exp_op_node=factor,
+                            exponents=(2, 3),
+                            idx_set=idx_set,
+                            dummy_element=dummy_element))
+
+                    term_lists = []
+
+                    for expanded_factor in expanded_factors:
+                        if isinstance(expanded_factor, mat.AdditionNode):
+                            term_lists.append(self.__expand_multiplication(expanded_factor, idx_set, dummy_element))
+                        else:
+                            term_lists.append([expanded_factor])
+
+                    return self.expand_factors_n(term_lists)
 
             # multi-operand operation
             elif isinstance(node, mat.MultiArithmeticOperationNode):
@@ -632,18 +840,18 @@ class Formulator:
                 if node.operator == '+':
                     terms = []
                     for operand in node.operands:
-                        terms.extend(self.expand_multiplication(operand))
+                        terms.extend(self.__expand_multiplication(operand, idx_set, dummy_element))
                     return terms
 
                 # multiplication
                 elif node.operator == '*':
-                    term_lists = [self.expand_multiplication(o) for o in node.operands]
+                    term_lists = [self.__expand_multiplication(o, idx_set, dummy_element) for o in node.operands]
                     return self.expand_factors_n(term_lists)
 
             # conditional operation
             elif isinstance(node, mat.ConditionalArithmeticExpressionNode):
                 for i, operand in enumerate(node.operands):
-                    terms = self.expand_multiplication(operand)
+                    terms = self.__expand_multiplication(operand, idx_set, dummy_element)
                     node.operands[i] = self._node_builder.build_addition_node(terms)
                 return [node]
 
@@ -695,7 +903,14 @@ class Formulator:
     # Summation Combination
     # ------------------------------------------------------------------------------------------------------------------
 
-    def combine_summation_factor_nodes(self, factors: Iterable[mat.ArithmeticExpressionNode]):
+    def combine_summation_factor_nodes(self,
+                                       factors: Iterable[mat.ArithmeticExpressionNode],
+                                       outer_unb_syms: Iterable[str]):
+
+        if outer_unb_syms is None:
+            outer_unb_syms = set()
+        elif isinstance(outer_unb_syms, set):
+            outer_unb_syms = set(outer_unb_syms)
 
         cmpt_set_nodes = []  # component set nodes of the combined indexing set node
         conj_operands = []  # conjunctive operands of the constraint node of the combined indexing set node
@@ -706,8 +921,9 @@ class Formulator:
         for factor in factors:
 
             unb_syms = self._node_builder.retrieve_unbound_symbols(factor)
-            clashing_unb_syms = def_unb_syms.intersection(unb_syms)
-            def_unb_syms = def_unb_syms.union(unb_syms)
+            unb_syms = unb_syms - outer_unb_syms  # remove unbound symbols defined in the outer scope
+            clashing_unb_syms = def_unb_syms & unb_syms  # retrieve previously-defined unbound symbols
+            def_unb_syms = def_unb_syms | unb_syms  # update set of defined unbound symbols
 
             if len(clashing_unb_syms) > 0:  # one or more unbound symbol conflicts
 
@@ -775,6 +991,9 @@ class Formulator:
 
     # Utility
     # ------------------------------------------------------------------------------------------------------------------
+
+    def get_node_builder(self) -> NodeBuilder:
+        return self._node_builder
 
     def generate_free_node_id(self):
         if self._problem is not None:

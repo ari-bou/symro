@@ -95,6 +95,41 @@ class BaseProblem:
     def add_meta_constraint_to_model(self, meta_con: mat.MetaConstraint):
         self.model_meta_cons.append(meta_con)
 
+    def replace_model_meta_constraint(self,
+                                      old_symbol: str,
+                                      new_meta_cons: List[mat.MetaConstraint]):
+        self._replace_model_meta_entity(old_symbol=old_symbol,
+                                        new_meta_entities=new_meta_cons,
+                                        model_meta_entities=self.model_meta_cons)
+
+    def _replace_model_meta_entity(self,
+                                   old_symbol: str,
+                                   new_meta_entities: List[mat.MetaEntity],
+                                   model_meta_entities: List[mat.MetaEntity]):
+
+        if len(new_meta_entities) == 1 and old_symbol == new_meta_entities[0].get_symbol():
+            return
+
+        i = 0
+        while i < len(model_meta_entities):
+
+            old_me = self.model_meta_cons[i]
+
+            if old_me.get_symbol() == old_symbol:
+
+                model_meta_entities.pop(i)
+
+                if not old_me.is_sub():
+                    replacements = new_meta_entities
+                else:
+                    replacements = [new_mc.build_sub_entity(old_me.idx_set_node) for new_mc in new_meta_entities]
+
+                for rep_me in replacements:
+                    model_meta_entities.insert(i, rep_me)
+                    i += 1
+
+            i += 1
+
 
 class Problem(BaseProblem):
 
@@ -340,6 +375,29 @@ class Problem(BaseProblem):
             self.script_commands[script_command.symbol].append(script_command)
         else:
             self.script_commands[script_command.symbol] = [script_command]
+
+    # Replacement
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def replace_meta_constraint(self,
+                                old_symbol: str,
+                                new_meta_cons: List[mat.MetaConstraint]):
+
+        if len(new_meta_cons) == 1 and old_symbol == new_meta_cons[0].get_symbol():
+            return
+
+        self.symbols.remove(old_symbol)
+        self.meta_cons.pop(old_symbol)
+
+        for new_mc in new_meta_cons:
+            self.add_meta_constraint(new_mc, is_in_model=False)
+
+        self.replace_model_meta_constraint(old_symbol=old_symbol,
+                                           new_meta_cons=new_meta_cons)
+
+        for sp in self.subproblems.values():
+            sp.replace_model_meta_constraint(old_symbol=old_symbol,
+                                             new_meta_cons=new_meta_cons)
 
     # Identifier Generation
     # ------------------------------------------------------------------------------------------------------------------

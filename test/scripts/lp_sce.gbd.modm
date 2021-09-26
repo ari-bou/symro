@@ -14,7 +14,7 @@ param lambda_CON1{s in S, ct in CUTS} default 0;
 # --------------------------------------------------------------------------------------------------
 # beginregion
 var eta >= -100000;
-var GBD_F{s in S, ct in CUTS} = ((-1 * 10 * p[s] * y[s]) - (-1 * 10 * p[s] * y_stored[s,ct]));
+var GBD_F{s in S, ct in CUTS} = ((-10 * p[s] * y[s]) - (-10 * p[s] * y_stored[s,ct]));
 var GBD_G_0{s in S, ct in CUTS} = ((p[s] * y[s]) - (p[s] * y_stored[s,ct]));
 # endregion 
 

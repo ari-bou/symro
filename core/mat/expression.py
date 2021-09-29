@@ -1,9 +1,11 @@
 from ordered_set import OrderedSet
+from queue import Queue
 from typing import List, Optional
 
 from symro.core.mat.exprn import ExpressionNode
 from symro.core.mat.setn import CompoundSetNode
-from symro.core.mat.aexprn import DeclaredEntityNode
+from symro.core.mat.aexprn import DeclaredEntityNode, MultiplicationNode, DivisionNode, ExponentiationNode, \
+    ArithmeticTransformationNode
 from symro.core.mat.util import Element
 from symro.core.mat.state import State
 
@@ -11,31 +13,98 @@ from symro.core.mat.state import State
 # Node Utility Functions
 # ----------------------------------------------------------------------------------------------------------------------
 
-def get_param_nodes(expression_node: ExpressionNode) -> List[DeclaredEntityNode]:
+def is_constant(root_node: ExpressionNode) -> bool:
+
+    queue = Queue()
+    queue.put(root_node)
+
+    while not queue.empty():
+
+        node: ExpressionNode = queue.get()
+
+        if isinstance(node, DeclaredEntityNode) and not node.is_constant():
+            return False
+
+    return True
+
+
+def is_linear(root_node: ExpressionNode) -> bool:
+
+    queue = Queue()
+    queue.put(root_node)
+
+    while not queue.empty():
+
+        node: ExpressionNode = queue.get()
+
+        if isinstance(node, MultiplicationNode):  # multiplication
+            is_const = [is_constant(child) for child in node.get_children()]
+            if is_const.count(False) > 1:
+                return False
+
+        elif isinstance(node, DivisionNode):  # division
+            if not is_constant(node.rhs_operand):
+                return False
+
+        elif isinstance(node, ExponentiationNode):  # exponentiation
+            if not is_constant(node.lhs_operand):
+                return False
+            elif not is_constant(node.rhs_operand):
+                return False
+
+        elif isinstance(node, ArithmeticTransformationNode):   # transformation
+            if node.symbol != "sum":
+                is_const = [is_constant(child) for child in node.get_children()]
+                if is_const.count(False) > 0:
+                    return False
+
+        for child in node.get_children():
+            queue.put(child)
+
+    return True
+
+
+def get_param_nodes(root_node: ExpressionNode) -> List[DeclaredEntityNode]:
+
     param_nodes = []
 
-    def descend(node: ExpressionNode):
+    queue = Queue()
+    queue.put(root_node)
+
+    while not queue.empty():
+
+        node: ExpressionNode = queue.get()
+
         if isinstance(node, DeclaredEntityNode):
             if node.is_constant():
                 param_nodes.append(node)
-        for child in node.get_children():
-            descend(child)
 
-    descend(expression_node)
+        else:
+            for child in node.get_children():
+                queue.put(child)
+
     return param_nodes
 
 
-def get_var_nodes(expression_node: ExpressionNode) -> List[DeclaredEntityNode]:
+def get_var_nodes(root_node: ExpressionNode) -> List[DeclaredEntityNode]:
+
     var_nodes = []
 
-    def descend(node: ExpressionNode):
+    queue = Queue()
+    queue.put(root_node)
+
+    while not queue.empty():
+
+        node: ExpressionNode = queue.get()
+
         if isinstance(node, DeclaredEntityNode):
             if not node.is_constant():
                 var_nodes.append(node)
-        for child in node.get_children():
-            descend(child)
 
-    descend(expression_node)
+        else:
+            for child in node.get_children():
+                queue.put(child)
+
     return var_nodes
 
 
@@ -44,11 +113,11 @@ def get_var_nodes(expression_node: ExpressionNode) -> List[DeclaredEntityNode]:
 class Expression:
 
     def __init__(self,
-                 expression_node: ExpressionNode,
+                 root_node: ExpressionNode,
                  indexing_set_node: CompoundSetNode = None,
                  id: str = ""):
         self.id: str = id
-        self.expression_node: ExpressionNode = expression_node
+        self.root_node: ExpressionNode = root_node
         self.indexing_set_node: Optional[CompoundSetNode] = indexing_set_node
         self.link_nodes()
 
@@ -75,11 +144,11 @@ class Expression:
             dummy_symbols = self.indexing_set_node.combined_dummy_element
 
         if idx_set is None:
-            return [self.expression_node.to_lambda(state)]
+            return [self.root_node.to_lambda(state)]
         else:
             fcns = []
             for idx_set_member in idx_set:
-                fcn = self.expression_node.to_lambda(state, idx_set_member, dummy_symbols)
+                fcn = self.root_node.to_lambda(state, idx_set_member, dummy_symbols)
                 fcns.append(fcn)
             return fcns
 
@@ -91,7 +160,7 @@ class Expression:
                 child.parent = node
                 link(child)
 
-        link(self.expression_node)
+        link(self.root_node)
 
     def get_node_count(self) -> int:
         count = [0]
@@ -101,7 +170,7 @@ class Expression:
             for child in node.get_children():
                 descend(child)
 
-        descend(self.expression_node)
+        descend(self.root_node)
         return count[0]
 
     def get_declared_entity_nodes(self) -> List[DeclaredEntityNode]:
@@ -113,14 +182,14 @@ class Expression:
             for child in node.get_children():
                 descend(child)
 
-        descend(self.expression_node)
+        descend(self.root_node)
         return nodes
 
     def get_param_nodes(self) -> List[DeclaredEntityNode]:
-        return get_param_nodes(self.expression_node)
+        return get_param_nodes(self.root_node)
 
     def get_var_nodes(self) -> List[DeclaredEntityNode]:
-        return get_var_nodes(self.expression_node)
+        return get_var_nodes(self.root_node)
 
     def get_declared_entity_syms(self) -> List[str]:
         return [n.symbol for n in self.get_declared_entity_nodes()]
@@ -132,4 +201,4 @@ class Expression:
         return [n.symbol for n in self.get_var_nodes()]
 
     def get_literal(self) -> str:
-        return str(self.expression_node)
+        return str(self.root_node)

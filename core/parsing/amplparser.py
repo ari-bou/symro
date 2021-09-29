@@ -298,9 +298,7 @@ class AMPLParser:
 
             add_operands.append(sum_node)
 
-        return mat.MultiArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                operator='+',
-                                                operands=add_operands)
+        return mat.AdditionNode(id=self._generate_free_node_id(), operands=add_operands)
 
     # Logical Expression Parsing
     # ------------------------------------------------------------------------------------------------------------------
@@ -755,24 +753,6 @@ class AMPLParser:
                                                 idx_set_node=None,
                                                 operands=[sub_node, zero_node])
 
-    def __negate_subtrahend(self, subtrahend: mat.ArithmeticExpressionNode):
-
-        # build a numeric node with value -1
-        neg_one_node = mat.NumericNode(id=self._generate_free_node_id(), value=-1)
-
-        # special case: RHS operand is a multi-operand multiplication operation node
-        if isinstance(subtrahend, mat.MultiArithmeticOperationNode) and subtrahend.operator == '*':
-            # add the -1 node to the list of operands
-            subtrahend.operands.insert(0, neg_one_node)
-
-        # otherwise, build a new multi-operand multiplication operation node
-        else:
-            subtrahend = mat.MultiArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                          operator='*',
-                                                          operands=[neg_one_node, subtrahend])
-
-        return subtrahend
-
     def __convert_divisor_to_fraction(self, divisor: mat.ArithmeticExpressionNode):
 
         # build a numeric node with value 1
@@ -781,8 +761,8 @@ class AMPLParser:
         # build a division operation node
         fraction = mat.DivisionNode(id=self._generate_free_node_id(),
                                     lhs_operand=one_node,
-                                    rhs_operand=divisor)
-        fraction.is_prioritized = True
+                                    rhs_operand=divisor,
+                                    is_prioritized=True)
 
         return fraction
 
@@ -848,9 +828,7 @@ class AMPLParser:
         # generic case
         else:
             coeff_node = mat.NumericNode(id=free_node_id_generator(), value=-1)
-            mult_node = mat.MultiArithmeticOperationNode(id=free_node_id_generator(),
-                                                         operator='*',
-                                                         operands=[coeff_node, node])
+            mult_node = mat.MultiplicationNode(id=free_node_id_generator(), operands=[coeff_node, node])
             return mult_node
 
     def __parse_arithmetic_operand(self) -> Union[mat.ArithmeticExpressionNode,
@@ -1078,7 +1056,7 @@ class AMPLParser:
         else:
             return mat.DeclaredEntityNode(id=self._generate_free_node_id(),
                                           symbol=token,
-                                          entity_index_node=index_node,
+                                          idx_node=index_node,
                                           suffix=suffix,
                                           type=entity_type)
 

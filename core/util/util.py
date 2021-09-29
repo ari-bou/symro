@@ -1,7 +1,7 @@
 import json
 import os
 import shutil as shutil
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 # File I/O
@@ -71,17 +71,25 @@ def read_json_file(path: str, file_name: str = None):
     return o
 
 
-def write_file(dir_path: str,
+def write_file(dir_path: Optional[str],
                file_name: str,
                text: str,
                can_retry: bool = True):
+
+    if dir_path is None:
+        dir_path = os.getcwd()
+
     file_path = os.path.join(dir_path, file_name)
+
     is_looping = True
+
     while is_looping:
+
         try:
             with open(file_path, 'w') as f:
                 f.write(text)
             is_looping = False
+
         except IOError as e:
             print(e)
             if can_retry:

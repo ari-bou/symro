@@ -101,14 +101,15 @@ ENV_TYPE = "env"
 
 # Term Types
 # ----------------------------------------------------------------------------------------------------------------------
-CONSTANT_TERM = 0
-LINEAR_TERM = 1
-BILINEAR_TERM = 2
-TRILINEAR_TERM = 3
-FRACTIONAL_TERM = 4
-FRACTIONAL_TRILINEAR_TERM = 5
-UNVARIATE_CONCAVE_TERM = 6
-GENERAL_NONCONVEX_TERM = 7
+CONSTANT = 0
+LINEAR = 1
+BILINEAR = 2
+TRILINEAR = 3
+FRACTIONAL = 4
+FRACTIONAL_BILINEAR = 5
+FRACTIONAL_TRILINEAR = 6
+UNIVARIATE_CONCAVE = 7
+GENERAL_NONCONVEX = 8
 
 # Data Sheet
 # ----------------------------------------------------------------------------------------------------------------------

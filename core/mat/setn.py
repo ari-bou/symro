@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 import numpy as np
 from ordered_set import OrderedSet
 from typing import List, Optional, Set, Tuple, Union
@@ -304,7 +305,7 @@ class IndexingSetNode(SetExpressionNode):
     def get_dim(self, state: State) -> int:
         return self.dummy_node.get_dim()
 
-    def get_dummy_elements(self, state: State) -> Tuple[Union[int, float, str, tuple], ...]:
+    def get_dummy_element(self, state: State) -> Tuple[Union[int, float, str, tuple], ...]:
         if isinstance(self.dummy_node, DummyNode):
             return tuple([self.dummy_node.symbol])
         elif isinstance(self.dummy_node, CompoundDummyNode):
@@ -400,7 +401,7 @@ class CompoundSetNode(BaseSetNode):
         # Combine dummy sub-elements from the indexing set and each component set
         combined_dummy_sub_elements = None if dummy_element is None else list(dummy_element)
         for set_node in self.set_nodes:
-            component_dummy_syms = list(set_node.get_dummy_elements(state))
+            component_dummy_syms = list(set_node.get_dummy_element(state))
             if combined_dummy_sub_elements is None:
                 combined_dummy_sub_elements = component_dummy_syms
             else:
@@ -421,10 +422,10 @@ class CompoundSetNode(BaseSetNode):
 
                 if idx_set_ip is None:
                     idx_set_ip = component_idx_set_ip
-                    sub_combined_unb_syms = set_node.get_dummy_elements(state)
+                    sub_combined_unb_syms = set_node.get_dummy_element(state)
                 else:
                     idx_set_ip = cartesian_product([idx_set_ip, component_idx_set_ip])
-                    sub_combined_unb_syms += set_node.get_dummy_elements(state)
+                    sub_combined_unb_syms += set_node.get_dummy_element(state)
 
             combine_idx_sets[ip] = idx_set_ip
 
@@ -453,20 +454,21 @@ class CompoundSetNode(BaseSetNode):
             dummy_nodes.extend(set_node.get_dummy_component_nodes(state))
         return dummy_nodes
 
-    def get_dummy_elements(self, state: State) -> Tuple[Union[int, float, str, tuple], ...]:
+    def get_dummy_element(self, state: State) -> Element:
         dummy_syms = []
         for set_node in self.set_nodes:
-            dummy_syms.extend(set_node.get_dummy_elements(state))
+            dummy_syms.extend(set_node.get_dummy_element(state))
         return tuple(dummy_syms)
 
-    def get_defined_unbound_symbols(self, outer_unb_syms: Set[str] = None) -> Set[str]:
+    def get_defined_unbound_symbols(self, outer_unb_syms: Set[str] = None) -> OrderedSet[str]:
         """
-        Retrieve unbound symbols defined by the compound set node.
-        :param outer_unb_syms: set of unbound symbols defined in the outer scope
-        :return: set of unbound symbols
+        Retrieve ordered set of unbound symbols defined by the compound set node. The order corresponds to the order in
+        which the unbound symbols are defined.
+        :param outer_unb_syms: set of unbound symbols defined in the outer scope (exclusive filter)
+        :return: ordered set of defined unbound symbols
         """
 
-        unb_syms = set()
+        unb_syms = OrderedSet()
 
         if outer_unb_syms is None:
             outer_unb_syms = set()

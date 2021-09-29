@@ -137,7 +137,7 @@ class EntityBuilder:
         if idx_meta_sets is None and idx_set_node is not None:
             idx_meta_sets = self._build_idx_meta_sets_of_meta_entity(
                 idx_set_node=idx_set_node,
-                expr_nodes=[expression.expression_node])
+                expr_nodes=[expression.root_node])
 
         if idx_set_node is None:
             idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)
@@ -161,7 +161,7 @@ class EntityBuilder:
         if idx_meta_sets is None and idx_set_node is not None:
             idx_meta_sets = self._build_idx_meta_sets_of_meta_entity(
                 idx_set_node=idx_set_node,
-                expr_nodes=[expression.expression_node])
+                expr_nodes=[expression.root_node])
 
         if idx_set_node is None:
             idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets, idx_set_con_literal)

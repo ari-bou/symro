@@ -277,7 +277,7 @@ class Problem(BaseProblem):
                 else:
                     sp_clone.model_meta_cons.append(deepcopy(me))
 
-        clone.state = mat.State()
+        clone.state = deepcopy(source.state)
 
         clone.__free_node_id = source.__free_node_id
 

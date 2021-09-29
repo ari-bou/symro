@@ -811,7 +811,7 @@ class MetaObjective(MetaEntity):
             self._parent.set_expression(expr)
 
     def get_expression_nodes(self) -> List[ExpressionNode]:
-        expr_nodes = [self.get_expression().expression_node]
+        expr_nodes = [self.get_expression().root_node]
         if self.idx_set_node is not None:
             expr_nodes.append(self.idx_set_node)
         return expr_nodes
@@ -889,7 +889,7 @@ class MetaConstraint(MetaEntity):
         if self._parent is not None:
             return self._parent.elicit_constraint_type()
 
-        expr_node = self._expression.expression_node
+        expr_node = self._expression.root_node
 
         if isinstance(expr_node, RelationalOperationNode):
             if expr_node.operator in ['=', "=="]:
@@ -919,7 +919,7 @@ class MetaConstraint(MetaEntity):
             self._parent.set_expression(expr)
 
     def get_expression_nodes(self) -> List[ExpressionNode]:
-        expr_nodes = [self.get_expression().expression_node]
+        expr_nodes = [self.get_expression().root_node]
         if self.idx_set_node is not None:
             expr_nodes.append(self.idx_set_node)
         return expr_nodes

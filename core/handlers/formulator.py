@@ -80,7 +80,7 @@ class Formulator:
             meta_obj.set_direction(mat.MetaObjective.MINIMIZE_DIRECTION)
 
             expression = meta_obj.get_expression()
-            operand = expression.expression_node
+            operand = expression.root_node
             if not isinstance(operand, mat.ArithmeticExpressionNode):
                 raise ValueError("Formulator expected an arithmetic expression node"
                                  " while reformulating an objective function")
@@ -88,7 +88,7 @@ class Formulator:
             operand.is_prioritized = True
             neg_op = self._node_builder.append_negative_unity_coefficient(operand)
 
-            expression.expression_node = neg_op
+            expression.root_node = neg_op
             expression.link_nodes()
 
     def __standardize_constraint(self, meta_con: mat.MetaConstraint) -> List[mat.MetaConstraint]:
@@ -120,7 +120,7 @@ class Formulator:
         # single inequality or equality
         else:
 
-            rel_node = meta_con.get_expression().expression_node
+            rel_node = meta_con.get_expression().root_node
             if not isinstance(rel_node, mat.RelationalOperationNode):
                 raise ValueError("Formulator expected a relational operation node"
                                  " while verifying whether the constraint '{0}' is in standard form".format(meta_con))
@@ -141,7 +141,7 @@ class Formulator:
 
     def __standardize_equality_constraint(self, meta_con: mat.MetaConstraint) -> mat.MetaConstraint:
 
-        eq_op_node = meta_con.get_expression().expression_node
+        eq_op_node = meta_con.get_expression().root_node
         if not isinstance(eq_op_node, mat.RelationalOperationNode):
             raise ValueError("Formulator encountered unexpected expression node"
                              + " while standardizing equality constraint '{0}'".format(meta_con))
@@ -154,7 +154,7 @@ class Formulator:
 
     def __standardize_inequality_constraint(self, meta_con: mat.MetaConstraint) -> mat.MetaConstraint:
 
-        ineq_op_node = meta_con.get_expression().expression_node
+        ineq_op_node = meta_con.get_expression().root_node
         if not isinstance(ineq_op_node, mat.RelationalOperationNode):
             raise ValueError("Formulator encountered unexpected expression node"
                              + " while standardizing inequality constraint '{0}'".format(meta_con))
@@ -198,7 +198,7 @@ class Formulator:
             mc_clone.set_symbol(new_sym)
 
             expr_clone = mc_clone.get_expression()
-            expr_clone.expression_node = ref_ineq_op_node
+            expr_clone.root_node = ref_ineq_op_node
             expr_clone.link_nodes()
 
             mc_clone.elicit_constraint_type()
@@ -210,7 +210,7 @@ class Formulator:
     @staticmethod
     def __extract_operands_from_double_inequality(meta_con: mat.MetaConstraint):
 
-        ineq_op_node = meta_con.get_expression().expression_node
+        ineq_op_node = meta_con.get_expression().root_node
 
         if not isinstance(ineq_op_node, mat.RelationalOperationNode):
             raise ValueError("Formulator encountered unexpected expression node"
@@ -286,7 +286,7 @@ class Formulator:
         rel_op_node.lhs_operand = sub_node
         rel_op_node.rhs_operand = mat.NumericNode(id=self.generate_free_node_id(), value=0)
 
-    def convert_equality_to_inequality_constraint(self, meta_con: mat.MetaConstraint):
+    def convert_equality_to_inequality_constraints(self, meta_con: mat.MetaConstraint):
 
         ref_meta_cons = []
         old_sym = meta_con.get_symbol()
@@ -301,7 +301,7 @@ class Formulator:
             new_sym = self._problem.generate_unique_symbol("{0}_E{1}".format(old_sym, i + 1))
             ref_meta_con.set_symbol(new_sym)
 
-            eq_op_node = ref_meta_con.get_expression().expression_node
+            eq_op_node = ref_meta_con.get_expression().root_node
             if not isinstance(eq_op_node, mat.RelationalOperationNode):
                 raise ValueError("Formulator encountered unexpected expression node"
                                  + " while converting equality constraint '{0}'".format(meta_con)
@@ -361,15 +361,13 @@ class Formulator:
         con_sym = self._problem.generate_unique_symbol("{0}_F".format(meta_con.get_symbol()))
         sl_meta_con.set_symbol(con_sym)
 
-        rel_op_node = expr_clone.expression_node
+        rel_op_node = expr_clone.root_node
         if not isinstance(rel_op_node, mat.RelationalOperationNode):
             raise ValueError("Formulator encountered unexpected expression node"
                              + " while building a slackened constraint for '{0}'".format(meta_con))
 
         rhs_node = self._node_builder.append_negative_unity_coefficient(slack_node)
-        rel_op_node.lhs_operand = mat.MultiArithmeticOperationNode(id=self.generate_free_node_id(),
-                                                                   operator='+',
-                                                                   operands=[rel_op_node.lhs_operand, rhs_node])
+        rel_op_node.lhs_operand = self._node_builder.build_addition_node([rel_op_node.lhs_operand, rhs_node])
 
         expr_clone.link_nodes()
         sl_meta_con.set_expression(expr_clone)
@@ -390,7 +388,7 @@ class Formulator:
         entity_index_node = self._node_builder.build_default_entity_index_node(sl_meta_var)
         sl_var_node = mat.DeclaredEntityNode(id=self.generate_free_node_id(),
                                              symbol=sym,
-                                             entity_index_node=entity_index_node,
+                                             idx_node=entity_index_node,
                                              type=const.VAR_TYPE)
 
         return sl_meta_var, sl_var_node
@@ -411,7 +409,7 @@ class Formulator:
             entity_index_node = self._node_builder.build_default_entity_index_node(sl_meta_var)
             slack_node = mat.DeclaredEntityNode(id=self.generate_free_node_id(),
                                                 symbol=sl_meta_var.get_symbol(),
-                                                entity_index_node=entity_index_node)
+                                                idx_node=entity_index_node)
 
             if sl_meta_var.get_idx_set_reduced_dim() == 0:
                 operand = slack_node
@@ -429,16 +427,15 @@ class Formulator:
             operands.append(operand)
 
         if len(operands) > 1:
-            expression_node = mat.MultiArithmeticOperationNode(id=self.generate_free_node_id(),
-                                                               operator='+',
-                                                               operands=operands)
+            expr_node = self._node_builder.build_addition_node(operands)
+
         elif len(operands) == 1:
-            expression_node = operands[0]
+            expr_node = operands[0]
 
         else:
-            expression_node = mat.NumericNode(id=self.generate_free_node_id(), value=0)
+            expr_node = mat.NumericNode(id=self.generate_free_node_id(), value=0)
 
-        expression = mat.Expression(expression_node)
+        expression = mat.Expression(expr_node)
 
         meta_obj = entity_builder.build_meta_obj(symbol=obj_sym,
                                                  idx_meta_sets=idx_meta_sets,
@@ -526,13 +523,13 @@ class Formulator:
 
             # modify meta-objective expressions
             for mo in self._problem.model_meta_objs:
-                mo.get_expression().expression_node = self.substitute(root_node=mo.get_expression().expression_node,
-                                                                      sub_map=sub_map)
+                mo.get_expression().root_node = self.substitute(root_node=mo.get_expression().root_node,
+                                                                sub_map=sub_map)
 
             # modify meta-constraint expressions
             for mc in self._problem.model_meta_cons:
-                mc.get_expression().expression_node = self.substitute(root_node=mc.get_expression().expression_node,
-                                                                      sub_map=sub_map)
+                mc.get_expression().root_node = self.substitute(root_node=mc.get_expression().root_node,
+                                                                sub_map=sub_map)
 
     # Subtraction and Arithmetic Negation
     # ------------------------------------------------------------------------------------------------------------------
@@ -666,10 +663,11 @@ class Formulator:
                                                      idx_set=idx_set,
                                                      dummy_element=dummy_element)
 
-            for i in range(1, len(exponent_values)):
-                if exponent_values[0] != exponent_values[i]:
-                    is_exponent_const = False
-                    break
+            if len(exponent_values) > 1:
+                for i in range(1, len(exponent_values)):
+                    if exponent_values[0] != exponent_values[i]:
+                        is_exponent_const = False
+                        break
 
         return is_exponent_const, exponent_values
 
@@ -766,18 +764,10 @@ class Formulator:
                 lhs_terms = self.__expand_multiplication(node.lhs_operand, idx_set, dummy_element)
                 rhs_terms = self.__expand_multiplication(node.rhs_operand, idx_set, dummy_element)
 
-                # addition
-                if node.operator == '+':
-                    return lhs_terms + rhs_terms
-
                 # subtraction
-                elif node.operator == '-':
+                if node.operator == '-':
                     rhs_terms = [self._node_builder.append_negative_unity_coefficient(t) for t in rhs_terms]
                     return lhs_terms + rhs_terms
-
-                # multiplication
-                elif node.operator == '*':
-                    return self.expand_factors(lhs_terms, rhs_terms)
 
                 # division
                 elif node.operator == '/':
@@ -796,7 +786,7 @@ class Formulator:
                             return [node]
 
                     node.lhs_operand = mat.NumericNode(id=self.generate_free_node_id(), value=1)
-                    node.rhs_operand = rhs_terms
+                    node.rhs_operand = self._node_builder.build_multiplication_node(rhs_terms)
                     rhs_terms = [node]
 
                     return self.expand_factors(lhs_terms, rhs_terms)
@@ -934,6 +924,9 @@ class Formulator:
 
                 # replace the conflicting symbols with unique symbols
                 self._node_builder.replace_unbound_symbols(node=factor, mapping=mapping)
+
+                # update set of defined unbound symbols with newly-generated symbols
+                def_unb_syms = def_unb_syms | set(mapping.values())
 
             # reductive summation node
             if isinstance(factor, mat.ArithmeticTransformationNode) and factor.symbol == "sum":

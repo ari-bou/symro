@@ -132,7 +132,7 @@ class SetExpressionNode(ExpressionNode, ABC):
         dummy_nodes = [None] * self.get_dim(state)
         return dummy_nodes
 
-    def get_dummy_elements(self, state: State) -> Element:
+    def get_dummy_element(self, state: State) -> Element:
         dummy_syms = [None] * self.get_dim(state)
         return tuple(dummy_syms)
 

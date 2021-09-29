@@ -7,10 +7,20 @@ import symro.core.prob.statement as stm
 from symro.core.handlers.nodebuilder import NodeBuilder
 
 
+def model_to_ampl(problem: Problem,
+                  file_name: str = None,
+                  working_dir_path: str = None):
+    script_builder = ScriptBuilder()
+    script = script_builder.generate_problem_model_script(problem=problem,
+                                                          model_file_name=file_name,
+                                                          model_file_extension=None)
+    script.write(dir_path=working_dir_path, file_name=file_name)
+
+
 class ScriptBuilder:
 
     def __init__(self):
-        self.script: Optional[stm.Script] = None
+        self._script: Optional[stm.Script] = None
 
     # Model Script
     # ------------------------------------------------------------------------------------------------------------------
@@ -18,7 +28,7 @@ class ScriptBuilder:
     def generate_problem_model_script(self,
                                       problem: BaseProblem,
                                       model_file_name: str = None,
-                                      model_file_extension: str = ".mod"):
+                                      model_file_extension: Optional[str] = ".mod"):
         if model_file_name is None:
             model_file_name = problem.symbol
         return self.generate_model_script(model_file_name=model_file_name,
@@ -30,7 +40,7 @@ class ScriptBuilder:
 
     def generate_model_script(self,
                               model_file_name: str = None,
-                              model_file_extension: str = ".mod",
+                              model_file_extension: Optional[str] = ".mod",
                               meta_sets: Union[List[mat.MetaSet], Dict[str, mat.MetaSet]] = None,
                               meta_params: Union[List[mat.MetaParameter], Dict[str, mat.MetaParameter]] = None,
                               meta_sets_params: Union[List[Union[mat.MetaSet, mat.MetaParameter]],
@@ -63,12 +73,12 @@ class ScriptBuilder:
 
         if model_file_name is None:
             model_file_name = "model"
-        if len(model_file_name) >= 4 and model_file_name[-4:] == '.mod':
-            model_file_name += model_file_name[:-4]
         if model_file_extension is not None:
+            if len(model_file_name) >= 4 and model_file_name[-4:] == ".mod":
+                model_file_name = model_file_name[:-4]
             model_file_name += model_file_extension
 
-        self.script = stm.Script(id=model_file_name)
+        self._script = stm.Script(id=model_file_name)
 
         if (include_sets or include_params) and len(meta_sets_params) > 0:
             self.__generate_region_heading("Sets and Parameters")
@@ -92,7 +102,7 @@ class ScriptBuilder:
             self.__generate_entity_declarations(meta_cons)
             self.__generate_region_footer()
 
-        return self.script
+        return self._script
 
     def __generate_entity_declarations(self, meta_entities: List[mat.MetaEntity]):
         for meta_entity in meta_entities:
@@ -139,7 +149,7 @@ class ScriptBuilder:
                 node_builder.replace_unbound_symbols(entity_idx_node, node_builder.unb_sym_map)
 
             entity_node = mat.DeclaredEntityNode(symbol=meta_entity.get_symbol(),
-                                                 entity_index_node=entity_idx_node,
+                                                 idx_node=entity_idx_node,
                                                  type=meta_entity.get_type())
 
             if meta_entity.get_idx_set_reduced_dim() == 0:
@@ -185,4 +195,4 @@ class ScriptBuilder:
         self.__add_statement(comment)
 
     def __add_statement(self, statement: stm.BaseStatement):
-        self.script.statements.append(statement)
+        self._script.statements.append(statement)

@@ -1,3 +1,4 @@
+import amplpy
 from ordered_set import OrderedSet
 import os
 from typing import List, Optional, Tuple, Union
@@ -12,16 +13,19 @@ from symro.core.parsing.amplscriptparser import AMPLScriptParser
 import symro.core.util.util as util
 
 
-def build_problem_from_ampl_script(file_name: str = None,
-                                   script_literal: str = None,
-                                   working_dir_path: str = None,
-                                   name: str = None,
-                                   description: str = None,
-                                   engine: AMPLEngine = None,
-                                   can_clean_script: bool = False) -> Optional[Problem]:
+def read_ampl(file_name: str = None,
+              script_literal: str = None,
+              working_dir_path: str = None,
+              name: str = None,
+              description: str = None,
+              engine: AMPLEngine = None,
+              can_clean_script: bool = False) -> Optional[Problem]:
 
     if file_name is None and script_literal is None:
         raise ValueError("Problem builder requires either a file name or a script literal.")
+
+    if working_dir_path is None:
+        working_dir_path = os.getcwd()
 
     if name is None and file_name is not None:
         file_name = os.path.basename(file_name)
@@ -72,6 +76,8 @@ def __retrieve_set_data_from_ampl_engine(problem: Problem,
     sets = ampl_engine.api.getSets()
     for sym, ampl_set in sets:
 
+        ampl_set: amplpy.Set
+
         # set the dimension of the meta-set
         meta_set = problem.meta_sets[sym]
         meta_set.set_dim(ampl_set.arity())
@@ -106,6 +112,8 @@ def __retrieve_param_data_from_ampl_engine(problem: Problem,
                                            ampl_engine: AMPLEngine):
     params = ampl_engine.api.getParameters()
     for sym, param in params:
+
+        param: amplpy.Parameter
 
         if param.indexarity() == 0:
             problem.state.add_parameter(mat.Parameter(symbol=sym,

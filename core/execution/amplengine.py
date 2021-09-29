@@ -1,5 +1,6 @@
 import warnings
 
+import amplpy
 import amplpy as ampl
 import numpy as np
 import os
@@ -307,7 +308,7 @@ class AMPLEngine(Engine):
     def get_param_value(self,
                         symbol: str,
                         idx: Optional[mat.Element] = None):
-        param = self.api.getParameter(symbol)
+        param: amplpy.Parameter = self.api.getParameter(symbol)
         if param.indexarity() > 0:
             param.get(idx)
         else:
@@ -316,7 +317,7 @@ class AMPLEngine(Engine):
     def get_var_value(self,
                       symbol: str,
                       idx: Optional[mat.Element] = None):
-        var = self.api.getVariable(symbol)
+        var: amplpy.Variable = self.api.getVariable(symbol)
         var = self.get_entity_instance(var, idx)
         return var.value()
 

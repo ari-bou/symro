@@ -1,4 +1,6 @@
+from abc import ABC
 from functools import partial
+from numbers import Number
 import numpy as np
 from ordered_set import OrderedSet
 from typing import Callable, Dict, List, Optional, Tuple, Union
@@ -16,7 +18,7 @@ import symro.core.constants as const
 class NumericNode(ArithmeticExpressionNode):
 
     def __init__(self,
-                 value: Union[int, float, str],
+                 value: Union[Number, str],
                  sci_not: bool = False,
                  coeff_sym: str = None,
                  power_sign: str = None,
@@ -25,8 +27,8 @@ class NumericNode(ArithmeticExpressionNode):
 
         super().__init__(id)
 
-        self.value: Union[int, float] = 0
-        self.sci_not: bool = sci_not
+        self.value: Number = 0
+        self.sci_not: bool = sci_not  # True if scientific notation is used
         self.__is_null: bool = False
 
         if not self.sci_not:
@@ -89,7 +91,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
 
     def __init__(self,
                  symbol: str,
-                 entity_index_node: CompoundDummyNode = None,
+                 idx_node: CompoundDummyNode = None,
                  suffix: str = None,
                  type: str = None,
                  id: int = 0):
@@ -97,7 +99,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
         super().__init__(id)
 
         self.symbol: str = symbol
-        self.idx_node: CompoundDummyNode = entity_index_node
+        self.idx_node: CompoundDummyNode = idx_node
         self.suffix: str = suffix
         self.__entity_type: str = type
         self.__is_null: bool = False
@@ -244,7 +246,7 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
             if isinstance(operands, ArithmeticExpressionNode):
                 self.operands.append(operands)
             else:
-                self.operands = operands
+                self.operands.extend(operands)
 
     def evaluate(self,
                  state: State,
@@ -474,7 +476,7 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
         return literal
 
 
-class BinaryArithmeticOperationNode(ArithmeticExpressionNode):
+class BinaryArithmeticOperationNode(ArithmeticExpressionNode, ABC):
 
     ADDITION_OPERATOR = '+'
     SUBTRACTION_OPERATOR = '-'
@@ -567,7 +569,7 @@ class BinaryArithmeticOperationNode(ArithmeticExpressionNode):
         return literal
 
 
-class MultiArithmeticOperationNode(ArithmeticExpressionNode):
+class MultiArithmeticOperationNode(ArithmeticExpressionNode, ABC):
 
     ADDITION_OPERATOR = '+'
     MULTIPLICATION_OPERATOR = '*'
@@ -575,10 +577,12 @@ class MultiArithmeticOperationNode(ArithmeticExpressionNode):
     def __init__(self,
                  operator: str,
                  operands: List[ArithmeticExpressionNode],
+                 is_prioritized: bool = False,
                  id: int = 0):
         super().__init__(id)
         self.operator: str = operator
         self.operands: List[ArithmeticExpressionNode] = operands
+        self.is_prioritized = is_prioritized
 
     def evaluate(self,
                  state: State,
@@ -655,10 +659,12 @@ class AdditionNode(MultiArithmeticOperationNode):
 
     def __init__(self,
                  operands: List[ArithmeticExpressionNode],
+                 is_prioritized: bool = False,
                  id: int = 0):
         super().__init__(id=id,
                          operator='+',
-                         operands=operands)
+                         operands=operands,
+                         is_prioritized=is_prioritized)
 
 
 class SubtractionNode(BinaryArithmeticOperationNode):
@@ -679,10 +685,12 @@ class MultiplicationNode(MultiArithmeticOperationNode):
 
     def __init__(self,
                  operands: List[ArithmeticExpressionNode],
+                 is_prioritized: bool = False,
                  id: int = 0):
         super().__init__(id=id,
                          operator='*',
-                         operands=operands)
+                         operands=operands,
+                         is_prioritized=is_prioritized)
 
 
 class DivisionNode(BinaryArithmeticOperationNode):
@@ -780,10 +788,15 @@ class UnaryArithmeticOperationNode(ArithmeticExpressionNode):
 
 class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
 
-    def __init__(self, id: int = 0):
+    def __init__(self,
+                 operands: List[ArithmeticExpressionNode],
+                 conditions: List[LogicalExpressionNode],
+                 is_prioritized: bool = False,
+                 id: int = 0):
         super().__init__(id)
-        self.operands: List[ArithmeticExpressionNode] = []
-        self.conditions: List[LogicalExpressionNode] = []
+        self.operands: List[ArithmeticExpressionNode] = operands
+        self.conditions: List[LogicalExpressionNode] = conditions
+        self.is_prioritized = is_prioritized
 
     def evaluate(self,
                  state: State,

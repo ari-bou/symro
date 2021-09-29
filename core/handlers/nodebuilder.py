@@ -1,3 +1,4 @@
+from numbers import Number
 from queue import Queue
 from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
@@ -12,6 +13,39 @@ class NodeBuilder:
         self._problem: Problem = problem
         self.unb_sym_map: Optional[Dict[str, str]] = None  # mapping of unbound symbols created by certain methods
         self.__free_node_id: int = 0
+
+    # Symbols
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @staticmethod
+    def replace_declared_symbols(node: mat.ExpressionNode, mapping: Dict[str, str]):
+        """
+        Replace a selection of declared symbols in an expression tree. Modifies the declared entity nodes and set nodes
+        in place rather than replacing them with new objects.
+        :param node: root of the expression tree
+        :param mapping: dictionary of original declared symbols mapped to replacement declared symbols.
+        :return: None
+        """
+
+        if mapping is None:
+            return
+        if len(mapping) == 0:
+            return
+
+        queue = Queue()
+        queue.put(node)
+
+        while not queue.empty():
+
+            node = queue.get()
+
+            if isinstance(node, mat.DeclaredEntityNode) or isinstance(node, mat.SetNode):
+                if node.symbol in mapping:
+                    node.symbol = mapping[node.symbol]
+            else:
+                children = node.get_children()
+                for child in children:
+                    queue.put(child)
 
     # Unbound Symbols
     # ------------------------------------------------------------------------------------------------------------------
@@ -58,10 +92,10 @@ class NodeBuilder:
     @staticmethod
     def replace_unbound_symbols(node: mat.ExpressionNode, mapping: Dict[str, str]):
         """
-        Replace a selection of unbound symbols in an expression tree. Modifies the dummy nodes rather than replacing
-        them with new objects.
+        Replace a selection of unbound symbols in an expression tree. Modifies the dummy nodes in place rather than
+        replacing them with new objects.
         :param node: root of the expression tree
-        :param mapping: dictionary of original dummy symbols mapped to replacement dummy symbols.
+        :param mapping: dictionary of original unbound symbols mapped to replacement unbound symbols.
         :return: None
         """
 
@@ -232,13 +266,19 @@ class NodeBuilder:
 
         return mapping
 
+    # Dummy Node Construction
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def build_dummy_node(self, symbol: str):
+        return mat.DummyNode(id=self.generate_free_node_id(), symbol=symbol)
+
     # Entity Node Construction
     # ------------------------------------------------------------------------------------------------------------------
 
     def build_default_entity_node(self, meta_entity: mat.MetaEntity) -> mat.DeclaredEntityNode:
         entity_index_node = self.build_default_entity_index_node(meta_entity)
         return mat.DeclaredEntityNode(symbol=meta_entity.get_symbol(),
-                                      entity_index_node=entity_index_node,
+                                      idx_node=entity_index_node,
                                       type=meta_entity.get_type())
 
     def build_default_entity_index_node(self,
@@ -469,32 +509,54 @@ class NodeBuilder:
                                                  operator="||",
                                                  operands=operands)
 
+    # Numeric Node Construction
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def build_numeric_node(self, value: Number):
+        return mat.NumericNode(id=self.generate_free_node_id(), value=value)
+
     # Arithmetic Operation Node Construction
     # ------------------------------------------------------------------------------------------------------------------
 
-    def build_addition_node(self, terms: List[mat.ArithmeticExpressionNode]):
-        return mat.AdditionNode(id=self.generate_free_node_id(), operands=terms)
+    def build_addition_node(self,
+                            terms: List[mat.ArithmeticExpressionNode],
+                            is_prioritized: bool = False):
+        return mat.AdditionNode(id=self.generate_free_node_id(),
+                                operands=terms,
+                                is_prioritized=is_prioritized)
 
-    def build_multiplication_node(self, factors: List[mat.ArithmeticExpressionNode]):
-        return mat.MultiplicationNode(id=self.generate_free_node_id(), operands=factors)
+    def build_subtraction_node(self,
+                               lhs_term: mat.ArithmeticExpressionNode,
+                               rhs_term: mat.ArithmeticExpressionNode,
+                               is_prioritized: bool = False):
+        return mat.SubtractionNode(id=self.generate_free_node_id(),
+                                   lhs_operand=lhs_term,
+                                   rhs_operand=rhs_term,
+                                   is_prioritized=is_prioritized)
+
+    def build_multiplication_node(self,
+                                  factors: List[mat.ArithmeticExpressionNode],
+                                  is_prioritized: bool = False):
+        return mat.MultiplicationNode(id=self.generate_free_node_id(),
+                                      operands=factors,
+                                      is_prioritized=is_prioritized)
 
     def build_fractional_node(self,
                               numerator: mat.ArithmeticExpressionNode,
-                              denominator: mat.ArithmeticExpressionNode):
+                              denominator: mat.ArithmeticExpressionNode,
+                              is_prioritized: bool = True):
 
         num_1 = numerator
         num_2 = None
         den_1 = None
         den_2 = denominator
 
-        if isinstance(numerator, mat.BinaryArithmeticOperationNode):
-            if numerator.operator == '/':
-                num_1 = numerator.lhs_operand
-                den_1 = numerator.rhs_operand
-        if isinstance(denominator, mat.BinaryArithmeticOperationNode):
-            if denominator.operator == '/':
-                den_2 = denominator.lhs_operand
-                num_2 = denominator.rhs_operand
+        if isinstance(numerator, mat.DivisionNode):
+            num_1 = numerator.lhs_operand
+            den_1 = numerator.rhs_operand
+        if isinstance(denominator, mat.DivisionNode):
+            den_2 = denominator.lhs_operand
+            num_2 = denominator.rhs_operand
 
         num = None
         if num_1 is not None and num_2 is not None:
@@ -514,7 +576,15 @@ class NodeBuilder:
 
         return mat.DivisionNode(id=self.generate_free_node_id(),
                                 lhs_operand=num,
-                                rhs_operand=den)
+                                rhs_operand=den,
+                                is_prioritized=is_prioritized)
+
+    def build_fractional_node_with_unity_numerator(self,
+                                                   denominator: mat.ArithmeticExpressionNode,
+                                                   is_prioritized: bool = True):
+        return self.build_fractional_node(numerator=self.build_numeric_node(1),
+                                          denominator=denominator,
+                                          is_prioritized=is_prioritized)
 
     def append_negative_unity_coefficient(self, node: mat.ArithmeticExpressionNode):
         return AMPLParser.append_negative_unity_coefficient(node, self.generate_free_node_id)

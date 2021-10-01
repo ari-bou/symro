@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from functools import partial
 import numpy as np
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Union
 
 from symro.core.mat.util import IndexingSet, Element
 from symro.core.mat.state import State
@@ -10,8 +10,8 @@ from symro.core.mat.exprn import ExpressionNode, ArithmeticExpressionNode, Strin
 
 class BaseDummyNode(ExpressionNode, ABC):
 
-    def __init__(self, id: int = 0):
-        super().__init__(id)
+    def __init__(self):
+        super().__init__()
 
     def is_constant(self) -> bool:
         return True
@@ -37,8 +37,8 @@ class BaseDummyNode(ExpressionNode, ABC):
 
 class DummyNode(BaseDummyNode):
 
-    def __init__(self, symbol: str, id: int = 0):
-        super().__init__(id)
+    def __init__(self, symbol: str):
+        super().__init__()
         self.symbol: str = symbol
 
     def evaluate(self,
@@ -110,9 +110,8 @@ class CompoundDummyNode(BaseDummyNode):
     def __init__(self,
                  component_nodes: List[Union[DummyNode,
                                              StringExpressionNode,
-                                             ArithmeticExpressionNode]],
-                 id: int = 0):
-        super().__init__(id)
+                                             ArithmeticExpressionNode]]):
+        super().__init__()
         self.component_nodes: List[Union[DummyNode,
                                          StringExpressionNode,
                                          ArithmeticExpressionNode]] = component_nodes

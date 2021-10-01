@@ -166,9 +166,6 @@ class Problem(BaseProblem):
         # --- State ---
         self.state: mat.State = mat.State()
 
-        # --- Miscellaneous ---
-        self.__free_node_id: int = 0
-
     def __copy__(self):
         clone = Problem()
         self.copy(self, clone)
@@ -205,8 +202,6 @@ class Problem(BaseProblem):
         clone.subproblems = {sym: copy(sp) for sym, sp in source.subproblems.items()}
 
         clone.state = source.state
-
-        clone.__free_node_id = source.__free_node_id
 
     @staticmethod
     def deepcopy(source: "Problem", clone: "Problem"):
@@ -278,8 +273,6 @@ class Problem(BaseProblem):
                     sp_clone.model_meta_cons.append(deepcopy(me))
 
         clone.state = deepcopy(source.state)
-
-        clone.__free_node_id = source.__free_node_id
 
     # Checkers
     # ------------------------------------------------------------------------------------------------------------------
@@ -424,14 +417,6 @@ class Problem(BaseProblem):
             i += 1
 
         return sym
-
-    def generate_free_node_id(self) -> int:
-        free_node_id = self.__free_node_id
-        self.__free_node_id += 1
-        return free_node_id
-
-    def seed_free_node_id(self, node_id: int):
-        self.__free_node_id = max(node_id, self.__free_node_id)
 
     # File I/O
     # ------------------------------------------------------------------------------------------------------------------

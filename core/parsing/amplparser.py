@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Callable, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 import numpy as np
 
 import symro.core.constants as const
@@ -177,13 +177,13 @@ class AMPLParser:
         self._setup()
         tokens = self._lexer.tokenize(literal)
         if script_id is None:
-            main_script = stm.Script(id="main",
+            main_script = stm.Script(name="main",
                                      raw_literal=literal,
                                      tokens=tokens)
             self.compound_script = stm.CompoundScript(main_script=main_script)
             return main_script
         else:
-            script = stm.Script(id=script_id, raw_literal=literal, tokens=tokens)
+            script = stm.Script(name=script_id, raw_literal=literal, tokens=tokens)
             self.compound_script.included_scripts[script_id] = script
             return script
 
@@ -225,15 +225,14 @@ class AMPLParser:
             operands.append(self._parse_set_expression())
 
         if isinstance(operands[0], mat.SetExpressionNode):
-            return mat.ConditionalSetExpressionNode(id=self._generate_free_node_id(),
-                                                    operands=operands,
+            return mat.ConditionalSetExpressionNode(operands=operands,
                                                     conditions=conditions)
 
         else:
             return self.__convert_conditional_arithmetic_expression_to_addition_operation(operands, conditions)
 
-    def __convert_conditional_arithmetic_expression_to_addition_operation(self,
-                                                                          operands: List[mat.ArithmeticExpressionNode],
+    @staticmethod
+    def __convert_conditional_arithmetic_expression_to_addition_operation(operands: List[mat.ArithmeticExpressionNode],
                                                                           conditions: List[mat.LogicalExpressionNode]):
 
         add_operands = []
@@ -245,9 +244,8 @@ class AMPLParser:
 
         for i, operand in enumerate(operands):
 
-            ord_set_node = mat.OrderedSetNode(id=self._generate_free_node_id(),
-                                              start_node=mat.NumericNode(id=self._generate_free_node_id(), value=1),
-                                              end_node=mat.NumericNode(id=self._generate_free_node_id(), value=1))
+            ord_set_node = mat.OrderedSetNode(start_node=mat.NumericNode(value=1),
+                                              end_node=mat.NumericNode(value=1))
 
             if i == 0:
                 constraint_node = conditions[i]
@@ -258,13 +256,11 @@ class AMPLParser:
 
                     prev_condition = deepcopy(conditions[i - 1])
 
-                    neg_prev_condition = mat.UnaryLogicalOperationNode(id=self._generate_free_node_id(),
-                                                                       operator='!',
+                    neg_prev_condition = mat.UnaryLogicalOperationNode(operator='!',
                                                                        operand=prev_condition)
                     neg_prev_condition.is_prioritized = True
 
-                    conj_node = mat.MultiLogicalOperationNode(id=self._generate_free_node_id(),
-                                                              operator="and",
+                    conj_node = mat.MultiLogicalOperationNode(operator="and",
                                                               operands=[neg_prev_condition])
                     constraint_node = conj_node
 
@@ -274,8 +270,7 @@ class AMPLParser:
 
                     prev_condition = conj_node.operands[i - 1]
 
-                    neg_prev_condition = mat.UnaryLogicalOperationNode(id=self._generate_free_node_id(),
-                                                                       operator='!',
+                    neg_prev_condition = mat.UnaryLogicalOperationNode(operator='!',
                                                                        operand=prev_condition)
                     neg_prev_condition.is_prioritized = True
 
@@ -286,19 +281,17 @@ class AMPLParser:
                 if i < len(conditions):
                     conj_node.operands.append(conditions[i])
 
-            idx_set_node = mat.CompoundSetNode(id=self._generate_free_node_id(),
-                                               set_nodes=[ord_set_node],
+            idx_set_node = mat.CompoundSetNode(set_nodes=[ord_set_node],
                                                constraint_node=constraint_node)
 
             operand.is_prioritized = True
-            sum_node = mat.ArithmeticTransformationNode(id=self._generate_free_node_id(),
-                                                        symbol="sum",
+            sum_node = mat.ArithmeticTransformationNode(symbol="sum",
                                                         idx_set_node=idx_set_node,
                                                         operands=operand)
 
             add_operands.append(sum_node)
 
-        return mat.AdditionNode(id=self._generate_free_node_id(), operands=add_operands)
+        return mat.AdditionNode(operands=add_operands)
 
     # Logical Expression Parsing
     # ------------------------------------------------------------------------------------------------------------------
@@ -326,8 +319,7 @@ class AMPLParser:
             rhs_operand = self.__parse_logical_operand()
 
             # build logical operation node
-            root_operation = mat.BinaryLogicalOperationNode(id=self._generate_free_node_id(),
-                                                            operator=operator,
+            root_operation = mat.BinaryLogicalOperationNode(operator=operator,
                                                             lhs_operand=root_operation,
                                                             rhs_operand=rhs_operand)
 
@@ -345,8 +337,7 @@ class AMPLParser:
         if token in ['!', "not"]:
             self._next_token()
             operand = self.__parse_logical_operand()
-            return mat.UnaryLogicalOperationNode(id=self._generate_free_node_id(),
-                                                 operator=token,
+            return mat.UnaryLogicalOperationNode(operator=token,
                                                  operand=operand)
 
         # logical reduction
@@ -362,8 +353,7 @@ class AMPLParser:
 
             operand = self.__parse_logical_operand()
 
-            return mat.LogicalReductionOperationNode(id=self._generate_free_node_id(),
-                                                     symbol=operator,
+            return mat.LogicalReductionOperationNode(symbol=operator,
                                                      idx_set_node=idx_set_node,
                                                      operand=operand)
 
@@ -398,8 +388,7 @@ class AMPLParser:
         self._next_token()
 
         rhs_operand = self._parse_set_expression()
-        return mat.SetComparisonOperationNode(id=self._generate_free_node_id(),
-                                              operator=operator,
+        return mat.SetComparisonOperationNode(operator=operator,
                                               lhs_operand=lhs_operand,
                                               rhs_operand=rhs_operand)
 
@@ -413,8 +402,7 @@ class AMPLParser:
         self._next_token()
 
         rhs_operand = self._parse_set_expression()
-        return mat.SetMembershipOperationNode(id=self._generate_free_node_id(),
-                                              operator=operator,
+        return mat.SetMembershipOperationNode(operator=operator,
                                               member_node=dummy_node,
                                               set_node=rhs_operand)
 
@@ -439,8 +427,7 @@ class AMPLParser:
             rhs_operand = self._parse_set_expression()  # parse next operand
 
             # build relational operation node
-            root_operation = mat.RelationalOperationNode(id=self._generate_free_node_id(),
-                                                         operator=operator,
+            root_operation = mat.RelationalOperationNode(operator=operator,
                                                          lhs_operand=root_operation,
                                                          rhs_operand=rhs_operand)
 
@@ -485,8 +472,7 @@ class AMPLParser:
                 rhs_operand = self.__parse_set()
 
             # build a new binary set operation node
-            root_operation = mat.BinarySetOperationNode(id=self._generate_free_node_id(),
-                                                        operator=operator,
+            root_operation = mat.BinarySetOperationNode(operator=operator,
                                                         lhs_operand=root_operation,
                                                         rhs_operand=rhs_operand)
 
@@ -518,8 +504,7 @@ class AMPLParser:
                 raise NotImplementedError("Parsing logic for 'setof' has not yet been implemented")
             else:
                 operand = self._parse_set_expression()
-            set_reduc_op = mat.SetReductionOperationNode(id=self._generate_free_node_id(),
-                                                         symbol=token,
+            set_reduc_op = mat.SetReductionOperationNode(symbol=token,
                                                          idx_set_node=idx_set_node,
                                                          operand=operand)
             return set_reduc_op
@@ -600,12 +585,10 @@ class AMPLParser:
 
         # Build the set node
         if not is_explicit:
-            return mat.CompoundSetNode(id=self._generate_free_node_id(),
-                                       set_nodes=nodes,
+            return mat.CompoundSetNode(set_nodes=nodes,
                                        constraint_node=con_node)
         else:
-            return mat.EnumeratedSet(id=self._generate_free_node_id(),
-                                     element_nodes=nodes)
+            return mat.EnumeratedSet(element_nodes=nodes)
 
     def __parse_indexing_set(self, dummy_node: mat.BaseDummyNode) -> mat.IndexingSetNode:
 
@@ -622,8 +605,7 @@ class AMPLParser:
         set_node = self._parse_set_expression()  # parse set expression
 
         # build indexing set node
-        return mat.IndexingSetNode(id=self._generate_free_node_id(),
-                                   dummy_node=dummy_node,
+        return mat.IndexingSetNode(dummy_node=dummy_node,
                                    set_node=set_node)
 
     def __parse_ordered_set(self, start_node: Union[mat.ArithmeticExpressionNode,
@@ -634,8 +616,7 @@ class AMPLParser:
 
         end_node = self._parse_arithmetic_expression()
 
-        ordered_set_node = mat.OrderedSetNode(id=self._generate_free_node_id(),
-                                              start_node=start_node,
+        ordered_set_node = mat.OrderedSetNode(start_node=start_node,
                                               end_node=end_node)
         return ordered_set_node
 
@@ -696,14 +677,12 @@ class AMPLParser:
 
                 # div or mod
                 elif operator == "div" or operator == "mod":
-                    root_operation = mat.ArithmeticTransformationNode(id=self._generate_free_node_id(),
-                                                                      symbol=operator,
+                    root_operation = mat.ArithmeticTransformationNode(symbol=operator,
                                                                       operands=[root_operation, rhs_operand])
 
                 # exponentiation
                 else:
-                    root_operation = mat.ExponentiationNode(id=self._generate_free_node_id(),
-                                                            lhs_operand=root_operation,
+                    root_operation = mat.ExponentiationNode(lhs_operand=root_operation,
                                                             rhs_operand=rhs_operand)
 
                 arith_operation = None
@@ -718,7 +697,7 @@ class AMPLParser:
                 # convert subtraction operation to addition operation
                 if operator == '-':
                     operator = '+'  # change the operator
-                    rhs_operand = self.append_negative_unity_coefficient(rhs_operand, self._generate_free_node_id)
+                    rhs_operand = self.append_negative_unity_coefficient(rhs_operand)
 
                 # convert division operation to multiplication operation
                 elif operator == '/':
@@ -728,11 +707,9 @@ class AMPLParser:
                 # build a new arithmetic operation node if it does not exist yet
                 if arith_operation is None:
                     if operator == '+':
-                        arith_operation = mat.AdditionNode(id=self._generate_free_node_id(),
-                                                           operands=[root_operation, rhs_operand])
+                        arith_operation = mat.AdditionNode(operands=[root_operation, rhs_operand])
                     else:
-                        arith_operation = mat.MultiplicationNode(id=self._generate_free_node_id(),
-                                                                 operands=[root_operation, rhs_operand])
+                        arith_operation = mat.MultiplicationNode(operands=[root_operation, rhs_operand])
                     root_operation = arith_operation
 
                 # otherwise, add the RHS operand to the existing arithmetic operation node
@@ -744,23 +721,21 @@ class AMPLParser:
     def __convert_less_operation_to_non_negative_max(self,
                                                      lhs_operand: mat.ArithmeticExpressionNode,
                                                      rhs_operand: mat.ArithmeticExpressionNode):
-        zero_node = mat.NumericNode(id=self._generate_free_node_id(), value=0)
-        rhs_operand = self.append_negative_unity_coefficient(rhs_operand, self._generate_free_node_id)
-        sub_node = mat.AdditionNode(id=self._generate_free_node_id(),
-                                    operands=[lhs_operand, rhs_operand])
-        return mat.ArithmeticTransformationNode(id=self._generate_free_node_id(),
-                                                symbol="max",
+        zero_node = mat.NumericNode(value=0)
+        rhs_operand = self.append_negative_unity_coefficient(rhs_operand)
+        sub_node = mat.AdditionNode(operands=[lhs_operand, rhs_operand])
+        return mat.ArithmeticTransformationNode(symbol="max",
                                                 idx_set_node=None,
                                                 operands=[sub_node, zero_node])
 
-    def __convert_divisor_to_fraction(self, divisor: mat.ArithmeticExpressionNode):
+    @staticmethod
+    def __convert_divisor_to_fraction(divisor: mat.ArithmeticExpressionNode):
 
         # build a numeric node with value 1
-        one_node = mat.NumericNode(id=self._generate_free_node_id(), value=1)
+        one_node = mat.NumericNode(value=1)
 
         # build a division operation node
-        fraction = mat.DivisionNode(id=self._generate_free_node_id(),
-                                    lhs_operand=one_node,
+        fraction = mat.DivisionNode(lhs_operand=one_node,
                                     rhs_operand=divisor,
                                     is_prioritized=True)
 
@@ -783,11 +758,10 @@ class AMPLParser:
 
             # special case: unary negation
             if operator == '-':
-                node = self.append_negative_unity_coefficient(operand, self._generate_free_node_id)
+                node = self.append_negative_unity_coefficient(operand)
 
             else:
-                node = mat.UnaryArithmeticOperationNode(id=self._generate_free_node_id(),
-                                                        operator=operator,
+                node = mat.UnaryArithmeticOperationNode(operator=operator,
                                                         operand=operand)
 
             return node
@@ -796,8 +770,7 @@ class AMPLParser:
             return self._parse_arithmetic_expression(precedence=16)
 
     @staticmethod
-    def append_negative_unity_coefficient(node: mat.ArithmeticExpressionNode,
-                                          free_node_id_generator: Callable[[], int]):
+    def append_negative_unity_coefficient(node: mat.ArithmeticExpressionNode):
 
         # special case 1: node is numeric
         if isinstance(node, mat.NumericNode):
@@ -821,14 +794,14 @@ class AMPLParser:
 
             # add -1 coefficient to the node
             else:
-                coeff_node = mat.NumericNode(id=free_node_id_generator(), value=-1)
+                coeff_node = mat.NumericNode(value=-1)
                 node.operands.insert(0, coeff_node)
                 return node
 
         # generic case
         else:
-            coeff_node = mat.NumericNode(id=free_node_id_generator(), value=-1)
-            mult_node = mat.MultiplicationNode(id=free_node_id_generator(), operands=[coeff_node, node])
+            coeff_node = mat.NumericNode(value=-1)
+            mult_node = mat.MultiplicationNode(operands=[coeff_node, node])
             return mult_node
 
     def __parse_arithmetic_operand(self) -> Union[mat.ArithmeticExpressionNode,
@@ -895,8 +868,7 @@ class AMPLParser:
 
             self._next_token()  # skip closing parenthesis ')'
 
-        function_operation = mat.ArithmeticTransformationNode(id=self._generate_free_node_id(),
-                                                              symbol=function_sym,
+        function_operation = mat.ArithmeticTransformationNode(symbol=function_sym,
                                                               idx_set_node=idx_set_node,
                                                               operands=operands)
 
@@ -922,8 +894,7 @@ class AMPLParser:
             rhs_operand = self.__parse_string_term()
 
             if str_operation is None:
-                str_operation = mat.MultiStringOperationNode(id=self._generate_free_node_id(),
-                                                             operator=operator,
+                str_operation = mat.MultiStringOperationNode(operator=operator,
                                                              operands=[root_operation, rhs_operand])
                 root_operation = str_operation
 
@@ -963,7 +934,7 @@ class AMPLParser:
         # Dummy
         else:
             self._next_token()
-            return mat.DummyNode(id=self._generate_free_node_id(), symbol=token)
+            return mat.DummyNode(symbol=token)
 
     def _parse_string_literal(self):
 
@@ -973,7 +944,7 @@ class AMPLParser:
         delimiter = token[0]
         literal = token[1:len(token) - 1]
 
-        return mat.StringNode(id=self._generate_free_node_id(), literal=literal, delimiter=delimiter)
+        return mat.StringNode(literal=literal, delimiter=delimiter)
 
     # Entity Parsing
     # ------------------------------------------------------------------------------------------------------------------
@@ -1049,13 +1020,11 @@ class AMPLParser:
             self._next_token()  # skip suffix
 
         if entity_type == const.SET_TYPE:
-            return mat.SetNode(id=self._generate_free_node_id(),
-                               symbol=token,
+            return mat.SetNode(symbol=token,
                                entity_index_node=index_node,
                                suffix=suffix)
         else:
-            return mat.DeclaredEntityNode(id=self._generate_free_node_id(),
-                                          symbol=token,
+            return mat.DeclaredEntityNode(symbol=token,
                                           idx_node=index_node,
                                           suffix=suffix,
                                           type=entity_type)
@@ -1082,8 +1051,7 @@ class AMPLParser:
 
         self._next_token()  # skip closing bracket
 
-        return mat.CompoundDummyNode(id=self._generate_free_node_id(),
-                                     component_nodes=nodes)
+        return mat.CompoundDummyNode(component_nodes=nodes)
 
     def __parse_predefined_parameter(self):
 
@@ -1092,8 +1060,7 @@ class AMPLParser:
         # A.7.2
         if token == "Infinity":
             self._next_token()  # skip symbol
-            return mat.NumericNode(id=self._generate_free_node_id(),
-                                   value=np.inf)
+            return mat.NumericNode(value=np.inf)
         else:
             # treat it as a declared entity
             return self._parse_declared_entity()  # symbol is skipped in this method
@@ -1140,8 +1107,7 @@ class AMPLParser:
         self._next_token()
 
         symbol = "{0}{1}{2}{3}".format(coeff_sym, sci_not_sym, power_sign, power)
-        return mat.NumericNode(id=self._generate_free_node_id(),
-                               value=symbol,
+        return mat.NumericNode(value=symbol,
                                sci_not=is_sci_not,
                                coeff_sym=coeff_sym,
                                power_sign=power_sign,
@@ -1161,8 +1127,7 @@ class AMPLParser:
             else:
                 raise ValueError("AMPL parser encountered unexpected token '{0}'".format(self.get_token()) +
                                  " while parsing a compound set")
-        return mat.CompoundDummyNode(id=self._generate_free_node_id(),
-                                     component_nodes=component_nodes)
+        return mat.CompoundDummyNode(component_nodes=component_nodes)
 
     # Utility
     # ------------------------------------------------------------------------------------------------------------------
@@ -1225,14 +1190,6 @@ class AMPLParser:
             if self.get_token() in delimiters:
                 break  # reached whitespace or end of statement
         return token
-
-    def _generate_free_node_id(self) -> int:
-        if self.problem is not None:
-            return self.problem.generate_free_node_id()
-        else:
-            free_node_id = self.__free_node_id
-            self.__free_node_id += 1
-            return free_node_id
 
 
 class AMPLLexer:

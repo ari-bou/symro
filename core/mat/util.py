@@ -1,5 +1,6 @@
+import itertools
 from ordered_set import OrderedSet
-from typing import List, Optional, Tuple, Union
+from typing import Iterable, List, Optional, Tuple, Union
 
 Element = Tuple[Union[int, float, str, None], ...]
 IndexingSet = OrderedSet[Element]
@@ -26,18 +27,8 @@ def get_element_literal(element: Union[int, float, str]):
 # Set Operations
 # ----------------------------------------------------------------------------------------------------------------------
 
-def cartesian_product(sets: List[IndexingSet]) -> IndexingSet:
-    """
-    Evaluate the cartesian product of two or more sets. Each element of the combined set is a unique combination of 1
-    element from each of the constituent sets.
-    :param sets: list of constituent ordered sets
-    :return: ordered set of elements comprising the combined set
-    """
-
-    combined_sets: IndexingSet = OrderedSet()
-    set_count = len(sets)
-
-    def combine(index: List[Union[int, float, str]] = None, set_index: int = 0):
+"""
+    def cross(index: List[Union[int, float, str]] = None, set_index: int = 0):
         if index is None:
             index = []
         set_i = sets[set_index]
@@ -46,34 +37,54 @@ def cartesian_product(sets: List[IndexingSet]) -> IndexingSet:
                 index_copy: List[Optional[Union[int, float, str]]] = list(index)
                 index_copy.extend(list(element))
                 if set_index == set_count - 1:
-                    combined_sets.add(tuple(index_copy))
+                    combined_set.add(tuple(index_copy))
                 else:
-                    combine(index_copy, set_index + 1)
+                    cross(index_copy, set_index + 1)
         else:
             index_copy: List[Optional[Union[int, float, str]]] = list(index)
             index_copy.append(None)
             if set_index == set_count - 1:
-                combined_sets.add(tuple(index_copy))
+                combined_set.add(tuple(index_copy))
             else:
-                combine(index_copy, set_index + 1)
+                cross(index_copy, set_index + 1)
 
     if set_count > 0:
-        combine()
+        cross()
 
-    return combined_sets
+    return combined_set
+    """
+
+def cartesian_product(sets: List[IndexingSet]) -> IndexingSet:
+    """
+    Evaluate the cartesian product of two or more sets. Each element of the combined set is a unique combination of 1
+    element from each of the constituent sets.
+    :param sets: list of constituent ordered sets
+    :return: ordered set of elements comprising the combined set
+    """
+
+    if len(sets) == 0:
+        return OrderedSet()
+
+    else:
+        sets = [s for s in sets if s is not None]
+        combined_elements = itertools.product(*sets)
+        flattened_elements = [flatten_element(e) for e in combined_elements]
+        return OrderedSet(flattened_elements)
 
 
-def flatten_set(set_in: OrderedSet[Tuple[Optional[Tuple[Union[int, float, str], ...]], ...]]) -> IndexingSet:
-    flattened_set = OrderedSet()
-    for element in set_in:
-        flattened_element = []
-        for sub_element in element:
-            if sub_element is not None:
-                flattened_element.extend(list(sub_element))
-            else:
-                flattened_element.append(None)
-        flattened_set.add(tuple(flattened_element))
-    return flattened_set
+def flatten_element(element: Tuple[Union[int, float, str, Element], ...]) -> Element:
+
+    flattened_element = []
+
+    for sub_element in element:
+
+        if isinstance(sub_element, Iterable):
+            flattened_element.extend(sub_element)
+
+        else:
+            flattened_element.append(sub_element)
+
+    return tuple(flattened_element)
 
 
 def aggregate_set(set_in: IndexingSet,

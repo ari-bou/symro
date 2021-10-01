@@ -698,11 +698,11 @@ class StatementCollection(BaseStatement):
 class Script:
 
     def __init__(self,
-                 id: str = "main",
+                 name: str = "main",
                  raw_literal: str = None,
                  tokens: List[str] = None,
                  statements: List[BaseStatement] = None):
-        self.id: str = id
+        self.name: str = name
         self.raw_literal: str = raw_literal
         self.tokens: List[str] = tokens
         self.token_index: int = 0
@@ -715,7 +715,7 @@ class Script:
         return len(self.statements)
 
     def copy(self, source: "Script"):
-        self.id = source.id
+        self.name = source.name
         self.raw_literal = source.raw_literal
         self.tokens = list(source.tokens)
         self.token_index = source.token_index
@@ -723,7 +723,7 @@ class Script:
 
     def write(self, dir_path: str, file_name: str = None):
         if file_name is None:
-            file_name = self.id
+            file_name = self.name
         util.write_file(dir_path, file_name, self.get_literal())
 
     def get_literal(self, indent_level: int = 0) -> str:
@@ -752,7 +752,7 @@ class CompoundScript:
         if included_scripts is None:
             included_scripts = {}
         if isinstance(included_scripts, list):
-            included_scripts = {script.id: script for script in included_scripts}
+            included_scripts = {script.name: script for script in included_scripts}
 
         self.main_script: Optional[Script] = main_script
         self.included_scripts: Dict[str, Script] = included_scripts
@@ -772,9 +772,9 @@ class CompoundScript:
                             include_in_main: bool = True,
                             file_command: str = "include",
                             statement_index: int = 0):
-        self.included_scripts[script.id] = script
+        self.included_scripts[script.name] = script
         if include_in_main:
-            file_name_node = mat.StringNode(literal=script.id, delimiter='"')
+            file_name_node = mat.StringNode(literal=script.name, delimiter='"')
             file_statement = FileStatement(command=file_command,
                                            file_name_node=file_name_node)
             self.main_script.statements.insert(statement_index, file_statement)

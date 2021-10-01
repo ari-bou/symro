@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Optional
 import warnings
 
 from symro.core.mat.entity import Entity, EntityCollection, SSet, Parameter, Variable, Objective, Constraint

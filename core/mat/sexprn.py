@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 from symro.core.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode
 from symro.core.mat.setn import CompoundSetNode
@@ -11,9 +11,8 @@ class ConditionalSetExpressionNode(SetExpressionNode):
 
     def __init__(self,
                  operands: List[SetExpressionNode],
-                 conditions: List[Optional[LogicalExpressionNode]],
-                 id: int = 0):
-        super().__init__(id)
+                 conditions: List[Optional[LogicalExpressionNode]]):
+        super().__init__()
         self.operands: List[SetExpressionNode] = operands
         self.conditions: List[Optional[LogicalExpressionNode]] = conditions
 
@@ -70,10 +69,9 @@ class SetReductionOperationNode(SetExpressionNode):
     def __init__(self,
                  symbol: str,
                  idx_set_node: CompoundSetNode,
-                 operand: SetExpressionNode = None,
-                 id: int = 0):
+                 operand: SetExpressionNode = None):
 
-        super().__init__(id)
+        super().__init__()
         self.symbol: str = symbol
         self.idx_set_node: CompoundSetNode = idx_set_node
         self.operand: SetExpressionNode = operand
@@ -105,9 +103,8 @@ class BinarySetOperationNode(SetExpressionNode):
     def __init__(self,
                  operator: str,
                  lhs_operand: SetExpressionNode = None,
-                 rhs_operand: SetExpressionNode = None,
-                 id: int = 0):
-        super().__init__(id)
+                 rhs_operand: SetExpressionNode = None):
+        super().__init__()
         self.operator: str = operator
         self.lhs_operand: SetExpressionNode = lhs_operand
         self.rhs_operand: SetExpressionNode = rhs_operand

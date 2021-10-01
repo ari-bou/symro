@@ -20,9 +20,8 @@ class RelationalOperationNode(LogicalExpressionNode):
                                     DummyNode] = None,
                  rhs_operand: Union[ArithmeticExpressionNode,
                                     StringExpressionNode,
-                                    DummyNode] = None,
-                 id: int = 0):
-        super().__init__(id)
+                                    DummyNode] = None):
+        super().__init__()
         self.operator: str = operator
         self.lhs_operand: Optional[Union[ArithmeticExpressionNode,
                                          StringExpressionNode,
@@ -138,9 +137,8 @@ class SetMembershipOperationNode(LogicalExpressionNode):
     def __init__(self,
                  operator: str,
                  member_node: Union[BaseDummyNode, ArithmeticExpressionNode, StringExpressionNode] = None,
-                 set_node: SetExpressionNode = None,
-                 id: int = 0):
-        super().__init__(id)
+                 set_node: SetExpressionNode = None):
+        super().__init__()
         self.operator: str = operator  # 'in' or 'not in'
         self.member_node: Optional[Union[BaseDummyNode, ArithmeticExpressionNode, StringExpressionNode]] = member_node
         self.set_node: Optional[SetExpressionNode] = set_node
@@ -200,9 +198,8 @@ class SetComparisonOperationNode(LogicalExpressionNode):
     def __init__(self,
                  operator: str,
                  lhs_operand: SetExpressionNode = None,
-                 rhs_operand: SetExpressionNode = None,
-                 id: int = 0):
-        super().__init__(id)
+                 rhs_operand: SetExpressionNode = None):
+        super().__init__()
         self.operator: str = operator
         self.lhs_operand: Optional[SetExpressionNode] = lhs_operand
         self.rhs_operand: Optional[SetExpressionNode] = rhs_operand
@@ -240,10 +237,9 @@ class LogicalReductionOperationNode(LogicalExpressionNode):
     def __init__(self,
                  symbol: str,
                  idx_set_node: CompoundSetNode,
-                 operand: ExpressionNode = None,
-                 id: int = 0):
+                 operand: ExpressionNode = None):
 
-        super().__init__(id)
+        super().__init__()
         self.symbol: str = symbol
         self.idx_set_node: CompoundSetNode = idx_set_node
         self.operand: ExpressionNode = operand
@@ -271,9 +267,8 @@ class UnaryLogicalOperationNode(LogicalExpressionNode):
 
     def __init__(self,
                  operator: str,
-                 operand: LogicalExpressionNode = None,
-                 id: int = 0):
-        super().__init__(id)
+                 operand: LogicalExpressionNode = None):
+        super().__init__()
         self.operator: str = operator
         self.operand: Optional[LogicalExpressionNode] = operand
 
@@ -327,9 +322,8 @@ class BinaryLogicalOperationNode(LogicalExpressionNode):
     def __init__(self,
                  operator: str,
                  lhs_operand: LogicalExpressionNode = None,
-                 rhs_operand: LogicalExpressionNode = None,
-                 id: int = 0):
-        super().__init__(id)
+                 rhs_operand: LogicalExpressionNode = None):
+        super().__init__()
         self.operator: str = operator
         self.lhs_operand: Optional[LogicalExpressionNode] = lhs_operand
         self.rhs_operand: Optional[LogicalExpressionNode] = rhs_operand
@@ -394,9 +388,8 @@ class MultiLogicalOperationNode(LogicalExpressionNode):
 
     def __init__(self,
                  operator: str,
-                 operands: List[LogicalExpressionNode] = None,
-                 id: int = 0):
-        super().__init__(id)
+                 operands: List[LogicalExpressionNode] = None):
+        super().__init__()
         self.operator: str = operator
         self.operands: Optional[List[LogicalExpressionNode]] = operands
 

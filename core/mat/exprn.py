@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 import numpy as np
 from ordered_set import OrderedSet
-from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from symro.core.mat.entity import Parameter, Variable
 from symro.core.mat.util import Element, IndexingSet
@@ -14,8 +14,7 @@ from symro.core.mat.state import State
 
 class ExpressionNode(ABC):
 
-    def __init__(self, id: int = 0):
-        self.id: int = id
+    def __init__(self):
         self.parent: Optional[ExpressionNode] = None
         self.is_prioritized: bool = False
 
@@ -76,21 +75,6 @@ class ExpressionNode(ABC):
         """
         return any([o.is_controlled(dummy_element) for o in self.get_children()])
 
-    def get_node(self, id: int):
-        if self.id == id:
-            return self
-        for child in self.get_children():
-            n = child.get_node(id)
-            if n is not None:
-                return n
-        return None
-
-    def get_free_id(self, id: int = 0):
-        id = max(id, self.id + 1)
-        for child in self.get_children():
-            id = child.get_free_id(id)
-        return id
-
     @abstractmethod
     def get_children(self) -> List["ExpressionNode"]:
         pass
@@ -109,8 +93,8 @@ class ExpressionNode(ABC):
 
 class LogicalExpressionNode(ExpressionNode, ABC):
 
-    def __init__(self, id: int = 0):
-        super().__init__(id)
+    def __init__(self):
+        super().__init__()
 
     def evaluate(self,
                  state: State,
@@ -121,8 +105,8 @@ class LogicalExpressionNode(ExpressionNode, ABC):
 
 class SetExpressionNode(ExpressionNode, ABC):
 
-    def __init__(self, id: int = 0):
-        super().__init__(id)
+    def __init__(self):
+        super().__init__()
 
     @abstractmethod
     def get_dim(self, state: State) -> int:
@@ -146,8 +130,8 @@ class SetExpressionNode(ExpressionNode, ABC):
 
 class ArithmeticExpressionNode(ExpressionNode, ABC):
 
-    def __init__(self, id: int = 0):
-        super().__init__(id)
+    def __init__(self):
+        super().__init__()
 
     def collect_declared_entities(self,
                                   state: State,
@@ -164,8 +148,8 @@ class ArithmeticExpressionNode(ExpressionNode, ABC):
 
 class StringExpressionNode(ExpressionNode, ABC):
 
-    def __init__(self, id: int = 0):
-        super().__init__(id)
+    def __init__(self):
+        super().__init__()
 
     def evaluate(self,
                  state: State,

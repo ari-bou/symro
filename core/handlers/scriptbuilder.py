@@ -4,16 +4,20 @@ import symro.core.constants as const
 import symro.core.mat as mat
 from symro.core.prob.problem import BaseProblem, Problem
 import symro.core.prob.statement as stm
-from symro.core.handlers.nodebuilder import NodeBuilder
+import symro.core.handlers.nodebuilder as nb
 
 
 def model_to_ampl(problem: Problem,
                   file_name: str = None,
                   working_dir_path: str = None):
+
     script_builder = ScriptBuilder()
     script = script_builder.generate_problem_model_script(problem=problem,
                                                           model_file_name=file_name,
                                                           model_file_extension=None)
+
+    if working_dir_path is None:
+        working_dir_path = problem.working_dir_path
     script.write(dir_path=working_dir_path, file_name=file_name)
 
 
@@ -78,7 +82,7 @@ class ScriptBuilder:
                 model_file_name = model_file_name[:-4]
             model_file_name += model_file_extension
 
-        self._script = stm.Script(id=model_file_name)
+        self._script = stm.Script(name=model_file_name)
 
         if (include_sets or include_params) and len(meta_sets_params) > 0:
             self.__generate_region_heading("Sets and Parameters")
@@ -126,11 +130,14 @@ class ScriptBuilder:
                                         subproblem: BaseProblem,
                                         idx_meta_sets: List[mat.MetaSet] = None):
 
-        node_builder = NodeBuilder(problem)
-
         prob_node = mat.DeclaredEntityNode(symbol=subproblem.symbol,  # problem symbol
                                            type=const.PROB_TYPE)
-        idx_set_node = node_builder.build_idx_set_node(idx_meta_sets=idx_meta_sets)  # problem indexing set
+
+        unb_sym_mapping = {}
+        idx_set_node = nb.build_idx_set_node(problem=problem,
+                                             idx_meta_sets=idx_meta_sets,
+                                             unb_sym_mapping=unb_sym_mapping)  # problem indexing set
+
         custom_dummy_syms = None
         if idx_meta_sets is not None:
             custom_dummy_syms = {ms.get_symbol(): ms.get_dummy_element() for ms in idx_meta_sets}
@@ -144,9 +151,9 @@ class ScriptBuilder:
         # build tuples of indexing set nodes and entity nodes for the collected meta-entities
         def build_indexing_and_entity_node_tuple(meta_entity: mat.MetaEntity):
 
-            entity_idx_node = node_builder.build_default_entity_index_node(meta_entity)
-            if node_builder.unb_sym_map is not None:
-                node_builder.replace_unbound_symbols(entity_idx_node, node_builder.unb_sym_map)
+            entity_idx_node = nb.build_default_entity_index_node(meta_entity)
+            if len(unb_sym_mapping) > 0:
+                nb.replace_unbound_symbols(entity_idx_node, unb_sym_mapping)
 
             entity_node = mat.DeclaredEntityNode(symbol=meta_entity.get_symbol(),
                                                  idx_node=entity_idx_node,
@@ -156,9 +163,11 @@ class ScriptBuilder:
                 return None, entity_node
             else:
                 # build a new indexing set node with modified dummy symbols
-                entity_idx_set_node = node_builder.build_entity_idx_set_node(meta_entity=meta_entity,
-                                                                             remove_sets=idx_meta_sets,
-                                                                             custom_dummy_syms=custom_dummy_syms)
+                entity_idx_set_node = nb.build_entity_idx_set_node(
+                    problem=problem,
+                    meta_entity=meta_entity,
+                    remove_sets=idx_meta_sets,
+                    custom_dummy_syms=custom_dummy_syms)
                 return entity_idx_set_node, entity_node
 
         node_tuples = [build_indexing_and_entity_node_tuple(me) for me in meta_entities]

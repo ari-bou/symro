@@ -7,7 +7,7 @@ import warnings
 import symro.core.mat as mat
 from symro.core.prob.problem import Problem
 import symro.core.prob.statement as stm
-from symro.core.handlers.entitybuilder import EntityBuilder
+import symro.core.handlers.entitybuilder as eb
 from symro.core.execution.amplengine import AMPLEngine
 from symro.core.parsing.amplscriptparser import AMPLScriptParser
 import symro.core.util.util as util
@@ -146,13 +146,11 @@ def __standardize_indices_from_api(raw_indices: Union[int, float, str,
 # ----------------------------------------------------------------------------------------------------------------------
 
 def __complete_meta_entity_construction(problem: Problem):
-    entity_builder = EntityBuilder(problem)
-    entity_builder.build_all_idx_meta_sets()
-    __build_declared_subproblems(problem, entity_builder)
+    eb.build_all_idx_meta_sets(problem)
+    __build_declared_subproblems(problem)
 
 
-def __build_declared_subproblems(problem: Problem,
-                                 entity_builder: EntityBuilder):
+def __build_declared_subproblems(problem: Problem):
 
     prob_statements = []
 
@@ -166,9 +164,11 @@ def __build_declared_subproblems(problem: Problem,
                 prob_statements.append(statement)
 
     for prob_statement in prob_statements:
-        sp = entity_builder.build_subproblem(prob_sym=prob_statement.prob_node.symbol,
-                                             prob_idx_set_node=prob_statement.idx_set_node,
-                                             entity_nodes=prob_statement.item_nodes)
+        sp = eb.build_subproblem(
+            problem=problem,
+            sp_sym=prob_statement.prob_node.symbol,
+            sp_idx_set_node=prob_statement.idx_set_node,
+            entity_nodes=prob_statement.item_nodes)
         problem.add_subproblem(sp)
 
 

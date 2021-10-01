@@ -12,9 +12,9 @@ import symro.core.mat as mat
 from symro.core.prob.problem import Problem, BaseProblem
 import symro.core.prob.statement as stm
 
-from symro.core.handlers.formulator import Formulator
-from symro.core.handlers.nodebuilder import NodeBuilder
-from symro.core.handlers.entitybuilder import EntityBuilder
+import symro.core.handlers.formulator as fmr
+import symro.core.handlers.nodebuilder as nb
+import symro.core.handlers.entitybuilder as eb
 from symro.core.handlers.scriptbuilder import ScriptBuilder
 
 from symro.core.parsing.amplparser import AMPLParser
@@ -48,11 +48,6 @@ class GBDProblemBuilder:
         # Entities
         self.comp_vars: Dict[str, mat.Variable] = {}
 
-        # Handlers
-        self.formulator: Optional[Formulator] = None
-        self._node_builder: Optional[NodeBuilder] = None
-        self.entity_builder: Optional[EntityBuilder] = None
-
         # Flags
         self.__is_primal_sp_obj_comp: Dict[str, bool] = {}
 
@@ -81,9 +76,8 @@ class GBDProblemBuilder:
                                       working_dir_path=working_dir_path)
 
         # standardize model
-        self.formulator = Formulator(self.gbd_problem)
-        self.formulator.substitute_defined_variables()
-        self.gbd_problem.origin_to_std_con_map = self.formulator.standardize_model()
+        fmr.substitute_defined_variables(self.gbd_problem)
+        self.gbd_problem.origin_to_std_con_map = fmr.standardize_model(self.gbd_problem)
 
         # retrieve or construct complicating meta-variables
         self.__collect_complicating_meta_variables(comp_var_defs)
@@ -94,9 +88,6 @@ class GBDProblemBuilder:
         return self.gbd_problem
 
     def build_gbd_constructs(self) -> GBDProblem:
-
-        self._node_builder = NodeBuilder(self.gbd_problem)
-        self.entity_builder = EntityBuilder(self.gbd_problem)
 
         # --- Primal Problem ---
         self.__categorize_constraints()
@@ -166,7 +157,8 @@ class GBDProblemBuilder:
                 if len(sum_idx_meta_sets) > 0:
 
                     # build the indexing set node of a reductive summation operation
-                    sum_idx_set_node = self._node_builder.build_idx_set_node(sum_idx_meta_sets)
+                    sum_idx_set_node = nb.build_idx_set_node(problem=self.gbd_problem,
+                                                             idx_meta_sets=sum_idx_meta_sets)
 
                     # retrieve the root expression node of the original objective function
                     obj_exp_node = primal_sp_obj.get_expression().root_node
@@ -175,8 +167,7 @@ class GBDProblemBuilder:
                                          + " while generating a new primal subproblem meta-objective")
 
                     # embed the original function in a reductive summation operation
-                    sum_node = mat.ArithmeticTransformationNode(id=self.gbd_problem.generate_free_node_id(),
-                                                                symbol="sum",
+                    sum_node = mat.ArithmeticTransformationNode(symbol="sum",
                                                                 idx_set_node=sum_idx_set_node,
                                                                 operands=obj_exp_node)
 
@@ -190,11 +181,14 @@ class GBDProblemBuilder:
                                       for sym, ms in self.gbd_problem.idx_meta_sets.items()}
 
                 # build an indexing set node for the new meta-objective
-                obj_idx_set_node = self._node_builder.build_idx_set_node(obj_idx_meta_sets,
-                                                                         custom_dummy_syms=default_dummy_syms)
+                unb_sym_mapping = {}
+                obj_idx_set_node = nb.build_idx_set_node(problem=self.gbd_problem,
+                                                         idx_meta_sets=obj_idx_meta_sets,
+                                                         custom_unb_syms=default_dummy_syms,
+                                                         unb_sym_mapping=unb_sym_mapping)
 
                 # replace dummy symbols in expression with default dummy symbols
-                self._node_builder.replace_unbound_symbols(expr_node, mapping=self._node_builder.unb_sym_map)
+                nb.replace_unbound_symbols(expr_node, mapping=unb_sym_mapping)
 
                 # build meta-objective expression
                 expression = mat.Expression(expr_node)
@@ -389,7 +383,7 @@ class GBDProblemBuilder:
         for meta_con in meta_cons:
 
             # formulate modified constraint with slack variables
-            sl_result = self.formulator.formulate_slackened_constraint(meta_con)
+            sl_result = fmr.formulate_slackened_constraint(self.gbd_problem, meta_con)
             sl_meta_var_list, sl_meta_con = sl_result
 
             # add slack meta-variables to the problem
@@ -411,9 +405,10 @@ class GBDProblemBuilder:
                                              sl_meta_vars: List[mat.MetaVariable]):
 
         # formulate infeasibility minimization objective
-        fbl_meta_obj = self.formulator.formulate_slack_min_objective(idx_meta_sets=self.gbd_problem.idx_meta_sets,
-                                                                     sl_meta_vars=sl_meta_vars,
-                                                                     obj_sym=obj_sym)
+        fbl_meta_obj = fmr.formulate_slack_min_objective(problem=self.gbd_problem,
+                                                         idx_meta_sets=self.gbd_problem.idx_meta_sets,
+                                                         sl_meta_vars=sl_meta_vars,
+                                                         obj_sym=obj_sym)
 
         # add meta-objective to the problem
         self.gbd_problem.fbl_sp_objs[obj_sym] = fbl_meta_obj
@@ -476,10 +471,12 @@ class GBDProblemBuilder:
                 idx_set_con_literal = parent_meta_var.get_idx_set_con_literal()
 
                 # Build storage meta-parameter
-                stored_comp_param = self.entity_builder.build_meta_param(symbol=storage_symbol,
-                                                                         idx_meta_sets=idx_meta_sets,
-                                                                         idx_set_con_literal=idx_set_con_literal,
-                                                                         default_value=0)
+                stored_comp_param = eb.build_meta_param(
+                    problem=self.gbd_problem,
+                    symbol=storage_symbol,
+                    idx_meta_sets=idx_meta_sets,
+                    idx_set_con_literal=idx_set_con_literal,
+                    default_value=0)
 
                 # Add storage meta-parameter to problem
                 self.gbd_problem.stored_comp_decisions[meta_var.get_symbol()] = stored_comp_param
@@ -494,19 +491,20 @@ class GBDProblemBuilder:
 
         idx_node = None
         if eta.get_idx_set_reduced_dim() > 0:
-            idx_node = self._node_builder.build_default_entity_index_node(eta)
+            idx_node = nb.build_default_entity_index_node(eta)
 
-        eta_node = mat.DeclaredEntityNode(id=self.generate_free_node_id(),
-                                          symbol=eta.get_symbol(),
+        eta_node = mat.DeclaredEntityNode(symbol=eta.get_symbol(),
                                           idx_node=idx_node,
                                           type=const.VAR_TYPE)
 
         expression = mat.Expression(eta_node)
 
         # Build meta-objective for the master problem
-        meta_obj = self.entity_builder.build_meta_obj(symbol=self.gbd_problem.mp_obj_sym,
-                                                      direction="minimize",
-                                                      expression=expression)
+        meta_obj = eb.build_meta_obj(
+            problem=self.gbd_problem,
+            symbol=self.gbd_problem.mp_obj_sym,
+            direction="minimize",
+            expression=expression)
 
         # Add meta-objective to problem
         self.gbd_problem.master_obj = meta_obj
@@ -548,21 +546,18 @@ class GBDProblemBuilder:
                 operands.append(node)
 
         if len(operands) > 0:
-            sum_node = self._node_builder.build_addition_node(operands)
+            sum_node = nb.build_addition_node(operands)
         else:
-            sum_node = mat.NumericNode(id=self.generate_free_node_id(),
-                                       value=0)
+            sum_node = nb.build_numeric_node(0)
 
         # Build variable indexing set node
         idx_set_node = None
         if len(self.gbd_problem.idx_meta_sets) > 0:
-            idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets=self.gbd_problem.idx_meta_sets)
-            dummy_node = mat.DummyNode(id=self.generate_free_node_id(),
-                                       symbol=self.gbd_problem.cuts_unb_sym)
-            cuts_set_node = mat.SetNode(id=self.generate_free_node_id(),
-                                        symbol=self.gbd_problem.cuts_sym)
-            idx_set_node.set_nodes.append(mat.IndexingSetNode(id=self.generate_free_node_id(),
-                                                              dummy_node=dummy_node,
+            idx_set_node = nb.build_idx_set_node(problem=self.gbd_problem,
+                                                 idx_meta_sets=self.gbd_problem.idx_meta_sets)
+            dummy_node = mat.DummyNode(symbol=self.gbd_problem.cuts_unb_sym)
+            cuts_set_node = mat.SetNode(symbol=self.gbd_problem.cuts_sym)
+            idx_set_node.set_nodes.append(mat.IndexingSetNode(dummy_node=dummy_node,
                                                               set_node=cuts_set_node))
 
         # Build meta-variable
@@ -571,10 +566,12 @@ class GBDProblemBuilder:
         idx_meta_sets[self.gbd_problem.cuts_sym] = self.gbd_problem.cuts
 
         aux_f_sym = self.gbd_problem.generate_unique_symbol("GBD_F")
-        aux_f_meta_var = self.entity_builder.build_meta_var(symbol=aux_f_sym,
-                                                            idx_meta_sets=idx_meta_sets,
-                                                            idx_set_node=idx_set_node,
-                                                            defined_value=sum_node)
+        aux_f_meta_var = eb.build_meta_var(
+            problem=self.gbd_problem,
+            symbol=aux_f_sym,
+            idx_meta_sets=idx_meta_sets,
+            idx_set_node=idx_set_node,
+            defined_value=sum_node)
 
         # Add meta-variable to the problem
         self.gbd_problem.aux_f_meta_var = aux_f_meta_var
@@ -607,12 +604,9 @@ class GBDProblemBuilder:
             # Build auxiliary variable indexing set node
             if idx_set_node is not None:
                 idx_set_node = deepcopy(idx_set_node)
-                dummy_node = mat.DummyNode(id=self.generate_free_node_id(),
-                                           symbol=self.gbd_problem.cuts_unb_sym)
-                cuts_set_node = mat.SetNode(id=self.generate_free_node_id(),
-                                            symbol=self.gbd_problem.cuts_sym)
-                idx_set_node.set_nodes.append(mat.IndexingSetNode(id=self.generate_free_node_id(),
-                                                                  dummy_node=dummy_node,
+                dummy_node = mat.DummyNode(symbol=self.gbd_problem.cuts_unb_sym)
+                cuts_set_node = mat.SetNode(symbol=self.gbd_problem.cuts_sym)
+                idx_set_node.set_nodes.append(mat.IndexingSetNode(dummy_node=dummy_node,
                                                                   set_node=cuts_set_node))
 
             # Build meta-variable
@@ -621,11 +615,13 @@ class GBDProblemBuilder:
             idx_meta_sets.append(self.gbd_problem.cuts)
 
             aux_g_meta_var_sym = self.gbd_problem.generate_unique_symbol("GBD_G_{0}".format(i))
-            gv = self.entity_builder.build_meta_var(symbol=aux_g_meta_var_sym,
-                                                    idx_meta_sets=idx_meta_sets,
-                                                    idx_set_con_literal=meta_con.get_idx_set_con_literal(),
-                                                    idx_set_node=idx_set_node,
-                                                    defined_value=rhs_node)
+            gv = eb.build_meta_var(
+                problem=self.gbd_problem,
+                symbol=aux_g_meta_var_sym,
+                idx_meta_sets=idx_meta_sets,
+                idx_set_con_literal=meta_con.get_idx_set_con_literal(),
+                idx_set_node=idx_set_node,
+                defined_value=rhs_node)
 
             # Add meta-variable to the problem
             self.gbd_problem.aux_g_meta_vars[i] = gv
@@ -645,10 +641,12 @@ class GBDProblemBuilder:
         idx_set_con_literal = meta_con.get_idx_set_con_literal()
 
         # Build duality multiplier meta-parameter
-        duality_multiplier = self.entity_builder.build_meta_param(symbol=sym,
-                                                                  idx_meta_sets=idx_meta_sets,
-                                                                  idx_set_con_literal=idx_set_con_literal,
-                                                                  default_value=0)
+        duality_multiplier = eb.build_meta_param(
+            problem=self.gbd_problem,
+            symbol=sym,
+            idx_meta_sets=idx_meta_sets,
+            idx_set_con_literal=idx_set_con_literal,
+            default_value=0)
 
         # Add duality multiplier meta-parameter to the problem
         self.gbd_problem.duality_multipliers[id] = duality_multiplier
@@ -896,7 +894,7 @@ class GBDProblemBuilder:
                     return lhs_operand, lhs_status
                 elif rhs_status in self.COMP_STATUSES:
                     if node.operator == '-':
-                        rhs_operand = self._node_builder.append_negative_unity_coefficient(rhs_operand)
+                        rhs_operand = nb.append_negative_unity_coefficient(rhs_operand)
                         return rhs_operand, rhs_status
                     else:
                         return rhs_operand, rhs_status
@@ -966,8 +964,7 @@ class GBDProblemBuilder:
                 ref_op_node, status = self.__reformulate_node(op_node, idx_set, dummy_element)
 
                 if status == self.PURE_X_NODE:
-                    ref_op_node = mat.NumericNode(id=self.generate_free_node_id(),
-                                                  value=0)
+                    ref_op_node = nb.build_numeric_node(0)
                     status = self.CONST_NODE
 
                 statuses.append(status)
@@ -1010,8 +1007,7 @@ class GBDProblemBuilder:
         # Build summation node
         sum_idx_set_node = self.__build_idx_set_node_for_mixed_comp_entity_node(entity_node,
                                                                                 sub_comp_meta_vars)
-        sum_node = mat.ArithmeticTransformationNode(id=self.generate_free_node_id(),
-                                                    symbol="sum",
+        sum_node = mat.ArithmeticTransformationNode(symbol="sum",
                                                     idx_set_node=sum_idx_set_node,
                                                     operands=entity_node)
 
@@ -1098,8 +1094,7 @@ class GBDProblemBuilder:
                         is_controlled.append(entity_idx_nodes[dim_index].is_controlled())
 
                     if any(is_controlled):
-                        challenge_dummy_node = mat.CompoundDummyNode(id=self.generate_free_node_id(),
-                                                                     component_nodes=component_dummy_nodes)
+                        challenge_dummy_node = mat.CompoundDummyNode(component_nodes=component_dummy_nodes)
 
                 # Build set membership operation nodes
                 if challenge_dummy_node is not None and challenged_set_node is not None:
@@ -1113,8 +1108,7 @@ class GBDProblemBuilder:
                                          + " while reformulating a mixed entity node")
 
                     # Build logical set-membership operation
-                    membership_node = mat.SetMembershipOperationNode(id=self.generate_free_node_id(),
-                                                                     operator="in",
+                    membership_node = mat.SetMembershipOperationNode(operator="in",
                                                                      member_node=challenge_dummy_node,
                                                                      set_node=challenged_set_node)
                     conjunction_operands.append(membership_node)
@@ -1129,16 +1123,14 @@ class GBDProblemBuilder:
                 conjunction_operands.append(constraint_node)
 
             # --- Build logical conjunction node ---
-            conjunction_node = mat.MultiLogicalOperationNode(id=self.generate_free_node_id(),
-                                                             operator="&&",
+            conjunction_node = mat.MultiLogicalOperationNode(operator="&&",
                                                              operands=conjunction_operands)
             conjunction_node.is_prioritized = True
             conjunction_nodes.append(conjunction_node)
 
         # Build logical disjunction node
         if len(conjunction_nodes) > 0:
-            disjunction_node = mat.MultiLogicalOperationNode(id=self.generate_free_node_id(),
-                                                             operator="||",
+            disjunction_node = mat.MultiLogicalOperationNode(operator="||",
                                                              operands=conjunction_nodes)
         else:
             disjunction_node = None
@@ -1146,11 +1138,9 @@ class GBDProblemBuilder:
         # === Constrained Indexing Set Node Construction ===
 
         # Build indexing set node
-        ord_set_node = mat.OrderedSetNode(id=self.generate_free_node_id(),
-                                          start_node=mat.NumericNode(id=self.generate_free_node_id(), value=1),
-                                          end_node=mat.NumericNode(id=self.generate_free_node_id(), value=1))
-        sum_idx_set_node = mat.CompoundSetNode(id=self.generate_free_node_id(),
-                                               set_nodes=[ord_set_node],
+        ord_set_node = mat.OrderedSetNode(start_node=nb.build_numeric_node(1),
+                                          end_node=nb.build_numeric_node(1))
+        sum_idx_set_node = mat.CompoundSetNode(set_nodes=[ord_set_node],
                                                constraint_node=disjunction_node)
 
         return sum_idx_set_node
@@ -1205,14 +1195,12 @@ class GBDProblemBuilder:
                         is_comp_var_node = True
 
                         # build storage parameter index node
-                        cuts_dummy_node = mat.DummyNode(id=self.generate_free_node_id(),
-                                                        symbol=self.gbd_problem.cuts.get_dummy_element()[0])
+                        cuts_dummy_node = mat.DummyNode(symbol=self.gbd_problem.cuts.get_dummy_element()[0])
                         if node.idx_node is not None:
                             storage_param_idx_node = deepcopy(node.idx_node)
                             storage_param_idx_node.component_nodes.append(cuts_dummy_node)
                         else:
-                            storage_param_idx_node = mat.CompoundDummyNode(id=self.generate_free_node_id(),
-                                                                           component_nodes=[cuts_dummy_node])
+                            storage_param_idx_node = mat.CompoundDummyNode(component_nodes=[cuts_dummy_node])
 
                         # retrieve storage meta-parameter
                         storage_meta_param = self.gbd_problem.stored_comp_decisions[node.symbol]
@@ -1236,8 +1224,7 @@ class GBDProblemBuilder:
                     queue.put((child, idx_set, dummy_syms))
 
         # build subtraction node
-        subtraction_node = mat.SubtractionNode(id=self.generate_free_node_id(),
-                                               lhs_operand=root_node,
+        subtraction_node = mat.SubtractionNode(lhs_operand=root_node,
                                                rhs_operand=root_node_clone,
                                                is_prioritized=True)
 
@@ -1272,13 +1259,13 @@ class GBDProblemBuilder:
         idx_meta_sets = [self.gbd_problem.cuts]
 
         # build indexing set constraint node
-        is_feasible_node = self._node_builder.build_default_entity_node(self.gbd_problem.is_feasible)
+        is_feasible_node = nb.build_default_entity_node(self.gbd_problem.is_feasible)
         idx_set_con_node = mat.RelationalOperationNode(operator='=',
                                                        lhs_operand=is_feasible_node,
-                                                       rhs_operand=mat.NumericNode(1))
+                                                       rhs_operand=nb.build_numeric_node(1))
 
         # build indexing set node
-        idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets)
+        idx_set_node = nb.build_idx_set_node(problem=self.gbd_problem, idx_meta_sets=idx_meta_sets)
         idx_set_node.constraint_node = idx_set_con_node
 
         # build expression
@@ -1300,13 +1287,13 @@ class GBDProblemBuilder:
         idx_meta_sets = [self.gbd_problem.cuts]
 
         # build indexing set constraint node
-        is_feasible_node = self._node_builder.build_default_entity_node(self.gbd_problem.is_feasible)
+        is_feasible_node = nb.build_default_entity_node(self.gbd_problem.is_feasible)
         idx_set_con_node = mat.RelationalOperationNode(operator='=',
                                                        lhs_operand=is_feasible_node,
-                                                       rhs_operand=mat.NumericNode(0))
+                                                       rhs_operand=nb.build_numeric_node(0))
 
         # build indexing set node
-        idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets)
+        idx_set_node = nb.build_idx_set_node(problem=self.gbd_problem, idx_meta_sets=idx_meta_sets)
         idx_set_node.constraint_node = idx_set_con_node
 
         # build expression
@@ -1326,7 +1313,7 @@ class GBDProblemBuilder:
 
         # build indexing set node
         idx_meta_sets = [self.gbd_problem.cuts]
-        idx_set_node = self._node_builder.build_idx_set_node(idx_meta_sets)
+        idx_set_node = nb.build_idx_set_node(problem=self.gbd_problem, idx_meta_sets=idx_meta_sets)
 
         # build expression
         expression = self.__build_canonical_integer_cut_expression()
@@ -1347,9 +1334,8 @@ class GBDProblemBuilder:
 
         # Build stored objective node
         stored_obj = self.gbd_problem.stored_obj
-        stored_obj_idx_node = self._node_builder.build_default_entity_index_node(stored_obj)
-        stored_obj_node = mat.DeclaredEntityNode(id=self.generate_free_node_id(),
-                                                 symbol=stored_obj.get_symbol(),
+        stored_obj_idx_node = nb.build_default_entity_index_node(stored_obj)
+        stored_obj_node = mat.DeclaredEntityNode(symbol=stored_obj.get_symbol(),
                                                  idx_node=stored_obj_idx_node,
                                                  type=const.PARAM_TYPE)
         sum_operands.append(stored_obj_node)
@@ -1366,19 +1352,18 @@ class GBDProblemBuilder:
         eta = self.gbd_problem.eta
         eta_idx_node = None
         if eta.get_idx_set_reduced_dim() > 0:
-            eta_idx_node = self._node_builder.build_default_entity_index_node(eta)
-        eta_node = mat.DeclaredEntityNode(id=self.generate_free_node_id(),
-                                          symbol=eta.get_symbol(),
+            eta_idx_node = nb.build_default_entity_index_node(eta)
+        eta_node = mat.DeclaredEntityNode(symbol=eta.get_symbol(),
                                           idx_node=eta_idx_node,
                                           type=const.VAR_TYPE)
 
         # Lower bound
-        lb_node = self._node_builder.build_addition_node(sum_operands)
+        lb_node = nb.build_addition_node(sum_operands)
 
         # Inequality node
-        ineq_op_node = mat.RelationalOperationNode(id=self.generate_free_node_id(), operator=">=")
-        ineq_op_node.add_operand(eta_node)
-        ineq_op_node.add_operand(lb_node)
+        ineq_op_node = mat.RelationalOperationNode(operator=">=",
+                                                   lhs_operand=eta_node,
+                                                   rhs_operand=lb_node)
 
         return mat.Expression(ineq_op_node)
 
@@ -1388,9 +1373,8 @@ class GBDProblemBuilder:
 
         # Build stored objective node
         stored_obj = self.gbd_problem.stored_obj
-        stored_obj_idx_node = self._node_builder.build_default_entity_index_node(stored_obj)
-        stored_obj_node = mat.DeclaredEntityNode(id=self.generate_free_node_id(),
-                                                 symbol=stored_obj.get_symbol(),
+        stored_obj_idx_node = nb.build_default_entity_index_node(stored_obj)
+        stored_obj_node = mat.DeclaredEntityNode(symbol=stored_obj.get_symbol(),
                                                  idx_node=stored_obj_idx_node,
                                                  type=const.PARAM_TYPE)
         sum_operands.append(stored_obj_node)
@@ -1401,20 +1385,20 @@ class GBDProblemBuilder:
             sum_operands.append(self.__build_aux_g_summation_node(g_id))
 
         # Zero node
-        zero_node = mat.NumericNode(id=self.generate_free_node_id(), value=0)
+        zero_node = nb.build_numeric_node(0)
 
         # Lower bound
-        lb_node = self._node_builder.build_addition_node(sum_operands)
+        lb_node = nb.build_addition_node(sum_operands)
 
         # Inequality node
-        ineq_op_node = mat.RelationalOperationNode(id=self.generate_free_node_id(), operator=">=")
-        ineq_op_node.add_operand(zero_node)
-        ineq_op_node.add_operand(lb_node)
+        ineq_op_node = mat.RelationalOperationNode(operator=">=",
+                                                   lhs_operand=zero_node,
+                                                   rhs_operand=lb_node)
 
         return mat.Expression(ineq_op_node)
 
     def __build_aux_f_summation_node(self):
-        aux_f_node = self._node_builder.build_default_entity_node(self.gbd_problem.aux_f_meta_var)
+        aux_f_node = nb.build_default_entity_node(self.gbd_problem.aux_f_meta_var)
 
         # auxiliary variable is only indexed with respect to the cuts set
         if self.gbd_problem.aux_f_meta_var.get_idx_set_reduced_dim() <= 1:
@@ -1426,8 +1410,7 @@ class GBDProblemBuilder:
             idx_set_node = deepcopy(self.gbd_problem.aux_f_meta_var.idx_set_node)
             idx_set_node.set_nodes.pop()  # Remove cuts set from indexing set node
 
-            sum_f_node = mat.ArithmeticTransformationNode(id=self.generate_free_node_id(),
-                                                          symbol="sum",
+            sum_f_node = mat.ArithmeticTransformationNode(symbol="sum",
                                                           idx_set_node=idx_set_node,
                                                           operands=aux_f_node)
             return sum_f_node
@@ -1437,21 +1420,19 @@ class GBDProblemBuilder:
         aux_g_meta_var = self.gbd_problem.aux_g_meta_vars[g_id]
 
         # Retrieve G(y) node
-        aux_g_node = self._node_builder.build_default_entity_node(aux_g_meta_var)
+        aux_g_node = nb.build_default_entity_node(aux_g_meta_var)
 
         # Build index node of the duality multiplier node
         dual_mult_index_node = deepcopy(aux_g_node.idx_node)
 
         # Build duality multiplier node
         dual_mult_meta_param = self.gbd_problem.duality_multipliers[g_id]
-        dual_mult_node = mat.DeclaredEntityNode(id=self.generate_free_node_id(),
-                                                symbol=dual_mult_meta_param.get_symbol(),
+        dual_mult_node = mat.DeclaredEntityNode(symbol=dual_mult_meta_param.get_symbol(),
                                                 idx_node=dual_mult_index_node,
                                                 type=const.PARAM_TYPE)
 
         # build (lambda * G(y)) node
-        prod_node = mat.MultiplicationNode(id=self.generate_free_node_id(),
-                                           operands=[dual_mult_node, aux_g_node])
+        prod_node = mat.MultiplicationNode(operands=[dual_mult_node, aux_g_node])
 
         # auxiliary variable is only indexed with respect to the cuts set
         if aux_g_meta_var.get_idx_set_reduced_dim() <= 1:
@@ -1463,8 +1444,7 @@ class GBDProblemBuilder:
             # build sum (lambda * G(y)) node
             idx_set_node = deepcopy(aux_g_meta_var.idx_set_node)
             idx_set_node.set_nodes.pop()  # Remove CUTS set from indexing set node
-            sum_g_node = mat.ArithmeticTransformationNode(id=self.generate_free_node_id(),
-                                                          symbol="sum",
+            sum_g_node = mat.ArithmeticTransformationNode(symbol="sum",
                                                           idx_set_node=idx_set_node,
                                                           operands=prod_node)
 
@@ -1482,27 +1462,23 @@ class GBDProblemBuilder:
                 storage_meta_param = self.gbd_problem.stored_comp_decisions[comp_meta_var.get_symbol()]
 
                 # Build storage parameter index node
-                storage_param_idx_node = self._node_builder.build_default_entity_index_node(comp_meta_var)
-                cuts_dummy_node = mat.DummyNode(id=self.generate_free_node_id(),
-                                                symbol=self.gbd_problem.cuts_unb_sym)
+                storage_param_idx_node = nb.build_default_entity_index_node(comp_meta_var)
+                cuts_dummy_node = mat.DummyNode(symbol=self.gbd_problem.cuts_unb_sym)
                 if storage_param_idx_node is None:
-                    storage_param_idx_node = mat.CompoundDummyNode(id=self.generate_free_node_id(),
-                                                                   component_nodes=[cuts_dummy_node])
+                    storage_param_idx_node = mat.CompoundDummyNode(component_nodes=[cuts_dummy_node])
                 else:
                     storage_param_idx_node.component_nodes.append(cuts_dummy_node)
 
                 # Build storage parameter node
-                storage_param_node = mat.DeclaredEntityNode(id=self.generate_free_node_id(),
-                                                            symbol=storage_meta_param.get_symbol(),
+                storage_param_node = mat.DeclaredEntityNode(symbol=storage_meta_param.get_symbol(),
                                                             idx_node=storage_param_idx_node,
                                                             type=const.PARAM_TYPE)
 
                 # Build binary constant node
-                bin_const_node = mat.NumericNode(id=self.generate_free_node_id(), value=binary_value)
+                bin_const_node = nb.build_numeric_node(binary_value)
 
                 # Build equality node
-                eq_node = mat.RelationalOperationNode(id=self.generate_free_node_id(),
-                                                      operator='=',
+                eq_node = mat.RelationalOperationNode(operator='=',
                                                       lhs_operand=storage_param_node,
                                                       rhs_operand=bin_const_node)
 
@@ -1510,14 +1486,13 @@ class GBDProblemBuilder:
                 if idx_set_con_node is not None:
                     idx_set_con_node = deepcopy(idx_set_con_node)
                     idx_set_con_node.is_prioritized = True
-                    con_node = mat.BinaryLogicalOperationNode(id=self.generate_free_node_id(),
-                                                              operator="&&",
+                    con_node = mat.BinaryLogicalOperationNode(operator="&&",
                                                               lhs_operand=idx_set_con_node,
                                                               rhs_operand=eq_node)
                 else:
                     con_node = eq_node
 
-                idx_set_node = self._node_builder.build_entity_idx_set_node(comp_meta_var)
+                idx_set_node = nb.build_entity_idx_set_node(problem=self.gbd_problem, meta_entity=comp_meta_var)
                 idx_set_node.constraint_node = con_node
 
                 # Build operand node
@@ -1525,48 +1500,43 @@ class GBDProblemBuilder:
                 operand_node.is_prioritized = True
 
                 # Build summation node
-                var_sum_node = mat.ArithmeticTransformationNode(id=self.generate_free_node_id(),
-                                                                symbol="sum",
+                var_sum_node = mat.ArithmeticTransformationNode(symbol="sum",
                                                                 idx_set_node=idx_set_node,
                                                                 operands=operand_node)
 
                 operands.append(var_sum_node)
 
             # Build addition node
-            var_sum_node = self._node_builder.build_addition_node(operands)
+            var_sum_node = nb.build_addition_node(operands)
             var_sum_node.is_prioritized = True
             return var_sum_node
 
         # LHS
 
         def build_comp_var_node(meta_entity: mat.MetaEntity):
-            return self._node_builder.build_default_entity_node(meta_entity)
+            return nb.build_default_entity_node(meta_entity)
 
         sum_nodes = []
         for bin_value in [1, 0]:
             sum_node = build_sum_node(bin_value, build_comp_var_node)
             sum_nodes.append(sum_node)
 
-        lhs_node = mat.SubtractionNode(id=self.generate_free_node_id(),
-                                       lhs_operand=sum_nodes[0],
+        lhs_node = mat.SubtractionNode(lhs_operand=sum_nodes[0],
                                        rhs_operand=sum_nodes[1])
 
         # RHS
 
         def build_one_node(_):
-            return mat.NumericNode(id=self.generate_free_node_id(),
-                                   value=1)
+            return nb.build_numeric_node(1)
 
         sum_node = build_sum_node(1, build_one_node)
-        one_node = mat.NumericNode(id=self.generate_free_node_id(),
-                                   value=1)
+        one_node = nb.build_numeric_node(1)
 
-        rhs_node = mat.SubtractionNode(id=self.generate_free_node_id(),
-                                       lhs_operand=sum_node,
+        rhs_node = mat.SubtractionNode(lhs_operand=sum_node,
                                        rhs_operand=one_node)
 
         # Inequality node
-        ineq_op_node = mat.RelationalOperationNode(id=self.generate_free_node_id(), operator="<=")
+        ineq_op_node = mat.RelationalOperationNode(operator="<=")
         ineq_op_node.add_operand(lhs_node)
         ineq_op_node.add_operand(rhs_node)
 
@@ -1896,9 +1866,6 @@ class GBDProblemBuilder:
     # Utility
     # ------------------------------------------------------------------------------------------------------------------
 
-    def generate_free_node_id(self) -> int:
-        return self._node_builder.generate_free_node_id()
-
     def __retrieve_meta_entity_from_definition(self, entity_def: str):
 
         ampl_parser = AMPLParser(self.gbd_problem)
@@ -1917,9 +1884,11 @@ class GBDProblemBuilder:
             if idx_set_node is None:
                 meta_entities.append(parent_meta_entity)
             else:
-                sub_meta_entity = self.entity_builder.build_sub_meta_entity(idx_subset_node=idx_set_node,
-                                                                            meta_entity=parent_meta_entity,
-                                                                            entity_idx_node=entity_node.idx_node)
+                sub_meta_entity = eb.build_sub_meta_entity(
+                    problem=self.gbd_problem,
+                    idx_subset_node=idx_set_node,
+                    meta_entity=parent_meta_entity,
+                    entity_idx_node=entity_node.idx_node)
                 meta_entities.append(sub_meta_entity)
 
         return meta_entities

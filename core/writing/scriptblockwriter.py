@@ -1,7 +1,6 @@
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import symro.core.mat as mat
-from symro.core.prob.problem import Problem
 
 
 # Fundamental Blocks

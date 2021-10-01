@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Tuple
 import symro.core.constants as const
 import symro.core.mat as mat
 from symro.core.prob.problem import Problem, BaseProblem
-from symro.core.handlers.entitybuilder import EntityBuilder
+import symro.core.handlers.entitybuilder as eb
 
 
 DEFAULT_MP_SYMBOL = "Master"
@@ -153,38 +153,45 @@ class GBDProblem(Problem):
 
     def build_mp_constructs(self, init_lb: float):
 
-        entity_builder = EntityBuilder(self)
-
-        self.cut_count = entity_builder.build_meta_param(symbol=self.cut_count_sym,
-                                                         default_value=0)
+        self.cut_count = eb.build_meta_param(
+            problem=self,
+            symbol=self.cut_count_sym,
+            default_value=0)
         self.add_meta_parameter(self.cut_count, is_in_model=False)
 
         self.cuts_unb_sym = self.generate_unique_symbol("ct")
-        ord_set_node = mat.OrderedSetNode(id=self.generate_free_node_id(),
-                                          start_node=mat.NumericNode(id=self.generate_free_node_id(), value=1),
+        ord_set_node = mat.OrderedSetNode(start_node=mat.NumericNode(value=1),
                                           end_node=mat.DeclaredEntityNode(self.cut_count_sym,
                                                                           type=const.PARAM_TYPE))
-        self.cuts = entity_builder.build_meta_set(symbol=self.cuts_sym,
-                                                  dimension=1,
-                                                  dummy_symbols=[self.cuts_unb_sym],
-                                                  reduced_dummy_symbols=[self.cuts_unb_sym],
-                                                  set_node=ord_set_node)
+        self.cuts = eb.build_meta_set(
+            problem=self,
+            symbol=self.cuts_sym,
+            dimension=1,
+            dummy_symbols=[self.cuts_unb_sym],
+            reduced_dummy_symbols=[self.cuts_unb_sym],
+            set_node=ord_set_node)
         self.add_meta_set(self.cuts, is_in_model=False)
 
-        self.is_feasible = entity_builder.build_meta_param(symbol=self.is_feasible_sym,
-                                                           idx_meta_sets=[self.cuts],
-                                                           default_value=0)
+        self.is_feasible = eb.build_meta_param(
+            problem=self,
+            symbol=self.is_feasible_sym,
+            idx_meta_sets=[self.cuts],
+            default_value=0)
         self.add_meta_parameter(self.is_feasible, is_in_model=False)
 
-        self.stored_obj = entity_builder.build_meta_param(symbol=self.stored_obj_sym,
-                                                          idx_meta_sets=[self.cuts],
-                                                          default_value=0)
+        self.stored_obj = eb.build_meta_param(
+            problem=self,
+            symbol=self.stored_obj_sym,
+            idx_meta_sets=[self.cuts],
+            default_value=0)
         self.add_meta_parameter(self.stored_obj, is_in_model=False)
 
         # Meta-Variables
 
-        self.eta = entity_builder.build_meta_var(symbol=self.eta_sym,
-                                                 lower_bound=init_lb)
+        self.eta = eb.build_meta_var(
+            problem=self,
+            symbol=self.eta_sym,
+            lower_bound=init_lb)
         self.add_meta_variable(self.eta, is_in_model=False)
 
     def get_idx_meta_sets(self) -> List[mat.MetaSet]:

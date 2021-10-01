@@ -2,7 +2,9 @@ import symro
 from symro.test.test_util import *
 from symro.test.test_parsing import run_ampl_parser_test_group
 from symro.test.test_node_builder import run_node_builder_test_group
+from symro.test.test_formulator import run_formulator_test_group
 from symro.test.test_entity_builder import run_entity_builder_test_group
+from symro.test.test_convexifier import run_convexifier_test_group
 from symro.test.test_gbd import run_gbd_test_group
 
 
@@ -41,7 +43,9 @@ def run_all_tests():
     true_count, total_count = run_test_groups([run_ampl_parser_test_group,
                                                run_general_test_group,
                                                run_node_builder_test_group,
+                                               run_formulator_test_group,
                                                run_entity_builder_test_group,
+                                               run_convexifier_test_group,
                                                run_gbd_test_group])
 
     print("\nSummary")
@@ -52,4 +56,5 @@ def run_all_tests():
 # Execution
 # ----------------------------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
+    #run_convexifier_test_group()
     run_all_tests()

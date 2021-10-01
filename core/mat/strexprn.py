@@ -1,6 +1,6 @@
 from functools import partial
 import numpy as np
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Union
 
 from symro.core.mat.exprn import StringExpressionNode
 from symro.core.mat.dummyn import BaseDummyNode
@@ -10,8 +10,8 @@ from symro.core.mat.state import State
 
 class StringNode(StringExpressionNode):
 
-    def __init__(self, literal: str, delimiter: str, id: int = 0):
-        super().__init__(id)
+    def __init__(self, literal: str, delimiter: str):
+        super().__init__()
         self.literal: str = literal  # string literal without delimiter
         self.delimiter: str = delimiter
 
@@ -45,9 +45,8 @@ class MultiStringOperationNode(StringExpressionNode):
     def __init__(self,
                  operator: str,
                  operands: List[Union[StringExpressionNode, BaseDummyNode]] = None,
-                 is_prioritized: bool = False,
-                 id: int = 0):
-        super().__init__(id)
+                 is_prioritized: bool = False):
+        super().__init__()
         self.operator: str = operator
         self.operands: List[Union[StringExpressionNode, BaseDummyNode]] = operands
         self.is_prioritized = is_prioritized

@@ -1,6 +1,7 @@
 from symro.core.prob.problem import Problem
 from symro.core.handlers.problembuilder import read_ampl
 from symro.core.handlers.scriptbuilder import model_to_ampl
+from symro.core.handlers.convexifier import convexify
 from symro.core.execution.amplengine import AMPLEngine
 from symro.core.algo.gbd.gbdalgorithm import GBDAlgorithm
 

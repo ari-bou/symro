@@ -15,8 +15,8 @@ from symro.core.mat.state import State
 
 class BaseSetNode(SetExpressionNode, ABC):
 
-    def __init__(self, id: int = 0):
-        super().__init__(id)
+    def __init__(self):
+        super().__init__()
 
     @abstractmethod
     def get_dim(self, state: State) -> int:
@@ -40,9 +40,8 @@ class SetNode(BaseSetNode):
     def __init__(self,
                  symbol: str,
                  entity_index_node: CompoundDummyNode = None,
-                 suffix: str = None,
-                 id: int = 0):
-        super().__init__(id)
+                 suffix: str = None):
+        super().__init__()
         self.symbol: str = symbol
         self.entity_index_node: CompoundDummyNode = entity_index_node
         self.suffix: str = suffix
@@ -110,9 +109,8 @@ class OrderedSetNode(BaseSetNode):
 
     def __init__(self,
                  start_node: ArithmeticExpressionNode = None,
-                 end_node: ArithmeticExpressionNode = None,
-                 id: int = 0):
-        super().__init__(id)
+                 end_node: ArithmeticExpressionNode = None):
+        super().__init__()
         self.start_node: ArithmeticExpressionNode = start_node
         self.end_node: ArithmeticExpressionNode = end_node
 
@@ -162,9 +160,8 @@ class OrderedSetNode(BaseSetNode):
 class EnumeratedSet(BaseSetNode):
 
     def __init__(self,
-                 element_nodes: List[Union[BaseDummyNode, ArithmeticExpressionNode, StringExpressionNode]] = None,
-                 id: int = 0):
-        super().__init__(id)
+                 element_nodes: List[Union[BaseDummyNode, ArithmeticExpressionNode, StringExpressionNode]] = None):
+        super().__init__()
         self.element_nodes: List[Union[BaseDummyNode, ArithmeticExpressionNode, StringExpressionNode]] = element_nodes
 
     def evaluate(self,
@@ -224,9 +221,8 @@ class IndexingSetNode(SetExpressionNode):
 
     def __init__(self,
                  dummy_node: BaseDummyNode,
-                 set_node: SetExpressionNode,
-                 id: int = 0):
-        super().__init__(id)
+                 set_node: SetExpressionNode):
+        super().__init__()
         self.dummy_node: BaseDummyNode = dummy_node
         self.set_node: SetExpressionNode = set_node
 
@@ -343,9 +339,8 @@ class CompoundSetNode(BaseSetNode):
 
     def __init__(self,
                  set_nodes: List[SetExpressionNode],
-                 constraint_node: LogicalExpressionNode = None,
-                 id: int = 0):
-        super().__init__(id)
+                 constraint_node: LogicalExpressionNode = None):
+        super().__init__()
         self.set_nodes: List[SetExpressionNode] = set_nodes if set_nodes is not None else []  # length o
         self.constraint_node: LogicalExpressionNode = constraint_node
         self.combined_dummy_element: Optional[Tuple[Union[int, float, str, tuple, None], ...]] = None

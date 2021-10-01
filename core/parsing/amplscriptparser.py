@@ -878,8 +878,7 @@ class AMPLScriptParser(AMPLParser):
             literal = self._extract_string([' ', ';'])
             if self.get_token() == ' ':
                 self._next_token()  # skip whitespace
-            return mat.DummyNode(id=self._generate_free_node_id(),
-                                 symbol=literal)
+            return mat.DummyNode(symbol=literal)
 
     # A.16: display, print, and printf
     def __parse_display_print_statement(self):

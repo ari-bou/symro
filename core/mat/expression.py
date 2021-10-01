@@ -64,6 +64,24 @@ def is_linear(root_node: ExpressionNode) -> bool:
     return True
 
 
+def get_node(root_node: ExpressionNode, node_id: int):
+
+    queue = Queue()
+    queue.put(root_node)
+
+    while not queue.empty():
+
+        node = queue.get()
+
+        if id(node) == node_id:
+            return node
+
+        for child in node.get_children():
+            queue.put(child)
+
+    return None
+
+
 def get_param_nodes(root_node: ExpressionNode) -> List[DeclaredEntityNode]:
 
     param_nodes = []

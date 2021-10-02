@@ -473,98 +473,6 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
         return literal
 
 
-class BinaryArithmeticOperationNode(ArithmeticExpressionNode, ABC):
-
-    ADDITION_OPERATOR = '+'
-    SUBTRACTION_OPERATOR = '-'
-    MULTIPLICATION_OPERATOR = '*'
-    DIVISION_OPERATOR = '/'
-    EXPONENTIATION_OPERATOR = '^'
-
-    def __init__(self,
-                 operator: str,
-                 lhs_operand: ArithmeticExpressionNode = None,
-                 rhs_operand: ArithmeticExpressionNode = None,
-                 is_prioritized: bool = False):
-        super().__init__()
-        self.operator: str = operator
-        self.lhs_operand: ArithmeticExpressionNode = lhs_operand
-        self.rhs_operand: ArithmeticExpressionNode = rhs_operand
-        self.is_prioritized = is_prioritized
-
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_element: Element = None
-                 ) -> np.ndarray:
-
-        x_lhs = self.lhs_operand.evaluate(state, idx_set, dummy_element)
-        x_rhs = self.rhs_operand.evaluate(state, idx_set, dummy_element)
-
-        if self.operator == self.ADDITION_OPERATOR:  # addition
-            y = x_lhs + x_rhs
-        elif self.operator == self.SUBTRACTION_OPERATOR:  # subtraction
-            y = x_lhs - x_rhs
-        elif self.operator == self.MULTIPLICATION_OPERATOR:  # multiplication
-            y = x_lhs * x_rhs
-        elif self.operator == self.DIVISION_OPERATOR:  # division
-            y = x_lhs / x_rhs
-        elif self.operator == self.EXPONENTIATION_OPERATOR:  # exponentiation
-            y = x_lhs ** x_rhs
-        else:
-            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
-                             + " as a binary arithmetic operator")
-        return y
-
-    def to_lambda(self,
-                  state: State,
-                  idx_set_member: Element = None,
-                  dummy_element: Element = None) -> Callable:
-
-        x_lhs = self.lhs_operand.to_lambda(state, idx_set_member, dummy_element)
-        x_rhs = self.rhs_operand.to_lambda(state, idx_set_member, dummy_element)
-
-        if self.operator == self.ADDITION_OPERATOR:  # addition
-            return partial(lambda l, r: l() + r(), x_lhs, x_rhs)
-        elif self.operator == self.SUBTRACTION_OPERATOR:  # subtraction
-            return partial(lambda l, r: l() - r(), x_lhs, x_rhs)
-        elif self.operator == self.MULTIPLICATION_OPERATOR:  # multiplication
-            return partial(lambda l, r: l() * r(), x_lhs, x_rhs)
-        elif self.operator == self.DIVISION_OPERATOR:  # division
-            return partial(lambda l, r: l() / r(), x_lhs, x_rhs)
-        elif self.operator == self.EXPONENTIATION_OPERATOR:  # exponentiation
-            return partial(lambda l, r: l() ** r(), x_lhs, x_rhs)
-        else:
-            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
-                             + " as a binary arithmetic operator")
-
-    def collect_declared_entities(self,
-                                  state: State,
-                                  idx_set: IndexingSet = None,
-                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
-        vars = {}
-        vars.update(self.lhs_operand.collect_declared_entities(state, idx_set, dummy_element))
-        vars.update(self.rhs_operand.collect_declared_entities(state, idx_set, dummy_element))
-        return vars
-
-    def get_children(self) -> List:
-        return [self.lhs_operand, self.rhs_operand]
-
-    def set_children(self, operands: list):
-        if len(operands) > 0:
-            self.lhs_operand = operands[0]
-        if len(operands) > 1:
-            self.rhs_operand = operands[1]
-
-    def get_literal(self) -> str:
-        literal = "{0} {1} {2}".format(self.lhs_operand,
-                                       self.operator,
-                                       self.rhs_operand)
-        if self.is_prioritized:
-            literal = '(' + literal + ')'
-        return literal
-
-
 class MultiArithmeticOperationNode(ArithmeticExpressionNode, ABC):
 
     ADDITION_OPERATOR = '+'
@@ -648,6 +556,82 @@ class MultiArithmeticOperationNode(ArithmeticExpressionNode, ABC):
             return '(' + s + ')'
         else:
             return s
+
+
+class BinaryArithmeticOperationNode(MultiArithmeticOperationNode, ABC):
+
+    SUBTRACTION_OPERATOR = '-'
+    DIVISION_OPERATOR = '/'
+    EXPONENTIATION_OPERATOR = '^'
+
+    def __init__(self,
+                 operator: str,
+                 lhs_operand: ArithmeticExpressionNode = None,
+                 rhs_operand: ArithmeticExpressionNode = None,
+                 is_prioritized: bool = False):
+        super().__init__(
+            operator=operator,
+            operands=[lhs_operand, rhs_operand],
+            is_prioritized=is_prioritized
+        )
+
+    def evaluate(self,
+                 state: State,
+                 idx_set: IndexingSet = None,
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
+
+        x_lhs = self.get_lhs_operand().evaluate(state, idx_set, dummy_element)
+        x_rhs = self.get_rhs_operand().evaluate(state, idx_set, dummy_element)
+
+        if self.operator == self.ADDITION_OPERATOR:  # addition
+            y = x_lhs + x_rhs
+        elif self.operator == self.SUBTRACTION_OPERATOR:  # subtraction
+            y = x_lhs - x_rhs
+        elif self.operator == self.MULTIPLICATION_OPERATOR:  # multiplication
+            y = x_lhs * x_rhs
+        elif self.operator == self.DIVISION_OPERATOR:  # division
+            y = x_lhs / x_rhs
+        elif self.operator == self.EXPONENTIATION_OPERATOR:  # exponentiation
+            y = x_lhs ** x_rhs
+        else:
+            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
+                             + " as a binary arithmetic operator")
+        return y
+
+    def to_lambda(self,
+                  state: State,
+                  idx_set_member: Element = None,
+                  dummy_element: Element = None) -> Callable:
+
+        x_lhs = self.get_lhs_operand().to_lambda(state, idx_set_member, dummy_element)
+        x_rhs = self.get_rhs_operand().to_lambda(state, idx_set_member, dummy_element)
+
+        if self.operator == self.ADDITION_OPERATOR:  # addition
+            return partial(lambda l, r: l() + r(), x_lhs, x_rhs)
+        elif self.operator == self.SUBTRACTION_OPERATOR:  # subtraction
+            return partial(lambda l, r: l() - r(), x_lhs, x_rhs)
+        elif self.operator == self.MULTIPLICATION_OPERATOR:  # multiplication
+            return partial(lambda l, r: l() * r(), x_lhs, x_rhs)
+        elif self.operator == self.DIVISION_OPERATOR:  # division
+            return partial(lambda l, r: l() / r(), x_lhs, x_rhs)
+        elif self.operator == self.EXPONENTIATION_OPERATOR:  # exponentiation
+            return partial(lambda l, r: l() ** r(), x_lhs, x_rhs)
+        else:
+            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
+                             + " as a binary arithmetic operator")
+
+    def get_lhs_operand(self):
+        return self.operands[0]
+
+    def set_lhs_operand(self, operand: ArithmeticExpressionNode):
+        self.operands[0] = operand
+
+    def get_rhs_operand(self):
+        return self.operands[1]
+
+    def set_rhs_operand(self, operand: ArithmeticExpressionNode):
+        self.operands[1] = operand
 
 
 class AdditionNode(MultiArithmeticOperationNode):

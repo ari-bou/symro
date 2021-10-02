@@ -551,11 +551,11 @@ def build_fractional_node(numerator: mat.ArithmeticExpressionNode,
     den_2 = denominator
 
     if isinstance(numerator, mat.DivisionNode):
-        num_1 = numerator.lhs_operand
-        den_1 = numerator.rhs_operand
+        num_1 = numerator.get_lhs_operand()
+        den_1 = numerator.get_rhs_operand()
     if isinstance(denominator, mat.DivisionNode):
-        den_2 = denominator.lhs_operand
-        num_2 = denominator.rhs_operand
+        den_2 = denominator.get_lhs_operand()
+        num_2 = denominator.get_rhs_operand()
 
     num = None
     if num_1 is not None and num_2 is not None:

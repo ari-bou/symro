@@ -749,8 +749,8 @@ class GBDProblemBuilder:
         # Binary Operation
         elif isinstance(node, mat.BinaryArithmeticOperationNode):
 
-            lhs_status = self.__verify_complicating_node(node.lhs_operand, idx_set, dummy_element)
-            rhs_status = self.__verify_complicating_node(node.rhs_operand, idx_set, dummy_element)
+            lhs_status = self.__verify_complicating_node(node.get_lhs_operand(), idx_set, dummy_element)
+            rhs_status = self.__verify_complicating_node(node.get_rhs_operand(), idx_set, dummy_element)
             statuses = [lhs_status, rhs_status]
 
             if self.CONST_NODE in statuses:
@@ -877,11 +877,11 @@ class GBDProblemBuilder:
         # Binary Operation
         elif isinstance(node, mat.BinaryArithmeticOperationNode):
 
-            lhs_operand, lhs_status = self.__reformulate_node(node.lhs_operand, idx_set, dummy_element)
-            rhs_operand, rhs_status = self.__reformulate_node(node.rhs_operand, idx_set, dummy_element)
+            lhs_operand, lhs_status = self.__reformulate_node(node.get_lhs_operand(), idx_set, dummy_element)
+            rhs_operand, rhs_status = self.__reformulate_node(node.get_rhs_operand(), idx_set, dummy_element)
 
-            node.lhs_operand = lhs_operand
-            node.rhs_operand = rhs_operand
+            node.set_lhs_operand(lhs_operand)
+            node.set_rhs_operand(rhs_operand)
 
             # Linearly separable
             if node.operator in ['+', '-']:

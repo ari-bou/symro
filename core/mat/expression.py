@@ -43,13 +43,13 @@ def is_linear(root_node: ExpressionNode) -> bool:
                 return False
 
         elif isinstance(node, DivisionNode):  # division
-            if not is_constant(node.rhs_operand):
+            if not is_constant(node.get_rhs_operand()):
                 return False
 
         elif isinstance(node, ExponentiationNode):  # exponentiation
-            if not is_constant(node.lhs_operand):
+            if not is_constant(node.get_lhs_operand()):
                 return False
-            elif not is_constant(node.rhs_operand):
+            elif not is_constant(node.get_rhs_operand()):
                 return False
 
         elif isinstance(node, ArithmeticTransformationNode):   # transformation

@@ -278,7 +278,7 @@ class Convexifier:
             # by default, numerator is a numeric node with value 1
 
             # linear denominator
-            if mat.is_linear(node.rhs_operand):
+            if mat.is_linear(node.get_rhs_operand()):
                 return const.FRACTIONAL
 
             # nonlinear denominator
@@ -289,7 +289,7 @@ class Convexifier:
         elif isinstance(node, mat.ExponentiationNode):
 
             # univariate exponential with constant base: b^x
-            if mat.is_constant(node.lhs_operand) and mat.is_linear(node.rhs_operand):
+            if mat.is_constant(node.get_lhs_operand()) and mat.is_linear(node.get_rhs_operand()):
                 return const.UNIVARIATE_CONCAVE
 
             else:
@@ -482,7 +482,7 @@ class Convexifier:
 
             elif isinstance(operand, mat.DivisionNode):
 
-                den_node = operand.rhs_operand
+                den_node = operand.get_rhs_operand()
                 if not isinstance(den_node, mat.DeclaredEntityNode):
                     raise ValueError("Convexifier encountered an unexpected operand '{0}'".format(operand)
                                      + " while building a constrained underestimator")
@@ -636,7 +636,7 @@ class Convexifier:
 
                 elif isinstance(operand, mat.DivisionNode):
 
-                    den_node = operand.rhs_operand
+                    den_node = operand.get_rhs_operand()
                     if not isinstance(den_node, mat.DeclaredEntityNode):
                         raise ValueError("Convexifier encountered an unexpected operand '{0}'".format(operand)
                                          + " while building a constrained underestimator")
@@ -835,8 +835,8 @@ class Convexifier:
         # fractional (1/x)
         elif isinstance(operand, mat.DivisionNode):
 
-            operand_lb_node = self.__build_lower_bound_node(operand=operand.rhs_operand, is_negative=is_negative)
-            operand_ub_node = self.__build_upper_bound_node(operand=operand.rhs_operand, is_negative=is_negative)
+            operand_lb_node = self.__build_lower_bound_node(operand=operand.get_rhs_operand(), is_negative=is_negative)
+            operand_ub_node = self.__build_upper_bound_node(operand=operand.get_rhs_operand(), is_negative=is_negative)
 
             if coefficient is None:
                 coefficient = nb.build_numeric_node(1)
@@ -904,12 +904,12 @@ class Convexifier:
         elif isinstance(uc_node, mat.ExponentiationNode):
 
             # base is constant and exponent is univariate: b^x
-            if mat.is_constant(uc_node.lhs_operand):
-                x_node = uc_node.rhs_operand
+            if mat.is_constant(uc_node.get_lhs_operand()):
+                x_node = uc_node.get_rhs_operand()
 
             # base is univariate and exponent is constant: x^c
             else:
-                x_node = uc_node.lhs_operand
+                x_node = uc_node.get_lhs_operand()
 
         else:
             raise ValueError("Convexifier encountered an unexpected node '{0}'".format(uc_node)
@@ -942,7 +942,7 @@ class Convexifier:
         # build underestimator node
 
         num_node = nb.build_subtraction_node(uc_ub_node, deepcopy(uc_lb_node), is_prioritized=True)
-        num_node.rhs_operand.is_prioritized = True
+        num_node.get_rhs_operand().is_prioritized = True
         den_node = nb.build_subtraction_node(x_ub_node, x_lb_node, is_prioritized=True)
 
         return nb.build_addition_node(
@@ -1112,7 +1112,7 @@ class Convexifier:
 
     def __build_fractional_lower_bound_node(self, operand: mat.DivisionNode):
 
-        den_node = operand.rhs_operand
+        den_node = operand.get_rhs_operand()
         if not isinstance(den_node, mat.DeclaredEntityNode):
             raise ValueError("Convexifier encountered an unexpected operand '{0}'".format(operand)
                              + " while building a lower bound node")
@@ -1125,7 +1125,7 @@ class Convexifier:
 
     def __build_fractional_upper_bound_node(self, operand: mat.DivisionNode):
 
-        den_node = operand.rhs_operand
+        den_node = operand.get_rhs_operand()
         if not isinstance(den_node, mat.DeclaredEntityNode):
             raise ValueError("Convexifier encountered an unexpected operand '{0}'".format(operand)
                              + " while building an upper bound node")

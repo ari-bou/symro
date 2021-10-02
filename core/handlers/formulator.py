@@ -607,11 +607,14 @@ def simplify(problem: Problem,
                 simplified_operands.append(simplified_node)
 
         if const_term_val != 0:
-            simplified_operands.insert(mat.NumericNode(const_term_val))
+            simplified_operands.insert(0, mat.NumericNode(const_term_val))
 
         node.operands = simplified_operands
 
         return node
+
+    # subtraction
+
 
     else:
         return node
@@ -671,8 +674,8 @@ def reformulate_subtraction_and_unary_negation(root_node: mat.ExpressionNode):
 def __reformulate_subtraction_or_unary_negation_node(node: mat.ExpressionNode):
 
     if isinstance(node, mat.BinaryArithmeticOperationNode) and node.operator == '-':
-        rhs_operand = nb.append_negative_unity_coefficient(node.rhs_operand)
-        node = mat.AdditionNode(operands=[node.lhs_operand, rhs_operand])
+        rhs_operand = nb.append_negative_unity_coefficient(node.get_rhs_operand())
+        node = mat.AdditionNode(operands=[node.get_lhs_operand(), rhs_operand])
 
     elif isinstance(node, mat.UnaryArithmeticOperationNode) and node.operator == '-':
         node = nb.append_negative_unity_coefficient(node.operand)
@@ -691,13 +694,13 @@ def __factorize_exponentiation(problem: Problem,
 
     factors = []
 
-    if isinstance(exp_op_node.rhs_operand, mat.NumericNode):
-        exp_val = exp_op_node.rhs_operand.value
+    if isinstance(exp_op_node.get_rhs_operand(), mat.NumericNode):
+        exp_val = exp_op_node.get_rhs_operand().value
 
     else:
         exp_val = __simplify_node_to_numeric(
             problem=problem,
-            node=exp_op_node.rhs_operand,
+            node=exp_op_node.get_rhs_operand(),
             idx_set=idx_set,
             dummy_element=dummy_element)
 
@@ -707,7 +710,7 @@ def __factorize_exponentiation(problem: Problem,
             factors.append(nb.build_numeric_node(1))
 
         elif exp_val == 1:
-            factors.append(exp_op_node.lhs_operand)
+            factors.append(exp_op_node.get_lhs_operand())
 
         else:
 
@@ -715,11 +718,11 @@ def __factorize_exponentiation(problem: Problem,
 
             if exp_val in exponents:
 
-                exp_op_node.lhs_operand.is_prioritized = True
-                factors = [exp_op_node.lhs_operand]
+                exp_op_node.get_lhs_operand().is_prioritized = True
+                factors = [exp_op_node.get_lhs_operand()]
 
                 for i in range(2, exp_val + 1):
-                    factors.append(deepcopy(exp_op_node.lhs_operand))
+                    factors.append(deepcopy(exp_op_node.get_lhs_operand()))
 
             else:
                 factors.append(exp_op_node)
@@ -842,8 +845,8 @@ def __expand_multiplication(problem: Problem,
         # binary operation
         elif isinstance(node, mat.BinaryArithmeticOperationNode):
 
-            lhs_terms = __expand_multiplication(problem, node.lhs_operand, idx_set, dummy_element)
-            rhs_terms = __expand_multiplication(problem, node.rhs_operand, idx_set, dummy_element)
+            lhs_terms = __expand_multiplication(problem, node.get_lhs_operand(), idx_set, dummy_element)
+            rhs_terms = __expand_multiplication(problem, node.get_rhs_operand(), idx_set, dummy_element)
 
             # subtraction
             if node.operator == '-':
@@ -863,11 +866,11 @@ def __expand_multiplication(problem: Problem,
 
                     # special case: numerator is 1
                     if isinstance(numerator, mat.NumericNode) and numerator.value == 1:
-                        node.rhs_operand = nb.build_addition_node(rhs_terms)
+                        node.set_rhs_operand(nb.build_addition_node(rhs_terms))
                         return [node]
 
-                node.lhs_operand = nb.build_numeric_node(1)
-                node.rhs_operand = nb.build_multiplication_node(rhs_terms)
+                node.set_lhs_operand(nb.build_numeric_node(1))
+                node.set_rhs_operand(nb.build_multiplication_node(rhs_terms))
                 rhs_terms = [node]
 
                 return expand_factors(lhs_terms, rhs_terms)

@@ -201,7 +201,7 @@ class AMPLParser:
     # Conditional Expression Parsing
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __parse_conditional_expression(self) -> Union[mat.MultiArithmeticOperationNode,
+    def __parse_conditional_expression(self) -> Union[mat.ArithmeticOperationNode,
                                                       mat.ConditionalSetExpressionNode]:
 
         operands = []
@@ -236,7 +236,7 @@ class AMPLParser:
                                                                           conditions: List[mat.LogicalExpressionNode]):
 
         add_operands = []
-        conj_node: Optional[mat.MultiLogicalOperationNode] = None
+        conj_node: Optional[mat.LogicalOperationNode] = None
 
         # assign operation priority to all condition nodes
         for condition in conditions:
@@ -256,12 +256,12 @@ class AMPLParser:
 
                     prev_condition = deepcopy(conditions[i - 1])
 
-                    neg_prev_condition = mat.UnaryLogicalOperationNode(operator='!',
-                                                                       operand=prev_condition)
+                    neg_prev_condition = mat.LogicalOperationNode(operator=mat.UNARY_INVERSION_OPERATOR,
+                                                                  operands=[prev_condition])
                     neg_prev_condition.is_prioritized = True
 
-                    conj_node = mat.MultiLogicalOperationNode(operator="and",
-                                                              operands=[neg_prev_condition])
+                    conj_node = mat.LogicalOperationNode(operator=mat.CONJUNCTION_OPERATOR,
+                                                         operands=[neg_prev_condition])
                     constraint_node = conj_node
 
                 else:
@@ -270,8 +270,8 @@ class AMPLParser:
 
                     prev_condition = conj_node.operands[i - 1]
 
-                    neg_prev_condition = mat.UnaryLogicalOperationNode(operator='!',
-                                                                       operand=prev_condition)
+                    neg_prev_condition = mat.LogicalOperationNode(operator=mat.UNARY_INVERSION_OPERATOR,
+                                                                  operands=[prev_condition])
                     neg_prev_condition.is_prioritized = True
 
                     conj_node.operands[i - 1] = neg_prev_condition
@@ -312,16 +312,21 @@ class AMPLParser:
         # parse next logical operation
         while self.get_token() in self.LOGIC_BIN_OPR_SYMBOLS:
 
-            operator = self.get_token()  # parse logical operator
+            operator_sym = self.get_token()  # parse logical operator
             self._next_token()  # skip operator
+
+            # retrieve operator
+            if operator_sym in ("&&", "and"):
+                operator = mat.CONJUNCTION_OPERATOR
+            else:
+                operator = mat.DISJUNCTION_OPERATOR
 
             # parse next logical operand
             rhs_operand = self.__parse_logical_operand()
 
             # build logical operation node
-            root_operation = mat.BinaryLogicalOperationNode(operator=operator,
-                                                            lhs_operand=root_operation,
-                                                            rhs_operand=rhs_operand)
+            root_operation = mat.LogicalOperationNode(operator=operator,
+                                                      operands=[root_operation, rhs_operand])
 
         return root_operation
 
@@ -337,8 +342,8 @@ class AMPLParser:
         if token in ['!', "not"]:
             self._next_token()
             operand = self.__parse_logical_operand()
-            return mat.UnaryLogicalOperationNode(operator=token,
-                                                 operand=operand)
+            return mat.LogicalOperationNode(operator=mat.UNARY_INVERSION_OPERATOR,
+                                            operands=[operand])
 
         # logical reduction
         if token in ["exists", "forall"]:
@@ -392,7 +397,11 @@ class AMPLParser:
                                               lhs_operand=lhs_operand,
                                               rhs_operand=rhs_operand)
 
-    def __parse_set_membership_operation(self, dummy_node: mat.BaseDummyNode) -> mat.SetMembershipOperationNode:
+    def __parse_set_membership_operation(self,
+                                         dummy_node: Union[mat.BaseDummyNode,
+                                                           mat.ArithmeticExpressionNode,
+                                                           mat.StringExpressionNode]
+                                         ) -> mat.SetMembershipOperationNode:
 
         operator = ""
         if self.get_token() == "not":
@@ -421,8 +430,28 @@ class AMPLParser:
 
         while self.get_token() in self.REL_OPR_SYMBOLS:
 
-            operator = self.get_token()
+            operator_sym = self.get_token()
             self._next_token()  # skip operator
+
+            # retrieve operator
+
+            if operator_sym in ('=', "=="):
+                operator = mat.EQUALITY_OPERATOR
+
+            elif operator_sym in ("!=", "<>"):
+                operator = mat.STRICT_INEQUALITY_OPERATOR
+
+            elif operator_sym == '<':
+                operator = mat.LESS_INEQUALITY_OPERATOR
+
+            elif operator_sym == '<=':
+                operator = mat.LESS_EQUAL_INEQUALITY_OPERATOR
+
+            elif operator_sym == '>':
+                operator = mat.GREATER_INEQUALITY_OPERATOR
+
+            else:
+                operator = mat.GREATER_EQUAL_INEQUALITY_OPERATOR
 
             rhs_operand = self._parse_set_expression()  # parse next operand
 
@@ -462,8 +491,18 @@ class AMPLParser:
         # parse next set operation
         while self.get_token() in operators:
 
-            operator = self.get_token()
+            operator_sym = self.get_token()
             self._next_token()  # skip operator
+
+            # retrieve operator
+            if operator_sym == "union":
+                operator = mat.UNION_OPERATOR
+            elif operator_sym == "inter":
+                operator = mat.INTERSECTION_OPERATOR
+            elif operator_sym == "diff":
+                operator = mat.DIFFERENCE_OPERATOR
+            else:
+                operator = mat.SYMMETRIC_DIFFERENCE_OPERATOR
 
             # parse next RHS operand
             if precedence == 8:  # precedence level 8
@@ -472,9 +511,9 @@ class AMPLParser:
                 rhs_operand = self.__parse_set()
 
             # build a new binary set operation node
-            root_operation = mat.BinarySetOperationNode(operator=operator,
-                                                        lhs_operand=root_operation,
-                                                        rhs_operand=rhs_operand)
+            root_operation = mat.SetOperationNode(operator=operator,
+                                                  lhs_operand=root_operation,
+                                                  rhs_operand=rhs_operand)
 
         return root_operation
 
@@ -504,7 +543,16 @@ class AMPLParser:
                 raise NotImplementedError("Parsing logic for 'setof' has not yet been implemented")
             else:
                 operand = self._parse_set_expression()
-            set_reduc_op = mat.SetReductionOperationNode(symbol=token,
+
+            # retrieve operator
+            if token == "union":
+                operator = mat.UNION_OPERATOR
+            elif token == "inter":
+                operator = mat.INTERSECTION_OPERATOR
+            else:
+                operator = mat.SETOF_OPERATOR
+
+            set_reduc_op = mat.SetReductionOperationNode(operator=operator,
                                                          idx_set_node=idx_set_node,
                                                          operand=operand)
             return set_reduc_op
@@ -542,15 +590,19 @@ class AMPLParser:
         # Start at opening brace '{'
         self._next_token()  # skip opening brace '{'
 
-        idx_set_node = self.__parse_set_definition_body()
-        if not isinstance(idx_set_node, mat.CompoundSetNode) and not isinstance(idx_set_node, mat.EnumeratedSet):
-            raise ValueError("AMPL parser expected either compound set or an enumerate set" +
-                             " while parsing indexing set expression")
+        if self.get_token() == '}':  # empty set
+            set_node = mat.EnumeratedSet()
+
+        else:
+            set_node = self.__parse_set_definition_body()
+            if not isinstance(set_node, mat.CompoundSetNode) and not isinstance(set_node, mat.EnumeratedSet):
+                raise ValueError("AMPL parser expected either compound set or an enumerate set" +
+                                 " while parsing indexing set expression")
 
         self._enforce_token_value('}')
         self._next_token()  # skip closing brace '}'
 
-        return idx_set_node
+        return set_node
 
     def __parse_set_definition_body(self) -> mat.BaseSetNode:
 
@@ -642,7 +694,7 @@ class AMPLParser:
         else:  # precedence level 16
             root_operation = self.__parse_arithmetic_operand()
 
-        arith_operation: Optional[Union[mat.BinaryArithmeticOperationNode, mat.MultiArithmeticOperationNode]] = None
+        arith_operation: Optional[mat.ArithmeticOperationNode] = None
 
         if precedence == 12:  # precedence level 12
             operators = self.ARITH_BIN_OPR_SYMBOLS_12
@@ -756,13 +808,18 @@ class AMPLParser:
 
             operand = self._parse_arithmetic_expression(precedence=16)  # parse operand
 
+            # special case: unary positive
+            if operator == '+':
+                node = operand
+
             # special case: unary negation
-            if operator == '-':
+            elif operator == '-':
                 node = self.append_negative_unity_coefficient(operand)
 
             else:
-                node = mat.UnaryArithmeticOperationNode(operator=operator,
-                                                        operand=operand)
+                raise ValueError(
+                    "AMPL parser encountered an unexpected unary arithmetic operator '{0}'".format(operator)
+                )
 
             return node
 
@@ -778,7 +835,7 @@ class AMPLParser:
             return node
 
         # special case 2: node is a multi-operand multiplication node
-        elif isinstance(node, mat.MultiArithmeticOperationNode) and node.operator == '*':
+        elif isinstance(node, mat.ArithmeticOperationNode) and node.operator == mat.MULTIPLICATION_OPERATOR:
 
             has_numeric_factor_node = False
 

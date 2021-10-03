@@ -29,7 +29,7 @@ minimize MASTER_OBJ: eta;
 # CONSTRAINTS
 # --------------------------------------------------------------------------------------------------
 # beginregion
-GBD_OPT_CUT{ct in CUTS: is_feasible[ct] = 1}: eta >= obj_stored[ct] + GBD_F[ct] + lambda_CON1[ct] * GBD_G_0[ct];
-GBD_FBL_CUT{ct in CUTS: is_feasible[ct] = 0}: 0 >= obj_stored[ct] + lambda_CON1[ct] * GBD_G_0[ct];
+GBD_OPT_CUT{ct in CUTS: is_feasible[ct] == 1}: eta >= obj_stored[ct] + GBD_F[ct] + lambda_CON1[ct] * GBD_G_0[ct];
+GBD_FBL_CUT{ct in CUTS: is_feasible[ct] == 0}: 0 >= obj_stored[ct] + lambda_CON1[ct] * GBD_G_0[ct];
 # endregion 
 

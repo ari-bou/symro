@@ -6,9 +6,9 @@ from typing import List, Optional, Set, Tuple, Union
 
 from symro.core.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode, ArithmeticExpressionNode, \
     StringExpressionNode
+from symro.core.mat.sopn import SetOperationNode
 from symro.core.mat.dummyn import BaseDummyNode, DummyNode, CompoundDummyNode
-from symro.core.mat.util import Element, IndexingSet
-from symro.core.mat.util import cartesian_product, remove_set_dimensions
+from symro.core.mat.util import Element, IndexingSet, cartesian_product, remove_set_dimensions
 from symro.core.mat.entity import Entity
 from symro.core.mat.state import State
 
@@ -17,6 +17,18 @@ class BaseSetNode(SetExpressionNode, ABC):
 
     def __init__(self):
         super().__init__()
+
+    def __and__(self, other: SetExpressionNode):
+        return SetOperationNode.intersection(self, other)
+
+    def __or__(self, other: SetExpressionNode):
+        return SetOperationNode.union(self, other)
+
+    def __sub__(self, other: SetExpressionNode):
+        return SetOperationNode.difference(self, other)
+
+    def __xor__(self, other: SetExpressionNode):
+        return SetOperationNode.symmetric_difference(self, other)
 
     @abstractmethod
     def get_dim(self, state: State) -> int:
@@ -160,9 +172,15 @@ class OrderedSetNode(BaseSetNode):
 class EnumeratedSet(BaseSetNode):
 
     def __init__(self,
-                 element_nodes: List[Union[BaseDummyNode, ArithmeticExpressionNode, StringExpressionNode]] = None):
+                 element_nodes: List[Union[ArithmeticExpressionNode,
+                                           StringExpressionNode]] = None):
+
         super().__init__()
-        self.element_nodes: List[Union[BaseDummyNode, ArithmeticExpressionNode, StringExpressionNode]] = element_nodes
+
+        self.element_nodes: List[Union[ArithmeticExpressionNode, StringExpressionNode]] = element_nodes
+
+        if self.element_nodes is None:
+            self.element_nodes = []
 
     def evaluate(self,
                  state: State,
@@ -204,7 +222,7 @@ class EnumeratedSet(BaseSetNode):
         else:
             return 0
 
-    def get_children(self) -> List[Union[BaseDummyNode, ArithmeticExpressionNode, StringExpressionNode]]:
+    def get_children(self) -> List[Union[ArithmeticExpressionNode, StringExpressionNode]]:
         return list(self.element_nodes)
 
     def set_children(self, operands: list):
@@ -225,6 +243,18 @@ class IndexingSetNode(SetExpressionNode):
         super().__init__()
         self.dummy_node: BaseDummyNode = dummy_node
         self.set_node: SetExpressionNode = set_node
+
+    def __and__(self, other: SetExpressionNode):
+        return SetOperationNode.intersection(self, other)
+
+    def __or__(self, other: SetExpressionNode):
+        return SetOperationNode.union(self, other)
+
+    def __sub__(self, other: SetExpressionNode):
+        return SetOperationNode.difference(self, other)
+
+    def __xor__(self, other: SetExpressionNode):
+        return SetOperationNode.symmetric_difference(self, other)
 
     def evaluate(self,
                  state: State,
@@ -291,12 +321,6 @@ class IndexingSetNode(SetExpressionNode):
                 y[ip] = filtered_set
 
         return y
-
-    def is_constant(self) -> bool:
-        return True
-
-    def is_null(self) -> bool:
-        return False
 
     def get_dim(self, state: State) -> int:
         return self.dummy_node.get_dim()

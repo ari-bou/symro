@@ -1,9 +1,83 @@
 import itertools
 from ordered_set import OrderedSet
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Iterable, List, Tuple, Union
 
+
+# Types
+# ----------------------------------------------------------------------------------------------------------------------
 Element = Tuple[Union[int, float, str, None], ...]
 IndexingSet = OrderedSet[Element]
+
+# Operators
+# ----------------------------------------------------------------------------------------------------------------------
+
+# Unary Arithmetic
+UNARY_POSITIVE_OPERATOR = 1
+UNARY_NEGATION_OPERATOR = 2
+
+# Binary Arithmetic
+ADDITION_OPERATOR = 11
+SUBTRACTION_OPERATOR = 12
+MULTIPLICATION_OPERATOR = 13
+DIVISION_OPERATOR = 14
+EXPONENTIATION_OPERATOR = 15
+
+# Unary Logical
+UNARY_INVERSION_OPERATOR = 101
+
+# Binary Logical
+CONJUNCTION_OPERATOR = 111
+DISJUNCTION_OPERATOR = 112
+
+# Relational
+EQUALITY_OPERATOR = 121
+STRICT_INEQUALITY_OPERATOR = 122
+LESS_INEQUALITY_OPERATOR = 123
+LESS_EQUAL_INEQUALITY_OPERATOR = 124
+GREATER_INEQUALITY_OPERATOR = 125
+GREATER_EQUAL_INEQUALITY_OPERATOR = 126
+
+# Set
+
+UNION_OPERATOR = 201
+INTERSECTION_OPERATOR = 202
+DIFFERENCE_OPERATOR = 203
+SYMMETRIC_DIFFERENCE_OPERATOR = 204
+
+SETOF_OPERATOR = 211
+
+
+# Symbols
+AMPL_OPERATOR_SYMBOLS = {
+
+    UNARY_NEGATION_OPERATOR: '-',
+
+    ADDITION_OPERATOR: '+',
+    SUBTRACTION_OPERATOR: '-',
+    MULTIPLICATION_OPERATOR: '*',
+    DIVISION_OPERATOR: '/',
+    EXPONENTIATION_OPERATOR: '^',
+
+    UNARY_INVERSION_OPERATOR: '!',
+
+    CONJUNCTION_OPERATOR: '&&',
+    DISJUNCTION_OPERATOR: '||',
+
+    EQUALITY_OPERATOR: '==',
+    STRICT_INEQUALITY_OPERATOR: '!=',
+    LESS_INEQUALITY_OPERATOR: '<',
+    LESS_EQUAL_INEQUALITY_OPERATOR: '<=',
+    GREATER_INEQUALITY_OPERATOR: '>',
+    GREATER_EQUAL_INEQUALITY_OPERATOR: '>=',
+
+    UNION_OPERATOR: 'union',
+    INTERSECTION_OPERATOR: 'inter',
+    DIFFERENCE_OPERATOR: 'diff',
+    SYMMETRIC_DIFFERENCE_OPERATOR: 'symdiff',
+
+    SETOF_OPERATOR: 'setof',
+
+}
 
 
 # Element Operations
@@ -26,33 +100,6 @@ def get_element_literal(element: Union[int, float, str]):
 
 # Set Operations
 # ----------------------------------------------------------------------------------------------------------------------
-
-"""
-    def cross(index: List[Union[int, float, str]] = None, set_index: int = 0):
-        if index is None:
-            index = []
-        set_i = sets[set_index]
-        if len(set_i) > 0:
-            for element in set_i:
-                index_copy: List[Optional[Union[int, float, str]]] = list(index)
-                index_copy.extend(list(element))
-                if set_index == set_count - 1:
-                    combined_set.add(tuple(index_copy))
-                else:
-                    cross(index_copy, set_index + 1)
-        else:
-            index_copy: List[Optional[Union[int, float, str]]] = list(index)
-            index_copy.append(None)
-            if set_index == set_count - 1:
-                combined_set.add(tuple(index_copy))
-            else:
-                cross(index_copy, set_index + 1)
-
-    if set_count > 0:
-        cross()
-
-    return combined_set
-    """
 
 def cartesian_product(sets: List[IndexingSet]) -> IndexingSet:
     """

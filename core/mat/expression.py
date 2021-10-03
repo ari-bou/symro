@@ -1,12 +1,10 @@
-from ordered_set import OrderedSet
 from queue import Queue
-from typing import List, Optional
+from typing import Optional
 
 from symro.core.mat.exprn import ExpressionNode
 from symro.core.mat.setn import CompoundSetNode
-from symro.core.mat.aexprn import DeclaredEntityNode, MultiplicationNode, DivisionNode, ExponentiationNode, \
-    ArithmeticTransformationNode
-from symro.core.mat.util import Element
+from symro.core.mat.aexprn import DeclaredEntityNode, ArithmeticOperationNode, ArithmeticTransformationNode
+from symro.core.mat.util import *
 from symro.core.mat.state import State
 
 
@@ -37,19 +35,20 @@ def is_linear(root_node: ExpressionNode) -> bool:
 
         node: ExpressionNode = queue.get()
 
-        if isinstance(node, MultiplicationNode):  # multiplication
+        if isinstance(node, ArithmeticOperationNode) and node.operator == MULTIPLICATION_OPERATOR:  # multiplication
             is_const = [is_constant(child) for child in node.get_children()]
             if is_const.count(False) > 1:
                 return False
 
-        elif isinstance(node, DivisionNode):  # division
-            if not is_constant(node.get_rhs_operand()):
+        elif isinstance(node, ArithmeticOperationNode) and node.operator == DIVISION_OPERATOR:  # division
+            if not is_constant(node.operands[1]):
                 return False
 
-        elif isinstance(node, ExponentiationNode):  # exponentiation
-            if not is_constant(node.get_lhs_operand()):
+        elif isinstance(node, ArithmeticOperationNode) \
+                and node.operator == EXPONENTIATION_OPERATOR:  # exponentiation
+            if not is_constant(node.operands[0]):
                 return False
-            elif not is_constant(node.get_rhs_operand()):
+            elif not is_constant(node.operands[1]):
                 return False
 
         elif isinstance(node, ArithmeticTransformationNode):   # transformation

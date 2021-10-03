@@ -33,11 +33,6 @@ problem Master:
 	{s in S, ct in CUTS} GBD_G_0[s,ct],
 	MASTER_OBJ,
 	{s in S} NON_ANT[s],
-	{ct in CUTS: is_feasible[ct] = 1} GBD_OPT_CUT[ct],
-	{ct in CUTS: is_feasible[ct] = 0} GBD_FBL_CUT[ct]
+	{ct in CUTS: is_feasible[ct] == 1} GBD_OPT_CUT[ct],
+	{ct in CUTS: is_feasible[ct] == 0} GBD_FBL_CUT[ct]
 ;
-
-problem Master;
-option solver gurobi;
-option gurobi_options "outlev=1";
-solve;

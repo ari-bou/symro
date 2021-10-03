@@ -62,10 +62,6 @@ class ExpressionNode(ABC):
         are_operands_const = [o.is_constant() for o in self.get_children()]
         return all(are_operands_const)
 
-    def is_null(self) -> bool:
-        are_operands_null = [o.is_null() for o in self.get_children()]
-        return all(are_operands_null)
-
     def is_controlled(self, dummy_element: List[str] = None) -> bool:
         """
         Returns True if the node contains a dummy node whose symbol is in the dummy_syms argument. If dummy_syms is
@@ -75,11 +71,9 @@ class ExpressionNode(ABC):
         """
         return any([o.is_controlled(dummy_element) for o in self.get_children()])
 
-    @abstractmethod
     def get_children(self) -> List["ExpressionNode"]:
-        pass
+        return []
 
-    @abstractmethod
     def set_children(self, operands: List["ExpressionNode"]):
         pass
 
@@ -96,6 +90,18 @@ class LogicalExpressionNode(ExpressionNode, ABC):
     def __init__(self):
         super().__init__()
 
+    @abstractmethod
+    def __invert__(self):
+        pass
+
+    @abstractmethod
+    def __and__(self, other: "LogicalExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __or__(self, other: "LogicalExpressionNode"):
+        pass
+
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
@@ -107,6 +113,22 @@ class SetExpressionNode(ExpressionNode, ABC):
 
     def __init__(self):
         super().__init__()
+
+    @abstractmethod
+    def __and__(self, other: "SetExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __or__(self, other: "SetExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __sub__(self, other: "SetExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __xor__(self, other: "SetExpressionNode"):
+        pass
 
     @abstractmethod
     def get_dim(self, state: State) -> int:
@@ -133,6 +155,57 @@ class ArithmeticExpressionNode(ExpressionNode, ABC):
     def __init__(self):
         super().__init__()
 
+    def __pos__(self):
+        return self
+
+    @abstractmethod
+    def __neg__(self):
+        pass
+
+    @abstractmethod
+    def __add__(self, other: "ArithmeticExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __sub__(self, other: "ArithmeticExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __mul__(self, other: "ArithmeticExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __truediv__(self, other: "ArithmeticExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __pow__(self, power: "ArithmeticExpressionNode", modulo=None):
+        pass
+
+    @abstractmethod
+    def __eq__(self, other: "ArithmeticExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __ne__(self, other: "ArithmeticExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __lt__(self, other: "ArithmeticExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __le__(self, other: "ArithmeticExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __gt__(self, other: "ArithmeticExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __ge__(self, other: "ArithmeticExpressionNode"):
+        pass
+
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
@@ -150,6 +223,30 @@ class StringExpressionNode(ExpressionNode, ABC):
 
     def __init__(self):
         super().__init__()
+
+    @abstractmethod
+    def __eq__(self, other: "StringExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __ne__(self, other: "StringExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __lt__(self, other: "StringExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __le__(self, other: "StringExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __gt__(self, other: "StringExpressionNode"):
+        pass
+
+    @abstractmethod
+    def __ge__(self, other: "StringExpressionNode"):
+        pass
 
     def evaluate(self,
                  state: State,

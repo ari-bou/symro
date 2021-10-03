@@ -20,12 +20,14 @@ option knitro_options "outlev=3 ms_enable=0";
 objective OBJ;
 
 option solver cplex;
-solve;
+#solve;
 
-display NODE;
-display ARC;
-display PROFIT;
+#display NODE;
+#display ARC;
+#display PROFIT;
 
-display OBJ;
+#display OBJ;
 
-display {i in 1.._ncons} (_conname[i], _con[i].body, _con[i].dual);
+#display {i in 1.._ncons} (_conname[i], _con[i].body, _con[i].dual);
+
+set test_set = {};

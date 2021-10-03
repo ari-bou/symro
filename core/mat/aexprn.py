@@ -1,227 +1,71 @@
-from abc import ABC
 from functools import partial
 from numbers import Number
 import numpy as np
-from ordered_set import OrderedSet
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, Optional
 
-from symro.core.mat.entity import Parameter, Variable, Objective, Constraint
+from symro.core.mat.entity import Parameter, Variable
 from symro.core.mat.exprn import LogicalExpressionNode, ArithmeticExpressionNode
+from symro.core.mat.relopn import RelationalOperationNode
+from symro.core.mat.lexprn import BooleanNode
+from symro.core.mat.aopn import ArithmeticOperationNode
 from symro.core.mat.dummyn import CompoundDummyNode
 from symro.core.mat.setn import CompoundSetNode
-from symro.core.mat.util import Element, IndexingSet
-from symro.core.mat.util import cartesian_product
+from symro.core.mat.util import *
 from symro.core.mat.state import State
 import symro.core.constants as const
 
 
-class NumericNode(ArithmeticExpressionNode):
+class AdditionNode(ArithmeticOperationNode):
 
     def __init__(self,
-                 value: Union[Number, str],
-                 sci_not: bool = False,
-                 coeff_sym: str = None,
-                 power_sign: str = None,
-                 power_sym: str = None):
-
-        super().__init__()
-
-        self.value: Number = 0
-        self.sci_not: bool = sci_not  # True if scientific notation is used
-        self.__is_null: bool = False
-
-        if not self.sci_not:
-            self.value = float(value)
-        else:
-            coeff = float(coeff_sym)
-            power = float(power_sign + power_sym)
-            self.value = coeff * (10 ** power)
-        if isinstance(self.value, float):
-            if self.value.is_integer():
-                self.value = int(self.value)
-
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_element: Element = None
-                 ) -> np.ndarray:
-        mp = 1
-        if idx_set is not None:
-            mp = len(idx_set)
-        return np.full(shape=mp, fill_value=self.value)
-
-    def to_lambda(self,
-                  state: State,
-                  idx_set_member: Element = None,
-                  dummy_element: Element = None):
-        return partial(lambda c: c, self.value)
-
-    def is_constant(self) -> bool:
-        return True
-
-    def is_null(self) -> bool:
-        return self.__is_null
-
-    def nullify(self):
-        self.value = 0
-        self.__is_null = True
-
-    def get_children(self) -> list:
-        return []
-
-    def set_children(self, children: list):
-        pass
-
-    def get_literal(self) -> str:
-        if self.value == np.inf:
-            literal = "Infinity"
-        elif self.value == -np.inf:
-            literal = "-Infinity"
-        elif not self.sci_not:
-            literal = str(self.value)
-        else:
-            literal = "{:e}".format(self.value)
-        if self.is_prioritized:
-            return '(' + literal + ')'
-        return literal
+                 operands: List[ArithmeticExpressionNode],
+                 is_prioritized: bool = False):
+        super().__init__(operator=ADDITION_OPERATOR,
+                         operands=operands,
+                         is_prioritized=is_prioritized)
 
 
-class DeclaredEntityNode(ArithmeticExpressionNode):
+class SubtractionNode(ArithmeticOperationNode):
 
     def __init__(self,
-                 symbol: str,
-                 idx_node: CompoundDummyNode = None,
-                 suffix: str = None,
-                 type: str = None):
+                 lhs_operand: ArithmeticExpressionNode = None,
+                 rhs_operand: ArithmeticExpressionNode = None,
+                 is_prioritized: bool = False):
+        super().__init__(operator=SUBTRACTION_OPERATOR,
+                         operands=[lhs_operand, rhs_operand],
+                         is_prioritized=is_prioritized)
 
-        super().__init__()
 
-        self.symbol: str = symbol
-        self.idx_node: CompoundDummyNode = idx_node
-        self.suffix: str = suffix
-        self.__entity_type: str = type
-        self.__is_null: bool = False
+class MultiplicationNode(ArithmeticOperationNode):
 
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_element: Element = None
-                 ) -> np.ndarray:
+    def __init__(self,
+                 operands: List[ArithmeticExpressionNode],
+                 is_prioritized: bool = False):
+        super().__init__(operator=MULTIPLICATION_OPERATOR,
+                         operands=operands,
+                         is_prioritized=is_prioritized)
 
-        indices = None
-        if self.is_indexed():
-            indices = self.idx_node.evaluate(state, idx_set, dummy_element)
 
-        mp = 1
-        if idx_set is not None:
-            mp = len(idx_set)
+class DivisionNode(ArithmeticOperationNode):
 
-        y = np.zeros(shape=mp)
+    def __init__(self,
+                 lhs_operand: ArithmeticExpressionNode = None,
+                 rhs_operand: ArithmeticExpressionNode = None,
+                 is_prioritized: bool = False):
+        super().__init__(operator=DIVISION_OPERATOR,
+                         operands=[lhs_operand, rhs_operand],
+                         is_prioritized=is_prioritized)
 
-        for ip in range(mp):
-            index = None
-            if indices is not None:
-                index = indices[ip]
-            entity: Union[Parameter, Variable, Objective, Constraint] = state.get_entity(self.symbol, index)
-            y[ip] = entity.value
 
-        return y
+class ExponentiationNode(ArithmeticOperationNode):
 
-    def to_lambda(self,
-                  state: State,
-                  idx_set_member: Element = None,
-                  dummy_element: Element = None) -> Callable:
-
-        idx = None
-        if self.is_indexed():
-            idx = self.idx_node.evaluate(state=state,
-                                         idx_set=OrderedSet([idx_set_member]),
-                                         dummy_element=dummy_element)
-
-        entity = state.get_entity(symbol=self.symbol, idx=idx)
-
-        return partial(lambda e: e.value, entity)
-
-    def collect_declared_entities(self,
-                                  state: State,
-                                  idx_set: IndexingSet = None,
-                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
-        entities = {}
-
-        entity_indices = None
-        if self.is_indexed():
-            entity_indices = self.idx_node.evaluate(state, idx_set, dummy_element)
-
-        mp = 1
-        if idx_set is not None:
-            mp = len(idx_set)
-
-        for ip in range(mp):  # Iterate over elements in indexing set
-
-            # Scalar entity
-            if entity_indices is None:
-                entity_index = tuple([])
-                is_dim_aggregated = []
-
-            # Indexed entity
-            else:
-                entity_index_list = list(entity_indices[ip])
-                is_dim_aggregated = [False] * len(entity_index_list)
-                for j, idx in enumerate(entity_index_list):
-                    if isinstance(idx, tuple):
-                        entity_index_list[j] = idx[0]
-                        is_dim_aggregated[j] = True
-                entity_index = tuple(entity_index_list)
-
-            if not self.is_constant():
-                var = Variable(symbol=self.symbol,
-                               idx=entity_index,
-                               is_dim_aggregated=is_dim_aggregated)
-                entities[var.entity_id] = var
-            else:
-                param = Parameter(symbol=self.symbol,
-                                  idx=entity_index,
-                                  is_dim_aggregated=is_dim_aggregated)
-                entities[param.entity_id] = param
-
-        return entities
-
-    def is_indexed(self) -> bool:
-        return self.idx_node is not None
-
-    def is_constant(self) -> bool:
-        return self.__entity_type == const.PARAM_TYPE
-
-    def is_null(self) -> bool:
-        return self.__is_null
-
-    def nullify(self):
-        self.__is_null = True
-
-    def get_type(self) -> str:
-        return self.__entity_type
-
-    def set_type(self, entity_type: str):
-        self.__entity_type = entity_type
-
-    def get_children(self) -> list:
-        if self.idx_node is not None:
-            return [self.idx_node]
-        return []
-
-    def set_children(self, children: list):
-        if len(children) > 0:
-            self.idx_node = children[0]
-
-    def get_literal(self) -> str:
-        literal = self.symbol
-        if self.is_indexed():
-            literal += "[{0}]".format(','.join([str(n) for n in self.idx_node.component_nodes]))
-        if self.suffix is not None:
-            literal += ".{0}".format(self.suffix)
-        if self.is_prioritized:
-            literal = '(' + literal + ')'
-        return literal
+    def __init__(self,
+                 lhs_operand: ArithmeticExpressionNode = None,
+                 rhs_operand: ArithmeticExpressionNode = None,
+                 is_prioritized: bool = False):
+        super().__init__(operator=EXPONENTIATION_OPERATOR,
+                         operands=[lhs_operand, rhs_operand],
+                         is_prioritized=is_prioritized)
 
 
 class ArithmeticTransformationNode(ArithmeticExpressionNode):
@@ -244,6 +88,42 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
                 self.operands.append(operands)
             else:
                 self.operands.extend(operands)
+
+    def __neg__(self):
+        return ArithmeticOperationNode.negation(self)
+
+    def __add__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.addition(self, other)
+
+    def __sub__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.subtraction(self, other)
+
+    def __mul__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.multiplication(self, other)
+
+    def __truediv__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.division(self, other)
+
+    def __pow__(self, power: ArithmeticExpressionNode, modulo=None):
+        return ArithmeticOperationNode.exponentiation(self, power)
+
+    def __eq__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.equal(self, other)
+
+    def __ne__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.not_equal(self, other)
+
+    def __lt__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.less_than(self, other)
+
+    def __le__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.less_than_or_equal(self, other)
+
+    def __gt__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.greater_than(self, other)
+
+    def __ge__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.greater_than_or_equal(self, other)
 
     def evaluate(self,
                  state: State,
@@ -473,287 +353,6 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
         return literal
 
 
-class MultiArithmeticOperationNode(ArithmeticExpressionNode, ABC):
-
-    ADDITION_OPERATOR = '+'
-    MULTIPLICATION_OPERATOR = '*'
-
-    def __init__(self,
-                 operator: str,
-                 operands: List[ArithmeticExpressionNode],
-                 is_prioritized: bool = False):
-        super().__init__()
-        self.operator: str = operator
-        self.operands: List[ArithmeticExpressionNode] = operands
-        self.is_prioritized = is_prioritized
-
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_element: Element = None
-                 ) -> np.ndarray:
-
-        x_lhs = self.operands[0].evaluate(state, idx_set, dummy_element)
-        y = x_lhs
-
-        for i in range(1, len(self.operands)):
-
-            x_rhs = self.operands[i].evaluate(state, idx_set, dummy_element)
-
-            if self.operator == self.ADDITION_OPERATOR:  # Addition
-                y = x_lhs + x_rhs
-            elif self.operator == self.MULTIPLICATION_OPERATOR:  # Multiplication
-                y = x_lhs * x_rhs
-            else:
-                raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
-                                 + " as a multi arithmetic operator")
-
-            x_lhs = y
-
-        return y
-
-    def to_lambda(self,
-                  state: State,
-                  idx_set_member: Element = None,
-                  dummy_element: Element = None) -> Callable:
-
-        args_all = []
-        for operand in self.operands:
-            args_all.append(operand.to_lambda(state, idx_set_member, dummy_element))
-
-        if self.operator == self.ADDITION_OPERATOR:  # Addition
-            return partial(lambda x: sum([x_i() for x_i in x]), args_all)
-        elif self.operator == self.MULTIPLICATION_OPERATOR:  # Multiplication
-            return partial(lambda x: np.prod([x_i() for x_i in x]), args_all)
-        else:
-            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
-                             + " as a multi arithmetic operator")
-
-    def collect_declared_entities(self,
-                                  state: State,
-                                  idx_set: IndexingSet = None,
-                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
-        vars = {}
-        for operand in self.operands:
-            vars.update(operand.collect_declared_entities(state, idx_set, dummy_element))
-        return vars
-
-    def get_children(self) -> List:
-        return self.operands
-
-    def set_children(self, operands: list):
-        self.operands.clear()
-        self.operands.extend(operands)
-
-    def get_literal(self) -> str:
-        s = ""
-        for i, operand in enumerate(self.operands):
-            if i == 0:
-                s = operand.get_literal()
-            else:
-                s += " {0} {1}".format(self.operator, operand)
-        if self.is_prioritized:
-            return '(' + s + ')'
-        else:
-            return s
-
-
-class BinaryArithmeticOperationNode(MultiArithmeticOperationNode, ABC):
-
-    SUBTRACTION_OPERATOR = '-'
-    DIVISION_OPERATOR = '/'
-    EXPONENTIATION_OPERATOR = '^'
-
-    def __init__(self,
-                 operator: str,
-                 lhs_operand: ArithmeticExpressionNode = None,
-                 rhs_operand: ArithmeticExpressionNode = None,
-                 is_prioritized: bool = False):
-        super().__init__(
-            operator=operator,
-            operands=[lhs_operand, rhs_operand],
-            is_prioritized=is_prioritized
-        )
-
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_element: Element = None
-                 ) -> np.ndarray:
-
-        x_lhs = self.get_lhs_operand().evaluate(state, idx_set, dummy_element)
-        x_rhs = self.get_rhs_operand().evaluate(state, idx_set, dummy_element)
-
-        if self.operator == self.ADDITION_OPERATOR:  # addition
-            y = x_lhs + x_rhs
-        elif self.operator == self.SUBTRACTION_OPERATOR:  # subtraction
-            y = x_lhs - x_rhs
-        elif self.operator == self.MULTIPLICATION_OPERATOR:  # multiplication
-            y = x_lhs * x_rhs
-        elif self.operator == self.DIVISION_OPERATOR:  # division
-            y = x_lhs / x_rhs
-        elif self.operator == self.EXPONENTIATION_OPERATOR:  # exponentiation
-            y = x_lhs ** x_rhs
-        else:
-            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
-                             + " as a binary arithmetic operator")
-        return y
-
-    def to_lambda(self,
-                  state: State,
-                  idx_set_member: Element = None,
-                  dummy_element: Element = None) -> Callable:
-
-        x_lhs = self.get_lhs_operand().to_lambda(state, idx_set_member, dummy_element)
-        x_rhs = self.get_rhs_operand().to_lambda(state, idx_set_member, dummy_element)
-
-        if self.operator == self.ADDITION_OPERATOR:  # addition
-            return partial(lambda l, r: l() + r(), x_lhs, x_rhs)
-        elif self.operator == self.SUBTRACTION_OPERATOR:  # subtraction
-            return partial(lambda l, r: l() - r(), x_lhs, x_rhs)
-        elif self.operator == self.MULTIPLICATION_OPERATOR:  # multiplication
-            return partial(lambda l, r: l() * r(), x_lhs, x_rhs)
-        elif self.operator == self.DIVISION_OPERATOR:  # division
-            return partial(lambda l, r: l() / r(), x_lhs, x_rhs)
-        elif self.operator == self.EXPONENTIATION_OPERATOR:  # exponentiation
-            return partial(lambda l, r: l() ** r(), x_lhs, x_rhs)
-        else:
-            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
-                             + " as a binary arithmetic operator")
-
-    def get_lhs_operand(self):
-        return self.operands[0]
-
-    def set_lhs_operand(self, operand: ArithmeticExpressionNode):
-        self.operands[0] = operand
-
-    def get_rhs_operand(self):
-        return self.operands[1]
-
-    def set_rhs_operand(self, operand: ArithmeticExpressionNode):
-        self.operands[1] = operand
-
-
-class AdditionNode(MultiArithmeticOperationNode):
-
-    def __init__(self,
-                 operands: List[ArithmeticExpressionNode],
-                 is_prioritized: bool = False):
-        super().__init__(operator='+',
-                         operands=operands,
-                         is_prioritized=is_prioritized)
-
-
-class SubtractionNode(BinaryArithmeticOperationNode):
-
-    def __init__(self,
-                 lhs_operand: ArithmeticExpressionNode = None,
-                 rhs_operand: ArithmeticExpressionNode = None,
-                 is_prioritized: bool = False):
-        super().__init__(operator='-',
-                         lhs_operand=lhs_operand,
-                         rhs_operand=rhs_operand,
-                         is_prioritized=is_prioritized)
-
-
-class MultiplicationNode(MultiArithmeticOperationNode):
-
-    def __init__(self,
-                 operands: List[ArithmeticExpressionNode],
-                 is_prioritized: bool = False):
-        super().__init__(operator='*',
-                         operands=operands,
-                         is_prioritized=is_prioritized)
-
-
-class DivisionNode(BinaryArithmeticOperationNode):
-
-    def __init__(self,
-                 lhs_operand: ArithmeticExpressionNode = None,
-                 rhs_operand: ArithmeticExpressionNode = None,
-                 is_prioritized: bool = False):
-        super().__init__(operator='/',
-                         lhs_operand=lhs_operand,
-                         rhs_operand=rhs_operand,
-                         is_prioritized=is_prioritized)
-
-
-class ExponentiationNode(BinaryArithmeticOperationNode):
-
-    def __init__(self,
-                 lhs_operand: ArithmeticExpressionNode = None,
-                 rhs_operand: ArithmeticExpressionNode = None,
-                 is_prioritized: bool = False):
-        super().__init__(operator='^',
-                         lhs_operand=lhs_operand,
-                         rhs_operand=rhs_operand,
-                         is_prioritized=is_prioritized)
-
-
-class UnaryArithmeticOperationNode(ArithmeticExpressionNode):
-
-    UNARY_PLUS_OPERATOR = '+'
-    UNARY_NEGATION_OPERATOR = '-'
-
-    def __init__(self,
-                 operator: str,
-                 operand: ArithmeticExpressionNode = None):
-        super().__init__()
-        self.operator: str = operator
-        self.operand: ArithmeticExpressionNode = operand
-
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_element: Tuple[str, ...] = None
-                 ) -> np.ndarray:
-
-        x = self.operand.evaluate(state, idx_set, dummy_element)
-
-        if self.operator == self.UNARY_PLUS_OPERATOR:  # unary plus
-            y = x
-        elif self.operator == self.UNARY_NEGATION_OPERATOR:  # unary negation
-            y = -x
-        else:
-            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
-                             + " as a unary arithmetic operator")
-        return y
-
-    def to_lambda(self,
-                  state: State,
-                  idx_set_member: Element = None,
-                  dummy_element: Element = None) -> Callable:
-
-        arg = self.operand.to_lambda(state, idx_set_member, dummy_element)
-
-        if self.operator == self.UNARY_PLUS_OPERATOR:  # unary plus
-            return arg
-        elif self.operator == self.UNARY_NEGATION_OPERATOR:  # unary negation
-            return partial(lambda x: -x(), arg)
-        else:
-            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
-                             + " as a unary arithmetic operator")
-
-    def collect_declared_entities(self,
-                                  state: State,
-                                  idx_set: IndexingSet = None,
-                                  dummy_element: Tuple[str, ...] = None) -> Dict[str, Union[Parameter, Variable]]:
-        return self.operand.collect_declared_entities(state, idx_set, dummy_element)
-
-    def get_children(self) -> List:
-        return [self.operand]
-
-    def set_children(self, operands: list):
-        if len(operands) > 0:
-            self.operand = operands[0]
-
-    def get_literal(self) -> str:
-        literal = "{0}{1}".format(self.operator, self.operand)
-        if self.is_prioritized:
-            literal = '(' + literal + ')'
-        return literal
-
-
 class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
 
     def __init__(self,
@@ -764,6 +363,42 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
         self.operands: List[ArithmeticExpressionNode] = operands
         self.conditions: List[LogicalExpressionNode] = conditions
         self.is_prioritized = is_prioritized
+
+    def __neg__(self):
+        return ArithmeticOperationNode.negation(self)
+
+    def __add__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.addition(self, other)
+
+    def __sub__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.subtraction(self, other)
+
+    def __mul__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.multiplication(self, other)
+
+    def __truediv__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.division(self, other)
+
+    def __pow__(self, power: ArithmeticExpressionNode, modulo=None):
+        return ArithmeticOperationNode.exponentiation(self, power)
+
+    def __eq__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.equal(self, other)
+
+    def __ne__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.not_equal(self, other)
+
+    def __lt__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.less_than(self, other)
+
+    def __le__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.less_than_or_equal(self, other)
+
+    def __gt__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.greater_than(self, other)
+
+    def __ge__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.greater_than_or_equal(self, other)
 
     def evaluate(self,
                  state: State,
@@ -900,3 +535,334 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
             else:
                 rhs += " else if {0} then {1}".format(self.conditions[i], operand)
         return rhs
+
+
+class DeclaredEntityNode(ArithmeticExpressionNode):
+
+    def __init__(self,
+                 symbol: str,
+                 idx_node: CompoundDummyNode = None,
+                 suffix: str = None,
+                 type: str = None):
+
+        super().__init__()
+
+        self.symbol: str = symbol
+        self.idx_node: CompoundDummyNode = idx_node
+        self.suffix: str = suffix
+        self.__entity_type: str = type
+
+    def __neg__(self):
+        return ArithmeticOperationNode.negation(self)
+
+    def __add__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.addition(self, other)
+
+    def __sub__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.subtraction(self, other)
+
+    def __mul__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.multiplication(self, other)
+
+    def __truediv__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.division(self, other)
+
+    def __pow__(self, power: ArithmeticExpressionNode, modulo=None):
+        return ArithmeticOperationNode.exponentiation(self, power)
+
+    def __eq__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.equal(self, other)
+
+    def __ne__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.not_equal(self, other)
+
+    def __lt__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.less_than(self, other)
+
+    def __le__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.less_than_or_equal(self, other)
+
+    def __gt__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.greater_than(self, other)
+
+    def __ge__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.greater_than_or_equal(self, other)
+
+    def evaluate(self,
+                 state: State,
+                 idx_set: IndexingSet = None,
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
+
+        indices = None
+        if self.is_indexed():
+            indices = self.idx_node.evaluate(state, idx_set, dummy_element)
+
+        mp = 1
+        if idx_set is not None:
+            mp = len(idx_set)
+
+        y = np.zeros(shape=mp)
+
+        for ip in range(mp):
+            index = None
+            if indices is not None:
+                index = indices[ip]
+            entity = state.get_entity(self.symbol, index)
+            y[ip] = entity.get_value()
+
+        return y
+
+    def to_lambda(self,
+                  state: State,
+                  idx_set_member: Element = None,
+                  dummy_element: Element = None) -> Callable:
+
+        idx = None
+        if self.is_indexed():
+            idx = self.idx_node.evaluate(state=state,
+                                         idx_set=OrderedSet([idx_set_member]),
+                                         dummy_element=dummy_element)
+
+        entity = state.get_entity(symbol=self.symbol, idx=idx)
+
+        return partial(lambda e: e.value, entity)
+
+    def collect_declared_entities(self,
+                                  state: State,
+                                  idx_set: IndexingSet = None,
+                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
+        entities = {}
+
+        entity_indices = None
+        if self.is_indexed():
+            entity_indices = self.idx_node.evaluate(state, idx_set, dummy_element)
+
+        mp = 1
+        if idx_set is not None:
+            mp = len(idx_set)
+
+        for ip in range(mp):  # Iterate over elements in indexing set
+
+            # Scalar entity
+            if entity_indices is None:
+                entity_index = tuple([])
+                is_dim_aggregated = []
+
+            # Indexed entity
+            else:
+                entity_index_list = list(entity_indices[ip])
+                is_dim_aggregated = [False] * len(entity_index_list)
+                for j, idx in enumerate(entity_index_list):
+                    if isinstance(idx, tuple):
+                        entity_index_list[j] = idx[0]
+                        is_dim_aggregated[j] = True
+                entity_index = tuple(entity_index_list)
+
+            if not self.is_constant():
+                var = Variable(symbol=self.symbol,
+                               idx=entity_index,
+                               is_dim_aggregated=is_dim_aggregated)
+                entities[var.entity_id] = var
+            else:
+                param = Parameter(symbol=self.symbol,
+                                  idx=entity_index,
+                                  is_dim_aggregated=is_dim_aggregated)
+                entities[param.entity_id] = param
+
+        return entities
+
+    def is_indexed(self) -> bool:
+        return self.idx_node is not None
+
+    def is_constant(self) -> bool:
+        return self.__entity_type == const.PARAM_TYPE
+
+    def get_type(self) -> str:
+        return self.__entity_type
+
+    def set_type(self, entity_type: str):
+        self.__entity_type = entity_type
+
+    def get_children(self) -> list:
+        if self.idx_node is not None:
+            return [self.idx_node]
+        return []
+
+    def set_children(self, children: list):
+        if len(children) > 0:
+            self.idx_node = children[0]
+
+    def get_literal(self) -> str:
+        literal = self.symbol
+        if self.is_indexed():
+            literal += "[{0}]".format(','.join([str(n) for n in self.idx_node.component_nodes]))
+        if self.suffix is not None:
+            literal += ".{0}".format(self.suffix)
+        if self.is_prioritized:
+            literal = '(' + literal + ')'
+        return literal
+
+
+class NumericNode(ArithmeticExpressionNode):
+
+    def __init__(self,
+                 value: Union[Number, str],
+                 sci_not: bool = False,
+                 coeff_sym: str = None,
+                 power_sign: str = None,
+                 power_sym: str = None):
+
+        super().__init__()
+
+        self.value: Number = 0
+        self.sci_not: bool = sci_not  # True if scientific notation is used
+        self.__is_null: bool = False
+
+        if not self.sci_not:
+            self.value = float(value)
+        else:
+            coeff = float(coeff_sym)
+            power = float(power_sign + power_sym)
+            self.value = coeff * (10 ** power)
+        if isinstance(self.value, float):
+            if self.value.is_integer():
+                self.value = int(self.value)
+
+    def __neg__(self):
+        self.value *= -1
+
+    def __add__(self, other: ArithmeticExpressionNode):
+
+        if isinstance(other, NumericNode):
+            return NumericNode(self.value + other.value)
+
+        elif isinstance(other, ArithmeticOperationNode) and other.operator == ADDITION_OPERATOR:
+
+            for term in other.operands:
+                if isinstance(term, NumericNode):
+                    term.value += self.value
+                    return other
+
+            other.operands.append(self)
+            return other
+
+        else:
+            return ArithmeticOperationNode.addition(self, other)
+
+    def __sub__(self, other: ArithmeticExpressionNode):
+        if isinstance(other, NumericNode):
+            return NumericNode(self.value - other.value)
+        else:
+            return ArithmeticOperationNode.subtraction(self, other)
+
+    def __mul__(self, other: ArithmeticExpressionNode):
+
+        if isinstance(other, NumericNode):
+            return NumericNode(self.value * other.value)
+
+        elif isinstance(other, ArithmeticOperationNode) and other.operator == MULTIPLICATION_OPERATOR:
+
+            for term in other.operands:
+                if isinstance(term, NumericNode):
+                    term.value *= self.value
+                    return other
+
+            other.operands.insert(0, self)
+            return other
+
+        else:
+            return ArithmeticOperationNode.addition(self, other)
+
+    def __truediv__(self, other: ArithmeticExpressionNode):
+        if isinstance(other, NumericNode):
+            return NumericNode(self.value / other.value)
+        else:
+            return ArithmeticOperationNode.division(self, other)
+
+    def __pow__(self, power: ArithmeticExpressionNode, modulo=None):
+        if isinstance(power, NumericNode):
+            return NumericNode(self.value ** power.value)
+        else:
+            return ArithmeticOperationNode.exponentiation(self, power)
+
+    def __eq__(self, other: ArithmeticExpressionNode):
+        if isinstance(other, NumericNode):
+            return BooleanNode(value=self.value == other.value)
+        else:
+            return RelationalOperationNode.equal(self, other)
+
+    def __ne__(self, other: ArithmeticExpressionNode):
+        if isinstance(other, NumericNode):
+            return BooleanNode(value=self.value != other.value)
+        else:
+            return RelationalOperationNode.not_equal(self, other)
+
+    def __lt__(self, other: ArithmeticExpressionNode):
+        if isinstance(other, NumericNode):
+            return BooleanNode(value=self.value < other.value)
+        else:
+            return RelationalOperationNode.less_than(self, other)
+
+    def __le__(self, other: ArithmeticExpressionNode):
+        if isinstance(other, NumericNode):
+            return BooleanNode(value=self.value <= other.value)
+        else:
+            return RelationalOperationNode.less_than_or_equal(self, other)
+
+    def __gt__(self, other: ArithmeticExpressionNode):
+        if isinstance(other, NumericNode):
+            return BooleanNode(value=self.value > other.value)
+        else:
+            return RelationalOperationNode.greater_than(self, other)
+
+    def __ge__(self, other: ArithmeticExpressionNode):
+        if isinstance(other, NumericNode):
+            return BooleanNode(value=self.value >= other.value)
+        else:
+            return RelationalOperationNode.greater_than_or_equal(self, other)
+
+    def evaluate(self,
+                 state: State,
+                 idx_set: IndexingSet = None,
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
+        mp = 1
+        if idx_set is not None:
+            mp = len(idx_set)
+        return np.full(shape=mp, fill_value=self.value)
+
+    def to_lambda(self,
+                  state: State,
+                  idx_set_member: Element = None,
+                  dummy_element: Element = None):
+        return partial(lambda c: c, self.value)
+
+    def is_constant(self) -> bool:
+        return True
+
+    def is_null(self) -> bool:
+        return self.__is_null
+
+    def nullify(self):
+        self.value = 0
+        self.__is_null = True
+
+    def get_children(self) -> list:
+        return []
+
+    def set_children(self, children: list):
+        pass
+
+    def get_literal(self) -> str:
+        if self.value == np.inf:
+            literal = "Infinity"
+        elif self.value == -np.inf:
+            literal = "-Infinity"
+        elif not self.sci_not:
+            literal = str(self.value)
+        else:
+            literal = "{:e}".format(self.value)
+        if self.is_prioritized:
+            return '(' + literal + ')'
+        return literal

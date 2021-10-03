@@ -20,8 +20,8 @@ var NODE{MATERIALS, TIMEPERIODS, SCENARIOS} >= 0, <= 1000;
 var ARC{LINKAGES, TIMEPERIODS, SCENARIOS} >= 0, <= 1000;
 var PROFIT{TIMEPERIODS, SCENARIOS};
 
-maximize OBJ: sum {t in TIMEPERIODS, s in SCENARIOS} (PROBABILITY[s] * (sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s]) - sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s] + 0.01 * COST[r,s] * NODE[r,t,s] ^ 1)));
-maximize OBJ_SUB{t in TIMEPERIODS, s in SCENARIOS}: PROBABILITY[s] * (sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s]) - sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s] + 0.01 * COST[r,s] * NODE[r,t,s] ^ 1));
+maximize OBJ: sum {t in TIMEPERIODS, s in SCENARIOS} (PROBABILITY[s] * (sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s]) - sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s] + 0.01 * COST[r,s] * NODE[r,t,s] ^ 2)));
+maximize OBJ_SUB{t in TIMEPERIODS, s in SCENARIOS}: PROBABILITY[s] * (sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s]) - sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s] + 0.01 * COST[r,s] * NODE[r,t,s] ^ 2));
 
 INLET_FLOW_RATE{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS}: INLET[r,t,s] = NODE[r,t,s];
 RAW_MAT_FLOW_RATE{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS}: sum {p in PRODUCTS} ARC[r,p,t,s] = NODE[r,t,s];

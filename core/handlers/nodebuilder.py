@@ -492,8 +492,8 @@ def build_conjunction_node(operands: List[mat.LogicalExpressionNode]):
     else:
         for op in operands:
             op.is_prioritized = True
-        return mat.MultiLogicalOperationNode(operator="&&",
-                                             operands=operands)
+        return mat.LogicalOperationNode(operator=mat.CONJUNCTION_OPERATOR,
+                                        operands=operands)
 
 
 def build_disjunction_node(operands: List[mat.LogicalExpressionNode]):
@@ -507,8 +507,8 @@ def build_disjunction_node(operands: List[mat.LogicalExpressionNode]):
     else:
         for op in operands:
             op.is_prioritized = True
-        return mat.MultiLogicalOperationNode(operator="||",
-                                             operands=operands)
+        return mat.LogicalOperationNode(operator=mat.DISJUNCTION_OPERATOR,
+                                        operands=operands)
 
 
 # Numeric Node Construction
@@ -550,10 +550,10 @@ def build_fractional_node(numerator: mat.ArithmeticExpressionNode,
     den_1 = None
     den_2 = denominator
 
-    if isinstance(numerator, mat.DivisionNode):
+    if isinstance(numerator, mat.ArithmeticOperationNode) and numerator.operator == mat.DIVISION_OPERATOR:
         num_1 = numerator.get_lhs_operand()
         den_1 = numerator.get_rhs_operand()
-    if isinstance(denominator, mat.DivisionNode):
+    if isinstance(denominator, mat.ArithmeticOperationNode) and denominator.operator == mat.DIVISION_OPERATOR:
         den_2 = denominator.get_lhs_operand()
         num_2 = denominator.get_rhs_operand()
 

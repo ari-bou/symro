@@ -65,10 +65,19 @@ def check_str_result(actual_result, expected_result) -> bool:
 
 def check_num_result(actual_result: Union[int, float],
                      expected_result: Union[int, float],
-                     tol: float = 0.01) -> bool:
-    if abs(actual_result - expected_result) <= tol:
+                     rel_tol: float = 0.01) -> bool:
+
+    within_tol = False
+
+    if actual_result == expected_result:
+        within_tol = True
+    elif abs((actual_result - expected_result) / (0.5 * (actual_result + expected_result))) <= rel_tol:
+        within_tol = True
+
+    if within_tol:
         print("Correct result: {0}".format(actual_result))
         return True
+
     else:
         warnings.warn("Incorrect result: {0} \nExpected result: {1}".format(actual_result, expected_result))
         return False

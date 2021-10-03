@@ -1,9 +1,9 @@
-import numpy as np
 from typing import List, Optional, Union
 
+from symro.core.mat.util import *
 from symro.core.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode
+from symro.core.mat.sopn import SetOperationNode
 from symro.core.mat.setn import CompoundSetNode
-from symro.core.mat.util import Element, IndexingSet
 from symro.core.mat.state import State
 
 
@@ -15,6 +15,18 @@ class ConditionalSetExpressionNode(SetExpressionNode):
         super().__init__()
         self.operands: List[SetExpressionNode] = operands
         self.conditions: List[Optional[LogicalExpressionNode]] = conditions
+
+    def __and__(self, other: SetExpressionNode):
+        return SetOperationNode.intersection(self, other)
+
+    def __or__(self, other: SetExpressionNode):
+        return SetOperationNode.union(self, other)
+
+    def __sub__(self, other: SetExpressionNode):
+        return SetOperationNode.difference(self, other)
+
+    def __xor__(self, other: SetExpressionNode):
+        return SetOperationNode.symmetric_difference(self, other)
 
     @staticmethod
     def generate_negated_combined_condition(conditions: List[str]):
@@ -67,14 +79,26 @@ class ConditionalSetExpressionNode(SetExpressionNode):
 class SetReductionOperationNode(SetExpressionNode):
 
     def __init__(self,
-                 symbol: str,
+                 operator: int,
                  idx_set_node: CompoundSetNode,
                  operand: SetExpressionNode = None):
 
         super().__init__()
-        self.symbol: str = symbol
+        self.operator: int = operator
         self.idx_set_node: CompoundSetNode = idx_set_node
         self.operand: SetExpressionNode = operand
+
+    def __and__(self, other: SetExpressionNode):
+        return SetOperationNode.intersection(self, other)
+
+    def __or__(self, other: SetExpressionNode):
+        return SetOperationNode.union(self, other)
+
+    def __sub__(self, other: SetExpressionNode):
+        return SetOperationNode.difference(self, other)
+
+    def __xor__(self, other: SetExpressionNode):
+        return SetOperationNode.symmetric_difference(self, other)
 
     def get_dim(self, state: State) -> int:
         return self.operand.get_dim(state)
@@ -92,67 +116,7 @@ class SetReductionOperationNode(SetExpressionNode):
                 self.idx_set_node = operands[1]
 
     def get_literal(self) -> str:
-        literal = self.symbol + str(self.idx_set_node) + str(self.operand)
+        literal = AMPL_OPERATOR_SYMBOLS[self.operator] + str(self.idx_set_node) + str(self.operand)
         if self.is_prioritized:
             literal = '(' + literal + ')'
-        return literal
-
-
-class BinarySetOperationNode(SetExpressionNode):
-
-    def __init__(self,
-                 operator: str,
-                 lhs_operand: SetExpressionNode = None,
-                 rhs_operand: SetExpressionNode = None):
-        super().__init__()
-        self.operator: str = operator
-        self.lhs_operand: SetExpressionNode = lhs_operand
-        self.rhs_operand: SetExpressionNode = rhs_operand
-
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_element: Element = None
-                 ) -> np.ndarray:
-
-        x_lhs = self.lhs_operand.evaluate(state, idx_set, dummy_element)
-        x_rhs = self.rhs_operand.evaluate(state, idx_set, dummy_element)
-
-        if self.operator == "union":
-            return x_lhs | x_rhs
-
-        elif self.operator == "inter":
-            return x_lhs & x_rhs
-
-        elif self.operator == "diff":
-            return x_lhs - x_rhs
-
-        elif self.operator == "symdiff":
-            return x_lhs ^ x_rhs
-
-        else:
-            raise ValueError("Unable to resolve operator '{0}' as a binary set operator".format(self.operator))
-
-    def is_constant(self) -> bool:
-        return True
-
-    def is_null(self) -> bool:
-        return False
-
-    def get_dim(self, state: State) -> int:
-        return self.lhs_operand.get_dim(state)
-
-    def get_children(self) -> list:
-        return [self.lhs_operand, self.rhs_operand]
-
-    def set_children(self, operands: list):
-        if len(operands) > 0:
-            self.lhs_operand = operands[0]
-            if len(operands) > 1:
-                self.rhs_operand = operands[1]
-
-    def get_literal(self) -> str:
-        literal = "{0} {1} {2}".format(self.lhs_operand, self.operator, self.rhs_operand)
-        if self.is_prioritized:
-            return '(' + literal + ')'
         return literal

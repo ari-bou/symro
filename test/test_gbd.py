@@ -75,7 +75,7 @@ def gbd_scenario_wise_convex_qp_production() -> bool:
                               engine=engine,
                               can_clean_script=True)
 
-    engine.solve(solver_name="gurobi", solver_options="outlev=1")
+    engine.solve(solver_name="cplex", solver_options="outlev=1")
     v_benchmark = -engine.get_obj_value("OBJ")
 
     gbd = symro.GBDAlgorithm(problem,
@@ -88,8 +88,8 @@ def gbd_scenario_wise_convex_qp_production() -> bool:
                              init_ub=1000000)
     gbd.add_decomposition_axes(idx_set_symbols=["SCENARIOS"])
     gbd.setup()
-    v, y = gbd.run(mp_solver_name="gurobi",
-                   sp_solver_name="gurobi",
+    v, y = gbd.run(mp_solver_name="cplex",
+                   sp_solver_name="cplex",
                    rel_opt_tol=0.001,
                    verbosity=VERBOSITY)
 

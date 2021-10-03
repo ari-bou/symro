@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Union
 
+import mat
 import symro.core.constants as const
 from symro.core.mat.entity import Entity
 from symro.core.mat.state import State
 from symro.core.mat.setn import BaseSetNode, CompoundSetNode
-from symro.core.mat.lexprn import RelationalOperationNode
+from symro.core.mat.relopn import RelationalOperationNode
 from symro.core.mat.exprn import ExpressionNode
 from symro.core.mat.expression import Expression
 from symro.core.mat.util import Element, IndexingSet, remove_set_dimensions
@@ -892,9 +893,10 @@ class MetaConstraint(MetaEntity):
         expr_node = self._expression.root_node
 
         if isinstance(expr_node, RelationalOperationNode):
-            if expr_node.operator in ['=', "=="]:
+            if expr_node.operator == mat.EQUALITY_OPERATOR:
                 self._ctype = self.EQUALITY_TYPE
-            elif expr_node.operator in ['<', '<=', '>=', '>']:
+            elif expr_node.operator in [mat.LESS_INEQUALITY_OPERATOR, mat.LESS_EQUAL_INEQUALITY_OPERATOR,
+                                        mat.GREATER_INEQUALITY_OPERATOR, mat.GREATER_EQUAL_INEQUALITY_OPERATOR]:
                 if isinstance(expr_node.lhs_operand, RelationalOperationNode):
                     self._ctype = self.DOUBLE_INEQUALITY_TYPE
                 elif isinstance(expr_node.rhs_operand, RelationalOperationNode):

@@ -87,7 +87,7 @@ def __standardize_expression(problem: Problem, node: mat.ArithmeticExpressionNod
     terms = frm.expand_multiplication(problem, node)
     ref_terms = []
     for term in terms:
-        if isinstance(term, mat.MultiplicationNode):
+        if isinstance(term, mat.ArithmeticOperationNode) and term.operator == mat.MULTIPLICATION_OPERATOR:
             term = frm.combine_summation_factor_nodes(problem, term.operands)
             ref_terms.append(term)
         else:

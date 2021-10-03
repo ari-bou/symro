@@ -154,7 +154,7 @@ class Convexifier:
 
         ref_terms = []
         for term in terms:
-            if isinstance(term, mat.MultiplicationNode):
+            if isinstance(term, mat.ArithmeticOperationNode) and term.operator == mat.MULTIPLICATION_OPERATOR:
                 term = fmr.combine_summation_factor_nodes(
                     problem=self.convex_relaxation,
                     factors=term.operands,
@@ -174,7 +174,7 @@ class Convexifier:
             convexified_node = self.__convexify_node(node.operands[0])
             node.operands[0] = convexified_node
 
-        elif isinstance(node, mat.MultiplicationNode):
+        elif isinstance(node, mat.ArithmeticOperationNode) and node.operator == mat.MULTIPLICATION_OPERATOR:
 
             factors = node.operands
 
@@ -273,7 +273,7 @@ class Convexifier:
             return const.LINEAR
 
         # division
-        elif isinstance(node, mat.DivisionNode):
+        elif isinstance(node, mat.ArithmeticOperationNode) and node.operator == mat.DIVISION_OPERATOR:
 
             # by default, numerator is a numeric node with value 1
 
@@ -286,7 +286,7 @@ class Convexifier:
                 return const.GENERAL_NONCONVEX
 
         # exponentiation
-        elif isinstance(node, mat.ExponentiationNode):
+        elif isinstance(node, mat.ArithmeticOperationNode) and node.operator == mat.EXPONENTIATION_OPERATOR:
 
             # univariate exponential with constant base: b^x
             if mat.is_constant(node.get_lhs_operand()) and mat.is_linear(node.get_rhs_operand()):
@@ -326,20 +326,22 @@ class Convexifier:
 
         else:
 
-            # addition nodes should be expanded
-            if isinstance(node, mat.AdditionNode):
-                raise ValueError("Convexifier encountered an illegal addition node"
-                                 + " while identify the type of a term '{0}'".format(node))
+            if isinstance(node, mat.ArithmeticOperationNode):
 
-            # subtraction nodes should be converted to addition nodes
-            if isinstance(node, mat.SubtractionNode):
-                raise ValueError("Convexifier encountered an illegal subtraction node"
-                                 + " while identify the type of a term '{0}'".format(node))
+                # addition nodes should be expanded
+                if node.operator == mat.ADDITION_OPERATOR:
+                    raise ValueError("Convexifier encountered an illegal addition node"
+                                     + " while identify the type of a term '{0}'".format(node))
 
-            # multiplication nodes should be handled in a preceding method
-            if isinstance(node, mat.MultiplicationNode):
-                raise ValueError("Convexifier encountered an illegal multiplication node"
-                                 + " while identify the type of a term '{0}'".format(node))
+                # subtraction nodes should be converted to addition nodes
+                if node.operator == mat.SUBTRACTION_OPERATOR:
+                    raise ValueError("Convexifier encountered an illegal subtraction node"
+                                     + " while identify the type of a term '{0}'".format(node))
+
+                # multiplication nodes should be handled in a preceding method
+                if node.operator == mat.MULTIPLICATION_OPERATOR:
+                    raise ValueError("Convexifier encountered an illegal multiplication node"
+                                     + " while identify the type of a term '{0}'".format(node))
 
             raise ValueError("Convexifier encountered an unexpected term '{0}'".format(node)
                              + " while trying to identify its type")
@@ -394,7 +396,7 @@ class Convexifier:
                     nb.append_negative_unity_coefficient(neg_ue_node)
                 ],
                 conditions=[
-                    mat.RelationalOperationNode(operator=">=",
+                    mat.RelationalOperationNode(operator=mat.GREATER_EQUAL_INEQUALITY_OPERATOR,
                                                 lhs_operand=deepcopy(coefficient_node),
                                                 rhs_operand=nb.build_numeric_node(0))
                 ],
@@ -466,10 +468,12 @@ class Convexifier:
 
         for operand in operands:
 
+            # constant
             if isinstance(operand, mat.NumericNode):
                 sym = str(abs(int(operand.value)))
                 is_var[sym] = False
 
+            # linear
             elif isinstance(operand, mat.DeclaredEntityNode):
 
                 sym = operand.symbol
@@ -480,7 +484,8 @@ class Convexifier:
                 if operand.idx_node is not None:
                     dummy_nodes.extend(operand.idx_node.component_nodes)
 
-            elif isinstance(operand, mat.DivisionNode):
+            # fractional
+            elif isinstance(operand, mat.ArithmeticOperationNode) and operand.operator == mat.DIVISION_OPERATOR:
 
                 den_node = operand.get_rhs_operand()
                 if not isinstance(den_node, mat.DeclaredEntityNode):
@@ -630,11 +635,13 @@ class Convexifier:
                                for unb_sym in var_unb_sym_map[operand_sym]]
                 idx_node = mat.CompoundDummyNode(component_nodes=dummy_nodes)
 
+                # linear variable or constant
                 if isinstance(operand, mat.DeclaredEntityNode):
                     operand = deepcopy(operand)
                     operand.idx_node = idx_node
 
-                elif isinstance(operand, mat.DivisionNode):
+                # fractional
+                elif isinstance(operand, mat.ArithmeticOperationNode) and operand.operator == mat.DIVISION_OPERATOR:
 
                     den_node = operand.get_rhs_operand()
                     if not isinstance(den_node, mat.DeclaredEntityNode):
@@ -668,7 +675,7 @@ class Convexifier:
             ue_bound_sym = self.convex_relaxation.generate_unique_symbol("{0}_{1}".format(base_ue_bound_sym, i))
 
             rel_op_node = mat.RelationalOperationNode(
-                operator="<=",
+                operator=mat.LESS_EQUAL_INEQUALITY_OPERATOR,
                 lhs_operand=nb.build_subtraction_node(ce_expr_node, deepcopy(ue_node)),
                 rhs_operand=nb.build_numeric_node(0)
             )
@@ -833,7 +840,7 @@ class Convexifier:
                 return nb.build_multiplication_node([deepcopy(coefficient), deepcopy(operand)])
 
         # fractional (1/x)
-        elif isinstance(operand, mat.DivisionNode):
+        elif isinstance(operand, mat.ArithmeticOperationNode) and operand.operator == mat.DIVISION_OPERATOR:
 
             operand_lb_node = self.__build_lower_bound_node(operand=operand.get_rhs_operand(), is_negative=is_negative)
             operand_ub_node = self.__build_upper_bound_node(operand=operand.get_rhs_operand(), is_negative=is_negative)
@@ -866,12 +873,9 @@ class Convexifier:
             ]
 
             conditions = [
-                mat.RelationalOperationNode(operator=">=",
+                mat.RelationalOperationNode(operator=mat.GREATER_EQUAL_INEQUALITY_OPERATOR,
                                             lhs_operand=deepcopy(coefficient),
                                             rhs_operand=nb.build_numeric_node(0)),
-                mat.RelationalOperationNode(operator="<",
-                                            lhs_operand=deepcopy(coefficient),
-                                            rhs_operand=nb.build_numeric_node(0))
             ]
 
             return mat.ConditionalArithmeticExpressionNode(
@@ -901,7 +905,7 @@ class Convexifier:
         if isinstance(uc_node, mat.ArithmeticTransformationNode):
             x_node = uc_node.operands[0]
 
-        elif isinstance(uc_node, mat.ExponentiationNode):
+        elif isinstance(uc_node, mat.ArithmeticOperationNode) and uc_node.operator == mat.EXPONENTIATION_OPERATOR:
 
             # base is constant and exponent is univariate: b^x
             if mat.is_constant(uc_node.get_lhs_operand()):
@@ -1014,7 +1018,7 @@ class Convexifier:
                 )
 
         # factors (x1*x2*...xn)
-        elif isinstance(operand, mat.MultiplicationNode):
+        elif isinstance(operand, mat.ArithmeticOperationNode) and operand.operator == mat.MULTIPLICATION_OPERATOR:
 
             lb_nodes = []
             ub_nodes = []
@@ -1035,7 +1039,7 @@ class Convexifier:
             )
 
         # fractional (1/x)
-        elif isinstance(operand, mat.DivisionNode):
+        elif isinstance(operand, mat.ArithmeticOperationNode) and operand.operator == mat.DIVISION_OPERATOR:
             if not is_negative:  # 1/x_U
                 return self.__build_fractional_lower_bound_node(operand)
             else:  # -1/x_L
@@ -1069,7 +1073,7 @@ class Convexifier:
                 )
 
         # factors (x1*x2*...xn)
-        elif isinstance(operand, mat.MultiplicationNode):
+        elif isinstance(operand, mat.ArithmeticOperationNode) and operand.operator == mat.MULTIPLICATION_OPERATOR:
 
             lb_nodes = []
             ub_nodes = []
@@ -1090,7 +1094,7 @@ class Convexifier:
             )
 
         # fractional (1/x)
-        elif isinstance(operand, mat.DivisionNode):
+        elif isinstance(operand, mat.ArithmeticOperationNode) and operand.operator == mat.DIVISION_OPERATOR:
             if not is_negative:  # 1/x_L
                 return self.__build_fractional_upper_bound_node(operand)
             else:  # -1/x_U
@@ -1110,7 +1114,7 @@ class Convexifier:
         ub_param = self.ub_params[operand.symbol]
         return self.__build_declared_bound_node(ub_param, operand.idx_node)  # x_U
 
-    def __build_fractional_lower_bound_node(self, operand: mat.DivisionNode):
+    def __build_fractional_lower_bound_node(self, operand: mat.ArithmeticOperationNode):
 
         den_node = operand.get_rhs_operand()
         if not isinstance(den_node, mat.DeclaredEntityNode):
@@ -1123,7 +1127,7 @@ class Convexifier:
         # 1/x_U
         return nb.build_fractional_node_with_unity_numerator(denominator=den_ub_node)
 
-    def __build_fractional_upper_bound_node(self, operand: mat.DivisionNode):
+    def __build_fractional_upper_bound_node(self, operand: mat.ArithmeticOperationNode):
 
         den_node = operand.get_rhs_operand()
         if not isinstance(den_node, mat.DeclaredEntityNode):

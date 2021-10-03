@@ -211,22 +211,25 @@ class AMPLEngine(Engine):
 
                 con = self.get_con(symbol=meta_con.get_symbol(), idx=idx)
 
+                body = 0
+                lb = -np.inf
+                ub = np.inf
+                dual = 0
+
                 try:
                     body = con.body()
                     lb = con.lb()
                     ub = con.ub()
+                    dual = con.dual()
                 except Exception as e:
                     warnings.warn(str(e))
-                    body = 0
-                    lb = -np.inf
-                    ub = np.inf
 
                 self._store_con(symbol=meta_con.get_symbol(),
                                 idx=idx,
                                 body=body,
                                 lb=lb,
                                 ub=ub,
-                                dual=con.dual())
+                                dual=dual)
 
     def get_status(self) -> str:
         result = self.api.getOutput("display solve_result;")

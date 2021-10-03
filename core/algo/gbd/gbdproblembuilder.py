@@ -670,11 +670,11 @@ class GBDProblemBuilder:
                                    idx_set: mat.IndexingSet,
                                    dummy_element: mat.Element) -> int:
 
-        # Numeric constant or dummy
+        # numeric constant or dummy
         if isinstance(node, mat.NumericNode) or isinstance(node, mat.DummyNode):
             return self.CONST_NODE
 
-        # Declared entity
+        # declared entity
         elif isinstance(node, mat.DeclaredEntityNode):
 
             if node.get_type() == const.PARAM_TYPE:
@@ -703,7 +703,7 @@ class GBDProblemBuilder:
             else:
                 return self.MIXED_NODE
 
-        # Function
+        # transformation
         elif isinstance(node, mat.ArithmeticTransformationNode):
 
             if node.is_reductive():
@@ -742,56 +742,48 @@ class GBDProblemBuilder:
                     else:
                         return status
 
-        # Unary Operation
-        elif isinstance(node, mat.UnaryArithmeticOperationNode):
-            return self.__verify_complicating_node(node.operand, idx_set, dummy_element)
-
-        # Binary Operation
-        elif isinstance(node, mat.BinaryArithmeticOperationNode):
-
-            lhs_status = self.__verify_complicating_node(node.get_lhs_operand(), idx_set, dummy_element)
-            rhs_status = self.__verify_complicating_node(node.get_rhs_operand(), idx_set, dummy_element)
-            statuses = [lhs_status, rhs_status]
-
-            if self.CONST_NODE in statuses:
-                if self.PURE_X_NODE in statuses:
-                    return self.PURE_X_NODE
-                elif self.PURE_Y_NODE in statuses:
-                    return self.PURE_Y_NODE
-                elif self.MIXED_NODE in statuses:
-                    return self.MIXED_NODE
-                else:
-                    return self.CONST_NODE
-            elif lhs_status == self.PURE_X_NODE and rhs_status == self.PURE_X_NODE:
-                return self.PURE_X_NODE
-            elif lhs_status == self.PURE_Y_NODE and rhs_status == self.PURE_Y_NODE:
-                return self.PURE_Y_NODE
-            else:
-                if node.operator in ['+', '-', "less"]:
-                    return self.MIXED_NODE
-                else:
-                    raise ValueError("GBD problem builder encountered a complicating binary arithmetic operation node"
-                                     + " that violates Property P")
-
-        # Multi Operation
-        elif isinstance(node, mat.MultiArithmeticOperationNode):
+        # operation
+        elif isinstance(node, mat.ArithmeticOperationNode):
 
             statuses = [self.__verify_complicating_node(o, idx_set, dummy_element) for o in node.operands]
 
+            # all nodes are constant
             if all([s == self.CONST_NODE for s in statuses]):
                 return self.CONST_NODE
+
+            # all nodes are non-complicating
             if self.PURE_X_NODE in statuses and self.PURE_Y_NODE not in statuses and self.MIXED_NODE not in statuses:
                 return self.PURE_X_NODE
+
+            # all nodes are complicating
             elif self.PURE_X_NODE not in statuses and self.PURE_Y_NODE in statuses and self.MIXED_NODE not in statuses:
                 return self.PURE_Y_NODE
-            else:
-                if node.operator in ['+', '-', "less"]:
-                    return self.MIXED_NODE
-                else:
-                    raise ValueError("GBD problem builder encountered a complicating multi arithmetic operation node"
-                                     + " that violates Property P")
 
-        # Conditional Operation
+            # mix of complicating and non-complicating
+            else:
+
+                # unary operation or linearly-separable n-ary operation
+                if node.operator in (mat.UNARY_POSITIVE_OPERATOR, mat.UNARY_NEGATION_OPERATOR,
+                                     mat.ADDITION_OPERATOR, mat.SUBTRACTION_OPERATOR):
+                    return self.MIXED_NODE
+
+                # non-linearly-separable n-ary operation
+                else:
+
+                    pure_comp_count = statuses.count(self.PURE_Y_NODE)
+                    mixed_comp_count = statuses.count(self.MIXED_NODE)
+
+                    if pure_comp_count == 1 and mixed_comp_count == 0:
+                        return self.PURE_Y_NODE
+
+                    elif pure_comp_count == 0 and mixed_comp_count == 1:
+                        return self.MIXED_NODE
+
+                    else:
+                        raise ValueError("GBD problem builder encountered a complicating arithmetic operation node"
+                                         + " that violates Property P")
+
+        # conditional
         elif isinstance(node, mat.ConditionalArithmeticExpressionNode):
             statuses = []
             for op_node in node.operands:
@@ -870,73 +862,36 @@ class GBDProblemBuilder:
 
             return node, self.__combine_node_statuses(statuses)
 
-        # Unary Operation
-        elif isinstance(node, mat.UnaryArithmeticOperationNode):
-            return self.__reformulate_node(node.operand, idx_set, dummy_element)
-
-        # Binary Operation
-        elif isinstance(node, mat.BinaryArithmeticOperationNode):
-
-            lhs_operand, lhs_status = self.__reformulate_node(node.get_lhs_operand(), idx_set, dummy_element)
-            rhs_operand, rhs_status = self.__reformulate_node(node.get_rhs_operand(), idx_set, dummy_element)
-
-            node.set_lhs_operand(lhs_operand)
-            node.set_rhs_operand(rhs_operand)
-
-            # Linearly separable
-            if node.operator in ['+', '-']:
-                if lhs_status in self.COMP_STATUSES and rhs_status in self.COMP_STATUSES:
-                    if lhs_status == self.PURE_Y_NODE and rhs_status == self.PURE_Y_NODE:
-                        return node, self.PURE_Y_NODE
-                    else:
-                        return node, self.MIXED_NODE
-                elif lhs_status in self.COMP_STATUSES:
-                    return lhs_operand, lhs_status
-                elif rhs_status in self.COMP_STATUSES:
-                    if node.operator == '-':
-                        rhs_operand = nb.append_negative_unity_coefficient(rhs_operand)
-                        return rhs_operand, rhs_status
-                    else:
-                        return rhs_operand, rhs_status
-                else:
-                    if lhs_status == self.CONST_NODE and rhs_status == self.CONST_NODE:
-                        return node, self.CONST_NODE
-                    else:
-                        return node, self.PURE_X_NODE
-
-            # Not linearly separable
-            else:
-                if lhs_status in self.COMP_STATUSES and rhs_status in self.COMP_STATUSES:
-                    if lhs_status == self.PURE_Y_NODE and rhs_status == self.PURE_Y_NODE:
-                        return node, self.PURE_Y_NODE
-                    else:
-                        return node, self.MIXED_NODE
-                elif lhs_status in self.COMP_STATUSES:
-                    return node, lhs_status
-                elif rhs_status in self.COMP_STATUSES:
-                    return node, rhs_status
-                else:
-                    if lhs_status == self.CONST_NODE and rhs_status == self.CONST_NODE:
-                        return node, self.CONST_NODE
-                    else:
-                        return node, self.PURE_X_NODE
-
         # Multi Operation
-        elif isinstance(node, mat.MultiArithmeticOperationNode):
+        elif isinstance(node, mat.ArithmeticOperationNode):
+
+            # convert subtraction to addition
+            if node.operator == mat.SUBTRACTION_OPERATOR:
+                node.operator = mat.ADDITION_OPERATOR
+                rhs_operand = node.get_rhs_operand()
+                rhs_operand.is_prioritized = True
+                node.set_rhs_operand(nb.append_negative_unity_coefficient(rhs_operand))
 
             ref_results = [self.__reformulate_node(o, idx_set, dummy_element) for o in node.operands]
             statuses = [r[1] for r in ref_results]
 
+            # all nodes are constant
             if all([s == self.CONST_NODE for s in statuses]):
                 return node, self.CONST_NODE
 
+            # no complicating or mixed-complicating nodes
             elif all([s not in self.COMP_STATUSES for s in statuses]):
                 return node, self.PURE_X_NODE
 
+            # at least one complicating or mixed-complicating node
             else:
 
-                # Linearly separable
-                if node.operator == '+':
+                # unary operation
+                if node.operator in (mat.UNARY_POSITIVE_OPERATOR, mat.UNARY_NEGATION_OPERATOR) == 1:
+                    return node, statuses[0]
+
+                # linearly separable
+                elif node.operator == mat.ADDITION_OPERATOR:
                     comp_ref_results = [r for r in ref_results if r[1] in self.COMP_STATUSES]
                     comp_ref_nodes = [r[0] for r in comp_ref_results]
                     comp_statuses = [r[1] for r in comp_ref_results]
@@ -946,7 +901,7 @@ class GBDProblemBuilder:
                     else:
                         return node, self.MIXED_NODE
 
-                # Not linearly separable
+                # not linearly separable
                 else:
                     node.operands = [r[0] for r in ref_results]
                     if all([s == self.PURE_Y_NODE for s in statuses]):
@@ -1123,15 +1078,15 @@ class GBDProblemBuilder:
                 conjunction_operands.append(constraint_node)
 
             # --- Build logical conjunction node ---
-            conjunction_node = mat.MultiLogicalOperationNode(operator="&&",
-                                                             operands=conjunction_operands)
+            conjunction_node = mat.LogicalOperationNode(operator=mat.CONJUNCTION_OPERATOR,
+                                                        operands=conjunction_operands)
             conjunction_node.is_prioritized = True
             conjunction_nodes.append(conjunction_node)
 
         # Build logical disjunction node
         if len(conjunction_nodes) > 0:
-            disjunction_node = mat.MultiLogicalOperationNode(operator="||",
-                                                             operands=conjunction_nodes)
+            disjunction_node = mat.LogicalOperationNode(operator=mat.DISJUNCTION_OPERATOR,
+                                                        operands=conjunction_nodes)
         else:
             disjunction_node = None
 
@@ -1260,7 +1215,7 @@ class GBDProblemBuilder:
 
         # build indexing set constraint node
         is_feasible_node = nb.build_default_entity_node(self.gbd_problem.is_feasible)
-        idx_set_con_node = mat.RelationalOperationNode(operator='=',
+        idx_set_con_node = mat.RelationalOperationNode(operator=mat.EQUALITY_OPERATOR,
                                                        lhs_operand=is_feasible_node,
                                                        rhs_operand=nb.build_numeric_node(1))
 
@@ -1288,7 +1243,7 @@ class GBDProblemBuilder:
 
         # build indexing set constraint node
         is_feasible_node = nb.build_default_entity_node(self.gbd_problem.is_feasible)
-        idx_set_con_node = mat.RelationalOperationNode(operator='=',
+        idx_set_con_node = mat.RelationalOperationNode(operator=mat.EQUALITY_OPERATOR,
                                                        lhs_operand=is_feasible_node,
                                                        rhs_operand=nb.build_numeric_node(0))
 
@@ -1361,7 +1316,7 @@ class GBDProblemBuilder:
         lb_node = nb.build_addition_node(sum_operands)
 
         # Inequality node
-        ineq_op_node = mat.RelationalOperationNode(operator=">=",
+        ineq_op_node = mat.RelationalOperationNode(operator=mat.GREATER_EQUAL_INEQUALITY_OPERATOR,
                                                    lhs_operand=eta_node,
                                                    rhs_operand=lb_node)
 
@@ -1391,7 +1346,7 @@ class GBDProblemBuilder:
         lb_node = nb.build_addition_node(sum_operands)
 
         # Inequality node
-        ineq_op_node = mat.RelationalOperationNode(operator=">=",
+        ineq_op_node = mat.RelationalOperationNode(operator=mat.GREATER_EQUAL_INEQUALITY_OPERATOR,
                                                    lhs_operand=zero_node,
                                                    rhs_operand=lb_node)
 
@@ -1478,7 +1433,7 @@ class GBDProblemBuilder:
                 bin_const_node = nb.build_numeric_node(binary_value)
 
                 # Build equality node
-                eq_node = mat.RelationalOperationNode(operator='=',
+                eq_node = mat.RelationalOperationNode(operator=mat.EQUALITY_OPERATOR,
                                                       lhs_operand=storage_param_node,
                                                       rhs_operand=bin_const_node)
 
@@ -1486,9 +1441,8 @@ class GBDProblemBuilder:
                 if idx_set_con_node is not None:
                     idx_set_con_node = deepcopy(idx_set_con_node)
                     idx_set_con_node.is_prioritized = True
-                    con_node = mat.BinaryLogicalOperationNode(operator="&&",
-                                                              lhs_operand=idx_set_con_node,
-                                                              rhs_operand=eq_node)
+                    con_node = mat.LogicalOperationNode(operator=mat.CONJUNCTION_OPERATOR,
+                                                        operands=[idx_set_con_node, eq_node])
                 else:
                     con_node = eq_node
 
@@ -1536,9 +1490,9 @@ class GBDProblemBuilder:
                                        rhs_operand=one_node)
 
         # Inequality node
-        ineq_op_node = mat.RelationalOperationNode(operator="<=")
-        ineq_op_node.add_operand(lhs_node)
-        ineq_op_node.add_operand(rhs_node)
+        ineq_op_node = mat.RelationalOperationNode(operator=mat.LESS_EQUAL_INEQUALITY_OPERATOR,
+                                                   lhs_operand=lhs_node,
+                                                   rhs_operand=rhs_node)
 
         return mat.Expression(ineq_op_node)
 

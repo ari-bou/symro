@@ -5,19 +5,33 @@ from typing import Callable, List, Union
 
 from symro.core.mat.util import IndexingSet, Element
 from symro.core.mat.state import State
-from symro.core.mat.exprn import ExpressionNode, ArithmeticExpressionNode, StringExpressionNode
+from symro.core.mat.exprn import ArithmeticExpressionNode, StringExpressionNode
+from symro.core.mat.relopn import RelationalOperationNode
+from symro.core.mat.aopn import ArithmeticOperationNode
 
 
-class BaseDummyNode(ExpressionNode, ABC):
+class BaseDummyNode(ArithmeticExpressionNode, StringExpressionNode, ABC):
 
     def __init__(self):
         super().__init__()
 
-    def is_constant(self) -> bool:
-        return True
+    def __eq__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.equal(self, other)
 
-    def is_null(self) -> bool:
-        return False
+    def __ne__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.not_equal(self, other)
+
+    def __lt__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.less_than(self, other)
+
+    def __le__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.less_than_or_equal(self, other)
+
+    def __gt__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.greater_than(self, other)
+
+    def __ge__(self, other: ArithmeticExpressionNode):
+        return RelationalOperationNode.greater_than_or_equal(self, other)
 
     @staticmethod
     @abstractmethod
@@ -38,8 +52,29 @@ class BaseDummyNode(ExpressionNode, ABC):
 class DummyNode(BaseDummyNode):
 
     def __init__(self, symbol: str):
-        super().__init__()
+        super(DummyNode, self).__init__()
         self.symbol: str = symbol
+
+    def __pos__(self):
+        return self
+
+    def __neg__(self):
+        return ArithmeticOperationNode.negation(self)
+
+    def __add__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.addition(self, other)
+
+    def __sub__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.subtraction(self, other)
+
+    def __mul__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.multiplication(self, other)
+
+    def __truediv__(self, other: ArithmeticExpressionNode):
+        return ArithmeticOperationNode.division(self, other)
+
+    def __pow__(self, power: ArithmeticExpressionNode, modulo=None):
+        return ArithmeticOperationNode.exponentiation(self, power)
 
     def evaluate(self,
                  state: State,
@@ -73,12 +108,6 @@ class DummyNode(BaseDummyNode):
         else:
             return self.symbol
 
-    def is_constant(self) -> bool:
-        return True
-
-    def is_null(self) -> bool:
-        return False
-
     def is_controlled(self, dummy_element: List[str] = None) -> bool:
         if dummy_element is None:
             return True
@@ -91,12 +120,6 @@ class DummyNode(BaseDummyNode):
 
     def get_unbound_symbols(self) -> List[str]:
         return [self.symbol]
-
-    def get_children(self) -> list:
-        return []
-
-    def set_children(self, children: list):
-        pass
 
     def get_literal(self) -> str:
         if not self.is_prioritized:
@@ -115,6 +138,27 @@ class CompoundDummyNode(BaseDummyNode):
         self.component_nodes: List[Union[DummyNode,
                                          StringExpressionNode,
                                          ArithmeticExpressionNode]] = component_nodes
+
+    def __pos__(self):
+        return self
+
+    def __neg__(self):
+        return self
+
+    def __add__(self, other: ArithmeticExpressionNode):
+        raise TypeError("Addition operation cannot be performed on a compound dummy node")
+
+    def __sub__(self, other: ArithmeticExpressionNode):
+        raise TypeError("Subtraction operation cannot be performed on a compound dummy node")
+
+    def __mul__(self, other: ArithmeticExpressionNode):
+        raise TypeError("Multiplication operation cannot be performed on a compound dummy node")
+
+    def __truediv__(self, other: ArithmeticExpressionNode):
+        raise TypeError("Division operation cannot be performed on a compound dummy node")
+
+    def __pow__(self, power: ArithmeticExpressionNode, modulo=None):
+        raise TypeError("Exponentiation operation cannot be performed on a compound dummy node")
 
     def evaluate(self,
                  state: State,
@@ -141,12 +185,6 @@ class CompoundDummyNode(BaseDummyNode):
                   dummy_element: Element = None):
         x = tuple([c.to_lambda(state, idx_set_member, dummy_element) for c in self.component_nodes])
         return partial(lambda d: tuple([x_i() for x_i in x]), x)
-
-    def is_constant(self) -> bool:
-        return True
-
-    def is_null(self) -> bool:
-        return False
 
     def is_controlled(self, dummy_element: List[str] = None) -> bool:
         return any([c.is_controlled(dummy_element) for c in self.component_nodes])

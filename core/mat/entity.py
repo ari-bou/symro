@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 import re
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -26,18 +26,6 @@ class Entity(ABC):
         if self.is_dim_aggregated is None:
             self.is_dim_aggregated = [False] * self.get_dim()
 
-    def is_aggregate(self) -> bool:
-        if self.get_dim() == 0:
-            return False
-        else:
-            return any(self.is_dim_aggregated)
-
-    def get_dim(self) -> int:
-        if self.idx is None:
-            return 0
-        else:
-            return len(self.idx)
-
     def __str__(self):
         literal = self.symbol
         if self.get_dim() > 0:
@@ -54,6 +42,22 @@ class Entity(ABC):
                     index_literals.append(str(idx))
             literal += "[{0}]".format(','.join(index_literals))
         return literal
+
+    def is_aggregate(self) -> bool:
+        if self.get_dim() == 0:
+            return False
+        else:
+            return any(self.is_dim_aggregated)
+
+    def get_dim(self) -> int:
+        if self.idx is None:
+            return 0
+        else:
+            return len(self.idx)
+
+    @abstractmethod
+    def get_value(self):
+        pass
 
     @staticmethod
     def generate_entity_id(symbol: str, indices: Tuple[Union[int, float, str], ...]) -> str:
@@ -185,6 +189,9 @@ class SSet(Entity):
     def __len__(self):
         return len(self.elements)
 
+    def get_value(self):
+        return None
+
 
 class Parameter(Entity):
 
@@ -202,6 +209,9 @@ class Parameter(Entity):
         if isinstance(other, Parameter) and self.entity_id == other.entity_id:
             return True
         return False
+
+    def get_value(self):
+        return self.value
 
 
 class Variable(Entity):
@@ -225,6 +235,9 @@ class Variable(Entity):
             return True
         return False
 
+    def get_value(self):
+        return self.value
+
 
 class Objective(Entity):
 
@@ -243,6 +256,9 @@ class Objective(Entity):
             return True
         return False
 
+    def get_value(self):
+        return self.value
+
 
 class Constraint(Entity):
 
@@ -257,7 +273,7 @@ class Constraint(Entity):
         super(Constraint, self).__init__(symbol=symbol,
                                          idx=idx,
                                          is_dim_aggregated=is_dim_aggregated)
-        self.value: Union[float, str] = value
+        self.value: Union[float, str] = value  # body
         self.lb: float = float(lb)
         self.ub: float = float(ub)
         self.dual: float = dual
@@ -266,6 +282,9 @@ class Constraint(Entity):
         if isinstance(other, Constraint) and self.entity_id == other.entity_id:
             return True
         return False
+
+    def get_value(self):
+        return self.value
 
 
 # Entity Collection

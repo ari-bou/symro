@@ -557,7 +557,7 @@ def __compare_super_and_sub_idx_sets(problem: Problem,
 
             # build equality node to be included as an indexing set constraint
             outer_dummy_node = mat.DummyNode(symbol=outer_scope_unbound_sym)
-            eq_node = mat.RelationalOperationNode(operator="==",
+            eq_node = mat.RelationalOperationNode(operator=mat.EQUALITY_OPERATOR,
                                                   lhs_operand=outer_dummy_node,
                                                   rhs_operand=deepcopy(cmpt_node))
             eq_nodes.append(eq_node)
@@ -816,7 +816,7 @@ def __build_inner_scope_idx_set_node(problem: Problem,
         for unbound_sym in duplicated_unbound_syms:
             lhs_node = mat.DummyNode(symbol=middle_rep_map.get(unbound_sym, unbound_sym))
             rhs_node = mat.DummyNode(symbol=inner_rep_map.get(unbound_sym, unbound_sym))
-            eq_node = mat.RelationalOperationNode(operator="==",
+            eq_node = mat.RelationalOperationNode(operator=mat.EQUALITY_OPERATOR,
                                                   lhs_operand=lhs_node,
                                                   rhs_operand=rhs_node)
             inner_idx_set_con_ops.append(eq_node)
@@ -836,7 +836,7 @@ def __build_set_node(middle_idx_set_node: mat.CompoundSetNode,
         set_node = inner_idx_set_node
 
     else:
-        set_node = mat.SetReductionOperationNode(symbol="union",
+        set_node = mat.SetReductionOperationNode(operator=mat.UNION_OPERATOR,
                                                  idx_set_node=middle_idx_set_node,
                                                  operand=inner_idx_set_node)
 

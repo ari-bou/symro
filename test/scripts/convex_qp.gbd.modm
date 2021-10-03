@@ -14,6 +14,7 @@ param lambda_INLET_FLOW_RATE{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIO
 # --------------------------------------------------------------------------------------------------
 # beginregion
 var eta >= -1000000;
+var GBD_F{s in SCENARIOS, ct in CUTS} = 0;
 var GBD_G_0{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS, ct in CUTS} = ((INLET[r,t,s]) - (INLET_stored[r,t,s,ct]));
 # endregion 
 
@@ -28,7 +29,7 @@ minimize MASTER_OBJ: eta;
 # CONSTRAINTS
 # --------------------------------------------------------------------------------------------------
 # beginregion
-GBD_OPT_CUT{ct in CUTS: is_feasible[ct] = 1}: eta >= obj_stored[ct] + (sum {s in SCENARIOS} 0) + (sum {r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS} lambda_INLET_FLOW_RATE[r,t,s,ct] * GBD_G_0[r,t,s,ct]);
-GBD_FBL_CUT{ct in CUTS: is_feasible[ct] = 0}: 0 >= obj_stored[ct] + (sum {r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS} lambda_INLET_FLOW_RATE[r,t,s,ct] * GBD_G_0[r,t,s,ct]);
+GBD_OPT_CUT{ct in CUTS: is_feasible[ct] == 1}: eta >= obj_stored[ct] + (sum {s in SCENARIOS} GBD_F[s,ct]) + (sum {r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS} lambda_INLET_FLOW_RATE[r,t,s,ct] * GBD_G_0[r,t,s,ct]);
+GBD_FBL_CUT{ct in CUTS: is_feasible[ct] == 0}: 0 >= obj_stored[ct] + (sum {r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS} lambda_INLET_FLOW_RATE[r,t,s,ct] * GBD_G_0[r,t,s,ct]);
 # endregion 
 

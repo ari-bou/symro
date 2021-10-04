@@ -23,6 +23,9 @@ def is_constant(root_node: ExpressionNode) -> bool:
         if isinstance(node, DeclaredEntityNode) and not node.is_constant():
             return False
 
+        for child in node.get_children():
+            queue.put(child)
+
     return True
 
 

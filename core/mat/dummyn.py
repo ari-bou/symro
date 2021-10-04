@@ -6,8 +6,7 @@ from typing import Callable, List, Union
 from symro.core.mat.util import IndexingSet, Element
 from symro.core.mat.state import State
 from symro.core.mat.exprn import ArithmeticExpressionNode, StringExpressionNode
-from symro.core.mat.relopn import RelationalOperationNode
-from symro.core.mat.aopn import ArithmeticOperationNode
+from symro.core.mat.opern import RelationalOperationNode, ArithmeticOperationNode, StringOperationNode
 
 
 class BaseDummyNode(ArithmeticExpressionNode, StringExpressionNode, ABC):
@@ -75,6 +74,9 @@ class DummyNode(BaseDummyNode):
 
     def __pow__(self, power: ArithmeticExpressionNode, modulo=None):
         return ArithmeticOperationNode.exponentiation(self, power)
+
+    def __and__(self, other: StringExpressionNode):
+        return StringOperationNode.concatenate(self, other)
 
     def evaluate(self,
                  state: State,
@@ -159,6 +161,9 @@ class CompoundDummyNode(BaseDummyNode):
 
     def __pow__(self, power: ArithmeticExpressionNode, modulo=None):
         raise TypeError("Exponentiation operation cannot be performed on a compound dummy node")
+
+    def __and__(self, other: StringExpressionNode):
+        raise TypeError("Concatenation operation cannot be performed on a compound dummy node")
 
     def evaluate(self,
                  state: State,

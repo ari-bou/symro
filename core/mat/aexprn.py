@@ -5,9 +5,8 @@ from typing import Callable, Dict, Optional
 
 from symro.core.mat.entity import Parameter, Variable
 from symro.core.mat.exprn import LogicalExpressionNode, ArithmeticExpressionNode
-from symro.core.mat.relopn import RelationalOperationNode
+from symro.core.mat.opern import RelationalOperationNode, ArithmeticOperationNode
 from symro.core.mat.lexprn import BooleanNode
-from symro.core.mat.aopn import ArithmeticOperationNode
 from symro.core.mat.dummyn import CompoundDummyNode
 from symro.core.mat.setn import CompoundSetNode
 from symro.core.mat.util import *
@@ -526,15 +525,21 @@ class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
         self.conditions = operands[operand_count:]
 
     def get_literal(self) -> str:
-        rhs = ""
+
+        literal = ""
+
         for i, operand in enumerate(self.operands):
             if i == 0:
-                rhs += "if {0} then {1}".format(self.conditions[i], operand)
+                literal += "if {0} then {1}".format(self.conditions[i], operand)
             elif i == len(self.operands) - 1 and self.has_trailing_else_clause():
-                rhs += " else {0}".format(operand)
+                literal += " else {0}".format(operand)
             else:
-                rhs += " else if {0} then {1}".format(self.conditions[i], operand)
-        return rhs
+                literal += " else if {0} then {1}".format(self.conditions[i], operand)
+
+        if self.is_prioritized:
+            literal = "({0})".format(literal)
+
+        return literal
 
 
 class DeclaredEntityNode(ArithmeticExpressionNode):
@@ -739,9 +744,9 @@ class NumericNode(ArithmeticExpressionNode):
 
         elif isinstance(other, ArithmeticOperationNode) and other.operator == ADDITION_OPERATOR:
 
-            for term in other.operands:
+            for i, term in enumerate(other.operands):
                 if isinstance(term, NumericNode):
-                    term.value += self.value
+                    other.operands[i] = NumericNode(term.value + self.value)
                     return other
 
             other.operands.append(self)
@@ -763,9 +768,9 @@ class NumericNode(ArithmeticExpressionNode):
 
         elif isinstance(other, ArithmeticOperationNode) and other.operator == MULTIPLICATION_OPERATOR:
 
-            for term in other.operands:
-                if isinstance(term, NumericNode):
-                    term.value *= self.value
+            for i, factor in enumerate(other.operands):
+                if isinstance(factor, NumericNode):
+                    other.operands[i] = NumericNode(factor.value * self.value)
                     return other
 
             other.operands.insert(0, self)

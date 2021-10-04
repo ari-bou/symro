@@ -623,7 +623,7 @@ def __simplify_conditional_expression(problem: Problem,
 
         if spl_condition is not None:
 
-            condition_value: Optional[bool] = __simplify_node_to_scalar_value(
+            condition_value: Optional[bool] = simplify_node_to_scalar_value(
                 problem=problem,
                 node=spl_condition,
                 idx_set=idx_set,
@@ -663,7 +663,7 @@ def __simplify_arithmetic_expression(problem: Problem,
         # parameter
         if node.is_constant():
 
-            val = __simplify_node_to_scalar_value(
+            val = simplify_node_to_scalar_value(
                 problem=problem,
                 node=node,
                 idx_set=idx_set,
@@ -833,7 +833,7 @@ def __simplify_logical_expression(problem: Problem,
 
         node.set_children(spl_operands)
 
-        val: Optional[bool] = __simplify_node_to_scalar_value(
+        val: Optional[bool] = simplify_node_to_scalar_value(
             problem=problem,
             node=node,
             idx_set=idx_set,
@@ -960,10 +960,10 @@ def __simplify_string_expression(problem: Problem,
         return node
 
 
-def __simplify_node_to_scalar_value(problem: Problem,
-                                    node: mat.ExpressionNode,
-                                    idx_set: mat.IndexingSet,
-                                    dummy_element: mat.Element) -> Optional[Union[bool, Number, str, mat.IndexingSet]]:
+def simplify_node_to_scalar_value(problem: Problem,
+                                  node: mat.ExpressionNode,
+                                  idx_set: mat.IndexingSet,
+                                  dummy_element: mat.Element) -> Optional[Union[bool, Number, str, mat.IndexingSet]]:
 
     var_nodes = mat.get_var_nodes(node)
 
@@ -1040,7 +1040,7 @@ def __factorize_exponentiation(problem: Problem,
         exp_val = exp_op_node.get_rhs_operand().value
 
     else:
-        exp_val = __simplify_node_to_scalar_value(
+        exp_val = simplify_node_to_scalar_value(
             problem=problem,
             node=exp_op_node.get_rhs_operand(),
             idx_set=idx_set,
@@ -1233,11 +1233,19 @@ def __expand_multiplication(problem: Problem,
 
                         # special case: numerator is 1
                         if isinstance(numerator, mat.NumericNode) and numerator.value == 1:
-                            node.set_rhs_operand(nb.build_addition_node(rhs_terms))
+                            if len(rhs_terms) == 1:
+                                node.set_rhs_operand(rhs_terms[0])
+                            else:
+                                node.set_rhs_operand(nb.build_addition_node(rhs_terms))
                             return [node]
 
                     node.set_lhs_operand(nb.build_numeric_node(1))
-                    node.set_rhs_operand(nb.build_multiplication_node(rhs_terms))
+
+                    if len(rhs_terms) == 1:
+                        node.set_rhs_operand(rhs_terms[0])
+                    else:
+                        node.set_rhs_operand(nb.build_multiplication_node(rhs_terms))
+
                     rhs_terms = [node]
 
                     return expand_factors(lhs_terms, rhs_terms)

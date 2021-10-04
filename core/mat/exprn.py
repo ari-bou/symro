@@ -225,6 +225,10 @@ class StringExpressionNode(ExpressionNode, ABC):
         super().__init__()
 
     @abstractmethod
+    def __and__(self, other: "StringExpressionNode"):
+        pass
+
+    @abstractmethod
     def __eq__(self, other: "StringExpressionNode"):
         pass
 

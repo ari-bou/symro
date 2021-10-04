@@ -1,99 +1,12 @@
 from functools import partial
 import numpy as np
-from typing import Callable, List, Union
+from typing import Callable, List
 
 from symro.core.mat.exprn import StringExpressionNode
-from symro.core.mat.relopn import RelationalOperationNode
+from symro.core.mat.opern import RelationalOperationNode, StringOperationNode
 from symro.core.mat.lexprn import BooleanNode
-from symro.core.mat.dummyn import BaseDummyNode
 from symro.core.mat.util import IndexingSet, Element
 from symro.core.mat.state import State
-
-
-class MultiStringOperationNode(StringExpressionNode):
-
-    CONCAT_OPERATOR = '&'
-
-    def __init__(self,
-                 operator: str,
-                 operands: List[Union[StringExpressionNode, BaseDummyNode]] = None,
-                 is_prioritized: bool = False):
-        super().__init__()
-        self.operator: str = operator
-        self.operands: List[Union[StringExpressionNode, BaseDummyNode]] = operands
-        self.is_prioritized = is_prioritized
-
-    def __eq__(self, other: "StringExpressionNode"):
-        return RelationalOperationNode.equal(self, other)
-
-    def __ne__(self, other: "StringExpressionNode"):
-        return RelationalOperationNode.not_equal(self, other)
-
-    def __lt__(self, other: "StringExpressionNode"):
-        return RelationalOperationNode.less_than(self, other)
-
-    def __le__(self, other: "StringExpressionNode"):
-        return RelationalOperationNode.less_than_or_equal(self, other)
-
-    def __gt__(self, other: "StringExpressionNode"):
-        return RelationalOperationNode.greater_than(self, other)
-
-    def __ge__(self, other: "StringExpressionNode"):
-        return RelationalOperationNode.greater_than_or_equal(self, other)
-
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_element: Element = None
-                 ) -> np.ndarray:
-
-        x_lhs = self.operands[0].evaluate(state, idx_set, dummy_element)
-        y = x_lhs
-
-        for i in range(1, len(self.operands)):
-
-            x_rhs = self.operands[i].evaluate(state, idx_set, dummy_element)
-
-            if self.operator == self.CONCAT_OPERATOR:  # concatenation
-                y = np.char.add(x_lhs, x_rhs)
-            else:
-                raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
-                                 + " as a string operator")
-
-            x_lhs = y
-
-        return y
-
-    def to_lambda(self,
-                  state: State,
-                  idx_set_member: Element = None,
-                  dummy_element: Element = None) -> Callable:
-
-        args = np.array([o.to_lambda(state, idx_set_member, dummy_element) for o in self.operands])
-
-        if self.operator == self.CONCAT_OPERATOR:  # concatenation
-            return partial(lambda x: ''.join([x_i() for x_i in x]), args)
-        else:
-            raise ValueError("Unable to resolve symbol '{0}'".format(self.operator)
-                             + " as a string operator")
-
-    def get_children(self) -> List:
-        return list(self.operands)
-
-    def set_children(self, operands: list):
-        self.operands = list(operands)
-
-    def get_literal(self) -> str:
-        s = ""
-        for i, operand in enumerate(self.operands):
-            if i == 0:
-                s = operand.get_literal()
-            else:
-                s += " {0} {1}".format(self.operator, operand)
-        if self.is_prioritized:
-            return '(' + s + ')'
-        else:
-            return s
 
 
 class StringNode(StringExpressionNode):
@@ -108,8 +21,18 @@ class StringNode(StringExpressionNode):
         if self.delimiter is None:
             if '"' not in self.literal:
                 self.delimiter = '"'
-            else:
+            elif "'" not in self.literal:
                 self.delimiter = "'"
+            else:
+                raise ValueError("Encountered a string literal ({0})".format(self.literal)
+                                 + " containing both string delimiters ' and \" ")
+
+    def __and__(self, other: StringExpressionNode):
+
+        if isinstance(other, StringNode):
+            return StringNode(self.literal + other.literal)
+
+        return StringOperationNode.concatenate(self, other)
 
     def __eq__(self, other: StringExpressionNode):
         if isinstance(other, StringNode):

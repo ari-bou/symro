@@ -4,7 +4,7 @@ from typing import Callable, Optional
 from symro.core.mat.util import *
 from symro.core.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode, ArithmeticExpressionNode, \
     StringExpressionNode
-from symro.core.mat.logopn import LogicalOperationNode
+from symro.core.mat.opern import LogicalOperationNode
 from symro.core.mat.setn import CompoundSetNode
 from symro.core.mat.state import State
 

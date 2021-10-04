@@ -56,5 +56,5 @@ def run_all_tests():
 # Execution
 # ----------------------------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
-    #run_convexifier_test_group()
-    run_all_tests()
+    run_convexifier_test_group()
+    #run_all_tests()

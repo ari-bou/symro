@@ -6,7 +6,7 @@ import symro.core.constants as const
 from symro.core.mat.entity import Entity
 from symro.core.mat.state import State
 from symro.core.mat.setn import BaseSetNode, CompoundSetNode
-from symro.core.mat.relopn import RelationalOperationNode
+from symro.core.mat.opern import RelationalOperationNode
 from symro.core.mat.exprn import ExpressionNode
 from symro.core.mat.expression import Expression
 from symro.core.mat.util import Element, IndexingSet, remove_set_dimensions

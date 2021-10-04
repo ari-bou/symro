@@ -6,7 +6,7 @@ from typing import List, Optional, Set, Tuple, Union
 
 from symro.core.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode, ArithmeticExpressionNode, \
     StringExpressionNode
-from symro.core.mat.sopn import SetOperationNode
+from symro.core.mat.opern import SetOperationNode
 from symro.core.mat.dummyn import BaseDummyNode, DummyNode, CompoundDummyNode
 from symro.core.mat.util import Element, IndexingSet, cartesian_product, remove_set_dimensions
 from symro.core.mat.entity import Entity

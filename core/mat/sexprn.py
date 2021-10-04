@@ -2,7 +2,7 @@ from typing import List, Optional, Union
 
 from symro.core.mat.util import *
 from symro.core.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode
-from symro.core.mat.sopn import SetOperationNode
+from symro.core.mat.opern import SetOperationNode
 from symro.core.mat.setn import CompoundSetNode
 from symro.core.mat.state import State
 

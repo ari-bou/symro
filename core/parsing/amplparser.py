@@ -941,18 +941,18 @@ class AMPLParser:
                                                 mat.BaseDummyNode]:
 
         root_operation = self.__parse_string_term()
-        str_operation: Optional[mat.MultiStringOperationNode] = None
+        str_operation: Optional[mat.StringOperationNode] = None
 
         while self.get_token() == '&':
 
-            operator = self.get_token()
+            self.get_token()
             self._next_token()  # skip operator
 
             rhs_operand = self.__parse_string_term()
 
             if str_operation is None:
-                str_operation = mat.MultiStringOperationNode(operator=operator,
-                                                             operands=[root_operation, rhs_operand])
+                str_operation = mat.StringOperationNode(operator=mat.CONCATENATION_OPERATOR,
+                                                        operands=[root_operation, rhs_operand])
                 root_operation = str_operation
 
             else:

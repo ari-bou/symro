@@ -8,15 +8,19 @@ from symro.test.test_util import *
 
 SCRIPT = """
 
-var x >= 0, <= 1;
-var y >= 0, <= 1;
-var z >= 0, <= 1;
+var x >= 2, <= 10;
+var y >= 2, <= 10;
+var z >= 2, <= 10;
 
-minimize OBJ: 0;
+minimize OBJ: x;
 
 #CON1: x * y <= 0; 
-
-CON2: -x * y <= 0;
+#CON2: -x * y <= 0;
+#CON3: x * y * z <= 0;
+#CON4: -x * y * z <= 0;
+#CON5: x / y <= 0;
+#CON6: -x / y <= 0;
+CON7: x * y / z <= 0;
 
 """
 
@@ -37,15 +41,6 @@ def convexifier_test():
     convexifier = Convexifier()
     convex_relax = convexifier.convexify(problem)
 
-    results = []
-
-    # test 1: xy
-    con = convex_relax.meta_cons["CON2"]
-    results.append(check_str_result(
-        con.get_expression().root_node,
-        " x * y <= 0"
-    ))
-
     symro.model_to_ampl(convex_relax, file_name="convex_relaxation_test.mod")
 
-    return results
+    return []

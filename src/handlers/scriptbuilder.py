@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import Dict, Iterable, List, Optional, Set, Union
 
 import symro.src.constants as const
 import symro.src.mat as mat
@@ -25,6 +25,7 @@ class ScriptBuilder:
 
     def __init__(self):
         self._script: Optional[stm.Script] = None
+        self._defined_syms: Optional[Set[str]] = None
 
     # Model Script
     # ------------------------------------------------------------------------------------------------------------------
@@ -83,6 +84,7 @@ class ScriptBuilder:
             model_file_name += model_file_extension
 
         self._script = stm.Script(name=model_file_name)
+        self._defined_syms = set()
 
         if (include_sets or include_params) and len(meta_sets_params) > 0:
             self.__generate_region_heading("Sets and Parameters")
@@ -108,19 +110,28 @@ class ScriptBuilder:
 
         return self._script
 
-    def __generate_entity_declarations(self, meta_entities: List[mat.MetaEntity]):
+    def __generate_entity_declarations(self, meta_entities: Iterable[mat.MetaEntity]):
         for meta_entity in meta_entities:
-            self.__add_entity_declaration(meta_entity)
+            if meta_entity.get_symbol() not in self._defined_syms:
+                if meta_entity.is_sub():
+                    meta_entity = meta_entity.get_parent()
+                self.__add_entity_declaration(meta_entity)
 
     def __generate_set_and_param_statements(self,
-                                            meta_sets_params: List[Union[mat.MetaSet, mat.MetaParameter]],
+                                            meta_sets_params: Iterable[Union[mat.MetaSet, mat.MetaParameter]],
                                             include_sets: bool,
                                             include_params: bool):
+
         for meta_entity in meta_sets_params:
-            if isinstance(meta_entity, mat.MetaSet) and include_sets:
-                self.__add_entity_declaration(meta_entity)
-            elif isinstance(meta_entity, mat.MetaParameter) and include_params:
-                self.__add_entity_declaration(meta_entity)
+            if meta_entity.get_symbol() not in self._defined_syms:
+
+                if meta_entity.is_sub():
+                    meta_entity = meta_entity.get_parent()
+
+                if isinstance(meta_entity, mat.MetaSet) and include_sets:
+                    self.__add_entity_declaration(meta_entity)
+                elif isinstance(meta_entity, mat.MetaParameter) and include_params:
+                    self.__add_entity_declaration(meta_entity)
 
     # Problem Statement
     # ------------------------------------------------------------------------------------------------------------------
@@ -131,7 +142,7 @@ class ScriptBuilder:
                                         idx_meta_sets: List[mat.MetaSet] = None):
 
         prob_node = mat.DeclaredEntityNode(symbol=subproblem.symbol,  # problem symbol
-                                           type=const.PROB_TYPE)
+                                           type=mat.PROB_TYPE)
 
         unb_sym_mapping = {}
         idx_set_node = nb.build_idx_set_node(problem=problem,
@@ -184,6 +195,7 @@ class ScriptBuilder:
     def __add_entity_declaration(self, meta_entity: mat.MetaEntity):
         statement = stm.ModelEntityDeclaration(meta_entity)
         self.__add_statement(statement)
+        self._defined_syms.add(meta_entity.get_symbol())
 
     def __generate_region_heading(self, name: str):
         comment = stm.Comment(comment=" {0}".format(name.upper()),

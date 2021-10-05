@@ -11,7 +11,6 @@ from symro.src.mat.dummyn import CompoundDummyNode
 from symro.src.mat.setn import CompoundSetNode
 from symro.src.mat.util import *
 from symro.src.mat.state import State
-import symro.src.constants as const
 
 
 class AdditionNode(ArithmeticOperationNode):
@@ -681,7 +680,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
         return self.idx_node is not None
 
     def is_constant(self) -> bool:
-        return self.__entity_type == const.PARAM_TYPE
+        return self.__entity_type == PARAM_TYPE
 
     def get_type(self) -> str:
         return self.__entity_type

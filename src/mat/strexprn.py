@@ -2,10 +2,10 @@ from functools import partial
 import numpy as np
 from typing import Callable, List
 
+from symro.src.mat.util import IndexingSet, Element
 from symro.src.mat.exprn import StringExpressionNode
 from symro.src.mat.opern import RelationalOperationNode, StringOperationNode
 from symro.src.mat.lexprn import BooleanNode
-from symro.src.mat.util import IndexingSet, Element
 from symro.src.mat.state import State
 
 

@@ -392,7 +392,7 @@ def __generate_slack_var(problem: Problem,
     entity_index_node = nb.build_default_entity_index_node(sl_meta_var)
     sl_var_node = mat.DeclaredEntityNode(symbol=sym,
                                          idx_node=entity_index_node,
-                                         type=const.VAR_TYPE)
+                                         type=mat.VAR_TYPE)
 
     return sl_meta_var, sl_var_node
 

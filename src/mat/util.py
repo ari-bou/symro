@@ -8,6 +8,28 @@ from typing import Iterable, List, Tuple, Union
 Element = Tuple[Union[int, float, str, None], ...]
 IndexingSet = OrderedSet[Element]
 
+# Entities
+SET_TYPE = "set"
+PARAM_TYPE = "param"
+VAR_TYPE = "var"
+OBJ_TYPE = "obj"
+CON_TYPE = "con"
+TABLE_TYPE = "table"
+PROB_TYPE = "prob"
+ENV_TYPE = "env"
+
+# Functions
+CONSTANT = 0
+LINEAR = 1
+BILINEAR = 2
+TRILINEAR = 3
+FRACTIONAL = 4
+FRACTIONAL_BILINEAR = 5
+FRACTIONAL_TRILINEAR = 6
+UNIVARIATE_NONLINEAR = 7
+GENERAL_NONCONVEX = 8
+
+
 # Operators
 # ----------------------------------------------------------------------------------------------------------------------
 

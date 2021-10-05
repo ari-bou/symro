@@ -4,8 +4,8 @@ import numpy as np
 from ordered_set import OrderedSet
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
-from symro.src.mat.entity import Parameter, Variable
 from symro.src.mat.util import Element, IndexingSet
+from symro.src.mat.entity import Parameter, Variable
 from symro.src.mat.state import State
 
 

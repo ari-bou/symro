@@ -1047,21 +1047,21 @@ class AMPLParser:
 
         token = self.get_token()
 
-        entity_type = const.PARAM_TYPE
+        entity_type = mat.PARAM_TYPE
         if token in self.problem.meta_sets:
-            entity_type = const.SET_TYPE
+            entity_type = mat.SET_TYPE
         if token in self.problem.meta_params:
-            entity_type = const.PARAM_TYPE
+            entity_type = mat.PARAM_TYPE
         elif token in self.problem.meta_vars:
-            entity_type = const.VAR_TYPE
+            entity_type = mat.VAR_TYPE
         elif token in self.problem.meta_objs:
-            entity_type = const.OBJ_TYPE
+            entity_type = mat.OBJ_TYPE
         elif token in self.problem.meta_cons:
-            entity_type = const.CON_TYPE
+            entity_type = mat.CON_TYPE
         elif token in self.problem.meta_tables:
-            entity_type = const.TABLE_TYPE
+            entity_type = mat.TABLE_TYPE
         elif token in self.problem.subproblems:
-            entity_type = const.PROB_TYPE
+            entity_type = mat.PROB_TYPE
 
         # Index
         self._next_token()
@@ -1076,7 +1076,7 @@ class AMPLParser:
             suffix = self.get_token()
             self._next_token()  # skip suffix
 
-        if entity_type == const.SET_TYPE:
+        if entity_type == mat.SET_TYPE:
             return mat.SetNode(symbol=token,
                                entity_index_node=index_node,
                                suffix=suffix)

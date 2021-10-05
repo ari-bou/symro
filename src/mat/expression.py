@@ -1,10 +1,10 @@
 from queue import Queue
 from typing import Optional
 
+from symro.src.mat.util import *
 from symro.src.mat.exprn import ExpressionNode
 from symro.src.mat.setn import CompoundSetNode
 from symro.src.mat.aexprn import DeclaredEntityNode, ArithmeticOperationNode, ArithmeticTransformationNode
-from symro.src.mat.util import *
 from symro.src.mat.state import State
 
 
@@ -40,7 +40,7 @@ def is_linear(root_node: ExpressionNode) -> bool:
 
         if isinstance(node, ArithmeticOperationNode) and node.operator == MULTIPLICATION_OPERATOR:  # multiplication
             is_const = [is_constant(child) for child in node.get_children()]
-            if is_const.count(False) > 1:
+            if len(is_const) > 1:
                 return False
 
         elif isinstance(node, ArithmeticOperationNode) and node.operator == DIVISION_OPERATOR:  # division
@@ -57,13 +57,59 @@ def is_linear(root_node: ExpressionNode) -> bool:
         elif isinstance(node, ArithmeticTransformationNode):   # transformation
             if node.symbol != "sum":
                 is_const = [is_constant(child) for child in node.get_children()]
-                if is_const.count(False) > 0:
+                if len(is_const) > 0:
                     return False
 
         for child in node.get_children():
             queue.put(child)
 
     return True
+
+
+def is_univariate(node: ExpressionNode,
+                  state: State,
+                  idx_set: IndexingSet,
+                  dummy_element: Element) -> bool:
+
+    var_nodes = get_var_nodes(node)
+
+    # exponent node contains only 1 variable node
+    if len(var_nodes) == 1:
+        return True
+
+    # exponent node contains more than 1 variable node
+    else:
+
+        # retrieve the symbol of the first variable node
+        var_sym_0 = var_nodes[0].symbol
+
+        # retrieve the index of the first variable node
+        var_idx_set_0 = None
+        if var_nodes[0].idx_node is not None:
+            var_idx_set_0 = var_nodes[0].idx_node.evaluate(
+                state=state,
+                idx_set=idx_set,
+                dummy_element=dummy_element
+            )
+
+        # check whether the variable nodes are identical
+        for i in range(1, len(var_nodes)):
+
+            # check if the variable nodes reference different meta-variables
+            if var_sym_0 != var_nodes[i].symbol:  # different variable symbols
+                return False  # function is multivariate
+
+            # check if the variable nodes reference different instances of the same meta-variable
+            elif var_idx_set_0 is not None:
+                var_idx_set_i = var_nodes[i].idx_node.evaluate(
+                    state=state,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element
+                )
+                if (var_idx_set_0 != var_idx_set_i).any():
+                    return False  # function is multivariate
+
+        return True  # function is univariate
 
 
 def get_node(root_node: ExpressionNode, node_id: int):

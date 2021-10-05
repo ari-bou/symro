@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Union
+from typing import Dict, Optional
 
-import mat
-import symro.src.constants as const
+from symro.src.mat.util import *
 from symro.src.mat.entity import Entity
 from symro.src.mat.state import State
 from symro.src.mat.setn import BaseSetNode, CompoundSetNode
@@ -11,8 +10,6 @@ from symro.src.mat.exprn import ExpressionNode
 from symro.src.mat.expression import Expression
 from symro.src.mat.util import Element, IndexingSet, remove_set_dimensions
 
-
-# TODO: consider assigning unique numeric ids to each meta-entity
 
 class MetaEntity(ABC):
 
@@ -75,6 +72,12 @@ class MetaEntity(ABC):
             self._alias = alias
         else:
             self._parent.set_alias(alias)
+
+    def get_parent(self) -> Optional["MetaEntity"]:
+        if self._parent is not None:
+            return self._parent
+        else:
+            return None
 
     @abstractmethod
     def get_expression_nodes(self) -> List[ExpressionNode]:
@@ -313,7 +316,7 @@ class MetaSet(MetaEntity):
     # ------------------------------------------------------------------------------------------------------------------
 
     def get_type(self) -> str:
-        return const.SET_TYPE
+        return SET_TYPE
 
     # Properties
     # ------------------------------------------------------------------------------------------------------------------
@@ -495,7 +498,7 @@ class MetaParameter(MetaEntity):
     # ------------------------------------------------------------------------------------------------------------------
 
     def get_type(self) -> str:
-        return const.PARAM_TYPE
+        return PARAM_TYPE
 
     # Properties
     # ------------------------------------------------------------------------------------------------------------------
@@ -656,7 +659,7 @@ class MetaVariable(MetaEntity):
     # ------------------------------------------------------------------------------------------------------------------
 
     def get_type(self) -> str:
-        return const.VAR_TYPE
+        return VAR_TYPE
 
     # Properties
     # ------------------------------------------------------------------------------------------------------------------
@@ -817,7 +820,7 @@ class MetaObjective(MetaEntity):
     # ------------------------------------------------------------------------------------------------------------------
 
     def get_type(self) -> str:
-        return const.OBJ_TYPE
+        return OBJ_TYPE
 
     def get_direction(self) -> str:
         if self._parent is None:
@@ -909,7 +912,7 @@ class MetaConstraint(MetaEntity):
     # ------------------------------------------------------------------------------------------------------------------
 
     def get_type(self) -> str:
-        return const.CON_TYPE
+        return CON_TYPE
 
     def get_constraint_type(self) -> str:
         if self._parent is None:
@@ -925,10 +928,10 @@ class MetaConstraint(MetaEntity):
         expr_node = self._expression.root_node
 
         if isinstance(expr_node, RelationalOperationNode):
-            if expr_node.operator == mat.EQUALITY_OPERATOR:
+            if expr_node.operator == EQUALITY_OPERATOR:
                 self._ctype = self.EQUALITY_TYPE
-            elif expr_node.operator in [mat.LESS_INEQUALITY_OPERATOR, mat.LESS_EQUAL_INEQUALITY_OPERATOR,
-                                        mat.GREATER_INEQUALITY_OPERATOR, mat.GREATER_EQUAL_INEQUALITY_OPERATOR]:
+            elif expr_node.operator in [LESS_INEQUALITY_OPERATOR, LESS_EQUAL_INEQUALITY_OPERATOR,
+                                        GREATER_INEQUALITY_OPERATOR, GREATER_EQUAL_INEQUALITY_OPERATOR]:
                 if isinstance(expr_node.lhs_operand, RelationalOperationNode):
                     self._ctype = self.DOUBLE_INEQUALITY_TYPE
                 elif isinstance(expr_node.rhs_operand, RelationalOperationNode):

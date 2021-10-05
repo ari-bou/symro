@@ -22,7 +22,6 @@ from symro.src.parsing.amplparser import AMPLParser
 from symro.src.algo.gbd import GBDProblem, GBDSubproblemContainer
 
 
-# TODO: create FormulationError exception class and raise it whenever an incorrect formulation is encountered
 class GBDProblemBuilder:
 
     CONST_NODE = 0
@@ -315,6 +314,8 @@ class GBDProblemBuilder:
         # build new subproblem
         else:
 
+            meta_sets_params = list(self.gbd_problem.model_meta_sets_params)
+
             meta_vars = []
             for var_def in var_defs:
                 meta_vars.extend(self.__retrieve_meta_entity_from_definition(var_def))
@@ -327,6 +328,7 @@ class GBDProblemBuilder:
 
             sp = BaseProblem(symbol=sp_sym,
                              description="Primal subproblem")
+            sp.model_meta_sets_params = meta_sets_params
             sp.model_meta_vars = meta_vars
             sp.model_meta_objs.append(meta_obj)
             sp.model_meta_cons = meta_cons
@@ -420,6 +422,8 @@ class GBDProblemBuilder:
 
         for primal_sp in self.gbd_problem.primal_sps:
 
+            meta_sets_params = list(self.gbd_problem.model_meta_sets_params)
+
             meta_vars = [mv for mv in primal_sp.model_meta_vars]
             sl_meta_vars_list = []
             meta_cons = []
@@ -440,6 +444,7 @@ class GBDProblemBuilder:
             fbl_sp_sym = primal_sp.get_symbol() + "_FBL"
             fbl_sp = BaseProblem(symbol=fbl_sp_sym,
                                  description="Feasibility subproblem")
+            fbl_sp.model_meta_sets_params = meta_sets_params
             fbl_sp.model_meta_vars = meta_vars
             fbl_sp.model_meta_objs.append(meta_obj)
             fbl_sp.model_meta_cons = meta_cons
@@ -495,7 +500,7 @@ class GBDProblemBuilder:
 
         eta_node = mat.DeclaredEntityNode(symbol=eta.get_symbol(),
                                           idx_node=idx_node,
-                                          type=const.VAR_TYPE)
+                                          type=mat.VAR_TYPE)
 
         expression = mat.Expression(eta_node)
 
@@ -677,7 +682,7 @@ class GBDProblemBuilder:
         # declared entity
         elif isinstance(node, mat.DeclaredEntityNode):
 
-            if node.get_type() == const.PARAM_TYPE:
+            if node.get_type() == mat.PARAM_TYPE:
                 return self.CONST_NODE
 
             if node.symbol not in [mv.get_symbol() for mv in self.gbd_problem.comp_meta_vars.values()]:
@@ -827,7 +832,7 @@ class GBDProblemBuilder:
         # Declared entity
         elif isinstance(node, mat.DeclaredEntityNode):
 
-            if node.get_type() == const.PARAM_TYPE:
+            if node.get_type() == mat.PARAM_TYPE:
                 return node, self.CONST_NODE
 
             status = self.__verify_complicating_node(node, idx_set, dummy_element)
@@ -1141,7 +1146,7 @@ class GBDProblemBuilder:
             is_comp_var_node = False
 
             if isinstance(node, mat.DeclaredEntityNode):
-                if node.get_type() == const.VAR_TYPE:
+                if node.get_type() == mat.VAR_TYPE:
 
                     status = self.__verify_complicating_node(node, idx_set, dummy_syms)
 
@@ -1163,7 +1168,7 @@ class GBDProblemBuilder:
                         # transform complicating variable node in storage parameter node
                         node.symbol = storage_meta_param.get_symbol()
                         node.idx_node = storage_param_idx_node
-                        node.set_type(const.PARAM_TYPE)
+                        node.set_type(mat.PARAM_TYPE)
 
             elif isinstance(node, mat.ArithmeticTransformationNode):
                 if node.is_reductive():
@@ -1292,7 +1297,7 @@ class GBDProblemBuilder:
         stored_obj_idx_node = nb.build_default_entity_index_node(stored_obj)
         stored_obj_node = mat.DeclaredEntityNode(symbol=stored_obj.get_symbol(),
                                                  idx_node=stored_obj_idx_node,
-                                                 type=const.PARAM_TYPE)
+                                                 type=mat.PARAM_TYPE)
         sum_operands.append(stored_obj_node)
 
         # Build F(y) node
@@ -1310,7 +1315,7 @@ class GBDProblemBuilder:
             eta_idx_node = nb.build_default_entity_index_node(eta)
         eta_node = mat.DeclaredEntityNode(symbol=eta.get_symbol(),
                                           idx_node=eta_idx_node,
-                                          type=const.VAR_TYPE)
+                                          type=mat.VAR_TYPE)
 
         # Lower bound
         lb_node = nb.build_addition_node(sum_operands)
@@ -1331,7 +1336,7 @@ class GBDProblemBuilder:
         stored_obj_idx_node = nb.build_default_entity_index_node(stored_obj)
         stored_obj_node = mat.DeclaredEntityNode(symbol=stored_obj.get_symbol(),
                                                  idx_node=stored_obj_idx_node,
-                                                 type=const.PARAM_TYPE)
+                                                 type=mat.PARAM_TYPE)
         sum_operands.append(stored_obj_node)
 
         # Build (lambda * G(y)) nodes
@@ -1384,7 +1389,7 @@ class GBDProblemBuilder:
         dual_mult_meta_param = self.gbd_problem.duality_multipliers[g_id]
         dual_mult_node = mat.DeclaredEntityNode(symbol=dual_mult_meta_param.get_symbol(),
                                                 idx_node=dual_mult_index_node,
-                                                type=const.PARAM_TYPE)
+                                                type=mat.PARAM_TYPE)
 
         # build (lambda * G(y)) node
         prod_node = mat.MultiplicationNode(operands=[dual_mult_node, aux_g_node])
@@ -1427,7 +1432,7 @@ class GBDProblemBuilder:
                 # Build storage parameter node
                 storage_param_node = mat.DeclaredEntityNode(symbol=storage_meta_param.get_symbol(),
                                                             idx_node=storage_param_idx_node,
-                                                            type=const.PARAM_TYPE)
+                                                            type=mat.PARAM_TYPE)
 
                 # Build binary constant node
                 bin_const_node = mat.NumericNode(binary_value)
@@ -1501,6 +1506,11 @@ class GBDProblemBuilder:
 
     def __build_mp(self):
 
+        meta_sets_params = list(self.gbd_problem.model_meta_sets_params)
+        meta_sets_params.append(self.gbd_problem.cuts)
+        meta_sets_params.extend(self.gbd_problem.duality_multipliers.values())
+        meta_sets_params.extend(self.gbd_problem.stored_comp_decisions.values())
+
         meta_vars = [mv for _, mv in self.gbd_problem.comp_meta_vars.items()]
         meta_vars.append(self.gbd_problem.eta)
         meta_vars.append(self.gbd_problem.aux_f_meta_var)
@@ -1513,6 +1523,7 @@ class GBDProblemBuilder:
 
         mp = BaseProblem(symbol=self.gbd_problem.mp_symbol,
                          description="Master problem")
+        mp.model_meta_sets_params = meta_sets_params
         mp.model_meta_vars = meta_vars
         mp.model_meta_objs.append(meta_obj)
         mp.model_meta_cons = meta_cons
@@ -1545,7 +1556,7 @@ class GBDProblemBuilder:
         # retrieve indexing sets of all complicating meta-variables partitioned by subproblem
         comp_vars = list(self.gbd_problem.comp_meta_vars.values())
         idx_sets = self.__assemble_complete_entity_idx_sets_by_symbol(comp_vars)
-        sp_sym_idx_sets = self.__partition_complete_entity_idx_sets_by_sp_sym(entity_type=const.VAR_TYPE,
+        sp_sym_idx_sets = self.__partition_complete_entity_idx_sets_by_sp_sym(entity_type=mat.VAR_TYPE,
                                                                               complete_idx_sets=idx_sets)
         sp_idx_sets = self.__partition_sp_entity_idx_sets_by_sp_index(sp_entity_idx_sets=sp_sym_idx_sets)
 
@@ -1556,7 +1567,7 @@ class GBDProblemBuilder:
         # retrieve indexing sets of all mixed-complicating meta-constraints partitioned by subproblem
         mixed_comp_cons = list(self.gbd_problem.mixed_comp_cons.values())
         idx_sets = self.__assemble_complete_entity_idx_sets_by_symbol(mixed_comp_cons)
-        sp_sym_idx_sets = self.__partition_complete_entity_idx_sets_by_sp_sym(entity_type=const.CON_TYPE,
+        sp_sym_idx_sets = self.__partition_complete_entity_idx_sets_by_sp_sym(entity_type=mat.CON_TYPE,
                                                                               complete_idx_sets=idx_sets)
         sp_idx_sets = self.__partition_sp_entity_idx_sets_by_sp_index(sp_entity_idx_sets=sp_sym_idx_sets)
 
@@ -1613,11 +1624,11 @@ class GBDProblemBuilder:
             sp_entity_idx_sets[primal_sp.get_symbol()] = sp_entity_idx_sets_i
 
             # retrieve the selected list of meta-entities
-            if entity_type == const.VAR_TYPE:
+            if entity_type == mat.VAR_TYPE:
                 meta_entities = primal_sp.model_meta_vars
-            elif entity_type == const.OBJ_TYPE:
+            elif entity_type == mat.OBJ_TYPE:
                 meta_entities = primal_sp.model_meta_objs
-            elif entity_type == const.CON_TYPE:
+            elif entity_type == mat.CON_TYPE:
                 meta_entities = primal_sp.model_meta_cons
             else:
                 raise ValueError("GBD problem builder encountered an unexpected entity type '{0}'".format(entity_type)

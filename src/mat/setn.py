@@ -4,11 +4,11 @@ import numpy as np
 from ordered_set import OrderedSet
 from typing import List, Optional, Set, Tuple, Union
 
+from symro.src.mat.util import Element, IndexingSet, cartesian_product, remove_set_dimensions
 from symro.src.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode, ArithmeticExpressionNode, \
     StringExpressionNode
 from symro.src.mat.opern import SetOperationNode
 from symro.src.mat.dummyn import BaseDummyNode, DummyNode, CompoundDummyNode
-from symro.src.mat.util import Element, IndexingSet, cartesian_product, remove_set_dimensions
 from symro.src.mat.entity import Entity
 from symro.src.mat.state import State
 

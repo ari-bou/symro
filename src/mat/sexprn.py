@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Optional
 
 from symro.src.mat.util import *
 from symro.src.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode

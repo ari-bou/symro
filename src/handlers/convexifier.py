@@ -3,7 +3,6 @@ from ordered_set import OrderedSet
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 import warnings
 
-import symro.src.constants as const
 import symro.src.mat as mat
 from symro.src.prob.problem import Problem
 import symro.src.handlers.nodebuilder as nb
@@ -226,7 +225,7 @@ class Convexifier:
             is_const = [mat.is_constant(factor) for factor in factors]
 
             var_factors = [f for f, is_f_const in zip(factors, is_const) if not is_f_const]
-            var_factor_types = [self.__identify_node(f) for f in var_factors]
+            var_factor_types = [self.__identify_node(f, idx_set, dummy_element) for f in var_factors]
             var_factor_count = len(var_factors)
 
             const_factors = [f for f, is_f_const in zip(factors, is_const) if is_f_const]
@@ -236,65 +235,65 @@ class Convexifier:
                 return node
 
             # general nonconvexity
-            elif const.GENERAL_NONCONVEX in var_factor_types:
+            elif mat.GENERAL_NONCONVEX in var_factor_types:
                 warnings.warn("Convexifier was unable to convexify general nonconvex term '{0}'".format(node))
                 return node
 
-            # univariate concave
-            elif var_factor_count == 1 and var_factor_types[0] == const.UNIVARIATE_CONCAVE:
-                return self.__build_sign_conditional_convex_underestimator(ue_type=const.UNIVARIATE_CONCAVE,
+            # general univariate nonlinear
+            elif var_factor_count == 1 and var_factor_types[0] == mat.UNIVARIATE_NONLINEAR:
+                return self.__build_sign_conditional_convex_underestimator(ue_type=mat.UNIVARIATE_NONLINEAR,
                                                                            coefficient_nodes=const_factors,
                                                                            factors=var_factors,
                                                                            idx_set=idx_set,
                                                                            dummy_element=dummy_element)
 
             # linear (x)
-            elif var_factor_count == 1 and var_factor_types.count(const.LINEAR) == 1:
+            elif var_factor_count == 1 and var_factor_types.count(mat.LINEAR) == 1:
                 return node
 
             # bilinear (xy)
-            elif var_factor_count == 2 and var_factor_types.count(const.LINEAR) == 2:
-                return self.__build_sign_conditional_convex_underestimator(ue_type=const.BILINEAR,
+            elif var_factor_count == 2 and var_factor_types.count(mat.LINEAR) == 2:
+                return self.__build_sign_conditional_convex_underestimator(ue_type=mat.BILINEAR,
                                                                            coefficient_nodes=const_factors,
                                                                            factors=var_factors,
                                                                            idx_set=idx_set,
                                                                            dummy_element=dummy_element)
 
             # trilinear (xyz)
-            elif var_factor_count == 3 and var_factor_types.count(const.LINEAR) == 3:
-                return self.__build_sign_conditional_convex_underestimator(ue_type=const.TRILINEAR,
+            elif var_factor_count == 3 and var_factor_types.count(mat.LINEAR) == 3:
+                return self.__build_sign_conditional_convex_underestimator(ue_type=mat.TRILINEAR,
                                                                            coefficient_nodes=const_factors,
                                                                            factors=var_factors,
                                                                            idx_set=idx_set,
                                                                            dummy_element=dummy_element)
 
             # fraction with nonlinear denominator (1/xy)
-            elif var_factor_types.count(const.FRACTIONAL) > 1:
+            elif var_factor_types.count(mat.FRACTIONAL) > 1:
                 warnings.warn("Convexifier was unable to convexify term '{0}'".format(node)
                               + " with more than 1 fractional factor ")
                 return node
 
             # fractional (1/x)
-            elif var_factor_count == 1 and var_factor_types.count(const.FRACTIONAL) == 1:
-                return self.__build_sign_conditional_convex_underestimator(ue_type=const.FRACTIONAL,
+            elif var_factor_count == 1 and var_factor_types.count(mat.FRACTIONAL) == 1:
+                return self.__build_sign_conditional_convex_underestimator(ue_type=mat.FRACTIONAL,
                                                                            coefficient_nodes=const_factors,
                                                                            factors=var_factors,
                                                                            idx_set=idx_set,
                                                                            dummy_element=dummy_element)
 
             # bilinear fractional (x/y)
-            elif var_factor_count == 2 and var_factor_types.count(const.LINEAR) == 1 \
-                    and var_factor_types.count(const.FRACTIONAL) == 1:
-                return self.__build_sign_conditional_convex_underestimator(ue_type=const.FRACTIONAL_BILINEAR,
+            elif var_factor_count == 2 and var_factor_types.count(mat.LINEAR) == 1 \
+                    and var_factor_types.count(mat.FRACTIONAL) == 1:
+                return self.__build_sign_conditional_convex_underestimator(ue_type=mat.FRACTIONAL_BILINEAR,
                                                                            coefficient_nodes=const_factors,
                                                                            factors=var_factors,
                                                                            idx_set=idx_set,
                                                                            dummy_element=dummy_element)
 
             # trilinear fractional (xy/z)
-            elif var_factor_count == 3 and var_factor_types.count(const.LINEAR) == 2 \
-                    and var_factor_types.count(const.FRACTIONAL) == 1:
-                return self.__build_sign_conditional_convex_underestimator(ue_type=const.FRACTIONAL_TRILINEAR,
+            elif var_factor_count == 3 and var_factor_types.count(mat.LINEAR) == 2 \
+                    and var_factor_types.count(mat.FRACTIONAL) == 1:
+                return self.__build_sign_conditional_convex_underestimator(ue_type=mat.FRACTIONAL_TRILINEAR,
                                                                            coefficient_nodes=const_factors,
                                                                            factors=var_factors,
                                                                            idx_set=idx_set,
@@ -306,28 +305,38 @@ class Convexifier:
             if mat.is_linear(node):
                 return node
 
-            type = self.__identify_node(node)
+            type = self.__identify_node(node,
+                                        idx_set=idx_set,
+                                        dummy_element=dummy_element)
 
-            # univariate concave
-            if type == const.UNIVARIATE_CONCAVE:
-                return self.__build_convex_envelope_for_general_univariate_concave_function(node)
+            # univariate nonlinear
+            if type == mat.UNIVARIATE_NONLINEAR:
+                return self.__build_sign_conditional_convex_underestimator(ue_type=mat.UNIVARIATE_NONLINEAR,
+                                                                           coefficient_nodes=[],
+                                                                           factors=[node],
+                                                                           idx_set=idx_set,
+                                                                           dummy_element=dummy_element)
 
             # general nonconvexity
             else:
                 warnings.warn("Convexifier was unable to convexify term '{0}'".format(node))
                 return node
 
-    # Term Identification
+    # Function Identification
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __identify_node(self, node: mat.ArithmeticExpressionNode) -> int:
+    def __identify_node(self,
+                        node: mat.ArithmeticExpressionNode,
+                        idx_set: mat.IndexingSet,
+                        dummy_element: mat.Element) -> int:
 
+        # numeric constant or parameter
         if mat.is_constant(node):
-            return const.CONSTANT
+            return mat.CONSTANT
 
         # declared entity
         elif isinstance(node, mat.DeclaredEntityNode):
-            return const.LINEAR
+            return mat.LINEAR
 
         # division
         elif isinstance(node, mat.ArithmeticOperationNode) and node.operator == mat.DIVISION_OPERATOR:
@@ -336,22 +345,55 @@ class Convexifier:
 
             # linear denominator
             if mat.is_linear(node.get_rhs_operand()):
-                return const.FRACTIONAL
+                return mat.FRACTIONAL
 
             # nonlinear denominator
             else:
-                return const.GENERAL_NONCONVEX
+                return mat.GENERAL_NONCONVEX
 
         # exponentiation
         elif isinstance(node, mat.ArithmeticOperationNode) and node.operator == mat.EXPONENTIATION_OPERATOR:
 
             # univariate exponential with constant base: b^x
-            if mat.is_constant(node.get_lhs_operand()) and mat.is_linear(node.get_rhs_operand()):
-                return const.UNIVARIATE_CONCAVE
+            if mat.is_constant(node.get_lhs_operand()):
+
+                exponent_node = node.get_rhs_operand()
+
+                # exponent is linear and univariate
+                if mat.is_linear(exponent_node) and mat.is_univariate(
+                        node=exponent_node,
+                        state=self.convex_relaxation.state,
+                        idx_set=idx_set,
+                        dummy_element=dummy_element):
+                    return mat.UNIVARIATE_NONLINEAR
+
+                # exponent is nonlinear and/or multivariate
+                else:
+                    return mat.GENERAL_NONCONVEX
+
+            # univariate exponential with constant exponent: x^c
+            if mat.is_constant(node.get_rhs_operand()) and isinstance(node.get_lhs_operand(), mat.DeclaredEntityNode):
+
+                exponent_node = node.get_rhs_operand()
+
+                # simplify exponent node to a scalar value
+                exp_val = fmr.simplify_node_to_scalar_value(
+                    problem=self.convex_relaxation,
+                    node=exponent_node,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element
+                )
+
+                if exp_val is None:  # exponent value cannot be resolved as a scalar
+                    return mat.GENERAL_NONCONVEX
+                elif exp_val % 2 != 0:  # scalar exponent value is not even
+                    return mat.GENERAL_NONCONVEX
+                else:  # scalar exponent value is an even number
+                    return mat.UNIVARIATE_NONLINEAR
 
             else:
                 # all other non-factorizable exponentiation operations assumed to be general nonconvexities
-                return const.GENERAL_NONCONVEX
+                return mat.GENERAL_NONCONVEX
 
         # transformation
         elif isinstance(node, mat.ArithmeticTransformationNode):
@@ -359,27 +401,43 @@ class Convexifier:
             # reductive transformation
             if node.is_reductive():
 
+                # retrieve the combined indexing set
+                inner_idx_sets = node.idx_set_node.evaluate(self.convex_relaxation.state, idx_set, dummy_element)
+                inner_idx_set = OrderedSet().union(*inner_idx_sets)
+                idx_set = mat.cartesian_product([idx_set, inner_idx_set])
+                dummy_element = node.idx_set_node.combined_dummy_element
+
                 # summation
                 if node.symbol == "sum":
-                    return self.__identify_node(node.operands[0])
+                    return self.__identify_node(node.operands[0],
+                                                idx_set=idx_set,
+                                                dummy_element=dummy_element)
 
                 # product, maximum, or minimum
                 else:
-                    return const.GENERAL_NONCONVEX
+                    return mat.GENERAL_NONCONVEX
 
             # non-reductive transformation
             else:
 
                 if node.symbol in ("log", "log10", "exp", "cos", "sin", "tan"):
 
-                    if mat.is_linear(node.operands[0]):  # operand is linear
-                        return const.UNIVARIATE_CONCAVE
+                    operand = node.operands[0]
 
-                    else:  # operand is nonlinear
-                        return const.GENERAL_NONCONVEX
+                    # operand is linear and univariate
+                    if mat.is_linear(operand) and mat.is_univariate(
+                            node=operand,
+                            state=self.convex_relaxation.state,
+                            idx_set=idx_set,
+                            dummy_element=dummy_element):
+                        return mat.UNIVARIATE_NONLINEAR
+
+                    # operand is nonlinear and/or multivariate
+                    else:
+                        return mat.GENERAL_NONCONVEX
 
                 else:  # all other transformations are assumed to be nonconvex
-                    return const.GENERAL_NONCONVEX
+                    return mat.GENERAL_NONCONVEX
 
         else:
 
@@ -424,14 +482,14 @@ class Convexifier:
             # constant
             if isinstance(factor, mat.NumericNode):
                 sym = str(abs(int(factor.value)))
-                fcn_type = const.CONSTANT
+                fcn_type = mat.CONSTANT
                 id_to_var_node_map[id(factor)] = None
 
             # linear
             elif isinstance(factor, mat.DeclaredEntityNode):
 
                 sym = factor.symbol
-                fcn_type = const.LINEAR
+                fcn_type = mat.LINEAR
                 id_to_var_node_map[id(factor)] = factor
 
                 self.__build_bound_meta_entities(sym)
@@ -445,7 +503,7 @@ class Convexifier:
                                      + " while building a constrained underestimator")
 
                 sym = den_node.symbol
-                fcn_type = const.FRACTIONAL
+                fcn_type = mat.FRACTIONAL
                 id_to_var_node_map[id(factor)] = den_node
 
                 self.__build_bound_meta_entities(sym)
@@ -1003,38 +1061,60 @@ class Convexifier:
 
         # general univariate concave term
         else:
-            ue_node = self.__build_convex_envelope_for_general_univariate_concave_function(operand,
-                                                                                           is_negative=is_negative)
+            ue_node = self.__build_convex_envelope_for_general_univariate_nonlinear_function(operand,
+                                                                                             is_negative=is_negative)
             if coefficient is None:
                 return ue_node
             else:
                 return nb.build_multiplication_node([deepcopy(coefficient), ue_node])
 
-    def __build_convex_envelope_for_general_univariate_concave_function(self,
-                                                                        uc_node: mat.ArithmeticExpressionNode,
-                                                                        is_negative: bool = False):
+    def __build_convex_envelope_for_general_univariate_nonlinear_function(self,
+                                                                          unl_node: mat.ArithmeticExpressionNode,
+                                                                          is_negative: bool = False):
 
-        # function is mirrored vertically due to a negative coefficient
-        if is_negative:
-            # function is convex
-            return deepcopy(uc_node)
+        if isinstance(unl_node, mat.ArithmeticTransformationNode):
 
-        if isinstance(uc_node, mat.ArithmeticTransformationNode):
-            x_node = uc_node.operands[0]
+            # special case: -log(x) and -log10(x)
+            if unl_node.symbol in ('log', 'log10') and is_negative:
+                return deepcopy(unl_node)  # function is convex
 
-        elif isinstance(uc_node, mat.ArithmeticOperationNode) and uc_node.operator == mat.EXPONENTIATION_OPERATOR:
+            # special case: +exp(x)
+            elif unl_node.symbol == "exp" and not is_negative:
+                return deepcopy(unl_node)  # function is convex
 
-            # base is constant and exponent is univariate: b^x
-            if mat.is_constant(uc_node.get_lhs_operand()):
-                x_node = uc_node.get_rhs_operand()
+            # special case: sin(x), cos(x), and tan(x)
+            elif unl_node.symbol in ("sin", "cos", "tan"):
+                raise NotImplementedError("Convexification logic for trigonometric functions not yet implemented")
 
-            # base is univariate and exponent is constant: x^c
+            x_node = unl_node.operands[0]
+
+        elif isinstance(unl_node, mat.ArithmeticOperationNode) and unl_node.operator == mat.EXPONENTIATION_OPERATOR:
+
+            # base is constant and exponent is univariate: +/- b^x
+            if mat.is_constant(unl_node.get_lhs_operand()):
+
+                # special case: +b^x
+                if not is_negative:
+                    return deepcopy(unl_node)  # function is convex
+
+                x_node = unl_node.get_rhs_operand()
+
+            # base is univariate and exponent evaluates to an even number: +/- x^c
+            elif mat.is_constant(unl_node.get_rhs_operand()):
+
+                # special case: +x^c
+                if not is_negative:
+                    return deepcopy(unl_node)  # function is convex
+
+                x_node = unl_node.get_lhs_operand()
+
             else:
-                x_node = uc_node.get_lhs_operand()
+                raise ValueError("Convexifier encountered an unexpected node '{0}'".format(unl_node)
+                                 + " while constructing a convex envelope for a general univariate nonlinear term")
 
         else:
-            raise ValueError("Convexifier encountered an unexpected node '{0}'".format(uc_node)
-                             + " while constructing a convex envelope for a general univariate concave term")
+            raise ValueError("Convexifier encountered an unexpected node '{0}'".format(unl_node)
+                             + " while constructing a convex envelope for a general univariate nonlinear term")
 
         var_node = mat.get_var_nodes(x_node)[0]
         var_sym = var_node.symbol
@@ -1047,10 +1127,10 @@ class Convexifier:
 
         # build elemental nodes
 
-        uc_lb_node = deepcopy(uc_node)
+        uc_lb_node = deepcopy(unl_node)
         nb.replace_declared_symbols(uc_lb_node, lb_mapping)
 
-        uc_ub_node = deepcopy(uc_node)
+        uc_ub_node = deepcopy(unl_node)
         nb.replace_declared_symbols(uc_ub_node, ub_mapping)
 
         x_lb_node = deepcopy(x_node)

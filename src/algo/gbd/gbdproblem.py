@@ -162,7 +162,7 @@ class GBDProblem(Problem):
         self.cuts_unb_sym = self.generate_unique_symbol("ct")
         ord_set_node = mat.OrderedSetNode(start_node=mat.NumericNode(value=1),
                                           end_node=mat.DeclaredEntityNode(self.cut_count_sym,
-                                                                          type=const.PARAM_TYPE))
+                                                                          type=mat.PARAM_TYPE))
         self.cuts = eb.build_meta_set(
             problem=self,
             symbol=self.cuts_sym,

@@ -1,5 +1,5 @@
 import symro
-from symro.core.handlers.convexifier import Convexifier
+from symro.src.handlers.convexifier import Convexifier
 from symro.test.test_util import *
 
 
@@ -14,13 +14,15 @@ var z >= 2, <= 10;
 
 minimize OBJ: x;
 
-#CON1: x * y <= 0; 
+CON1: x * y = 0; 
 #CON2: -x * y <= 0;
 #CON3: x * y * z <= 0;
 #CON4: -x * y * z <= 0;
 #CON5: x / y <= 0;
 #CON6: -x / y <= 0;
-CON7: x * y / z <= 0;
+#CON7: x * y / z <= 0;
+#CON8: -x * y / z <= 0;
+#CON9: log(x) = 0;
 
 """
 

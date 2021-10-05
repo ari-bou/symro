@@ -1,5 +1,5 @@
 import symro
-from symro.core.parsing.amplparser import AMPLParser
+from symro.src.parsing.amplparser import AMPLParser
 from symro.test.test_util import *
 
 

@@ -1,5 +1,5 @@
 import symro
-import symro.core.handlers.nodebuilder as nb
+import symro.src.handlers.nodebuilder as nb
 from symro.test.test_util import *
 
 

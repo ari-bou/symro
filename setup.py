@@ -1,16 +1,21 @@
+import os
 import pathlib
 import setuptools
 
 # The directory containing this file
-HERE = pathlib.Path(__file__).parent
+ROOT_DIR = pathlib.Path(__file__).parent
 
 # The text of the README file
-README = (HERE / "README.md").read_text()
+README = (ROOT_DIR / "README.md").read_text()
+
+version_file = open(os.path.join(ROOT_DIR, 'VERSION'))
+version = version_file.read().strip()
+__version__ = version
 
 # This call to setup() does all the work
 setuptools.setup(
     name="symro",
-    version="0.0.2",
+    version=version,
     description="SYMbolic Reformulation and Optimization (SYMRO) package",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -26,7 +31,7 @@ setuptools.setup(
         "Intended Audience :: Science/Research",
         "Development Status :: 2 - Pre-Alpha",
     ],
-    package_dir={"": "core"},
+    package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.8",
     include_package_data=True,

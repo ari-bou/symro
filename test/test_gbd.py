@@ -1,6 +1,6 @@
 import symro
 from symro.test.test_util import *
-from symro.core.execution.amplengine import AMPLEngine
+from symro.src.execution.amplengine import AMPLEngine
 
 
 VERBOSITY = 1
@@ -21,7 +21,7 @@ def gbd_lp() -> bool:
                               engine=engine,
                               can_clean_script=True)
 
-    engine.solve(solver_name="gurobi", solver_options="outlev=1")
+    engine.solve(solve_options={"solver": "gurobi", "gurobi_options": "outlev=1"})
     v_benchmark = engine.get_obj_value("OBJ")
 
     gbd = symro.GBDAlgorithm(problem,
@@ -32,8 +32,8 @@ def gbd_lp() -> bool:
                              init_lb=-100000,
                              init_ub=100000)
     gbd.setup()
-    v, y = gbd.run(mp_solver_name="gurobi",
-                   sp_solver_name="gurobi",
+    v, y = gbd.run(mp_solve_options={"solver": "gurobi"},
+                   sp_solve_options={"solver": "gurobi"},
                    verbosity=VERBOSITY)
 
     return check_num_result(v, v_benchmark, 0.01)
@@ -47,7 +47,7 @@ def gbd_scenario_wise_lp() -> bool:
                               engine=engine,
                               can_clean_script=True)
 
-    engine.solve(solver_name="gurobi", solver_options="outlev=1")
+    engine.solve(solve_options={"solver": "gurobi", "gurobi_options": "outlev=1"})
     v_benchmark = engine.get_obj_value("OBJ")
 
     gbd = symro.GBDAlgorithm(problem,
@@ -60,8 +60,8 @@ def gbd_scenario_wise_lp() -> bool:
                              init_ub=100000)
     gbd.add_decomposition_axes(idx_set_symbols=["S"])
     gbd.setup()
-    v, y = gbd.run(mp_solver_name="gurobi",
-                   sp_solver_name="gurobi",
+    v, y = gbd.run(mp_solve_options={"solver": "gurobi"},
+                   sp_solve_options={"solver": "gurobi"},
                    verbosity=VERBOSITY)
 
     return check_num_result(v, v_benchmark, 0.01)
@@ -75,7 +75,7 @@ def gbd_scenario_wise_convex_qp_production() -> bool:
                               engine=engine,
                               can_clean_script=True)
 
-    engine.solve(solver_name="cplex", solver_options="outlev=1")
+    engine.solve(solve_options={"solver": "cplex", "cplex_options": "outlev=1"})
     v_benchmark = -engine.get_obj_value("OBJ")
 
     gbd = symro.GBDAlgorithm(problem,
@@ -88,8 +88,8 @@ def gbd_scenario_wise_convex_qp_production() -> bool:
                              init_ub=1000000)
     gbd.add_decomposition_axes(idx_set_symbols=["SCENARIOS"])
     gbd.setup()
-    v, y = gbd.run(mp_solver_name="cplex",
-                   sp_solver_name="cplex",
+    v, y = gbd.run(mp_solve_options={"solver": "cplex"},
+                   sp_solve_options={"solver": "cplex"},
                    rel_opt_tol=0.001,
                    verbosity=VERBOSITY)
 
@@ -104,7 +104,7 @@ def gbd_scenario_wise_convex_qp_refinery() -> bool:
                               engine=engine,
                               can_clean_script=True)
 
-    engine.solve(solver_name="gurobi", solver_options="outlev=1")
+    engine.solve(solve_options={"solver": "gurobi", "gurobi_options": "outlev=1"})
     v_benchmark = -engine.get_obj_value("TOTAL_PROFIT")
 
     gbd = symro.GBDAlgorithm(problem,
@@ -116,8 +116,8 @@ def gbd_scenario_wise_convex_qp_refinery() -> bool:
                              init_ub=1000000)
     gbd.add_decomposition_axes(["SCENARIOS"])
     gbd.setup()
-    v, y = gbd.run(mp_solver_name="knitro",
-                   sp_solver_name="cplex",
+    v, y = gbd.run(mp_solve_options={"solver": "knitro"},
+                   sp_solve_options={"solver": "cplex"},
                    max_iter_count=10000,
                    verbosity=2)
 

@@ -1,9 +1,9 @@
 import symro
-import symro.core.mat as mat
-from symro.core.prob.problem import Problem
-from symro.core.parsing.amplparser import AMPLParser
-import symro.core.handlers.nodebuilder as nb
-import symro.core.handlers.formulator as frm
+import symro.src.mat as mat
+from symro.src.prob.problem import Problem
+from symro.src.parsing.amplparser import AMPLParser
+import symro.src.handlers.nodebuilder as nb
+import symro.src.handlers.formulator as frm
 from symro.test.test_util import *
 
 

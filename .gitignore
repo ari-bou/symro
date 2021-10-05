@@ -1,4 +1,4 @@
 .idea/
 /venv
 /dist
-/core/symro.egg-info
+/src/symro.egg-info

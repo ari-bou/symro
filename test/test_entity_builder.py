@@ -1,6 +1,6 @@
 import symro
-import symro.core.handlers.entitybuilder as eb
-from symro.core.parsing.amplparser import AMPLParser
+import symro.src.handlers.entitybuilder as eb
+from symro.src.parsing.amplparser import AMPLParser
 from symro.test.test_util import *
 
 

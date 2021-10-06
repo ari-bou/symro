@@ -181,15 +181,21 @@ class Convexifier:
             dummy_element=dummy_element)
 
         ref_terms = []
+
         for term in terms:
+
             if isinstance(term, mat.ArithmeticOperationNode) and term.operator == mat.MULTIPLICATION_OPERATOR:
-                term = fmr.combine_summation_factor_nodes(
-                    problem=self.convex_relaxation,
-                    factors=term.operands,
-                    outer_unb_syms=outer_unb_syms)
-                ref_terms.append(term)
+                factors = term.operands
+
             else:
-                ref_terms.append(term)
+                factors = [term]
+
+            term = fmr.combine_summation_factor_nodes(
+                problem=self.convex_relaxation,
+                factors=factors,
+                outer_unb_syms=outer_unb_syms)
+
+            ref_terms.append(term)
 
         return ref_terms
 
@@ -467,17 +473,17 @@ class Convexifier:
                 # addition nodes should be expanded
                 if node.operator == mat.ADDITION_OPERATOR:
                     raise ValueError("Convexifier encountered an illegal addition node"
-                                     + " while identify the type of a term '{0}'".format(node))
+                                     + " while identifying the type of a term '{0}'".format(node))
 
                 # subtraction nodes should be converted to addition nodes
                 if node.operator == mat.SUBTRACTION_OPERATOR:
                     raise ValueError("Convexifier encountered an illegal subtraction node"
-                                     + " while identify the type of a term '{0}'".format(node))
+                                     + " while identifying the type of a term '{0}'".format(node))
 
                 # multiplication nodes should be handled in a preceding method
                 if node.operator == mat.MULTIPLICATION_OPERATOR:
                     raise ValueError("Convexifier encountered an illegal multiplication node"
-                                     + " while identify the type of a term '{0}'".format(node))
+                                     + " while identifying the type of a term '{0}'".format(node))
 
             raise ValueError("Convexifier encountered an unexpected term '{0}'".format(node)
                              + " while trying to identify its type")
@@ -506,12 +512,16 @@ class Convexifier:
                 fcn_type = mat.CONSTANT
                 id_to_var_node_map[id(factor)] = None
 
+                factor.is_prioritized = False
+
             # linear
             elif isinstance(factor, mat.DeclaredEntityNode):
 
                 sym = factor.symbol
                 fcn_type = mat.LINEAR
                 id_to_var_node_map[id(factor)] = factor
+
+                factor.is_prioritized = False
 
                 self.__build_bound_meta_entities(sym)
 
@@ -526,6 +536,8 @@ class Convexifier:
                 sym = den_node.symbol
                 fcn_type = mat.FRACTIONAL
                 id_to_var_node_map[id(factor)] = den_node
+
+                factor.is_prioritized = True
 
                 self.__build_bound_meta_entities(sym)
 

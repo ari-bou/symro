@@ -1370,6 +1370,41 @@ def combine_summation_factor_nodes(problem: Problem,
 
     for factor in factors:
 
+        # recursively combine summation nodes embedded within the current factor
+        if isinstance(factor, mat.ArithmeticTransformationNode) and factor.symbol == "sum":
+
+            inner_node = factor.operands[0]
+
+            if isinstance(inner_node, mat.ArithmeticOperationNode) \
+                    and inner_node.operator == mat.MULTIPLICATION_OPERATOR:
+
+                inner_node = combine_summation_factor_nodes(
+                    problem=problem,
+                    factors=inner_node.operands,
+                    outer_unb_syms=outer_unb_syms | def_unb_syms
+                )
+
+                if isinstance(inner_node, mat.ArithmeticTransformationNode) and inner_node.symbol == "sum":
+
+                    factor.operands[0] = inner_node.operands[0]
+
+                    outer_idx_set_node = factor.idx_set_node
+                    inner_idx_set_node = inner_node.idx_set_node
+
+                    outer_idx_set_node.set_nodes.extend(inner_idx_set_node.set_nodes)
+
+                    inner_con_node = inner_idx_set_node.constraint_node
+                    if inner_con_node is not None:
+                        if outer_idx_set_node.constraint_node is None:
+                            outer_idx_set_node.constraint_node = inner_con_node
+                        else:
+                            outer_idx_set_node.constraint_node = nb.build_conjunction_node(
+                                [
+                                    outer_idx_set_node.constraint_node,
+                                    inner_con_node
+                                ]
+                            )
+
         unb_syms = nb.retrieve_unbound_symbols(factor)
         unb_syms = unb_syms - outer_unb_syms  # remove unbound symbols defined in the outer scope
         clashing_unb_syms = def_unb_syms & unb_syms  # retrieve previously-defined unbound symbols
@@ -1388,7 +1423,7 @@ def combine_summation_factor_nodes(problem: Problem,
             # update set of defined unbound symbols with newly-generated symbols
             def_unb_syms = def_unb_syms | set(mapping.values())
 
-        # reductive summation node
+        # collect indexing set and constraint nodes
         if isinstance(factor, mat.ArithmeticTransformationNode) and factor.symbol == "sum":
 
             # collect set nodes of the current indexing set node

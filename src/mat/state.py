@@ -51,7 +51,10 @@ class State:
         if symbol in self.set_collections:
             return self.set_collections[symbol].entity_map[idx]
         elif symbol in self.param_collections:
-            return self.param_collections[symbol].entity_map[idx]
+            try:
+                return self.param_collections[symbol].entity_map[idx]
+            except:
+                x = 2
         elif symbol in self.var_collections:
             return self.var_collections[symbol].entity_map[idx]
         elif symbol in self.obj_collections:

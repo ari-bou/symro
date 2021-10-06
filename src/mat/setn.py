@@ -374,8 +374,20 @@ class CompoundSetNode(BaseSetNode):
                  idx_set: IndexingSet = None,
                  dummy_element: Element = None
                  ) -> np.ndarray:
+        return self.generate_combined_idx_sets(
+            state=state,
+            idx_set=idx_set,
+            dummy_element=dummy_element,
+            can_reduce=True
+        )
 
-        combined_sets = self.combine_indexing_and_component_sets(state, idx_set, dummy_element)
+    def generate_combined_idx_sets(self,
+                                   state: State,
+                                   idx_set: IndexingSet = None,  # length mp
+                                   dummy_element: Element = None,
+                                   can_reduce: bool = True):
+
+        combined_sets = self.__combine_idx_sets(state, idx_set, dummy_element)
 
         mp = 1
         if idx_set is not None:
@@ -389,26 +401,26 @@ class CompoundSetNode(BaseSetNode):
 
             if self.constraint_node is not None:
                 filtered_set = self.__filter_set(state, combined_set_ip)
-                if idx_set is not None:
+                if idx_set is not None and can_reduce:
                     filtered_set = remove_set_dimensions(filtered_set, list(range(len(dummy_element))))
                 y[ip] = filtered_set
 
             else:
-                if idx_set is not None:
+                if idx_set is not None and can_reduce:
                     combined_set_ip = remove_set_dimensions(combined_set_ip, list(range(len(dummy_element))))
                 y[ip] = combined_set_ip
 
         return y
 
-    def combine_indexing_and_component_sets(self,
-                                            state: State,
-                                            idx_set: IndexingSet = None,  # length mp
-                                            dummy_element: Element = None):
+    def __combine_idx_sets(self,
+                           state: State,
+                           idx_set: IndexingSet = None,  # length mp
+                           dummy_element: Element = None):
         """
-        Combine the indexing sets and the component sets together.
+        Combine the indexing set of the outer scope and the component sets together.
         Note that the indexing set constraint is not applied.
-        :param state: State
-        :param idx_set: IndexSet of length mp
+        :param state: problem state
+        :param idx_set: indexing set of length mp
         :param dummy_element: tuple of unbound symbols of length np
         :return: combined indexing sets for each index of the outer scope
         """
@@ -503,7 +515,7 @@ class CompoundSetNode(BaseSetNode):
 
                 elif isinstance(dummy_node, CompoundDummyNode):
                     for cmpt_node in dummy_node.component_nodes:
-                        if cmpt_node.symbol not in outer_unb_syms:
+                        if isinstance(cmpt_node, DummyNode) and cmpt_node.symbol not in outer_unb_syms:
                             unb_syms.add(cmpt_node.symbol)
 
         return unb_syms

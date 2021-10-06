@@ -291,21 +291,13 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
     def combine_indexing_sets(self,
                               state: State,
                               idx_set: IndexingSet = None,  # length mp
-                              dummy_symbols: Element = None):
-
-        fcn_idx_sets = self.idx_set_node.evaluate(state, idx_set, dummy_symbols)  # length mp
-
-        if idx_set is not None:
-            combined_idx_sets = []
-            for element_p, fcn_set_c in zip(idx_set, fcn_idx_sets):  # loop from ip = 0 ... mp
-                set_ip = OrderedSet([element_p])
-                combined_idx_set = cartesian_product([set_ip, fcn_set_c])
-                combined_idx_sets.append(combined_idx_set)
-
-        else:
-            combined_idx_sets = fcn_idx_sets
-
-        return combined_idx_sets  # length mp
+                              dummy_element: Element = None):
+        return self.idx_set_node.generate_combined_idx_sets(  # length mp
+            state=state,
+            idx_set=idx_set,
+            dummy_element=dummy_element,
+            can_reduce=False
+        )
 
     def is_reductive(self) -> bool:
         return self.idx_set_node is not None
@@ -613,6 +605,8 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
             if indices is not None:
                 index = indices[ip]
             entity = state.get_entity(self.symbol, index)
+            if entity is None:
+                x = 2
             y[ip] = entity.get_value()
 
         return y

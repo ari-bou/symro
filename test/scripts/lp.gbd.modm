@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------------
 # beginregion
 param CUT_COUNT default 0;
-set CUTS := 1..CUT_COUNT;
+set CUTS = 1..CUT_COUNT;
 param obj_stored{ct in CUTS} default 0;
 param is_feasible{ct in CUTS} default 0;
 param y_stored{ct in CUTS} default 0;

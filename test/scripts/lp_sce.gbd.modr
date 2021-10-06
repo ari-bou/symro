@@ -1,10 +1,10 @@
 # SETS AND PARAMETERS
 # --------------------------------------------------------------------------------------------------
 # beginregion
-set S := {1,2,3};
-param p{S};
+set S = {1,2,3};
+param p{s in S};
 param cut_count = 2;
-param lambda_1{s in S, 1..cut_count};
+param lambda_1{s in S, t in 1..cut_count};
 param y_soln = 0.4;
 # endregion 
 
@@ -12,9 +12,9 @@ param y_soln = 0.4;
 # VARIABLES
 # --------------------------------------------------------------------------------------------------
 # beginregion
-var x1{S} := 500, >= 0, <= 1000;
-var x2{S} := 500, >= 0, <= 1000;
-var y{S} := 500, >= 0, <= 1000;
+var x1{s in S} := 500, >= 0, <= 1000;
+var x2{s in S} := 500, >= 0, <= 1000;
+var y{s in S} := 500, >= 0, <= 1000;
 # endregion 
 
 

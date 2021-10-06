@@ -132,6 +132,9 @@ class Convexifier:
 
                 lhs_operand = root_node.lhs_operand
 
+                if mc.get_symbol() == "INVENTORY_TANK_SULFUR_BLENDING_E2":
+                    x = 2
+
                 terms = self.__standardize_expression(root_node=lhs_operand,
                                                       idx_set_node=mc.idx_set_node,
                                                       dummy_element=tuple(mc.get_idx_set_dummy_element()))
@@ -210,9 +213,13 @@ class Convexifier:
         if isinstance(node, mat.ArithmeticTransformationNode) and node.symbol == "sum":
 
             # retrieve the combined indexing set
-            inner_idx_sets = node.idx_set_node.evaluate(self.convex_relaxation.state, idx_set, dummy_element)
-            inner_idx_set = OrderedSet().union(*inner_idx_sets)
-            idx_set = mat.cartesian_product([idx_set, inner_idx_set])
+            idx_sets = node.idx_set_node.generate_combined_idx_sets(
+                state=self.convex_relaxation.state,
+                idx_set=idx_set,
+                dummy_element=dummy_element,
+                can_reduce=False
+            )
+            idx_set = OrderedSet().union(*idx_sets)
             dummy_element = node.idx_set_node.combined_dummy_element
 
             # convexify operand of summation
@@ -265,7 +272,7 @@ class Convexifier:
                 bilinear_node = mat.MultiplicationNode(operands=var_factors)
 
                 if mat.is_univariate(
-                    node=bilinear_node,
+                    root_node=bilinear_node,
                     state=self.convex_relaxation.state,
                     idx_set=idx_set,
                     dummy_element=dummy_element
@@ -370,11 +377,16 @@ class Convexifier:
 
             # by default, numerator is a numeric node with value 1
 
-            # linear denominator
-            if mat.is_linear(node.get_rhs_operand()):
+            # denominator is a linear univariate function
+            if mat.is_linear(node.get_rhs_operand()) and mat.is_univariate(
+                root_node=node,
+                state=self.convex_relaxation.state,
+                idx_set=idx_set,
+                dummy_element=dummy_element
+            ):
                 return mat.FRACTIONAL
 
-            # nonlinear denominator
+            # denominator is a nonlinear and/or multivariate function
             else:
                 return mat.GENERAL_NONCONVEX
 
@@ -388,7 +400,7 @@ class Convexifier:
 
                 # exponent is linear and univariate
                 if mat.is_linear(exponent_node) and mat.is_univariate(
-                        node=exponent_node,
+                        root_node=exponent_node,
                         state=self.convex_relaxation.state,
                         idx_set=idx_set,
                         dummy_element=dummy_element):
@@ -429,9 +441,13 @@ class Convexifier:
             if node.is_reductive():
 
                 # retrieve the combined indexing set
-                inner_idx_sets = node.idx_set_node.evaluate(self.convex_relaxation.state, idx_set, dummy_element)
-                inner_idx_set = OrderedSet().union(*inner_idx_sets)
-                idx_set = mat.cartesian_product([idx_set, inner_idx_set])
+                idx_sets = node.idx_set_node.generate_combined_idx_sets(
+                    state=self.convex_relaxation.state,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element,
+                    can_reduce=False
+                )
+                idx_set = OrderedSet().union(*idx_sets)
                 dummy_element = node.idx_set_node.combined_dummy_element
 
                 # summation
@@ -453,7 +469,7 @@ class Convexifier:
 
                     # operand is linear and univariate
                     if mat.is_linear(operand) and mat.is_univariate(
-                            node=operand,
+                            root_node=operand,
                             state=self.convex_relaxation.state,
                             idx_set=idx_set,
                             dummy_element=dummy_element):

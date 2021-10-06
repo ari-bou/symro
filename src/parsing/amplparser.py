@@ -358,9 +358,9 @@ class AMPLParser:
 
             operand = self.__parse_logical_operand()
 
-            return mat.LogicalReductionOperationNode(symbol=operator,
-                                                     idx_set_node=idx_set_node,
-                                                     operand=operand)
+            return mat.LogicalReductionNode(symbol=operator,
+                                            idx_set_node=idx_set_node,
+                                            operand=operand)
 
         else:
 
@@ -552,9 +552,9 @@ class AMPLParser:
             else:
                 operator = mat.SETOF_OPERATOR
 
-            set_reduc_op = mat.SetReductionOperationNode(operator=operator,
-                                                         idx_set_node=idx_set_node,
-                                                         operand=operand)
+            set_reduc_op = mat.SetReductionNode(operator=operator,
+                                                idx_set_node=idx_set_node,
+                                                operand=operand)
             return set_reduc_op
 
         # Declared Set

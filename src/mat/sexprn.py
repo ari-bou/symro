@@ -76,7 +76,7 @@ class ConditionalSetExpressionNode(SetExpressionNode):
         return rhs
 
 
-class SetReductionOperationNode(SetExpressionNode):
+class SetReductionNode(SetExpressionNode):
 
     def __init__(self,
                  operator: int,

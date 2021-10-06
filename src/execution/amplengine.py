@@ -18,14 +18,16 @@ class AMPLEngine(Engine):
     # Construction
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __init__(self, problem: Problem = None):
+    def __init__(self,
+                 problem: Problem = None,
+                 can_clean_script: bool = False):
 
         super(AMPLEngine, self).__init__(problem)
 
         self.api: Optional[ampl.AMPL] = None
 
         if problem is not None:
-            self.setup_ampl_engine(problem)
+            self.setup_ampl_engine(problem, can_clean_script=can_clean_script)
 
     # Setup
     # ------------------------------------------------------------------------------------------------------------------

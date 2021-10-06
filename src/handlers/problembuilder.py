@@ -173,7 +173,8 @@ def read_ampl(file_name: str = None,
     try:
 
         if engine is None:
-            engine = AMPLEngine(problem)
+            engine = AMPLEngine(problem,
+                                can_clean_script=can_clean_script)
         else:
             engine.setup_ampl_engine(problem,
                                      can_clean_script=can_clean_script)

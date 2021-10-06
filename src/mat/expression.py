@@ -2,7 +2,7 @@ from queue import Queue
 from typing import Optional
 
 from symro.src.mat.util import *
-from symro.src.mat.exprn import ExpressionNode
+from symro.src.mat.exprn import ExpressionNode, ArithmeticExpressionNode, LogicalExpressionNode
 from symro.src.mat.setn import CompoundSetNode
 from symro.src.mat.aexprn import DeclaredEntityNode, ArithmeticOperationNode, ArithmeticTransformationNode
 from symro.src.mat.state import State
@@ -66,19 +66,15 @@ def is_linear(root_node: ExpressionNode) -> bool:
     return True
 
 
-def is_univariate(node: ExpressionNode,
+def is_univariate(root_node: ExpressionNode,
                   state: State,
                   idx_set: IndexingSet,
                   dummy_element: Element) -> bool:
 
-    var_nodes = get_var_nodes(node)
+    var_nodes = get_var_nodes(root_node)
 
-    # exponent node contains only 1 variable node
-    if len(var_nodes) == 1:
-        return True
-
-    # exponent node contains more than 1 variable node
-    else:
+    # node contains more than 1 variable node
+    if len(var_nodes) > 1:
 
         # retrieve the symbol of the first variable node
         var_sym_0 = var_nodes[0].symbol
@@ -109,7 +105,47 @@ def is_univariate(node: ExpressionNode,
                 if (var_idx_set_0 != var_idx_set_i).any():
                     return False  # function is multivariate
 
-        return True  # function is univariate
+    # check reductive arithmetic transformation nodes
+    return not __contains_multivariate_reductive_arithmetic_transformation(
+        node=root_node,
+        state=state,
+        idx_set=idx_set,
+        dummy_element=dummy_element,
+    )
+
+
+def __contains_multivariate_reductive_arithmetic_transformation(node: ExpressionNode,
+                                                                state: State,
+                                                                idx_set: IndexingSet,
+                                                                dummy_element: Element) -> bool:
+
+    if isinstance(node, ArithmeticTransformationNode) and node.is_reductive() and not is_constant(node):
+
+        # retrieve the combined indexing set
+        idx_sets = node.idx_set_node.generate_combined_idx_sets(
+            state=state,
+            idx_set=idx_set,
+            dummy_element=dummy_element,
+            can_reduce=False
+        )
+        idx_set = OrderedSet().union(*idx_sets)
+        dummy_element = node.idx_set_node.combined_dummy_element
+
+        if len(idx_set) > 1:
+            return True  # function is multivariate
+
+    for child in node.get_children():
+        if isinstance(child, ArithmeticExpressionNode) or isinstance(child, LogicalExpressionNode):
+            is_multi_var = __contains_multivariate_reductive_arithmetic_transformation(
+                node=child,
+                state=state,
+                idx_set=idx_set,
+                dummy_element=dummy_element,
+            )
+            if is_multi_var:
+                return True
+
+    return False  # function is univariate
 
 
 def get_node(root_node: ExpressionNode, node_id: int):
@@ -206,7 +242,7 @@ class Expression:
 
         dummy_symbols = None
         if self.indexing_set_node is not None:
-            self.indexing_set_node.combine_indexing_and_component_sets(state)
+            self.indexing_set_node.generate_combined_idx_sets(state)
             dummy_symbols = self.indexing_set_node.combined_dummy_element
 
         if idx_set is None:

@@ -700,9 +700,13 @@ def __simplify_arithmetic_expression(problem: Problem,
 
             node.idx_set_node = spl_idx_set_node
 
-            inner_idx_sets = node.idx_set_node.evaluate(problem.state, idx_set, dummy_element)
-            inner_idx_set = OrderedSet().union(*inner_idx_sets)
-            idx_set = mat.cartesian_product([idx_set, inner_idx_set])
+            idx_sets = node.idx_set_node.generate_combined_idx_sets(
+                state=problem.state,
+                idx_set=idx_set,
+                dummy_element=dummy_element,
+                can_reduce=False
+            )
+            idx_set = OrderedSet().union(*idx_sets)
             dummy_element = node.idx_set_node.combined_dummy_element
 
             # check if indexing set node is empty
@@ -818,7 +822,7 @@ def __simplify_logical_expression(problem: Problem,
                                   idx_set: mat.IndexingSet,
                                   dummy_element: mat.Element):
 
-    if isinstance(node, mat.LogicalReductionOperationNode):
+    if isinstance(node, mat.LogicalReductionNode):
         pass
 
     # other
@@ -858,7 +862,7 @@ def __simplify_set_expression(problem: Problem,
     if isinstance(node, mat.CompoundSetNode):
         pass
 
-    elif isinstance(node, mat.SetReductionOperationNode):
+    elif isinstance(node, mat.SetReductionNode):
 
         spl_idx_set_node = __simplify_set_expression(
             problem=problem,
@@ -873,9 +877,13 @@ def __simplify_set_expression(problem: Problem,
 
         node.idx_set_node = spl_idx_set_node
 
-        inner_idx_sets = node.idx_set_node.evaluate(problem.state, idx_set, dummy_element)
-        inner_idx_set = OrderedSet().union(*inner_idx_sets)
-        idx_set = mat.cartesian_product([idx_set, inner_idx_set])
+        idx_sets = node.idx_set_node.generate_combined_idx_sets(
+            state=problem.state,
+            idx_set=idx_set,
+            dummy_element=dummy_element,
+            can_reduce=False
+        )
+        idx_set = OrderedSet().union(*idx_sets)
         dummy_element = node.idx_set_node.combined_dummy_element
 
         node.operand = __simplify_set_expression(
@@ -1133,9 +1141,13 @@ def __expand_multiplication(problem: Problem,
             # reductive summation
             if node.is_reductive() and node.symbol == "sum":
 
-                inner_idx_sets = node.idx_set_node.evaluate(problem.state, idx_set, dummy_element)
-                inner_idx_set = OrderedSet().union(*inner_idx_sets)
-                idx_set = mat.cartesian_product([idx_set, inner_idx_set])
+                idx_sets = node.idx_set_node.generate_combined_idx_sets(
+                    state=problem.state,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element,
+                    can_reduce=False
+                )
+                idx_set = OrderedSet().union(*idx_sets)
                 dummy_element = node.idx_set_node.combined_dummy_element
 
                 terms = __expand_multiplication(problem, node.operands[0], idx_set, dummy_element)
@@ -1239,15 +1251,16 @@ def __expand_multiplication(problem: Problem,
                             if len(rhs_terms) == 1:
                                 node.set_rhs_operand(rhs_terms[0])
                             else:
-                                node.set_rhs_operand(nb.build_addition_node(rhs_terms))
+                                node.set_rhs_operand(nb.build_addition_node(rhs_terms, is_prioritized=True))
                             return [node]
 
                     node.set_lhs_operand(mat.NumericNode(1))
+                    node.is_prioritized = True
 
                     if len(rhs_terms) == 1:
                         node.set_rhs_operand(rhs_terms[0])
                     else:
-                        node.set_rhs_operand(nb.build_multiplication_node(rhs_terms))
+                        node.set_rhs_operand(nb.build_multiplication_node(rhs_terms, is_prioritized=True))
 
                     rhs_terms = [node]
 
@@ -1374,22 +1387,31 @@ def combine_summation_factor_nodes(problem: Problem,
         if isinstance(factor, mat.ArithmeticTransformationNode) and factor.symbol == "sum":
 
             inner_node = factor.operands[0]
+            ref_inner_node = None
+            middle_unb_syms = nb.retrieve_unbound_symbols(factor.idx_set_node)
 
             if isinstance(inner_node, mat.ArithmeticOperationNode) \
                     and inner_node.operator == mat.MULTIPLICATION_OPERATOR:
-
-                inner_node = combine_summation_factor_nodes(
+                ref_inner_node = combine_summation_factor_nodes(
                     problem=problem,
                     factors=inner_node.operands,
-                    outer_unb_syms=outer_unb_syms | def_unb_syms
+                    outer_unb_syms=outer_unb_syms | middle_unb_syms | def_unb_syms
                 )
 
-                if isinstance(inner_node, mat.ArithmeticTransformationNode) and inner_node.symbol == "sum":
+            elif isinstance(inner_node, mat.ArithmeticTransformationNode) and inner_node.symbol == "sum":
+                ref_inner_node = combine_summation_factor_nodes(
+                    problem=problem,
+                    factors=[inner_node],
+                    outer_unb_syms=outer_unb_syms | middle_unb_syms | def_unb_syms
+                )
 
-                    factor.operands[0] = inner_node.operands[0]
+            if ref_inner_node is not None:
+                if isinstance(ref_inner_node, mat.ArithmeticTransformationNode) and ref_inner_node.symbol == "sum":
+
+                    factor.operands[0] = ref_inner_node.operands[0]
 
                     outer_idx_set_node = factor.idx_set_node
-                    inner_idx_set_node = inner_node.idx_set_node
+                    inner_idx_set_node = ref_inner_node.idx_set_node
 
                     outer_idx_set_node.set_nodes.extend(inner_idx_set_node.set_nodes)
 

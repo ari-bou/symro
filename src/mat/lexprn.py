@@ -38,7 +38,7 @@ class SetMembershipOperationNode(LogicalExpressionNode):
             raise ValueError("Indexing set of a set membership operation cannot be null")
 
         challenge_elements = self.member_node.evaluate(state, idx_set, dummy_element)
-        challenge_elements = np.array([tuple([e]) if not isinstance(e, tuple) else e for e in challenge_elements])
+        challenge_elements = [tuple([e]) if not isinstance(e, tuple) else e for e in challenge_elements]
 
         sets_c = self.set_node.evaluate(state, idx_set, dummy_element)
 
@@ -126,7 +126,7 @@ class SetComparisonOperationNode(LogicalExpressionNode):
         return literal
 
 
-class LogicalReductionOperationNode(LogicalExpressionNode):
+class LogicalReductionNode(LogicalExpressionNode):
 
     def __init__(self,
                  symbol: str,

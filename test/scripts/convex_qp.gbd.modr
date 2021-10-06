@@ -1,32 +1,32 @@
 # SETS AND PARAMETERS
 # --------------------------------------------------------------------------------------------------
 # beginregion
-set SCENARIOS := {1,2,3};
-set TIMEPERIODS := {1};
+set SCENARIOS = {1,2,3};
+set TIMEPERIODS = {1};
 set RAW_MATERIALS;
 set PRODUCTS;
-set MATERIALS := RAW_MATERIALS union PRODUCTS;
+set MATERIALS = RAW_MATERIALS union PRODUCTS;
 set LINKAGES within {i in MATERIALS, j in MATERIALS: i != j};
 set QUALITIES;
-param YIELD{PRODUCTS, RAW_MATERIALS};
-param MIN_PROD{PRODUCTS};
-param DEMAND{PRODUCTS};
-param QUALITY_RAW_MAT{QUALITIES, RAW_MATERIALS};
-param QUALITY_SPEC_MIN{QUALITIES, PRODUCTS};
-param QUALITY_SPEC_MAX{QUALITIES, PRODUCTS};
-param COST{MATERIALS, SCENARIOS};
-param PROBABILITY{SCENARIOS};
-set test_set := {};
+param YIELD{p in PRODUCTS, r in RAW_MATERIALS};
+param MIN_PROD{p in PRODUCTS};
+param DEMAND{p in PRODUCTS};
+param QUALITY_RAW_MAT{q in QUALITIES, r in RAW_MATERIALS};
+param QUALITY_SPEC_MIN{q in QUALITIES, p in PRODUCTS};
+param QUALITY_SPEC_MAX{q in QUALITIES, p in PRODUCTS};
+param COST{m in MATERIALS, s in SCENARIOS};
+param PROBABILITY{s in SCENARIOS};
+set test_set = {};
 # endregion 
 
 
 # VARIABLES
 # --------------------------------------------------------------------------------------------------
 # beginregion
-var INLET{RAW_MATERIALS, TIMEPERIODS, SCENARIOS} := 30, >= 0, <= 1000;
-var NODE{MATERIALS, TIMEPERIODS, SCENARIOS} >= 0, <= 1000;
-var ARC{LINKAGES, TIMEPERIODS, SCENARIOS} >= 0, <= 1000;
-var PROFIT{TIMEPERIODS, SCENARIOS};
+var INLET{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS} := 30, >= 0, <= 1000;
+var NODE{m in MATERIALS, t in TIMEPERIODS, s in SCENARIOS} >= 0, <= 1000;
+var ARC{(l0,l1) in LINKAGES, t in TIMEPERIODS, s in SCENARIOS} >= 0, <= 1000;
+var PROFIT{t in TIMEPERIODS, s in SCENARIOS};
 # endregion 
 
 

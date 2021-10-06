@@ -1,11 +1,8 @@
 from copy import deepcopy
 import numpy as np
+from ordered_set import OrderedSet
 from queue import Queue
 from typing import Callable, Dict, List, Optional, Tuple, Union
-
-from ordered_set import OrderedSet
-
-import symro.src.constants as const
 
 import symro.src.mat as mat
 
@@ -712,9 +709,13 @@ class GBDProblemBuilder:
         elif isinstance(node, mat.ArithmeticTransformationNode):
 
             if node.is_reductive():
-                inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_element)
-                inner_idx_set = OrderedSet().union(*inner_idx_sets)
-                idx_set = mat.cartesian_product([idx_set, inner_idx_set])
+                idx_sets = node.idx_set_node.generate_combined_idx_sets(
+                    state=self.gbd_problem.state,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element,
+                    can_reduce=False
+                )
+                idx_set = OrderedSet().union(*idx_sets)
                 dummy_element = node.idx_set_node.combined_dummy_element
 
             statuses = []
@@ -854,9 +855,13 @@ class GBDProblemBuilder:
         elif isinstance(node, mat.ArithmeticTransformationNode):
 
             if node.is_reductive():
-                inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_element)
-                inner_idx_set = OrderedSet().union(*inner_idx_sets)
-                idx_set = mat.cartesian_product([idx_set, inner_idx_set])
+                idx_sets = node.idx_set_node.generate_combined_idx_sets(
+                    state=self.gbd_problem.state,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element,
+                    can_reduce=False
+                )
+                idx_set = OrderedSet().union(*idx_sets)
                 dummy_element = node.idx_set_node.combined_dummy_element
 
             statuses = []
@@ -1127,28 +1132,28 @@ class GBDProblemBuilder:
     def __build_complicating_subtraction_node(self,
                                               root_node: mat.ArithmeticExpressionNode,
                                               idx_set: mat.IndexingSet,
-                                              dummy_syms: Tuple[Union[int, float, str, tuple, None], ...]):
+                                              dummy_element: mat.Element):
 
         root_node.is_prioritized = True
         root_node_clone = deepcopy(root_node)
 
         queue = Queue()
-        queue.put((root_node_clone, idx_set, dummy_syms))
+        queue.put((root_node_clone, idx_set, dummy_element))
 
         # modify complicating variable nodes
         while not queue.empty():
 
-            node, idx_set, dummy_syms = queue.get()
+            node, idx_set, dummy_element = queue.get()
             node: mat.ExpressionNode
             idx_set: mat.IndexingSet
-            dummy_syms: mat.Element
+            dummy_element: mat.Element
 
             is_comp_var_node = False
 
             if isinstance(node, mat.DeclaredEntityNode):
                 if node.get_type() == mat.VAR_TYPE:
 
-                    status = self.__verify_complicating_node(node, idx_set, dummy_syms)
+                    status = self.__verify_complicating_node(node, idx_set, dummy_element)
 
                     if status in self.COMP_STATUSES:
 
@@ -1173,15 +1178,19 @@ class GBDProblemBuilder:
             elif isinstance(node, mat.ArithmeticTransformationNode):
                 if node.is_reductive():
                     # add the indexing set of the current scope to that of the outer scope
-                    inner_idx_sets = node.idx_set_node.evaluate(self.gbd_problem.state, idx_set, dummy_syms)
-                    inner_idx_set = OrderedSet().union(*inner_idx_sets)
-                    idx_set = mat.cartesian_product([idx_set, inner_idx_set])
-                    dummy_syms = node.idx_set_node.combined_dummy_element
+                    idx_sets = node.idx_set_node.generate_combined_idx_sets(
+                        state=self.gbd_problem.state,
+                        idx_set=idx_set,
+                        dummy_element=dummy_element,
+                        can_reduce=False
+                    )
+                    idx_set = OrderedSet().union(*idx_sets)
+                    dummy_element = node.idx_set_node.combined_dummy_element
 
             if not is_comp_var_node:
                 children = node.get_children()
                 for child in children:
-                    queue.put((child, idx_set, dummy_syms))
+                    queue.put((child, idx_set, dummy_element))
 
         # build subtraction node
         subtraction_node = mat.SubtractionNode(lhs_operand=root_node,

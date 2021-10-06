@@ -798,9 +798,9 @@ def __build_set_node(middle_idx_set_node: mat.CompoundSetNode,
         set_node = inner_idx_set_node
 
     else:
-        set_node = mat.SetReductionOperationNode(operator=mat.UNION_OPERATOR,
-                                                 idx_set_node=middle_idx_set_node,
-                                                 operand=inner_idx_set_node)
+        set_node = mat.SetReductionNode(operator=mat.UNION_OPERATOR,
+                                        idx_set_node=middle_idx_set_node,
+                                        operand=inner_idx_set_node)
 
     return set_node
 

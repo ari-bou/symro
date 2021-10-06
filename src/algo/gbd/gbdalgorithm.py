@@ -48,10 +48,8 @@ class GBDAlgorithm:
         self.init_lb: float = init_lb
         self.init_ub: float = init_ub
 
-        self.mp_solver_name: Optional[str] = None
-        self.mp_solve_options: Optional[str] = None
-        self.sp_solve_options: Optional[str] = None
-        self.sp_solve_options: Optional[str] = None
+        self.mp_solve_options: Optional[Dict[str, Union[int, float, str]]] = None
+        self.sp_solve_options: Optional[Dict[str, Union[int, float, str]]] = None
 
         self.max_iter_count: int = 100
         self.abs_opt_tol: Optional[float] = None
@@ -436,7 +434,7 @@ class GBDAlgorithm:
             is_feasible = False
 
         # Conopt
-        if self.sp_solve_options.lower() == "conopt":
+        if self.sp_solve_options.get("solver", None) == "conopt":
 
             # Last iteration yielded a feasible solution
             if is_feasible:

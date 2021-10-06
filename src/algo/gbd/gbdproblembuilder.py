@@ -826,11 +826,11 @@ class GBDProblemBuilder:
                            dummy_element: mat.Element
                            ) -> Tuple[Union[mat.ArithmeticExpressionNode, mat.DummyNode], int]:
 
-        # Numeric constant
+        # numeric constant
         if isinstance(node, mat.NumericNode) or isinstance(node, mat.DummyNode):
             return node, self.CONST_NODE
 
-        # Declared entity
+        # declared entity
         elif isinstance(node, mat.DeclaredEntityNode):
 
             if node.get_type() == mat.PARAM_TYPE:
@@ -851,7 +851,7 @@ class GBDProblemBuilder:
                 else:
                     return self.__reformulate_complicating_entity_node(node, idx_set, dummy_element), self.PURE_Y_NODE
 
-        # Function
+        # transformation
         elif isinstance(node, mat.ArithmeticTransformationNode):
 
             if node.is_reductive():
@@ -872,7 +872,7 @@ class GBDProblemBuilder:
 
             return node, self.__combine_node_statuses(statuses)
 
-        # Multi Operation
+        # operation
         elif isinstance(node, mat.ArithmeticOperationNode):
 
             # convert subtraction to addition
@@ -919,7 +919,7 @@ class GBDProblemBuilder:
                     else:
                         return node, self.MIXED_NODE
 
-        # Conditional Operation
+        # conditional
         elif isinstance(node, mat.ConditionalArithmeticExpressionNode):
 
             statuses = []
@@ -946,11 +946,11 @@ class GBDProblemBuilder:
                                                idx_set: mat.IndexingSet,
                                                dummy_syms: Tuple[Union[int, float, str, tuple, None], ...]):
 
-        # Retrieve all variable entities
+        # retrieve all variable entities
         entities = entity_node.collect_declared_entities(self.gbd_problem.state, idx_set, dummy_syms)
         vars = {k: v for k, v in entities.items() if isinstance(v, mat.Variable)}
 
-        # Identify complicating meta-variables that own a complicating variable entity
+        # identify complicating meta-variables that own a complicating variable entity
         sub_comp_meta_vars = {}
         has_x = False
         has_y = False
@@ -965,11 +965,11 @@ class GBDProblemBuilder:
             if not is_y:
                 has_x = True
 
-        # Check whether the entity node is purely non-complicating or purely complicating
+        # check whether the entity node is purely non-complicating or purely complicating
         if not (has_x and has_y):
-            return entity_node  # Return the entity node argument without reformulation
+            return entity_node  # return the entity node argument without reformulation
 
-        # Build summation node
+        # build summation node
         sum_idx_set_node = self.__build_idx_set_node_for_mixed_comp_entity_node(entity_node,
                                                                                 sub_comp_meta_vars)
         sum_node = mat.ArithmeticTransformationNode(symbol="sum",

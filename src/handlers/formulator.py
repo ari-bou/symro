@@ -2,10 +2,9 @@ from copy import deepcopy
 from numbers import Number
 from ordered_set import OrderedSet
 from queue import Queue
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import numpy as np
-import symro.src.constants as const
 import symro.src.mat as mat
 from symro.src.prob.problem import Problem
 import symro.src.handlers.nodebuilder as nb
@@ -1302,10 +1301,30 @@ def __expand_multiplication(problem: Problem,
 
         # conditional operation
         elif isinstance(node, mat.ConditionalArithmeticExpressionNode):
-            for i, operand in enumerate(node.operands):
-                terms = __expand_multiplication(problem, operand, idx_set, dummy_element)
-                node.operands[i] = nb.build_addition_node(terms)
-            return [node]
+
+            # uni-conditional
+            if len(node.operands) == 1:
+
+                terms = __expand_multiplication(problem, node.operands[0], idx_set, dummy_element)
+
+                dist_terms = []  # list of terms onto which the conditional is distributed
+                for term in terms:
+                    dist_terms.append(mat.ConditionalArithmeticExpressionNode(
+                        operands=[term],
+                        conditions=[deepcopy(node.conditions[0])],
+                        is_prioritized=True
+                    ))
+
+                return dist_terms
+
+            # n-conditional
+            else:
+
+                for i, operand in enumerate(node.operands):
+                    terms = __expand_multiplication(problem, operand, idx_set, dummy_element)
+                    node.operands[i] = nb.build_addition_node(terms)
+
+                return [node]
 
     else:
         raise ValueError("Formulator encountered an unexpected node while expanding factors")
@@ -1363,137 +1382,235 @@ def expand_factors_n(factors: List[List[mat.ArithmeticExpressionNode]]):
     return terms
 
 
-# Summation Combination
+# Arithmetic Reduction Combination
 # ------------------------------------------------------------------------------------------------------------------
 
-def combine_summation_factor_nodes(problem: Problem,
-                                   factors: Iterable[mat.ArithmeticExpressionNode],
-                                   outer_unb_syms: Iterable[str] = None):
+
+def combine_arithmetic_reduction_nodes(problem: Problem,
+                                       node: mat.ArithmeticExpressionNode,
+                                       outer_unb_syms: Iterable[str] = None):
 
     if outer_unb_syms is None:
         outer_unb_syms = set()
     elif isinstance(outer_unb_syms, set):
         outer_unb_syms = set(outer_unb_syms)
 
-    cmpt_set_nodes = []  # component set nodes of the combined indexing set node
-    conj_operands = []  # conjunctive operands of the constraint node of the combined indexing set node
-    ref_factors = []  # factors subject to the combined summation node
-
-    def_unb_syms = set()  # previously defined unbound symbols
-
-    for factor in factors:
-
-        # recursively combine summation nodes embedded within the current factor
-        if isinstance(factor, mat.ArithmeticTransformationNode) and factor.symbol == "sum":
-
-            inner_node = factor.operands[0]
-            ref_inner_node = None
-            middle_unb_syms = nb.retrieve_unbound_symbols(factor.idx_set_node)
-
-            if isinstance(inner_node, mat.ArithmeticOperationNode) \
-                    and inner_node.operator == mat.MULTIPLICATION_OPERATOR:
-                ref_inner_node = combine_summation_factor_nodes(
-                    problem=problem,
-                    factors=inner_node.operands,
-                    outer_unb_syms=outer_unb_syms | middle_unb_syms | def_unb_syms
-                )
-
-            elif isinstance(inner_node, mat.ArithmeticTransformationNode) and inner_node.symbol == "sum":
-                ref_inner_node = combine_summation_factor_nodes(
-                    problem=problem,
-                    factors=[inner_node],
-                    outer_unb_syms=outer_unb_syms | middle_unb_syms | def_unb_syms
-                )
-
-            if ref_inner_node is not None:
-                if isinstance(ref_inner_node, mat.ArithmeticTransformationNode) and ref_inner_node.symbol == "sum":
-
-                    factor.operands[0] = ref_inner_node.operands[0]
-
-                    outer_idx_set_node = factor.idx_set_node
-                    inner_idx_set_node = ref_inner_node.idx_set_node
-
-                    outer_idx_set_node.set_nodes.extend(inner_idx_set_node.set_nodes)
-
-                    inner_con_node = inner_idx_set_node.constraint_node
-                    if inner_con_node is not None:
-                        if outer_idx_set_node.constraint_node is None:
-                            outer_idx_set_node.constraint_node = inner_con_node
-                        else:
-                            outer_idx_set_node.constraint_node = nb.build_conjunction_node(
-                                [
-                                    outer_idx_set_node.constraint_node,
-                                    inner_con_node
-                                ]
-                            )
-
-        unb_syms = nb.retrieve_unbound_symbols(factor)
-        unb_syms = unb_syms - outer_unb_syms  # remove unbound symbols defined in the outer scope
-        clashing_unb_syms = def_unb_syms & unb_syms  # retrieve previously-defined unbound symbols
-        def_unb_syms = def_unb_syms | unb_syms  # update set of defined unbound symbols
-
-        if len(clashing_unb_syms) > 0:  # one or more unbound symbol conflicts
-
-            # generate mapping of old conflicting symbols to new unique symbols
-            mapping = {}
-            for unb_sym in clashing_unb_syms:
-                mapping[unb_sym] = problem.generate_unique_symbol(unb_sym)
-
-            # replace the conflicting symbols with unique symbols
-            nb.replace_unbound_symbols(node=factor, mapping=mapping)
-
-            # update set of defined unbound symbols with newly-generated symbols
-            def_unb_syms = def_unb_syms | set(mapping.values())
-
-        # collect indexing set and constraint nodes
-        if isinstance(factor, mat.ArithmeticTransformationNode) and factor.symbol == "sum":
-
-            # collect set nodes of the current indexing set node
-            cmpt_set_nodes.extend(factor.idx_set_node.set_nodes)
-
-            # collect constraint node of the current indexing set node
-            if factor.idx_set_node.constraint_node is not None:
-                conj_operands.append(factor.idx_set_node.constraint_node)
-
-            # designate the operand of the current summation node as the factorable node
-            factorable_node = factor.operands[0]
-
-        # other
-        else:
-            # designate the current node as the factorable node
-            factorable_node = factor
-
-        # retrieve underlying factors of the factorable node
-
-        # multiple factors
-        if isinstance(factorable_node, mat.ArithmeticOperationNode) \
-                and factorable_node.operator == mat.MULTIPLICATION_OPERATOR:
-            ref_factors.extend(factorable_node.operands)
-
-        # single factor
-        else:
-            ref_factors.append(factorable_node)
+    ref_factors, cmpt_set_nodes, con_nodes = __extract_idx_set_nodes_and_constraint_nodes(
+        problem=problem,
+        node=node,
+        outer_unb_syms=outer_unb_syms
+    )
 
     # build multiplication node with collected factors
-    multiplication_node = nb.build_multiplication_node(ref_factors, is_prioritized=True)
+    prod_node = nb.build_multiplication_node(ref_factors, is_prioritized=True)
 
-    # indexing set of the combined summation node is empty
-    if len(cmpt_set_nodes) == 0:
-        return multiplication_node
+    # no component indexing set nodes and no constraint nodes
+    if len(cmpt_set_nodes) == 0 and len(con_nodes) == 0:
+        return prod_node
 
-    # indexing set of the combined summation node is not empty
+    # one or more constraint nodes
     else:
 
         # build a conjunctive constraint node for the combined indexing set node
         constraint_node = None
-        if len(conj_operands) > 0:
-            constraint_node = nb.build_conjunction_node(conj_operands)
+        if len(con_nodes) > 0:
+            constraint_node = nb.build_conjunction_node(con_nodes)
 
-        # build the combined indexing set node
-        idx_set_node = mat.CompoundSetNode(set_nodes=cmpt_set_nodes,
-                                           constraint_node=constraint_node)
+        # no component indexing set nodes
+        if len(cmpt_set_nodes) == 0:
+            return mat.ConditionalArithmeticExpressionNode(
+                operands=[prod_node],
+                conditions=[constraint_node],
+                is_prioritized=True
+            )
 
-        # build the combined summation node
-        return mat.ArithmeticTransformationNode(symbol="sum",
-                                                idx_set_node=idx_set_node,
-                                                operands=multiplication_node)
+        # one or more component indexing set nodes
+        else:
+
+            # build the combined indexing set node
+            idx_set_node = mat.CompoundSetNode(set_nodes=cmpt_set_nodes,
+                                               constraint_node=constraint_node)
+
+            # build the combined summation node
+            return mat.ArithmeticTransformationNode(symbol="sum",
+                                                    idx_set_node=idx_set_node,
+                                                    operands=prod_node)
+
+
+def __extract_idx_set_nodes_and_constraint_nodes(problem: Problem,
+                                                 node: mat.ArithmeticExpressionNode,
+                                                 outer_unb_syms: Set[str]
+                                                 ) -> Tuple[List[mat.ArithmeticExpressionNode],
+                                                            List[mat.SetExpressionNode],
+                                                            List[mat.LogicalExpressionNode]]:
+
+    # multiplication
+    if isinstance(node, mat.ArithmeticOperationNode) and node.operator == mat.MULTIPLICATION_OPERATOR:
+
+        ref_factors = []
+        cmpt_set_nodes = []
+        con_nodes = []
+        def_unb_syms = set()
+
+        for i, factor in enumerate(node.operands):
+
+            # reformulate factor
+            ref_inner_factors, inner_cmpt_set_nodes, inner_con_nodes = __extract_idx_set_nodes_and_constraint_nodes(
+                problem=problem,
+                node=factor,
+                outer_unb_syms=outer_unb_syms | def_unb_syms
+            )
+
+            ref_factors.extend(ref_inner_factors)
+            cmpt_set_nodes.extend(inner_cmpt_set_nodes)
+            con_nodes.extend(inner_con_nodes)
+
+            unb_syms = nb.retrieve_unbound_symbols(factor)
+            unb_syms = unb_syms - outer_unb_syms  # remove unbound symbols defined in the outer scope
+            clashing_unb_syms = def_unb_syms & unb_syms  # retrieve previously-defined unbound symbols
+            def_unb_syms = def_unb_syms | unb_syms  # update set of defined unbound symbols
+
+            if len(clashing_unb_syms) > 0:  # one or more unbound symbol conflicts
+
+                # generate mapping of old conflicting symbols to new unique symbols
+                mapping = {}
+                for unb_sym in clashing_unb_syms:
+                    mapping[unb_sym] = problem.generate_unique_symbol(unb_sym)
+
+                # replace the conflicting symbols with unique symbols
+                nb.replace_unbound_symbols(node=factor, mapping=mapping)
+
+                # update set of defined unbound symbols with newly-generated symbols
+                def_unb_syms = def_unb_syms | set(mapping.values())
+
+        return ref_factors, cmpt_set_nodes, con_nodes
+
+    # summation
+    elif isinstance(node, mat.ArithmeticTransformationNode) and node.symbol == "sum":
+
+        middle_unb_syms = nb.retrieve_unbound_symbols(node.idx_set_node)
+
+        # reformulate node
+        inner_nodes, cmpt_set_nodes, con_nodes = __extract_idx_set_nodes_and_constraint_nodes(
+            problem=problem,
+            node=node.operands[0],
+            outer_unb_syms=outer_unb_syms | middle_unb_syms
+        )
+
+        cmpt_set_nodes = node.idx_set_node.set_nodes + cmpt_set_nodes
+
+        if node.idx_set_node.constraint_node is not None:
+            con_nodes.insert(0, node.idx_set_node.constraint_node)
+
+        return inner_nodes, cmpt_set_nodes, con_nodes
+
+    # uni-conditional
+    elif isinstance(node, mat.ConditionalArithmeticExpressionNode) and len(node.operands) == 1:
+
+        # reformulate node
+        ref_factors, cmpt_set_nodes, con_nodes = __extract_idx_set_nodes_and_constraint_nodes(
+            problem=problem,
+            node=node.operands[0],
+            outer_unb_syms=outer_unb_syms
+        )
+
+        if node.conditions[0] is not None:
+            con_nodes.insert(0, node.conditions[0])
+
+        return ref_factors, cmpt_set_nodes, con_nodes
+
+    # other
+    else:
+        return [node], [], []
+
+
+# Conditional Expression Reformulation
+# ------------------------------------------------------------------------------------------------------------------
+
+def reformulate_arithmetic_conditional_expressions(root_node: mat.ExpressionNode):
+
+    if isinstance(root_node, mat.ConditionalArithmeticExpressionNode):
+        root_node = __reformulate_n_conditional_expression(root_node.operands, root_node.conditions)
+
+    queue = Queue()
+    queue.put(root_node)
+
+    while not queue.empty():
+
+        node = queue.get()
+
+        ref_children = []
+        for child in node.get_children():
+
+            if isinstance(child, mat.ConditionalArithmeticExpressionNode):
+                if len(child.operands) > 1:
+                    child = __reformulate_n_conditional_expression(child.operands, child.conditions)
+
+            if isinstance(child, mat.RelationalOperationNode) or isinstance(child, mat.ArithmeticExpressionNode):
+                queue.put(child)
+
+            ref_children.append(child)
+
+        node.set_children(ref_children)
+
+    return root_node
+
+
+def __reformulate_n_conditional_expression(operands: List[mat.ArithmeticExpressionNode],
+                                           conditions: List[mat.LogicalExpressionNode]):
+
+    sum_operands = []
+    conj_node: Optional[mat.LogicalOperationNode] = None
+
+    # assign operation priority to all condition nodes
+    for condition in conditions:
+        condition.is_prioritized = True
+
+    for i, operand in enumerate(operands):
+
+        if i == 0:
+            mod_cond_node = conditions[i]
+
+        else:
+
+            if i == 1:
+
+                prev_condition = deepcopy(conditions[i - 1])
+
+                neg_prev_condition = mat.LogicalOperationNode(operator=mat.UNARY_INVERSION_OPERATOR,
+                                                              operands=[prev_condition])
+                neg_prev_condition.is_prioritized = True
+
+                conj_node = mat.LogicalOperationNode(operator=mat.CONJUNCTION_OPERATOR,
+                                                     operands=[neg_prev_condition])
+                mod_cond_node = conj_node
+
+            else:
+
+                conj_node = deepcopy(conj_node)
+
+                prev_condition = conj_node.operands[i - 1]
+
+                neg_prev_condition = mat.LogicalOperationNode(operator=mat.UNARY_INVERSION_OPERATOR,
+                                                              operands=[prev_condition])
+                neg_prev_condition.is_prioritized = True
+
+                conj_node.operands[i - 1] = neg_prev_condition
+
+                mod_cond_node = conj_node
+
+            if i < len(conditions):
+                conj_node.operands.append(conditions[i])
+
+        operand.is_prioritized = True
+        mono_cond_expr_node = mat.ConditionalArithmeticExpressionNode(operands=[operand],
+                                                                      conditions=[mod_cond_node],
+                                                                      is_prioritized=True)
+
+        sum_operands.append(mono_cond_expr_node)
+
+    if len(sum_operands) == 1:
+        return sum_operands[0]
+
+    else:
+        return mat.AdditionNode(operands=sum_operands)

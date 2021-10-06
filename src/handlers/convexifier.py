@@ -132,9 +132,6 @@ class Convexifier:
 
                 lhs_operand = root_node.lhs_operand
 
-                if mc.get_symbol() == "INVENTORY_TANK_SULFUR_BLENDING_E2":
-                    x = 2
-
                 terms = self.__standardize_expression(root_node=lhs_operand,
                                                       idx_set_node=mc.idx_set_node,
                                                       dummy_element=tuple(mc.get_idx_set_dummy_element()))
@@ -168,6 +165,7 @@ class Convexifier:
                                  idx_set_node: mat.CompoundSetNode = None,
                                  dummy_element: mat.Element = None):
 
+        root_node = fmr.reformulate_arithmetic_conditional_expressions(root_node)
         root_node = fmr.reformulate_subtraction_and_unary_negation(root_node)
 
         if idx_set_node is None:
@@ -187,18 +185,12 @@ class Convexifier:
 
         for term in terms:
 
-            if isinstance(term, mat.ArithmeticOperationNode) and term.operator == mat.MULTIPLICATION_OPERATOR:
-                factors = term.operands
-
-            else:
-                factors = [term]
-
-            term = fmr.combine_summation_factor_nodes(
+            ref_term = fmr.combine_arithmetic_reduction_nodes(
                 problem=self.convex_relaxation,
-                factors=factors,
+                node=term,
                 outer_unb_syms=outer_unb_syms)
 
-            ref_terms.append(term)
+            ref_terms.append(ref_term)
 
         return ref_terms
 

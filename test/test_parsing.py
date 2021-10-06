@@ -28,16 +28,12 @@ def ampl_parser_core_logic_test():
     literal = "if 1 > 2 then 1 + 2 else if 1 = 2 then 3 + 4 else if 1 < 2 then 5 + 6"
     node = ampl_parser.parse_arithmetic_expression(literal)
     results.append(check_str_result(node,
-                                    ("(sum {1..1: (1 > 2)} (1 + 2))"
-                                     + " + (sum {1..1: (! (1 > 2)) && (1 == 2)} (3 + 4))"
-                                     + " + (sum {1..1: (! (1 > 2)) && (! (1 == 2)) && (1 < 2)} (5 + 6))")))
+                                    "if 1 > 2 then 1 + 2 else if 1 == 2 then 3 + 4 else if 1 < 2 then 5 + 6"))
 
     # conditional arithmetic expression with trailing else clause
     literal = "if 1 > 2 then 1 + 2 else if 1 = 2 then 3 + 4 else 5 + 6"
     node = ampl_parser.parse_arithmetic_expression(literal)
     results.append(check_str_result(node,
-                                    ("(sum {1..1: (1 > 2)} (1 + 2))"
-                                     + " + (sum {1..1: (! (1 > 2)) && (1 == 2)} (3 + 4))"
-                                     + " + (sum {1..1: (! (1 > 2)) && (! (1 == 2))} (5 + 6))")))
+                                    "if 1 > 2 then 1 + 2 else if 1 == 2 then 3 + 4 else 5 + 6"))
 
     return results

@@ -1,8 +1,6 @@
-from copy import deepcopy
 from typing import Dict, List, Optional, Union
 import numpy as np
 
-import symro.src.constants as const
 import symro.src.mat as mat
 from symro.src.prob.problem import Problem
 import symro.src.prob.statement as stm
@@ -201,7 +199,7 @@ class AMPLParser:
     # Conditional Expression Parsing
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __parse_conditional_expression(self) -> Union[mat.ArithmeticOperationNode,
+    def __parse_conditional_expression(self) -> Union[mat.ConditionalArithmeticExpressionNode,
                                                       mat.ConditionalSetExpressionNode]:
 
         operands = []
@@ -229,69 +227,9 @@ class AMPLParser:
                                                     conditions=conditions)
 
         else:
-            return self.__convert_conditional_arithmetic_expression_to_addition_operation(operands, conditions)
-
-    @staticmethod
-    def __convert_conditional_arithmetic_expression_to_addition_operation(operands: List[mat.ArithmeticExpressionNode],
-                                                                          conditions: List[mat.LogicalExpressionNode]):
-
-        add_operands = []
-        conj_node: Optional[mat.LogicalOperationNode] = None
-
-        # assign operation priority to all condition nodes
-        for condition in conditions:
-            condition.is_prioritized = True
-
-        for i, operand in enumerate(operands):
-
-            ord_set_node = mat.OrderedSetNode(start_node=mat.NumericNode(value=1),
-                                              end_node=mat.NumericNode(value=1))
-
-            if i == 0:
-                constraint_node = conditions[i]
-
-            else:
-
-                if i == 1:
-
-                    prev_condition = deepcopy(conditions[i - 1])
-
-                    neg_prev_condition = mat.LogicalOperationNode(operator=mat.UNARY_INVERSION_OPERATOR,
-                                                                  operands=[prev_condition])
-                    neg_prev_condition.is_prioritized = True
-
-                    conj_node = mat.LogicalOperationNode(operator=mat.CONJUNCTION_OPERATOR,
-                                                         operands=[neg_prev_condition])
-                    constraint_node = conj_node
-
-                else:
-
-                    conj_node = deepcopy(conj_node)
-
-                    prev_condition = conj_node.operands[i - 1]
-
-                    neg_prev_condition = mat.LogicalOperationNode(operator=mat.UNARY_INVERSION_OPERATOR,
-                                                                  operands=[prev_condition])
-                    neg_prev_condition.is_prioritized = True
-
-                    conj_node.operands[i - 1] = neg_prev_condition
-
-                    constraint_node = conj_node
-
-                if i < len(conditions):
-                    conj_node.operands.append(conditions[i])
-
-            idx_set_node = mat.CompoundSetNode(set_nodes=[ord_set_node],
-                                               constraint_node=constraint_node)
-
-            operand.is_prioritized = True
-            sum_node = mat.ArithmeticTransformationNode(symbol="sum",
-                                                        idx_set_node=idx_set_node,
-                                                        operands=operand)
-
-            add_operands.append(sum_node)
-
-        return mat.AdditionNode(operands=add_operands)
+            return mat.ConditionalArithmeticExpressionNode(operands=operands,
+                                                           conditions=conditions)
+            # return self.__convert_conditional_arithmetic_expression_to_addition_operation(operands, conditions)
 
     # Logical Expression Parsing
     # ------------------------------------------------------------------------------------------------------------------

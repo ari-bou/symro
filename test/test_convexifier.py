@@ -8,13 +8,24 @@ from symro.test.test_util import *
 
 SCRIPT = """
 
+set I = {1, 2, 3};
+set J = {4, 5, 6};
+set K = {7, 8, 9};
+set R = {'i', 'ii', 'iii'};
+set S = {'iv', 'v', 'vi'};
+set T = {'vii', 'viii', 'ix'};
+
 var x >= 2, <= 10;
 var y >= 2, <= 10;
 var z >= 2, <= 10;
 
+var a {I, R} >= 5, <= 15;
+var b {J, S} >= 5, <= 15;
+var c {K, T} >= 5, <= 15;
+
 minimize OBJ: x;
 
-CON1: x * y = 0; 
+#CON1: x * y = 0; 
 #CON2: -x * y <= 0;
 #CON3: x * y * z <= 0;
 #CON4: -x * y * z <= 0;
@@ -23,6 +34,9 @@ CON1: x * y = 0;
 #CON7: x * y / z <= 0;
 #CON8: -x * y / z <= 0;
 #CON9: log(x) = 0;
+#CON10: x^2 = 0;
+
+CON11{i in I}: sum {r in R} a[i,r] * x = 0; 
 
 """
 

@@ -561,7 +561,7 @@ class GBDProblemBuilder:
             idx_set_node = nb.build_idx_set_node(problem=self.gbd_problem,
                                                  idx_meta_sets=self.gbd_problem.idx_meta_sets)
             dummy_node = mat.DummyNode(symbol=self.gbd_problem.cuts_unb_sym)
-            cuts_set_node = mat.SetNode(symbol=self.gbd_problem.cuts_sym)
+            cuts_set_node = mat.DeclaredSetNode(symbol=self.gbd_problem.cuts_sym)
             idx_set_node.set_nodes.append(mat.IndexingSetNode(dummy_node=dummy_node,
                                                               set_node=cuts_set_node))
 
@@ -610,7 +610,7 @@ class GBDProblemBuilder:
             if idx_set_node is not None:
                 idx_set_node = deepcopy(idx_set_node)
                 dummy_node = mat.DummyNode(symbol=self.gbd_problem.cuts_unb_sym)
-                cuts_set_node = mat.SetNode(symbol=self.gbd_problem.cuts_sym)
+                cuts_set_node = mat.DeclaredSetNode(symbol=self.gbd_problem.cuts_sym)
                 idx_set_node.set_nodes.append(mat.IndexingSetNode(dummy_node=dummy_node,
                                                                   set_node=cuts_set_node))
 

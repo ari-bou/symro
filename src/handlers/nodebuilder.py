@@ -31,7 +31,7 @@ def replace_declared_symbols(node: mat.ExpressionNode, mapping: Dict[str, str]):
 
         node = queue.get()
 
-        if isinstance(node, mat.DeclaredEntityNode) or isinstance(node, mat.SetNode):
+        if isinstance(node, mat.DeclaredEntityNode) or isinstance(node, mat.DeclaredSetNode):
             if node.symbol in mapping:
                 node.symbol = mapping[node.symbol]
         else:

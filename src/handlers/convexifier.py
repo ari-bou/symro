@@ -218,6 +218,8 @@ class Convexifier:
 
             node.operands[0] = convexified_node  # replace original operand with convexified node
 
+            return node
+
         elif isinstance(node, mat.ArithmeticOperationNode) and node.operator == mat.MULTIPLICATION_OPERATOR:
 
             factors = node.operands
@@ -253,11 +255,30 @@ class Convexifier:
 
             # bilinear (xy)
             elif var_factor_count == 2 and var_factor_types.count(mat.LINEAR) == 2:
-                return self.__build_sign_conditional_convex_underestimator(ue_type=mat.BILINEAR,
-                                                                           coefficient_nodes=const_factors,
-                                                                           factors=var_factors,
-                                                                           idx_set=idx_set,
-                                                                           dummy_element=dummy_element)
+
+                bilinear_node = mat.MultiplicationNode(operands=var_factors)
+
+                if mat.is_univariate(
+                    node=bilinear_node,
+                    state=self.convex_relaxation.state,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element
+                ):
+                    quadratic_node = mat.ExponentiationNode(lhs_operand=var_factors[0],
+                                                            rhs_operand=mat.NumericNode(2),
+                                                            is_prioritized=True)
+                    return self.__build_sign_conditional_convex_underestimator(ue_type=mat.BILINEAR,
+                                                                               coefficient_nodes=const_factors,
+                                                                               factors=[quadratic_node],
+                                                                               idx_set=idx_set,
+                                                                               dummy_element=dummy_element)
+
+                else:
+                    return self.__build_sign_conditional_convex_underestimator(ue_type=mat.BILINEAR,
+                                                                               coefficient_nodes=const_factors,
+                                                                               factors=var_factors,
+                                                                               idx_set=idx_set,
+                                                                               dummy_element=dummy_element)
 
             # trilinear (xyz)
             elif var_factor_count == 3 and var_factor_types.count(mat.LINEAR) == 3:

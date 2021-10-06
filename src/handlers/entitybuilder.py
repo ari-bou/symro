@@ -1,7 +1,7 @@
 from copy import deepcopy
 from ordered_set import OrderedSet
 from queue import Queue
-from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Set, Union
 
 import symro.src.mat as mat
 from symro.src.prob.problem import BaseProblem, Problem
@@ -246,135 +246,122 @@ def build_idx_meta_sets(problem: Problem,
     if unb_syms_blacklist is None:
         unb_syms_blacklist = set()
 
-    component_set_syms = []
-    component_dims = []
-    raw_component_dummies = []
-    all_defined_indexing_dummies = set()
+    def_unb_syms = set()
 
     # Pass 1:
     # - retrieve component set symbols, dimensions, and dummies
     # - store declared dummy symbols
-    for component_set_node in idx_set_node.set_nodes:
+    for i, cmpt_set_node in enumerate(idx_set_node.set_nodes):
 
-        component_dim = component_set_node.get_dim(problem.state)
+        cmpt_dim = cmpt_set_node.get_dim(problem.state)
 
-        # Component set is indexed
-        if isinstance(component_set_node, mat.IndexingSetNode):
-            component_set_sym = component_set_node.set_node.get_literal()
-            dummy_node = component_set_node.dummy_node
+        # indexing set node
+        if isinstance(cmpt_set_node, mat.IndexingSetNode):
+            cmpt_set_sym = cmpt_set_node.set_node.get_literal()
+            dummy_node = cmpt_set_node.dummy_node
 
             if isinstance(dummy_node, mat.CompoundDummyNode):
-                dummy_elements = list(dummy_node.component_nodes)
+                dummy_nodes = list(dummy_node.component_nodes)
             elif isinstance(dummy_node, mat.DummyNode):
-                dummy_elements = [dummy_node.symbol]
+                dummy_nodes = [dummy_node]
             else:
-                raise ValueError("EntityBuilder expected a dummy node while resolving an indexing set")
+                raise ValueError("Entity builder expected a dummy node while resolving a component indexing set node")
 
-            for de in dummy_elements:
-                if isinstance(de, mat.DummyNode):
-                    all_defined_indexing_dummies.add(de.symbol)
+            for dummy_node in dummy_nodes:
+                if isinstance(dummy_node, mat.DummyNode):
+                    def_unb_syms.add(dummy_node.symbol)
 
+        # non-indexing set node
         else:
-            component_set_sym = component_set_node.get_literal()
-            dummy_elements = [None] * component_dim
 
-        component_set_syms.append(component_set_sym)
-        component_dims.append(component_dim)
-        raw_component_dummies.append(dummy_elements)
+            # declared set node
+            if isinstance(cmpt_set_node, mat.DeclaredSetNode):
 
-    # Pass 2: retrieve default dummy symbols of declared component sets
-    for i, component_set_node in enumerate(idx_set_node.set_nodes):
+                cmpt_set_sym = cmpt_set_node.get_literal()
 
-        # Component set is declared
-        if isinstance(component_set_node, mat.SetNode):
+                ms = problem.meta_sets[cmpt_set_node.symbol]
+                dummy_nodes = []
 
-            dummy_elements = list(problem.meta_sets[component_set_node.symbol].get_dummy_element())
-            for j, de in enumerate(dummy_elements):
-                if de not in all_defined_indexing_dummies:
-                    all_defined_indexing_dummies.add(de)
-                else:
-                    dummy_elements[j] = None
-            raw_component_dummies[i] = dummy_elements
+                # retrieve default unbound symbols of the meta-set
+                for d in ms.get_reduced_dummy_element():
 
-    # Pass 3: process dummy symbols
-    k = 0
-    def_unb_syms = set()
-    for i, component_set_node in enumerate(idx_set_node.set_nodes):
+                    # unbound symbol clashes with previously-defined symbol
+                    if d in def_unb_syms:
+                        d = problem.generate_unique_symbol(d, symbol_blacklist=def_unb_syms)
+                        problem.unbound_symbols.add(d)
+                        def_unb_syms.add(d)
 
-        component_set_sym = component_set_syms[i]
-        component_dummy = []
-        reduced_component_dummy = []
+                    dummy_nodes.append(mat.DummyNode(d))
+
+            # other
+            else:
+
+                cmpt_set_sym = cmpt_set_node.get_literal()
+                dummy_nodes = []
+
+                # generate unique unbound symbols for each dimension of the component set
+                for j in range(cmpt_dim):
+
+                    # elicit a base symbol
+                    unb_sym_base = ''
+                    for c in cmpt_set_sym:
+                        if c.isalpha():  # base symbol must be a letter
+                            unb_sym_base = c[0].lower()
+                    if unb_sym_base == '':
+                        unb_sym_base = 'i'  # default base symbol is 'i'
+
+                    # generate unique unbound symbol
+                    unb_sym = problem.generate_unique_symbol(
+                        base_symbol=unb_sym_base,
+                        symbol_blacklist=unb_syms_blacklist)
+
+                    # add unbound symbol to problem
+                    problem.unbound_symbols.add(unb_sym)
+                    def_unb_syms.add(unb_sym)
+
+                    # build new dummy node
+                    dummy_nodes.append(mat.DummyNode(unb_sym))
+
+            # replace component set node with an indexing set node
+
+            if len(dummy_nodes) == 1:
+                dummy_node = dummy_nodes[0]
+
+            # build compound dummy node
+            else:
+                dummy_node = mat.CompoundDummyNode(dummy_nodes)
+
+            # build indexing set node
+            idx_set_node.set_nodes[i] = mat.IndexingSetNode(
+                dummy_node=dummy_node,
+                set_node=cmpt_set_node
+            )
+
+        cmpt_dummy_element = []
+        reduced_cmpt_dummy_element = []
         is_dim_fixed = []
 
-        for j, de in enumerate(raw_component_dummies[i]):
+        # retrieve dummy element and fixed dimensions of the meta-set
+        for cmpt_node in dummy_nodes:
 
-            if isinstance(de, mat.DummyNode):
-                component_dummy.append(de.symbol)
-                if de.symbol not in def_unb_syms:
-                    reduced_component_dummy.append(de.symbol)
-                    def_unb_syms.add(de.symbol)
-                    unb_syms_blacklist.add(de.symbol)
-                    is_dim_fixed.append(False)
-                else:
-                    is_dim_fixed.append(True)
+            cmpt_dummy_element.append(cmpt_node.get_literal())
 
-            elif isinstance(de, mat.StringNode):  # always fixed
-                component_dummy.append(de.get_literal())
-                is_dim_fixed.append(True)
-
-            elif isinstance(de, mat.StringExpressionNode):  # always fixed
-                component_dummy.append(de.get_literal())
-                is_dim_fixed.append(True)
-
-            elif isinstance(de, mat.ArithmeticExpressionNode):  # always fixed
-                component_dummy.append(de.get_literal())
-                is_dim_fixed.append(True)
-
-            elif isinstance(de, str):  # indexing dummy of defined set node; will never be fixed
-                component_dummy.append(de)
-                reduced_component_dummy.append(de)
+            if isinstance(cmpt_node, mat.DummyNode):
                 is_dim_fixed.append(False)
-                def_unb_syms.add(de)
-                unb_syms_blacklist.add(de)
+                reduced_cmpt_dummy_element.append(cmpt_node.get_literal())
 
-            else:  # dummy element is undeclared (None); will never be fixed
-                # generate a unique unbound symbol for the component indexing set
+            else:
+                is_dim_fixed.append(True)
 
-                # elicit a base symbol
-                unb_sym_base = ''
-                for c in component_set_syms[i]:
-                    if c.isalpha():  # base symbol must be a letter
-                        unb_sym_base = c[0].lower()
-                if unb_sym_base == '':
-                    unb_sym_base = 'i'  # default base symbol is 'i'
+        # compute reduced dimension of the meta-set
+        reduced_cmpt_dim = len(reduced_cmpt_dummy_element)
 
-                # retrieve unbound symbols declared in the current scope
-                cmpt_unb_syms = nb.retrieve_unbound_symbols(component_set_node)
-
-                # generate unique unbound symbol
-                unb_sym = problem.generate_unique_symbol(
-                    base_symbol=unb_sym_base,
-                    symbol_blacklist=cmpt_unb_syms | unb_syms_blacklist)
-
-                # add unbound symbol to problem
-                problem.unbound_symbols.add(unb_sym)
-
-                component_dummy.append(unb_sym)
-                reduced_component_dummy.append(unb_sym)
-                is_dim_fixed.append(False)
-                def_unb_syms.add(unb_sym)
-                unb_syms_blacklist.add(unb_sym)
-
-            k += 1
-
-        reduced_component_dim = len(reduced_component_dummy)
-
-        # Generate indexing meta-set
-        indexing_meta_set = mat.MetaSet(symbol=component_set_sym,
-                                        dimension=component_dims[i],
-                                        reduced_dimension=reduced_component_dim,
-                                        dummy_symbols=tuple(component_dummy),
-                                        reduced_dummy_symbols=tuple(reduced_component_dummy),
+        # build indexing meta-set
+        indexing_meta_set = mat.MetaSet(symbol=cmpt_set_sym,
+                                        dimension=cmpt_dim,
+                                        reduced_dimension=reduced_cmpt_dim,
+                                        dummy_symbols=tuple(cmpt_dummy_element),
+                                        reduced_dummy_symbols=tuple(reduced_cmpt_dummy_element),
                                         is_dim_fixed=is_dim_fixed)
         idx_meta_sets.append(indexing_meta_set)
 

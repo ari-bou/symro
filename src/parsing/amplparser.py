@@ -1043,7 +1043,7 @@ class AMPLParser:
         self._active_script = script
         return self._parse_declared_entity()
 
-    def _parse_declared_entity(self) -> Union[mat.DeclaredEntityNode, mat.SetNode]:
+    def _parse_declared_entity(self) -> Union[mat.DeclaredEntityNode, mat.DeclaredSetNode]:
 
         token = self.get_token()
 
@@ -1077,9 +1077,9 @@ class AMPLParser:
             self._next_token()  # skip suffix
 
         if entity_type == mat.SET_TYPE:
-            return mat.SetNode(symbol=token,
-                               entity_index_node=index_node,
-                               suffix=suffix)
+            return mat.DeclaredSetNode(symbol=token,
+                                       entity_index_node=index_node,
+                                       suffix=suffix)
         else:
             return mat.DeclaredEntityNode(symbol=token,
                                           idx_node=index_node,

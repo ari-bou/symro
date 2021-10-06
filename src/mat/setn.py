@@ -47,7 +47,7 @@ class BaseSetNode(SetExpressionNode, ABC):
         pass
 
 
-class SetNode(BaseSetNode):
+class DeclaredSetNode(BaseSetNode):
 
     def __init__(self,
                  symbol: str,

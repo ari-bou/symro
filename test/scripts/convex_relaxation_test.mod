@@ -1,10 +1,16 @@
 # SETS AND PARAMETERS
 # --------------------------------------------------------------------------------------------------
 # beginregion
+set I = {1,2,3};
+set J = {4,5,6};
+set K = {7,8,9};
+set R = {'i','ii','iii'};
+set S = {'iv','v','vi'};
+set T = {'vii','viii','ix'};
+param a_L{i in I, r in R} default 5;
+param a_U{i in I, r in R} default 15;
 param x_L default 2;
 param x_U default 10;
-param y_L default 2;
-param y_U default 10;
 # endregion 
 
 
@@ -14,8 +20,11 @@ param y_U default 10;
 var x >= 2, <= 10;
 var y >= 2, <= 10;
 var z >= 2, <= 10;
-var UE_2_N_XY11;
-var UE_2_P_XY11;
+var a{i in I, r in R} >= 5, <= 15;
+var b{j in J, s in S} >= 5, <= 15;
+var c{k in K, t in T} >= 5, <= 15;
+var UE_2_N_AX11{i in I, r in R};
+var UE_2_P_AX11{i in I, r in R};
 # endregion 
 
 
@@ -29,11 +38,11 @@ minimize OBJ: (x);
 # CONSTRAINTS
 # --------------------------------------------------------------------------------------------------
 # beginregion
-CON1_E2: -1 * (-1) * UE_2_N_XY11 <= 0;
-CON1_E1: UE_2_P_XY11 <= 0;
-UE_ENV_2_N_XY11_1: (-1 * x_U * y + -1 * y_L * x + -1 * -1 * x_U * y_L) - UE_2_N_XY11 <= 0;
-UE_ENV_2_N_XY11_2: (-1 * x_L * y + -1 * y_U * x + -1 * -1 * x_L * y_U) - UE_2_N_XY11 <= 0;
-UE_ENV_2_P_XY11_1: (x_L * y + y_L * x + -1 * x_L * y_L) - UE_2_P_XY11 <= 0;
-UE_ENV_2_P_XY11_2: (x_U * y + y_U * x + -1 * x_U * y_U) - UE_2_P_XY11 <= 0;
+CON11_E2{i in I}: (sum {r in R} -1 * (-1) * UE_2_N_AX11[i,r]) <= 0;
+CON11_E1{i in I}: (sum {r in R} UE_2_P_AX11[i,r]) <= 0;
+UE_ENV_2_N_AX11_1{i in I, r in R}: (-1 * a_U[i,r] * x + -1 * x_L * a[i,r] + -1 * -1 * a_U[i,r] * x_L) - UE_2_N_AX11[i,r] <= 0;
+UE_ENV_2_N_AX11_2{i in I, r in R}: (-1 * a_L[i,r] * x + -1 * x_U * a[i,r] + -1 * -1 * a_L[i,r] * x_U) - UE_2_N_AX11[i,r] <= 0;
+UE_ENV_2_P_AX11_1{i in I, r in R}: (a_L[i,r] * x + x_L * a[i,r] + -1 * a_L[i,r] * x_L) - UE_2_P_AX11[i,r] <= 0;
+UE_ENV_2_P_AX11_2{i in I, r in R}: (a_U[i,r] * x + x_U * a[i,r] + -1 * a_U[i,r] * x_U) - UE_2_P_AX11[i,r] <= 0;
 # endregion 
 

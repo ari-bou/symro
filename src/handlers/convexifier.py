@@ -72,6 +72,8 @@ class Convexifier:
         self.__convexify_objectives()
         self.__convexify_constraints()
 
+        self.__add_bound_meta_parameters_to_problem()
+
         return self.convex_relaxation
 
     def __reformulate_nonlinear_equality_constraints(self):
@@ -1243,7 +1245,6 @@ class Convexifier:
                     default_value=default_value_node)
 
                 meta_params.append(meta_param)
-                self.convex_relaxation.add_meta_parameter(meta_param, is_in_model=True)
 
             self.lb_params[var_sym] = meta_params[0]
             self.ub_params[var_sym] = meta_params[1]
@@ -1276,10 +1277,24 @@ class Convexifier:
             defined_value=bound_node
         )
 
-        self.convex_relaxation.add_meta_parameter(mp, is_in_model=True)
         self.n_linear_bound_params[bound_id] = mp
 
         return mp
+
+    def __add_bound_meta_parameters_to_problem(self):
+
+        bound_mps = []
+        for mp_lb, mp_ub in zip(self.lb_params.values(), self.ub_params.values()):
+            bound_mps.append((mp_lb.get_symbol(), mp_lb, mp_ub))
+
+        bound_mps.sort(key=lambda t: t[0])
+
+        for _, mp_lb, mp_ub in bound_mps:
+            self.convex_relaxation.add_meta_parameter(mp_lb, is_in_model=True)
+            self.convex_relaxation.add_meta_parameter(mp_ub, is_in_model=True)
+
+        for _, mp in self.n_linear_bound_params.items():
+            self.convex_relaxation.add_meta_parameter(mp, is_in_model=True)
 
     # Bound Node Construction
     # ------------------------------------------------------------------------------------------------------------------

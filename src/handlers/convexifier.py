@@ -147,13 +147,21 @@ class Convexifier:
 
                 convex_terms = []  # list of convexified terms
 
-                # convexify each term of the constraint expression
-                for term in terms:
-                    convex_terms.append(self.__convexify_node(
-                        node=term,
-                        idx_set=idx_set,
-                        dummy_element=dummy_element
-                    ))
+                # meta-constraint is empty
+                if idx_set is not None and len(idx_set) == 0:
+                    convex_terms = terms
+                    warnings.warn("Convexifier was unable to convexify indexed meta-constraint '{0}'".format(mc)
+                                  + " because it has an empty indexing set")
+
+                # meta-constraint is not empty
+                else:
+                    # convexify each term of the constraint expression
+                    for term in terms:
+                        convex_terms.append(self.__convexify_node(
+                            node=term,
+                            idx_set=idx_set,
+                            dummy_element=dummy_element
+                        ))
 
                 convex_root_node = nb.build_addition_node(convex_terms)
 
@@ -201,8 +209,8 @@ class Convexifier:
 
     def __convexify_node(self,
                          node: mat.ArithmeticExpressionNode,
-                         idx_set: mat.IndexingSet,
-                         dummy_element: mat.Element) -> mat.ArithmeticExpressionNode:
+                         idx_set: Optional[mat.IndexingSet],
+                         dummy_element: Optional[mat.Element]) -> mat.ArithmeticExpressionNode:
 
         if isinstance(node, mat.ArithmeticTransformationNode) and node.symbol == "sum":
 

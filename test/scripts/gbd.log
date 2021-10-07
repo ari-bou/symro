@@ -1,541 +1,541 @@
-19:51:56: Setting up engine
-19:51:56: Running GBD
-19:51:56: (it 0) Solving master problem
-19:51:56: (it 0) Lower bound of -1000000.0
-19:51:56: (it 0) Storing complicating variables
-19:51:56: (it 0|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:56: (it 0|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:56: (it 0|sp PrimalSubproblem[1]) Primal subproblem is infeasible
-19:51:56: (it 0|sp PrimalSubproblem_FBL[1]) Fixing complicating variables
-19:51:56: (it 0|sp PrimalSubproblem_FBL[1]) Solving feasibility subproblem
-19:51:56: (it 0|sp PrimalSubproblem_FBL[1]) Subproblem objective is 20.0
-19:51:56: (it 0|sp PrimalSubproblem_FBL[2]) Fixing complicating variables
-19:51:56: (it 0|sp PrimalSubproblem_FBL[2]) Solving feasibility subproblem
-19:51:56: (it 0|sp PrimalSubproblem_FBL[2]) Subproblem objective is 20.0
-19:51:56: (it 0|sp PrimalSubproblem_FBL[3]) Fixing complicating variables
-19:51:56: (it 0|sp PrimalSubproblem_FBL[3]) Solving feasibility subproblem
-19:51:56: (it 0|sp PrimalSubproblem_FBL[3]) Subproblem objective is 20.0
-19:51:56: (it 0) Objective is 60.0
-19:51:56: (it 0) Storing dual multipliers
-19:51:56: (it 0) Iter:  0   | LB:    -1000000     | UB:     1000000     | Fbl: False
-19:51:56: (it 1) Solving master problem
-19:51:56: (it 1) Lower bound of -1000000.0
-19:51:56: (it 1) Storing complicating variables
-19:51:56: (it 1|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:56: (it 1|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:56: (it 1|sp PrimalSubproblem[1]) Primal subproblem is infeasible
-19:51:56: (it 1|sp PrimalSubproblem_FBL[1]) Fixing complicating variables
-19:51:56: (it 1|sp PrimalSubproblem_FBL[1]) Solving feasibility subproblem
-19:51:56: (it 1|sp PrimalSubproblem_FBL[1]) Subproblem objective is 208.0
-19:51:56: (it 1|sp PrimalSubproblem_FBL[2]) Fixing complicating variables
-19:51:56: (it 1|sp PrimalSubproblem_FBL[2]) Solving feasibility subproblem
-19:51:56: (it 1|sp PrimalSubproblem_FBL[2]) Subproblem objective is 208.0
-19:51:56: (it 1|sp PrimalSubproblem_FBL[3]) Fixing complicating variables
-19:51:56: (it 1|sp PrimalSubproblem_FBL[3]) Solving feasibility subproblem
-19:51:56: (it 1|sp PrimalSubproblem_FBL[3]) Subproblem objective is 208.0
-19:51:56: (it 1) Objective is 624.0
-19:51:57: (it 1) Storing dual multipliers
-19:51:57: (it 1) Iter:  1   | LB:    -1000000     | UB:     1000000     | Fbl: False
-19:51:57: (it 2) Solving master problem
-19:51:57: (it 2) Lower bound of -1000000.0
-19:51:57: (it 2) Storing complicating variables
-19:51:57: (it 2|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 2|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 2|sp PrimalSubproblem[1]) Primal subproblem is infeasible
-19:51:57: (it 2|sp PrimalSubproblem_FBL[1]) Fixing complicating variables
-19:51:57: (it 2|sp PrimalSubproblem_FBL[1]) Solving feasibility subproblem
-19:51:57: (it 2|sp PrimalSubproblem_FBL[1]) Subproblem objective is 7.6
-19:51:57: (it 2|sp PrimalSubproblem_FBL[2]) Fixing complicating variables
-19:51:57: (it 2|sp PrimalSubproblem_FBL[2]) Solving feasibility subproblem
-19:51:57: (it 2|sp PrimalSubproblem_FBL[2]) Subproblem objective is 7.6
-19:51:57: (it 2|sp PrimalSubproblem_FBL[3]) Fixing complicating variables
-19:51:57: (it 2|sp PrimalSubproblem_FBL[3]) Solving feasibility subproblem
-19:51:57: (it 2|sp PrimalSubproblem_FBL[3]) Subproblem objective is 7.6
-19:51:57: (it 2) Objective is 22.799999999999997
-19:51:57: (it 2) Storing dual multipliers
-19:51:57: (it 2) Iter:  2   | LB:    -1000000     | UB:     1000000     | Fbl: False
-19:51:57: (it 3) Solving master problem
-19:51:57: (it 3) Lower bound of -1000000.0
-19:51:57: (it 3) Storing complicating variables
-19:51:57: (it 3|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 3|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 3|sp PrimalSubproblem[1]) Primal subproblem is infeasible
-19:51:57: (it 3|sp PrimalSubproblem_FBL[1]) Fixing complicating variables
-19:51:57: (it 3|sp PrimalSubproblem_FBL[1]) Solving feasibility subproblem
-19:51:57: (it 3|sp PrimalSubproblem_FBL[1]) Subproblem objective is 0.6666666666667
-19:51:57: (it 3|sp PrimalSubproblem_FBL[2]) Fixing complicating variables
-19:51:57: (it 3|sp PrimalSubproblem_FBL[2]) Solving feasibility subproblem
-19:51:57: (it 3|sp PrimalSubproblem_FBL[2]) Subproblem objective is 0.6666666666667
-19:51:57: (it 3|sp PrimalSubproblem_FBL[3]) Fixing complicating variables
-19:51:57: (it 3|sp PrimalSubproblem_FBL[3]) Solving feasibility subproblem
-19:51:57: (it 3|sp PrimalSubproblem_FBL[3]) Subproblem objective is 0.6666666666667
-19:51:57: (it 3) Objective is 2.0000000000001004
-19:51:57: (it 3) Storing dual multipliers
-19:51:57: (it 3) Iter:  3   | LB:    -1000000     | UB:     1000000     | Fbl: False
-19:51:57: (it 4) Solving master problem
-19:51:57: (it 4) Lower bound of -1000000.0
-19:51:57: (it 4) Storing complicating variables
-19:51:57: (it 4|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 4|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 4|sp PrimalSubproblem[1]) Subproblem objective is 7.620480000000015
-19:51:57: (it 4|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:57: (it 4|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:57: (it 4|sp PrimalSubproblem[2]) Subproblem objective is 42.28463999999998
-19:51:57: (it 4|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:57: (it 4|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:57: (it 4|sp PrimalSubproblem[3]) Subproblem objective is 27.27264000000001
-19:51:57: (it 4) Objective is 77.17776
-19:51:57: (it 4) Storing dual multipliers
-19:51:57: (it 4) Updated global upper bound
-19:51:57: (it 4) Iter:  4   | LB:    -1000000     | UB:       77        | Fbl: True
-19:51:57: (it 5) Solving master problem
-19:51:57: (it 5) Lower bound of -36182.74442667
-19:51:57: (it 5) Updated global lower bound
-19:51:57: (it 5) Storing complicating variables
-19:51:57: (it 5|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 5|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 5|sp PrimalSubproblem[1]) Primal subproblem is infeasible
-19:51:57: (it 5|sp PrimalSubproblem_FBL[1]) Fixing complicating variables
-19:51:57: (it 5|sp PrimalSubproblem_FBL[1]) Solving feasibility subproblem
-19:51:57: (it 5|sp PrimalSubproblem_FBL[1]) Subproblem objective is 1590.0
-19:51:57: (it 5|sp PrimalSubproblem_FBL[2]) Fixing complicating variables
-19:51:57: (it 5|sp PrimalSubproblem_FBL[2]) Solving feasibility subproblem
-19:51:57: (it 5|sp PrimalSubproblem_FBL[2]) Subproblem objective is 1590.0
-19:51:57: (it 5|sp PrimalSubproblem_FBL[3]) Fixing complicating variables
-19:51:57: (it 5|sp PrimalSubproblem_FBL[3]) Solving feasibility subproblem
-19:51:57: (it 5|sp PrimalSubproblem_FBL[3]) Subproblem objective is 1590.0
-19:51:57: (it 5) Objective is 4770.0
-19:51:57: (it 5) Storing dual multipliers
-19:51:57: (it 5) Iter:  5   | LB:     -36182      | UB:       77        | Fbl: False
-19:51:57: (it 6) Solving master problem
-19:51:57: (it 6) Lower bound of -9122.288426667
-19:51:57: (it 6) Updated global lower bound
-19:51:57: (it 6) Storing complicating variables
-19:51:57: (it 6|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 6|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 6|sp PrimalSubproblem[1]) Subproblem objective is 7525.600000000002
-19:51:57: (it 6|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:57: (it 6|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:57: (it 6|sp PrimalSubproblem[2]) Subproblem objective is 20135.1
-19:51:57: (it 6|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:57: (it 6|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:57: (it 6|sp PrimalSubproblem[3]) Subproblem objective is 11583.6
-19:51:57: (it 6) Objective is 39244.3
-19:51:57: (it 6) Storing dual multipliers
-19:51:57: (it 6) Iter:  6   | LB:      -9122      | UB:       77        | Fbl: True
-19:51:57: (it 7) Solving master problem
-19:51:57: (it 7) Lower bound of -7301.913693157
-19:51:57: (it 7) Updated global lower bound
-19:51:57: (it 7) Storing complicating variables
-19:51:57: (it 7|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 7|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 7|sp PrimalSubproblem[1]) Subproblem objective is 6416.23490645516
-19:51:57: (it 7|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:57: (it 7|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:57: (it 7|sp PrimalSubproblem[2]) Subproblem objective is 6499.83917184545
-19:51:57: (it 7|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:57: (it 7|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:57: (it 7|sp PrimalSubproblem[3]) Subproblem objective is 6675.531237392768
-19:51:57: (it 7) Objective is 19591.605315693378
-19:51:57: (it 7) Storing dual multipliers
-19:51:57: (it 7) Iter:  7   | LB:      -7301      | UB:       77        | Fbl: True
-19:51:57: (it 8) Solving master problem
-19:51:57: (it 8) Lower bound of -4256.887803189
-19:51:57: (it 8) Updated global lower bound
-19:51:57: (it 8) Storing complicating variables
-19:51:57: (it 8|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 8|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 8|sp PrimalSubproblem[1]) Subproblem objective is 398.8230839123171
-19:51:57: (it 8|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:57: (it 8|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:57: (it 8|sp PrimalSubproblem[2]) Subproblem objective is 4612.67896095548
-19:51:57: (it 8|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:57: (it 8|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:57: (it 8|sp PrimalSubproblem[3]) Subproblem objective is 2194.753087537959
-19:51:57: (it 8) Objective is 7206.255132405756
-19:51:57: (it 8) Storing dual multipliers
-19:51:57: (it 8) Iter:  8   | LB:      -4256      | UB:       77        | Fbl: True
-19:51:57: (it 9) Solving master problem
-19:51:57: (it 9) Lower bound of -3284.460397628
-19:51:57: (it 9) Updated global lower bound
-19:51:57: (it 9) Storing complicating variables
-19:51:57: (it 9|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 9|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 9|sp PrimalSubproblem[1]) Subproblem objective is 612.2206524556132
-19:51:57: (it 9|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:57: (it 9|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:57: (it 9|sp PrimalSubproblem[2]) Subproblem objective is 1105.2259805536894
-19:51:57: (it 9|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:57: (it 9|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:57: (it 9|sp PrimalSubproblem[3]) Subproblem objective is 1207.1937471015817
-19:51:57: (it 9) Objective is 2924.6403801108845
-19:51:57: (it 9) Storing dual multipliers
-19:51:57: (it 9) Iter:  9   | LB:      -3284      | UB:       77        | Fbl: True
-19:51:57: (it 10) Solving master problem
-19:51:57: (it 10) Lower bound of -2074.279001883
-19:51:57: (it 10) Updated global lower bound
-19:51:57: (it 10) Storing complicating variables
-19:51:57: (it 10|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 10|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 10|sp PrimalSubproblem[1]) Subproblem objective is -731.2193620516289
-19:51:57: (it 10|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:57: (it 10|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:57: (it 10|sp PrimalSubproblem[2]) Subproblem objective is 1103.0957765639912
-19:51:57: (it 10|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:57: (it 10|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:57: (it 10|sp PrimalSubproblem[3]) Subproblem objective is 410.6843576875097
-19:51:57: (it 10) Objective is 782.560772199872
-19:51:57: (it 10) Storing dual multipliers
-19:51:57: (it 10) Iter:  10  | LB:      -2074      | UB:       77        | Fbl: True
-19:51:57: (it 11) Solving master problem
-19:51:57: (it 11) Lower bound of -1479.562560212
-19:51:57: (it 11) Updated global lower bound
-19:51:57: (it 11) Storing complicating variables
-19:51:57: (it 11|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 11|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 11|sp PrimalSubproblem[1]) Subproblem objective is -328.417047059427
-19:51:57: (it 11|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:57: (it 11|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:57: (it 11|sp PrimalSubproblem[2]) Subproblem objective is 134.87763539085756
-19:51:57: (it 11|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:57: (it 11|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:57: (it 11|sp PrimalSubproblem[3]) Subproblem objective is 297.2092728016636
-19:51:57: (it 11) Objective is 103.66986113309417
-19:51:57: (it 11) Storing dual multipliers
-19:51:57: (it 11) Iter:  11  | LB:      -1479      | UB:       77        | Fbl: True
-19:51:57: (it 12) Solving master problem
-19:51:57: (it 12) Lower bound of -1092.790206916
-19:51:57: (it 12) Updated global lower bound
-19:51:57: (it 12) Storing complicating variables
-19:51:57: (it 12|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 12|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 12|sp PrimalSubproblem[1]) Subproblem objective is -325.7634790229518
-19:51:57: (it 12|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:57: (it 12|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:57: (it 12|sp PrimalSubproblem[2]) Subproblem objective is 803.1760293109135
-19:51:57: (it 12|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:57: (it 12|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:57: (it 12|sp PrimalSubproblem[3]) Subproblem objective is 279.7505205961336
-19:51:57: (it 12) Objective is 757.1630708840953
-19:51:57: (it 12) Storing dual multipliers
-19:51:57: (it 12) Iter:  12  | LB:      -1092      | UB:       77        | Fbl: True
-19:51:57: (it 13) Solving master problem
-19:51:57: (it 13) Lower bound of -906.6325245421
-19:51:57: (it 13) Updated global lower bound
-19:51:57: (it 13) Storing complicating variables
-19:51:57: (it 13|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 13|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 13|sp PrimalSubproblem[1]) Subproblem objective is -644.0590093108334
-19:51:57: (it 13|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:57: (it 13|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:57: (it 13|sp PrimalSubproblem[2]) Subproblem objective is 365.37194000884324
-19:51:57: (it 13|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:57: (it 13|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:57: (it 13|sp PrimalSubproblem[3]) Subproblem objective is 75.42450477921093
-19:51:57: (it 13) Objective is -203.26256452277923
-19:51:57: (it 13) Storing dual multipliers
-19:51:57: (it 13) Updated global upper bound
-19:51:57: (it 13) Iter:  13  | LB:      -906       | UB:      -203       | Fbl: True
-19:51:57: (it 14) Solving master problem
-19:51:57: (it 14) Lower bound of -620.5036733651
-19:51:57: (it 14) Updated global lower bound
-19:51:57: (it 14) Storing complicating variables
-19:51:57: (it 14|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 14|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 14|sp PrimalSubproblem[1]) Subproblem objective is -150.76257350091407
-19:51:57: (it 14|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:57: (it 14|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:57: (it 14|sp PrimalSubproblem[2]) Subproblem objective is 78.87100820709878
-19:51:57: (it 14|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:57: (it 14|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:57: (it 14|sp PrimalSubproblem[3]) Subproblem objective is 61.95522410018938
-19:51:57: (it 14) Objective is -9.936341193625907
-19:51:57: (it 14) Storing dual multipliers
-19:51:57: (it 14) Iter:  14  | LB:      -620       | UB:      -203       | Fbl: True
-19:51:57: (it 15) Solving master problem
-19:51:57: (it 15) Lower bound of -471.5249123792
-19:51:57: (it 15) Updated global lower bound
-19:51:57: (it 15) Storing complicating variables
-19:51:57: (it 15|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 15|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 15|sp PrimalSubproblem[1]) Subproblem objective is -709.8629456952332
-19:51:57: (it 15|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:57: (it 15|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:57: (it 15|sp PrimalSubproblem[2]) Subproblem objective is 449.2407310605968
-19:51:57: (it 15|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:57: (it 15|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:57: (it 15|sp PrimalSubproblem[3]) Subproblem objective is 194.50106813483916
-19:51:57: (it 15) Objective is -66.12114649979725
-19:51:57: (it 15) Storing dual multipliers
-19:51:57: (it 15) Iter:  15  | LB:      -471       | UB:      -203       | Fbl: True
-19:51:57: (it 16) Solving master problem
-19:51:57: (it 16) Lower bound of -464.5621173559
-19:51:57: (it 16) Updated global lower bound
-19:51:57: (it 16) Storing complicating variables
-19:51:57: (it 16|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 16|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 16|sp PrimalSubproblem[1]) Subproblem objective is -488.697801904816
-19:51:57: (it 16|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:57: (it 16|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:57: (it 16|sp PrimalSubproblem[2]) Subproblem objective is 117.34546975920807
-19:51:57: (it 16|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:57: (it 16|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:57: (it 16|sp PrimalSubproblem[3]) Subproblem objective is 94.58218621769001
-19:51:57: (it 16) Objective is -276.77014592791795
-19:51:57: (it 16) Storing dual multipliers
-19:51:57: (it 16) Updated global upper bound
-19:51:57: (it 16) Iter:  16  | LB:      -464       | UB:      -276       | Fbl: True
-19:51:57: (it 17) Solving master problem
-19:51:57: (it 17) Lower bound of -373.7025387276
-19:51:57: (it 17) Updated global lower bound
-19:51:57: (it 17) Storing complicating variables
-19:51:57: (it 17|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 17|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:57: (it 17|sp PrimalSubproblem[1]) Subproblem objective is -260.8598965758582
-19:51:57: (it 17|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:57: (it 17|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:57: (it 17|sp PrimalSubproblem[2]) Subproblem objective is 65.31615265281206
-19:51:57: (it 17|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:57: (it 17|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:57: (it 17|sp PrimalSubproblem[3]) Subproblem objective is 17.610026289635982
-19:51:57: (it 17) Objective is -177.93371763341017
-19:51:57: (it 17) Storing dual multipliers
-19:51:57: (it 17) Iter:  17  | LB:      -373       | UB:      -276       | Fbl: True
-19:51:57: (it 18) Solving master problem
-19:51:57: (it 18) Lower bound of -369.1335505721
-19:51:57: (it 18) Updated global lower bound
-19:51:57: (it 18) Storing complicating variables
-19:51:57: (it 18|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:57: (it 18|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:58: (it 18|sp PrimalSubproblem[1]) Subproblem objective is -513.3128524306738
-19:51:58: (it 18|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:58: (it 18|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:58: (it 18|sp PrimalSubproblem[2]) Subproblem objective is 206.49746790759107
-19:51:58: (it 18|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:58: (it 18|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:58: (it 18|sp PrimalSubproblem[3]) Subproblem objective is 42.21369436490082
-19:51:58: (it 18) Objective is -264.601690158182
-19:51:58: (it 18) Storing dual multipliers
-19:51:58: (it 18) Iter:  18  | LB:      -369       | UB:      -276       | Fbl: True
-19:51:58: (it 19) Solving master problem
-19:51:58: (it 19) Lower bound of -361.5802601352
-19:51:58: (it 19) Updated global lower bound
-19:51:58: (it 19) Storing complicating variables
-19:51:58: (it 19|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:58: (it 19|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:58: (it 19|sp PrimalSubproblem[1]) Subproblem objective is -538.1918232905495
-19:51:58: (it 19|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:58: (it 19|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:58: (it 19|sp PrimalSubproblem[2]) Subproblem objective is 179.5567076511263
-19:51:58: (it 19|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:58: (it 19|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:58: (it 19|sp PrimalSubproblem[3]) Subproblem objective is 59.05924274645099
-19:51:58: (it 19) Objective is -299.57587289297214
-19:51:58: (it 19) Storing dual multipliers
-19:51:58: (it 19) Updated global upper bound
-19:51:58: (it 19) Iter:  19  | LB:      -361       | UB:      -299       | Fbl: True
-19:51:58: (it 20) Solving master problem
-19:51:58: (it 20) Lower bound of -349.0451556912
-19:51:58: (it 20) Updated global lower bound
-19:51:58: (it 20) Storing complicating variables
-19:51:58: (it 20|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:58: (it 20|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:58: (it 20|sp PrimalSubproblem[1]) Subproblem objective is -670.0115461987062
-19:51:58: (it 20|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:58: (it 20|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:58: (it 20|sp PrimalSubproblem[2]) Subproblem objective is 281.1415878951657
-19:51:58: (it 20|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:58: (it 20|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:58: (it 20|sp PrimalSubproblem[3]) Subproblem objective is 100.43507221564764
-19:51:58: (it 20) Objective is -288.4348860878929
-19:51:58: (it 20) Storing dual multipliers
-19:51:58: (it 20) Iter:  20  | LB:      -349       | UB:      -299       | Fbl: True
-19:51:58: (it 21) Solving master problem
-19:51:58: (it 21) Lower bound of -330.4030772075
-19:51:58: (it 21) Updated global lower bound
-19:51:58: (it 21) Storing complicating variables
-19:51:58: (it 21|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:58: (it 21|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:58: (it 21|sp PrimalSubproblem[1]) Subproblem objective is -535.5512409874174
-19:51:58: (it 21|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:58: (it 21|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:58: (it 21|sp PrimalSubproblem[2]) Subproblem objective is 169.0370444242808
-19:51:58: (it 21|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:58: (it 21|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:58: (it 21|sp PrimalSubproblem[3]) Subproblem objective is 62.78733631179526
-19:51:58: (it 21) Objective is -303.72686025134135
-19:51:58: (it 21) Storing dual multipliers
-19:51:58: (it 21) Updated global upper bound
-19:51:58: (it 21) Iter:  21  | LB:      -330       | UB:      -303       | Fbl: True
-19:51:58: (it 22) Solving master problem
-19:51:58: (it 22) Lower bound of -325.1447878729
-19:51:58: (it 22) Updated global lower bound
-19:51:58: (it 22) Storing complicating variables
-19:51:58: (it 22|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:58: (it 22|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:58: (it 22|sp PrimalSubproblem[1]) Subproblem objective is -600.7319622164504
-19:51:58: (it 22|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:58: (it 22|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:58: (it 22|sp PrimalSubproblem[2]) Subproblem objective is 196.35953447214774
-19:51:58: (it 22|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:58: (it 22|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:58: (it 22|sp PrimalSubproblem[3]) Subproblem objective is 95.14504216821462
-19:51:58: (it 22) Objective is -309.227385576088
-19:51:58: (it 22) Storing dual multipliers
-19:51:58: (it 22) Updated global upper bound
-19:51:58: (it 22) Iter:  22  | LB:      -325       | UB:      -309       | Fbl: True
-19:51:58: (it 23) Solving master problem
-19:51:58: (it 23) Lower bound of -323.7262170838
-19:51:58: (it 23) Updated global lower bound
-19:51:58: (it 23) Storing complicating variables
-19:51:58: (it 23|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:58: (it 23|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:58: (it 23|sp PrimalSubproblem[1]) Subproblem objective is -613.4908307007538
-19:51:58: (it 23|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:58: (it 23|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:58: (it 23|sp PrimalSubproblem[2]) Subproblem objective is 219.0655848015181
-19:51:58: (it 23|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:58: (it 23|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:58: (it 23|sp PrimalSubproblem[3]) Subproblem objective is 77.87964430309532
-19:51:58: (it 23) Objective is -316.5456015961404
-19:51:58: (it 23) Storing dual multipliers
-19:51:58: (it 23) Updated global upper bound
-19:51:58: (it 23) Iter:  23  | LB:      -323       | UB:      -316       | Fbl: True
-19:51:58: (it 24) Solving master problem
-19:51:58: (it 24) Lower bound of -320.0807924846
-19:51:58: (it 24) Updated global lower bound
-19:51:58: (it 24) Storing complicating variables
-19:51:58: (it 24|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:58: (it 24|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:58: (it 24|sp PrimalSubproblem[1]) Subproblem objective is -643.891846501193
-19:51:58: (it 24|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:58: (it 24|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:58: (it 24|sp PrimalSubproblem[2]) Subproblem objective is 243.60160977690646
-19:51:58: (it 24|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:58: (it 24|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:58: (it 24|sp PrimalSubproblem[3]) Subproblem objective is 96.72018997023224
-19:51:58: (it 24) Objective is -303.57004675405426
-19:51:58: (it 24) Storing dual multipliers
-19:51:58: (it 24) Iter:  24  | LB:      -320       | UB:      -316       | Fbl: True
-19:51:58: (it 25) Solving master problem
-19:51:58: (it 25) Lower bound of -320.0669748964
-19:51:58: (it 25) Updated global lower bound
-19:51:58: (it 25) Storing complicating variables
-19:51:58: (it 25|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:58: (it 25|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:58: (it 25|sp PrimalSubproblem[1]) Subproblem objective is -590.3615823840361
-19:51:58: (it 25|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:58: (it 25|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:58: (it 25|sp PrimalSubproblem[2]) Subproblem objective is 194.3561347280556
-19:51:58: (it 25|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:58: (it 25|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:58: (it 25|sp PrimalSubproblem[3]) Subproblem objective is 81.13937493594855
-19:51:58: (it 25) Objective is -314.86607272003187
-19:51:58: (it 25) Storing dual multipliers
-19:51:58: (it 25) Iter:  25  | LB:      -320       | UB:      -316       | Fbl: True
-19:51:58: (it 26) Solving master problem
-19:51:58: (it 26) Lower bound of -319.8727449664
-19:51:58: (it 26) Updated global lower bound
-19:51:58: (it 26) Storing complicating variables
-19:51:58: (it 26|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:58: (it 26|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:58: (it 26|sp PrimalSubproblem[1]) Subproblem objective is -573.6208290316006
-19:51:58: (it 26|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:58: (it 26|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:58: (it 26|sp PrimalSubproblem[2]) Subproblem objective is 185.20189705346596
-19:51:58: (it 26|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:58: (it 26|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:58: (it 26|sp PrimalSubproblem[3]) Subproblem objective is 70.786223736339
-19:51:58: (it 26) Objective is -317.6327082417956
-19:51:58: (it 26) Storing dual multipliers
-19:51:58: (it 26) Updated global upper bound
-19:51:58: (it 26) Iter:  26  | LB:      -319       | UB:      -317       | Fbl: True
-19:51:58: (it 27) Solving master problem
-19:51:58: (it 27) Lower bound of -319.7694820727
-19:51:58: (it 27) Updated global lower bound
-19:51:58: (it 27) Storing complicating variables
-19:51:58: (it 27|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:58: (it 27|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:58: (it 27|sp PrimalSubproblem[1]) Subproblem objective is -591.8993804548015
-19:51:58: (it 27|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:58: (it 27|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:58: (it 27|sp PrimalSubproblem[2]) Subproblem objective is 202.5171351657008
-19:51:58: (it 27|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:58: (it 27|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:58: (it 27|sp PrimalSubproblem[3]) Subproblem objective is 71.62688494419095
-19:51:58: (it 27) Objective is -317.75536034490983
-19:51:58: (it 27) Storing dual multipliers
-19:51:58: (it 27) Updated global upper bound
-19:51:58: (it 27) Iter:  27  | LB:      -319       | UB:      -317       | Fbl: True
-19:51:58: (it 28) Solving master problem
-19:51:58: (it 28) Lower bound of -319.3135134312
-19:51:58: (it 28) Updated global lower bound
-19:51:58: (it 28) Storing complicating variables
-19:51:58: (it 28|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:58: (it 28|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:58: (it 28|sp PrimalSubproblem[1]) Subproblem objective is -584.6822224370007
-19:51:58: (it 28|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:58: (it 28|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:58: (it 28|sp PrimalSubproblem[2]) Subproblem objective is 206.43210015394214
-19:51:58: (it 28|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:58: (it 28|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:58: (it 28|sp PrimalSubproblem[3]) Subproblem objective is 62.423505969124136
-19:51:58: (it 28) Objective is -315.82661631393444
-19:51:58: (it 28) Storing dual multipliers
-19:51:58: (it 28) Iter:  28  | LB:      -319       | UB:      -317       | Fbl: True
-19:51:58: (it 29) Solving master problem
-19:51:58: (it 29) Lower bound of -318.9659925178
-19:51:58: (it 29) Updated global lower bound
-19:51:58: (it 29) Storing complicating variables
-19:51:58: (it 29|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:58: (it 29|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:58: (it 29|sp PrimalSubproblem[1]) Subproblem objective is -590.5947424357341
-19:51:58: (it 29|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:58: (it 29|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:58: (it 29|sp PrimalSubproblem[2]) Subproblem objective is 203.55208449929967
-19:51:58: (it 29|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:58: (it 29|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:58: (it 29|sp PrimalSubproblem[3]) Subproblem objective is 69.11540969414273
-19:51:58: (it 29) Objective is -317.92724824229174
-19:51:58: (it 29) Storing dual multipliers
-19:51:58: (it 29) Updated global upper bound
-19:51:58: (it 29) Iter:  29  | LB:      -318       | UB:      -317       | Fbl: True
-19:51:58: (it 30) Solving master problem
-19:51:58: (it 30) Lower bound of -318.7098670989
-19:51:58: (it 30) Updated global lower bound
-19:51:58: (it 30) Storing complicating variables
-19:51:58: (it 30|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:58: (it 30|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:58: (it 30|sp PrimalSubproblem[1]) Subproblem objective is -594.331452321036
-19:51:58: (it 30|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:58: (it 30|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:58: (it 30|sp PrimalSubproblem[2]) Subproblem objective is 201.7084070925022
-19:51:58: (it 30|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:58: (it 30|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:58: (it 30|sp PrimalSubproblem[3]) Subproblem objective is 74.47740285866709
-19:51:58: (it 30) Objective is -318.14564236986666
-19:51:58: (it 30) Storing dual multipliers
-19:51:58: (it 30) Updated global upper bound
-19:51:58: (it 30) Iter:  30  | LB:      -318       | UB:      -318       | Fbl: True
-19:51:58: (it 31) Solving master problem
-19:51:58: (it 31) Lower bound of -318.6314638427
-19:51:58: (it 31) Updated global lower bound
-19:51:58: (it 31) Storing complicating variables
-19:51:58: (it 31|sp PrimalSubproblem[1]) Fixing complicating variables
-19:51:58: (it 31|sp PrimalSubproblem[1]) Solving primal subproblem
-19:51:58: (it 31|sp PrimalSubproblem[1]) Subproblem objective is -583.2936133810882
-19:51:58: (it 31|sp PrimalSubproblem[2]) Fixing complicating variables
-19:51:58: (it 31|sp PrimalSubproblem[2]) Solving primal subproblem
-19:51:58: (it 31|sp PrimalSubproblem[2]) Subproblem objective is 194.7994413714969
-19:51:58: (it 31|sp PrimalSubproblem[3]) Fixing complicating variables
-19:51:58: (it 31|sp PrimalSubproblem[3]) Solving primal subproblem
-19:51:58: (it 31|sp PrimalSubproblem[3]) Subproblem objective is 70.12426472255785
-19:51:58: (it 31) Objective is -318.36990728703347
-19:51:58: (it 31) Storing dual multipliers
-19:51:58: (it 31) Updated global upper bound
-19:51:58: (it 31) Iter:  31  | LB:      -318       | UB:      -318       | Fbl: True
-19:51:58: (it 32) Termination: epsilon-optimal solution with relative error = 0.0008212119079198864
-19:51:58: 
+19:59:16: Setting up engine
+19:59:16: Running GBD
+19:59:16: (it 0) Solving master problem
+19:59:16: (it 0) Lower bound of -1000000.0
+19:59:16: (it 0) Storing complicating variables
+19:59:16: (it 0|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:16: (it 0|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:16: (it 0|sp PrimalSubproblem[1]) Primal subproblem is infeasible
+19:59:16: (it 0|sp PrimalSubproblem_FBL[1]) Fixing complicating variables
+19:59:16: (it 0|sp PrimalSubproblem_FBL[1]) Solving feasibility subproblem
+19:59:16: (it 0|sp PrimalSubproblem_FBL[1]) Subproblem objective is 20.0
+19:59:16: (it 0|sp PrimalSubproblem_FBL[2]) Fixing complicating variables
+19:59:16: (it 0|sp PrimalSubproblem_FBL[2]) Solving feasibility subproblem
+19:59:16: (it 0|sp PrimalSubproblem_FBL[2]) Subproblem objective is 20.0
+19:59:16: (it 0|sp PrimalSubproblem_FBL[3]) Fixing complicating variables
+19:59:16: (it 0|sp PrimalSubproblem_FBL[3]) Solving feasibility subproblem
+19:59:16: (it 0|sp PrimalSubproblem_FBL[3]) Subproblem objective is 20.0
+19:59:16: (it 0) Objective is 60.0
+19:59:16: (it 0) Storing dual multipliers
+19:59:16: (it 0) Iter:  0   | LB:    -1000000     | UB:     1000000     | Fbl: False
+19:59:16: (it 1) Solving master problem
+19:59:16: (it 1) Lower bound of -1000000.0
+19:59:16: (it 1) Storing complicating variables
+19:59:16: (it 1|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:16: (it 1|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:16: (it 1|sp PrimalSubproblem[1]) Primal subproblem is infeasible
+19:59:16: (it 1|sp PrimalSubproblem_FBL[1]) Fixing complicating variables
+19:59:16: (it 1|sp PrimalSubproblem_FBL[1]) Solving feasibility subproblem
+19:59:16: (it 1|sp PrimalSubproblem_FBL[1]) Subproblem objective is 208.0
+19:59:16: (it 1|sp PrimalSubproblem_FBL[2]) Fixing complicating variables
+19:59:16: (it 1|sp PrimalSubproblem_FBL[2]) Solving feasibility subproblem
+19:59:16: (it 1|sp PrimalSubproblem_FBL[2]) Subproblem objective is 208.0
+19:59:16: (it 1|sp PrimalSubproblem_FBL[3]) Fixing complicating variables
+19:59:16: (it 1|sp PrimalSubproblem_FBL[3]) Solving feasibility subproblem
+19:59:16: (it 1|sp PrimalSubproblem_FBL[3]) Subproblem objective is 208.0
+19:59:16: (it 1) Objective is 624.0
+19:59:16: (it 1) Storing dual multipliers
+19:59:16: (it 1) Iter:  1   | LB:    -1000000     | UB:     1000000     | Fbl: False
+19:59:16: (it 2) Solving master problem
+19:59:16: (it 2) Lower bound of -1000000.0
+19:59:16: (it 2) Storing complicating variables
+19:59:16: (it 2|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:16: (it 2|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:16: (it 2|sp PrimalSubproblem[1]) Primal subproblem is infeasible
+19:59:16: (it 2|sp PrimalSubproblem_FBL[1]) Fixing complicating variables
+19:59:16: (it 2|sp PrimalSubproblem_FBL[1]) Solving feasibility subproblem
+19:59:16: (it 2|sp PrimalSubproblem_FBL[1]) Subproblem objective is 7.6
+19:59:16: (it 2|sp PrimalSubproblem_FBL[2]) Fixing complicating variables
+19:59:16: (it 2|sp PrimalSubproblem_FBL[2]) Solving feasibility subproblem
+19:59:16: (it 2|sp PrimalSubproblem_FBL[2]) Subproblem objective is 7.6
+19:59:16: (it 2|sp PrimalSubproblem_FBL[3]) Fixing complicating variables
+19:59:16: (it 2|sp PrimalSubproblem_FBL[3]) Solving feasibility subproblem
+19:59:16: (it 2|sp PrimalSubproblem_FBL[3]) Subproblem objective is 7.6
+19:59:16: (it 2) Objective is 22.799999999999997
+19:59:16: (it 2) Storing dual multipliers
+19:59:16: (it 2) Iter:  2   | LB:    -1000000     | UB:     1000000     | Fbl: False
+19:59:16: (it 3) Solving master problem
+19:59:16: (it 3) Lower bound of -1000000.0
+19:59:16: (it 3) Storing complicating variables
+19:59:16: (it 3|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:16: (it 3|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:16: (it 3|sp PrimalSubproblem[1]) Primal subproblem is infeasible
+19:59:16: (it 3|sp PrimalSubproblem_FBL[1]) Fixing complicating variables
+19:59:16: (it 3|sp PrimalSubproblem_FBL[1]) Solving feasibility subproblem
+19:59:16: (it 3|sp PrimalSubproblem_FBL[1]) Subproblem objective is 0.6666666666667
+19:59:16: (it 3|sp PrimalSubproblem_FBL[2]) Fixing complicating variables
+19:59:16: (it 3|sp PrimalSubproblem_FBL[2]) Solving feasibility subproblem
+19:59:16: (it 3|sp PrimalSubproblem_FBL[2]) Subproblem objective is 0.6666666666667
+19:59:16: (it 3|sp PrimalSubproblem_FBL[3]) Fixing complicating variables
+19:59:16: (it 3|sp PrimalSubproblem_FBL[3]) Solving feasibility subproblem
+19:59:16: (it 3|sp PrimalSubproblem_FBL[3]) Subproblem objective is 0.6666666666667
+19:59:16: (it 3) Objective is 2.0000000000001004
+19:59:16: (it 3) Storing dual multipliers
+19:59:16: (it 3) Iter:  3   | LB:    -1000000     | UB:     1000000     | Fbl: False
+19:59:16: (it 4) Solving master problem
+19:59:16: (it 4) Lower bound of -1000000.0
+19:59:16: (it 4) Storing complicating variables
+19:59:16: (it 4|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:16: (it 4|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:16: (it 4|sp PrimalSubproblem[1]) Subproblem objective is 7.620480000000015
+19:59:16: (it 4|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:16: (it 4|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:16: (it 4|sp PrimalSubproblem[2]) Subproblem objective is 42.28463999999998
+19:59:16: (it 4|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:16: (it 4|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:16: (it 4|sp PrimalSubproblem[3]) Subproblem objective is 27.27264000000001
+19:59:16: (it 4) Objective is 77.17776
+19:59:16: (it 4) Storing dual multipliers
+19:59:16: (it 4) Updated global upper bound
+19:59:16: (it 4) Iter:  4   | LB:    -1000000     | UB:       77        | Fbl: True
+19:59:16: (it 5) Solving master problem
+19:59:16: (it 5) Lower bound of -36182.74442667
+19:59:16: (it 5) Updated global lower bound
+19:59:16: (it 5) Storing complicating variables
+19:59:16: (it 5|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:16: (it 5|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:16: (it 5|sp PrimalSubproblem[1]) Primal subproblem is infeasible
+19:59:16: (it 5|sp PrimalSubproblem_FBL[1]) Fixing complicating variables
+19:59:16: (it 5|sp PrimalSubproblem_FBL[1]) Solving feasibility subproblem
+19:59:16: (it 5|sp PrimalSubproblem_FBL[1]) Subproblem objective is 1590.0
+19:59:16: (it 5|sp PrimalSubproblem_FBL[2]) Fixing complicating variables
+19:59:16: (it 5|sp PrimalSubproblem_FBL[2]) Solving feasibility subproblem
+19:59:16: (it 5|sp PrimalSubproblem_FBL[2]) Subproblem objective is 1590.0
+19:59:16: (it 5|sp PrimalSubproblem_FBL[3]) Fixing complicating variables
+19:59:16: (it 5|sp PrimalSubproblem_FBL[3]) Solving feasibility subproblem
+19:59:16: (it 5|sp PrimalSubproblem_FBL[3]) Subproblem objective is 1590.0
+19:59:16: (it 5) Objective is 4770.0
+19:59:16: (it 5) Storing dual multipliers
+19:59:16: (it 5) Iter:  5   | LB:     -36182      | UB:       77        | Fbl: False
+19:59:16: (it 6) Solving master problem
+19:59:16: (it 6) Lower bound of -9122.288426667
+19:59:16: (it 6) Updated global lower bound
+19:59:16: (it 6) Storing complicating variables
+19:59:16: (it 6|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:16: (it 6|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:16: (it 6|sp PrimalSubproblem[1]) Subproblem objective is 7525.600000000002
+19:59:16: (it 6|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:16: (it 6|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:16: (it 6|sp PrimalSubproblem[2]) Subproblem objective is 20135.1
+19:59:16: (it 6|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:16: (it 6|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:16: (it 6|sp PrimalSubproblem[3]) Subproblem objective is 11583.6
+19:59:16: (it 6) Objective is 39244.3
+19:59:16: (it 6) Storing dual multipliers
+19:59:16: (it 6) Iter:  6   | LB:      -9122      | UB:       77        | Fbl: True
+19:59:16: (it 7) Solving master problem
+19:59:16: (it 7) Lower bound of -7301.913693157
+19:59:16: (it 7) Updated global lower bound
+19:59:16: (it 7) Storing complicating variables
+19:59:16: (it 7|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:16: (it 7|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:16: (it 7|sp PrimalSubproblem[1]) Subproblem objective is 6416.23490645516
+19:59:16: (it 7|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:16: (it 7|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:16: (it 7|sp PrimalSubproblem[2]) Subproblem objective is 6499.83917184545
+19:59:16: (it 7|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:16: (it 7|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:16: (it 7|sp PrimalSubproblem[3]) Subproblem objective is 6675.531237392768
+19:59:16: (it 7) Objective is 19591.605315693378
+19:59:16: (it 7) Storing dual multipliers
+19:59:16: (it 7) Iter:  7   | LB:      -7301      | UB:       77        | Fbl: True
+19:59:16: (it 8) Solving master problem
+19:59:16: (it 8) Lower bound of -4256.887803189
+19:59:16: (it 8) Updated global lower bound
+19:59:16: (it 8) Storing complicating variables
+19:59:16: (it 8|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:16: (it 8|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:16: (it 8|sp PrimalSubproblem[1]) Subproblem objective is 398.8230839123171
+19:59:16: (it 8|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:16: (it 8|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:16: (it 8|sp PrimalSubproblem[2]) Subproblem objective is 4612.67896095548
+19:59:16: (it 8|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:16: (it 8|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:16: (it 8|sp PrimalSubproblem[3]) Subproblem objective is 2194.753087537959
+19:59:16: (it 8) Objective is 7206.255132405756
+19:59:16: (it 8) Storing dual multipliers
+19:59:16: (it 8) Iter:  8   | LB:      -4256      | UB:       77        | Fbl: True
+19:59:16: (it 9) Solving master problem
+19:59:16: (it 9) Lower bound of -3284.460397628
+19:59:16: (it 9) Updated global lower bound
+19:59:16: (it 9) Storing complicating variables
+19:59:16: (it 9|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:16: (it 9|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 9|sp PrimalSubproblem[1]) Subproblem objective is 612.2206524556132
+19:59:17: (it 9|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 9|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 9|sp PrimalSubproblem[2]) Subproblem objective is 1105.2259805536894
+19:59:17: (it 9|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 9|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 9|sp PrimalSubproblem[3]) Subproblem objective is 1207.1937471015817
+19:59:17: (it 9) Objective is 2924.6403801108845
+19:59:17: (it 9) Storing dual multipliers
+19:59:17: (it 9) Iter:  9   | LB:      -3284      | UB:       77        | Fbl: True
+19:59:17: (it 10) Solving master problem
+19:59:17: (it 10) Lower bound of -2074.279001883
+19:59:17: (it 10) Updated global lower bound
+19:59:17: (it 10) Storing complicating variables
+19:59:17: (it 10|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 10|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 10|sp PrimalSubproblem[1]) Subproblem objective is -731.2193620516289
+19:59:17: (it 10|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 10|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 10|sp PrimalSubproblem[2]) Subproblem objective is 1103.0957765639912
+19:59:17: (it 10|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 10|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 10|sp PrimalSubproblem[3]) Subproblem objective is 410.6843576875097
+19:59:17: (it 10) Objective is 782.560772199872
+19:59:17: (it 10) Storing dual multipliers
+19:59:17: (it 10) Iter:  10  | LB:      -2074      | UB:       77        | Fbl: True
+19:59:17: (it 11) Solving master problem
+19:59:17: (it 11) Lower bound of -1479.562560212
+19:59:17: (it 11) Updated global lower bound
+19:59:17: (it 11) Storing complicating variables
+19:59:17: (it 11|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 11|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 11|sp PrimalSubproblem[1]) Subproblem objective is -328.417047059427
+19:59:17: (it 11|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 11|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 11|sp PrimalSubproblem[2]) Subproblem objective is 134.87763539085756
+19:59:17: (it 11|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 11|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 11|sp PrimalSubproblem[3]) Subproblem objective is 297.2092728016636
+19:59:17: (it 11) Objective is 103.66986113309417
+19:59:17: (it 11) Storing dual multipliers
+19:59:17: (it 11) Iter:  11  | LB:      -1479      | UB:       77        | Fbl: True
+19:59:17: (it 12) Solving master problem
+19:59:17: (it 12) Lower bound of -1092.790206916
+19:59:17: (it 12) Updated global lower bound
+19:59:17: (it 12) Storing complicating variables
+19:59:17: (it 12|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 12|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 12|sp PrimalSubproblem[1]) Subproblem objective is -325.7634790229518
+19:59:17: (it 12|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 12|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 12|sp PrimalSubproblem[2]) Subproblem objective is 803.1760293109135
+19:59:17: (it 12|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 12|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 12|sp PrimalSubproblem[3]) Subproblem objective is 279.7505205961336
+19:59:17: (it 12) Objective is 757.1630708840953
+19:59:17: (it 12) Storing dual multipliers
+19:59:17: (it 12) Iter:  12  | LB:      -1092      | UB:       77        | Fbl: True
+19:59:17: (it 13) Solving master problem
+19:59:17: (it 13) Lower bound of -906.6325245421
+19:59:17: (it 13) Updated global lower bound
+19:59:17: (it 13) Storing complicating variables
+19:59:17: (it 13|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 13|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 13|sp PrimalSubproblem[1]) Subproblem objective is -644.0590093108334
+19:59:17: (it 13|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 13|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 13|sp PrimalSubproblem[2]) Subproblem objective is 365.37194000884324
+19:59:17: (it 13|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 13|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 13|sp PrimalSubproblem[3]) Subproblem objective is 75.42450477921093
+19:59:17: (it 13) Objective is -203.26256452277923
+19:59:17: (it 13) Storing dual multipliers
+19:59:17: (it 13) Updated global upper bound
+19:59:17: (it 13) Iter:  13  | LB:      -906       | UB:      -203       | Fbl: True
+19:59:17: (it 14) Solving master problem
+19:59:17: (it 14) Lower bound of -620.5036733651
+19:59:17: (it 14) Updated global lower bound
+19:59:17: (it 14) Storing complicating variables
+19:59:17: (it 14|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 14|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 14|sp PrimalSubproblem[1]) Subproblem objective is -150.76257350091407
+19:59:17: (it 14|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 14|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 14|sp PrimalSubproblem[2]) Subproblem objective is 78.87100820709878
+19:59:17: (it 14|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 14|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 14|sp PrimalSubproblem[3]) Subproblem objective is 61.95522410018938
+19:59:17: (it 14) Objective is -9.936341193625907
+19:59:17: (it 14) Storing dual multipliers
+19:59:17: (it 14) Iter:  14  | LB:      -620       | UB:      -203       | Fbl: True
+19:59:17: (it 15) Solving master problem
+19:59:17: (it 15) Lower bound of -471.5249123792
+19:59:17: (it 15) Updated global lower bound
+19:59:17: (it 15) Storing complicating variables
+19:59:17: (it 15|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 15|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 15|sp PrimalSubproblem[1]) Subproblem objective is -709.8629456952332
+19:59:17: (it 15|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 15|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 15|sp PrimalSubproblem[2]) Subproblem objective is 449.2407310605968
+19:59:17: (it 15|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 15|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 15|sp PrimalSubproblem[3]) Subproblem objective is 194.50106813483916
+19:59:17: (it 15) Objective is -66.12114649979725
+19:59:17: (it 15) Storing dual multipliers
+19:59:17: (it 15) Iter:  15  | LB:      -471       | UB:      -203       | Fbl: True
+19:59:17: (it 16) Solving master problem
+19:59:17: (it 16) Lower bound of -464.5621173559
+19:59:17: (it 16) Updated global lower bound
+19:59:17: (it 16) Storing complicating variables
+19:59:17: (it 16|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 16|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 16|sp PrimalSubproblem[1]) Subproblem objective is -488.697801904816
+19:59:17: (it 16|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 16|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 16|sp PrimalSubproblem[2]) Subproblem objective is 117.34546975920807
+19:59:17: (it 16|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 16|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 16|sp PrimalSubproblem[3]) Subproblem objective is 94.58218621769001
+19:59:17: (it 16) Objective is -276.77014592791795
+19:59:17: (it 16) Storing dual multipliers
+19:59:17: (it 16) Updated global upper bound
+19:59:17: (it 16) Iter:  16  | LB:      -464       | UB:      -276       | Fbl: True
+19:59:17: (it 17) Solving master problem
+19:59:17: (it 17) Lower bound of -373.7025387276
+19:59:17: (it 17) Updated global lower bound
+19:59:17: (it 17) Storing complicating variables
+19:59:17: (it 17|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 17|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 17|sp PrimalSubproblem[1]) Subproblem objective is -260.8598965758582
+19:59:17: (it 17|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 17|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 17|sp PrimalSubproblem[2]) Subproblem objective is 65.31615265281206
+19:59:17: (it 17|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 17|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 17|sp PrimalSubproblem[3]) Subproblem objective is 17.610026289635982
+19:59:17: (it 17) Objective is -177.93371763341017
+19:59:17: (it 17) Storing dual multipliers
+19:59:17: (it 17) Iter:  17  | LB:      -373       | UB:      -276       | Fbl: True
+19:59:17: (it 18) Solving master problem
+19:59:17: (it 18) Lower bound of -369.1335505721
+19:59:17: (it 18) Updated global lower bound
+19:59:17: (it 18) Storing complicating variables
+19:59:17: (it 18|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 18|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 18|sp PrimalSubproblem[1]) Subproblem objective is -513.3128524306738
+19:59:17: (it 18|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 18|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 18|sp PrimalSubproblem[2]) Subproblem objective is 206.49746790759107
+19:59:17: (it 18|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 18|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 18|sp PrimalSubproblem[3]) Subproblem objective is 42.21369436490082
+19:59:17: (it 18) Objective is -264.601690158182
+19:59:17: (it 18) Storing dual multipliers
+19:59:17: (it 18) Iter:  18  | LB:      -369       | UB:      -276       | Fbl: True
+19:59:17: (it 19) Solving master problem
+19:59:17: (it 19) Lower bound of -361.5802601352
+19:59:17: (it 19) Updated global lower bound
+19:59:17: (it 19) Storing complicating variables
+19:59:17: (it 19|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 19|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 19|sp PrimalSubproblem[1]) Subproblem objective is -538.1918232905495
+19:59:17: (it 19|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 19|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 19|sp PrimalSubproblem[2]) Subproblem objective is 179.5567076511263
+19:59:17: (it 19|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 19|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 19|sp PrimalSubproblem[3]) Subproblem objective is 59.05924274645099
+19:59:17: (it 19) Objective is -299.57587289297214
+19:59:17: (it 19) Storing dual multipliers
+19:59:17: (it 19) Updated global upper bound
+19:59:17: (it 19) Iter:  19  | LB:      -361       | UB:      -299       | Fbl: True
+19:59:17: (it 20) Solving master problem
+19:59:17: (it 20) Lower bound of -349.0451556912
+19:59:17: (it 20) Updated global lower bound
+19:59:17: (it 20) Storing complicating variables
+19:59:17: (it 20|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 20|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 20|sp PrimalSubproblem[1]) Subproblem objective is -670.0115461987062
+19:59:17: (it 20|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 20|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 20|sp PrimalSubproblem[2]) Subproblem objective is 281.1415878951657
+19:59:17: (it 20|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 20|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 20|sp PrimalSubproblem[3]) Subproblem objective is 100.43507221564764
+19:59:17: (it 20) Objective is -288.4348860878929
+19:59:17: (it 20) Storing dual multipliers
+19:59:17: (it 20) Iter:  20  | LB:      -349       | UB:      -299       | Fbl: True
+19:59:17: (it 21) Solving master problem
+19:59:17: (it 21) Lower bound of -330.4030772075
+19:59:17: (it 21) Updated global lower bound
+19:59:17: (it 21) Storing complicating variables
+19:59:17: (it 21|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 21|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 21|sp PrimalSubproblem[1]) Subproblem objective is -535.5512409874174
+19:59:17: (it 21|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 21|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 21|sp PrimalSubproblem[2]) Subproblem objective is 169.0370444242808
+19:59:17: (it 21|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 21|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 21|sp PrimalSubproblem[3]) Subproblem objective is 62.78733631179526
+19:59:17: (it 21) Objective is -303.72686025134135
+19:59:17: (it 21) Storing dual multipliers
+19:59:17: (it 21) Updated global upper bound
+19:59:17: (it 21) Iter:  21  | LB:      -330       | UB:      -303       | Fbl: True
+19:59:17: (it 22) Solving master problem
+19:59:17: (it 22) Lower bound of -325.1447878729
+19:59:17: (it 22) Updated global lower bound
+19:59:17: (it 22) Storing complicating variables
+19:59:17: (it 22|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 22|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 22|sp PrimalSubproblem[1]) Subproblem objective is -600.7319622164504
+19:59:17: (it 22|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 22|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 22|sp PrimalSubproblem[2]) Subproblem objective is 196.35953447214774
+19:59:17: (it 22|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 22|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 22|sp PrimalSubproblem[3]) Subproblem objective is 95.14504216821462
+19:59:17: (it 22) Objective is -309.227385576088
+19:59:17: (it 22) Storing dual multipliers
+19:59:17: (it 22) Updated global upper bound
+19:59:17: (it 22) Iter:  22  | LB:      -325       | UB:      -309       | Fbl: True
+19:59:17: (it 23) Solving master problem
+19:59:17: (it 23) Lower bound of -323.7262170838
+19:59:17: (it 23) Updated global lower bound
+19:59:17: (it 23) Storing complicating variables
+19:59:17: (it 23|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 23|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 23|sp PrimalSubproblem[1]) Subproblem objective is -613.4908307007538
+19:59:17: (it 23|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 23|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 23|sp PrimalSubproblem[2]) Subproblem objective is 219.0655848015181
+19:59:17: (it 23|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 23|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 23|sp PrimalSubproblem[3]) Subproblem objective is 77.87964430309532
+19:59:17: (it 23) Objective is -316.5456015961404
+19:59:17: (it 23) Storing dual multipliers
+19:59:17: (it 23) Updated global upper bound
+19:59:17: (it 23) Iter:  23  | LB:      -323       | UB:      -316       | Fbl: True
+19:59:17: (it 24) Solving master problem
+19:59:17: (it 24) Lower bound of -320.0807924846
+19:59:17: (it 24) Updated global lower bound
+19:59:17: (it 24) Storing complicating variables
+19:59:17: (it 24|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:17: (it 24|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:17: (it 24|sp PrimalSubproblem[1]) Subproblem objective is -643.891846501193
+19:59:17: (it 24|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:17: (it 24|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:17: (it 24|sp PrimalSubproblem[2]) Subproblem objective is 243.60160977690646
+19:59:17: (it 24|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:17: (it 24|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:17: (it 24|sp PrimalSubproblem[3]) Subproblem objective is 96.72018997023224
+19:59:17: (it 24) Objective is -303.57004675405426
+19:59:17: (it 24) Storing dual multipliers
+19:59:18: (it 24) Iter:  24  | LB:      -320       | UB:      -316       | Fbl: True
+19:59:18: (it 25) Solving master problem
+19:59:18: (it 25) Lower bound of -320.0669748964
+19:59:18: (it 25) Updated global lower bound
+19:59:18: (it 25) Storing complicating variables
+19:59:18: (it 25|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:18: (it 25|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:18: (it 25|sp PrimalSubproblem[1]) Subproblem objective is -590.3615823840361
+19:59:18: (it 25|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:18: (it 25|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:18: (it 25|sp PrimalSubproblem[2]) Subproblem objective is 194.3561347280556
+19:59:18: (it 25|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:18: (it 25|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:18: (it 25|sp PrimalSubproblem[3]) Subproblem objective is 81.13937493594855
+19:59:18: (it 25) Objective is -314.86607272003187
+19:59:18: (it 25) Storing dual multipliers
+19:59:18: (it 25) Iter:  25  | LB:      -320       | UB:      -316       | Fbl: True
+19:59:18: (it 26) Solving master problem
+19:59:18: (it 26) Lower bound of -319.8727449664
+19:59:18: (it 26) Updated global lower bound
+19:59:18: (it 26) Storing complicating variables
+19:59:18: (it 26|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:18: (it 26|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:18: (it 26|sp PrimalSubproblem[1]) Subproblem objective is -573.6208290316006
+19:59:18: (it 26|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:18: (it 26|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:18: (it 26|sp PrimalSubproblem[2]) Subproblem objective is 185.20189705346596
+19:59:18: (it 26|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:18: (it 26|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:18: (it 26|sp PrimalSubproblem[3]) Subproblem objective is 70.786223736339
+19:59:18: (it 26) Objective is -317.6327082417956
+19:59:18: (it 26) Storing dual multipliers
+19:59:18: (it 26) Updated global upper bound
+19:59:18: (it 26) Iter:  26  | LB:      -319       | UB:      -317       | Fbl: True
+19:59:18: (it 27) Solving master problem
+19:59:18: (it 27) Lower bound of -319.7694820727
+19:59:18: (it 27) Updated global lower bound
+19:59:18: (it 27) Storing complicating variables
+19:59:18: (it 27|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:18: (it 27|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:18: (it 27|sp PrimalSubproblem[1]) Subproblem objective is -591.8993804548015
+19:59:18: (it 27|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:18: (it 27|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:18: (it 27|sp PrimalSubproblem[2]) Subproblem objective is 202.5171351657008
+19:59:18: (it 27|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:18: (it 27|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:18: (it 27|sp PrimalSubproblem[3]) Subproblem objective is 71.62688494419095
+19:59:18: (it 27) Objective is -317.75536034490983
+19:59:18: (it 27) Storing dual multipliers
+19:59:18: (it 27) Updated global upper bound
+19:59:18: (it 27) Iter:  27  | LB:      -319       | UB:      -317       | Fbl: True
+19:59:18: (it 28) Solving master problem
+19:59:18: (it 28) Lower bound of -319.3135134312
+19:59:18: (it 28) Updated global lower bound
+19:59:18: (it 28) Storing complicating variables
+19:59:18: (it 28|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:18: (it 28|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:18: (it 28|sp PrimalSubproblem[1]) Subproblem objective is -584.6822224370007
+19:59:18: (it 28|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:18: (it 28|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:18: (it 28|sp PrimalSubproblem[2]) Subproblem objective is 206.43210015394214
+19:59:18: (it 28|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:18: (it 28|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:18: (it 28|sp PrimalSubproblem[3]) Subproblem objective is 62.423505969124136
+19:59:18: (it 28) Objective is -315.82661631393444
+19:59:18: (it 28) Storing dual multipliers
+19:59:18: (it 28) Iter:  28  | LB:      -319       | UB:      -317       | Fbl: True
+19:59:18: (it 29) Solving master problem
+19:59:18: (it 29) Lower bound of -318.9659925178
+19:59:18: (it 29) Updated global lower bound
+19:59:18: (it 29) Storing complicating variables
+19:59:18: (it 29|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:18: (it 29|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:18: (it 29|sp PrimalSubproblem[1]) Subproblem objective is -590.5947424357341
+19:59:18: (it 29|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:18: (it 29|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:18: (it 29|sp PrimalSubproblem[2]) Subproblem objective is 203.55208449929967
+19:59:18: (it 29|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:18: (it 29|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:18: (it 29|sp PrimalSubproblem[3]) Subproblem objective is 69.11540969414273
+19:59:18: (it 29) Objective is -317.92724824229174
+19:59:18: (it 29) Storing dual multipliers
+19:59:18: (it 29) Updated global upper bound
+19:59:18: (it 29) Iter:  29  | LB:      -318       | UB:      -317       | Fbl: True
+19:59:18: (it 30) Solving master problem
+19:59:18: (it 30) Lower bound of -318.7098670989
+19:59:18: (it 30) Updated global lower bound
+19:59:18: (it 30) Storing complicating variables
+19:59:18: (it 30|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:18: (it 30|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:18: (it 30|sp PrimalSubproblem[1]) Subproblem objective is -594.331452321036
+19:59:18: (it 30|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:18: (it 30|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:18: (it 30|sp PrimalSubproblem[2]) Subproblem objective is 201.7084070925022
+19:59:18: (it 30|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:18: (it 30|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:18: (it 30|sp PrimalSubproblem[3]) Subproblem objective is 74.47740285866709
+19:59:18: (it 30) Objective is -318.14564236986666
+19:59:18: (it 30) Storing dual multipliers
+19:59:18: (it 30) Updated global upper bound
+19:59:18: (it 30) Iter:  30  | LB:      -318       | UB:      -318       | Fbl: True
+19:59:18: (it 31) Solving master problem
+19:59:18: (it 31) Lower bound of -318.6314638427
+19:59:18: (it 31) Updated global lower bound
+19:59:18: (it 31) Storing complicating variables
+19:59:18: (it 31|sp PrimalSubproblem[1]) Fixing complicating variables
+19:59:18: (it 31|sp PrimalSubproblem[1]) Solving primal subproblem
+19:59:18: (it 31|sp PrimalSubproblem[1]) Subproblem objective is -583.2936133810882
+19:59:18: (it 31|sp PrimalSubproblem[2]) Fixing complicating variables
+19:59:18: (it 31|sp PrimalSubproblem[2]) Solving primal subproblem
+19:59:18: (it 31|sp PrimalSubproblem[2]) Subproblem objective is 194.7994413714969
+19:59:18: (it 31|sp PrimalSubproblem[3]) Fixing complicating variables
+19:59:18: (it 31|sp PrimalSubproblem[3]) Solving primal subproblem
+19:59:18: (it 31|sp PrimalSubproblem[3]) Subproblem objective is 70.12426472255785
+19:59:18: (it 31) Objective is -318.36990728703347
+19:59:18: (it 31) Storing dual multipliers
+19:59:18: (it 31) Updated global upper bound
+19:59:18: (it 31) Iter:  31  | LB:      -318       | UB:      -318       | Fbl: True
+19:59:18: (it 32) Termination: epsilon-optimal solution with relative error = 0.0008212119079198864
+19:59:18: 
 v = -318.36990728703347 
 y = {'INLET': {('A', 1, 1): 15.74493973111,
            ('A', 1, 2): 15.74493973111,
@@ -547,4 +547,4 @@ y = {'INLET': {('A', 1, 1): 15.74493973111,
            ('C', 1, 2): 35.76492505246,
            ('C', 1, 3): 35.76492505246}}
 runtime = 2 s (0.0 h)
-19:51:58: Algorithm terminated with feasible solution
+19:59:18: Algorithm terminated with feasible solution

@@ -225,6 +225,19 @@ class Convexifier:
 
             return node
 
+        elif isinstance(node, mat.ArithmeticConditionalNode) and len(node.operands) == 1:
+
+            # convexify operand of summation
+            convexified_node = self.__convexify_node(
+                node=node.operands[0],
+                idx_set=idx_set,
+                dummy_element=dummy_element
+            )
+
+            node.operands[0] = convexified_node  # replace original operand with convexified node
+
+            return node
+
         elif isinstance(node, mat.ArithmeticOperationNode) and node.operator == mat.MULTIPLICATION_OPERATOR:
 
             factors = node.operands
@@ -771,7 +784,7 @@ class Convexifier:
                 ue_node = nb.build_multiplication_node(
                     [
                         coefficient_node,
-                        mat.ConditionalArithmeticExpressionNode(
+                        mat.ArithmeticConditionalNode(
                             operands=[
                                 pos_ue_node,
                                 nb.append_negative_unity_coefficient(neg_ue_node)
@@ -1094,7 +1107,7 @@ class Convexifier:
                                             rhs_operand=mat.NumericNode(0)),
             ]
 
-            return mat.ConditionalArithmeticExpressionNode(
+            return mat.ArithmeticConditionalNode(
                 operands=cond_operands,
                 conditions=conditions,
                 is_prioritized=True

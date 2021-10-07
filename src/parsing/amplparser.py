@@ -199,8 +199,8 @@ class AMPLParser:
     # Conditional Expression Parsing
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __parse_conditional_expression(self) -> Union[mat.ConditionalArithmeticExpressionNode,
-                                                      mat.ConditionalSetExpressionNode]:
+    def __parse_conditional_expression(self) -> Union[mat.ArithmeticConditionalNode,
+                                                      mat.SetConditionalNode]:
 
         operands = []
         conditions = []
@@ -223,12 +223,12 @@ class AMPLParser:
             operands.append(self._parse_set_expression())
 
         if isinstance(operands[0], mat.SetExpressionNode):
-            return mat.ConditionalSetExpressionNode(operands=operands,
-                                                    conditions=conditions)
+            return mat.SetConditionalNode(operands=operands,
+                                          conditions=conditions)
 
         else:
-            return mat.ConditionalArithmeticExpressionNode(operands=operands,
-                                                           conditions=conditions)
+            return mat.ArithmeticConditionalNode(operands=operands,
+                                                 conditions=conditions)
             # return self.__convert_conditional_arithmetic_expression_to_addition_operation(operands, conditions)
 
     # Logical Expression Parsing

@@ -7,7 +7,7 @@ from symro.src.mat.setn import CompoundSetNode
 from symro.src.mat.state import State
 
 
-class ConditionalSetExpressionNode(SetExpressionNode):
+class SetConditionalNode(SetExpressionNode):
 
     def __init__(self,
                  operands: List[SetExpressionNode],

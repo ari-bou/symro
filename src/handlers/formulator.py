@@ -544,7 +544,7 @@ def simplify(problem: Problem,
              dummy_element: mat.Element):
 
     # conditional
-    if isinstance(node, mat.ConditionalArithmeticExpressionNode) or isinstance(node, mat.ConditionalSetExpressionNode):
+    if isinstance(node, mat.ArithmeticConditionalNode) or isinstance(node, mat.SetConditionalNode):
         return __simplify_conditional_expression(
             problem=problem,
             node=node,
@@ -1300,7 +1300,7 @@ def __expand_multiplication(problem: Problem,
                     return expand_factors_n(term_lists)
 
         # conditional operation
-        elif isinstance(node, mat.ConditionalArithmeticExpressionNode):
+        elif isinstance(node, mat.ArithmeticConditionalNode):
 
             # uni-conditional
             if len(node.operands) == 1:
@@ -1309,7 +1309,7 @@ def __expand_multiplication(problem: Problem,
 
                 dist_terms = []  # list of terms onto which the conditional is distributed
                 for term in terms:
-                    dist_terms.append(mat.ConditionalArithmeticExpressionNode(
+                    dist_terms.append(mat.ArithmeticConditionalNode(
                         operands=[term],
                         conditions=[deepcopy(node.conditions[0])],
                         is_prioritized=True
@@ -1418,7 +1418,7 @@ def combine_arithmetic_reduction_nodes(problem: Problem,
 
         # no component indexing set nodes
         if len(cmpt_set_nodes) == 0:
-            return mat.ConditionalArithmeticExpressionNode(
+            return mat.ArithmeticConditionalNode(
                 operands=[prod_node],
                 conditions=[constraint_node],
                 is_prioritized=True
@@ -1505,7 +1505,7 @@ def __extract_idx_set_nodes_and_constraint_nodes(problem: Problem,
         return inner_nodes, cmpt_set_nodes, con_nodes
 
     # uni-conditional
-    elif isinstance(node, mat.ConditionalArithmeticExpressionNode) and len(node.operands) == 1:
+    elif isinstance(node, mat.ArithmeticConditionalNode) and len(node.operands) == 1:
 
         # reformulate node
         ref_factors, cmpt_set_nodes, con_nodes = __extract_idx_set_nodes_and_constraint_nodes(
@@ -1529,7 +1529,7 @@ def __extract_idx_set_nodes_and_constraint_nodes(problem: Problem,
 
 def reformulate_arithmetic_conditional_expressions(root_node: mat.ExpressionNode):
 
-    if isinstance(root_node, mat.ConditionalArithmeticExpressionNode):
+    if isinstance(root_node, mat.ArithmeticConditionalNode):
         root_node = __reformulate_n_conditional_expression(root_node.operands, root_node.conditions)
 
     queue = Queue()
@@ -1542,7 +1542,7 @@ def reformulate_arithmetic_conditional_expressions(root_node: mat.ExpressionNode
         ref_children = []
         for child in node.get_children():
 
-            if isinstance(child, mat.ConditionalArithmeticExpressionNode):
+            if isinstance(child, mat.ArithmeticConditionalNode):
                 if len(child.operands) > 1:
                     child = __reformulate_n_conditional_expression(child.operands, child.conditions)
 
@@ -1603,9 +1603,9 @@ def __reformulate_n_conditional_expression(operands: List[mat.ArithmeticExpressi
                 conj_node.operands.append(conditions[i])
 
         operand.is_prioritized = True
-        mono_cond_expr_node = mat.ConditionalArithmeticExpressionNode(operands=[operand],
-                                                                      conditions=[mod_cond_node],
-                                                                      is_prioritized=True)
+        mono_cond_expr_node = mat.ArithmeticConditionalNode(operands=[operand],
+                                                            conditions=[mod_cond_node],
+                                                            is_prioritized=True)
 
         sum_operands.append(mono_cond_expr_node)
 

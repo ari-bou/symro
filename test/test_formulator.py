@@ -39,7 +39,7 @@ def formulator_expansion_test():
 
     results = []
 
-    """# test 1
+    # test 1
     literal = "x + 1 - 2 + 3 * x + 4 / x"
     node = ampl_parser.parse_arithmetic_expression(literal)
     node = __standardize_expression(problem, node)
@@ -79,7 +79,7 @@ def formulator_expansion_test():
     results.append(check_str_result(
         node,
         "(sum {i in I} (x * x * (y[i]))) + (sum {i in I, i1 in I} (2 * y[i] * x * (y[i1])))"
-    ))"""
+    ))
 
     # test 6
     literal = "x * (if 1 < 2 then sum {i in I} y[i] else sum {i in I} y[i] ^ 2)"

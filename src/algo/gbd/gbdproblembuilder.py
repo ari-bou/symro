@@ -790,7 +790,7 @@ class GBDProblemBuilder:
                                          + " that violates Property P")
 
         # conditional
-        elif isinstance(node, mat.ConditionalArithmeticExpressionNode):
+        elif isinstance(node, mat.ArithmeticConditionalNode):
             statuses = []
             for op_node in node.operands:
                 statuses.append(self.__verify_complicating_node(op_node, idx_set, dummy_element))
@@ -920,7 +920,7 @@ class GBDProblemBuilder:
                         return node, self.MIXED_NODE
 
         # conditional
-        elif isinstance(node, mat.ConditionalArithmeticExpressionNode):
+        elif isinstance(node, mat.ArithmeticConditionalNode):
 
             statuses = []
 

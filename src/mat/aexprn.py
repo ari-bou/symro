@@ -343,7 +343,7 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
         return literal
 
 
-class ConditionalArithmeticExpressionNode(ArithmeticExpressionNode):
+class ArithmeticConditionalNode(ArithmeticExpressionNode):
 
     def __init__(self,
                  operands: List[ArithmeticExpressionNode],

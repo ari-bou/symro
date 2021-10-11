@@ -438,7 +438,9 @@ class Problem(BaseProblem):
     def primal_to_dat(self,
                       file_name: str,
                       problem_symbol: str = None,
-                      problem_idx: mat.Element = None):
+                      problem_idx: mat.Element = None,
+                      include_defined: bool = False,
+                      include_default: bool = False):
 
         # TODO: filter variables by subproblem
 
@@ -446,12 +448,22 @@ class Problem(BaseProblem):
 
         for symbol, var_collection in self.state.var_collections.items():
 
-            # generate data statement
-            data_statement = stm.ParameterDataStatement(symbol=symbol,
-                                                        type="var",
-                                                        values=var_collection.generate_value_dict())
+            mv = self.meta_vars[symbol]
 
-            dat_script.statements.append(data_statement)  # append statement to script
+            can_include = True
+            if mv.is_defined() and not include_defined:
+                can_include = False
+            if mv.has_default() and not include_default:
+                can_include = False
+
+            if can_include:
+
+                # generate data statement
+                data_statement = stm.ParameterDataStatement(symbol=symbol,
+                                                            type="var",
+                                                            values=var_collection.generate_value_dict())
+
+                dat_script.statements.append(data_statement)  # append statement to script
 
         return dat_script
 
@@ -465,6 +477,7 @@ class Problem(BaseProblem):
         dat_script = stm.Script(file_name)  # generate data script
 
         for symbol, con_collection in self.state.con_collections.items():
+
             # generate data statement
             data_statement = stm.ParameterDataStatement(symbol=symbol,
                                                         type="var",

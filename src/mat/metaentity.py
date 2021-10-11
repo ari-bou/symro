@@ -684,6 +684,12 @@ class MetaVariable(MetaEntity):
         else:
             return self._parent.is_symbolic()
 
+    def has_default(self):
+        if self._parent is None:
+            return self._default_value is not None
+        else:
+            return self._parent.has_default()
+
     def get_default_value_node(self) -> ExpressionNode:
         if self._parent is None:
             return self._default_value

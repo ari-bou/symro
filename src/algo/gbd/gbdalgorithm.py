@@ -92,9 +92,8 @@ class GBDAlgorithm:
                                                            obj_def=obj,
                                                            con_defs=cons)
 
-    def add_decomposition_axes(self, idx_set_symbols: List[str]):
-        idx_meta_sets = {sym: self.gbd_problem.meta_sets[sym] for sym in idx_set_symbols}
-        self.gbd_problem.idx_meta_sets.update(idx_meta_sets)
+    def add_decomposition_axes(self, idx_set_defs: List[str]):
+        self.__gbd_problem_builder.add_decomposition_axes(idx_set_defs)
 
     def setup(self):
         self.__gbd_problem_builder.build_gbd_constructs()

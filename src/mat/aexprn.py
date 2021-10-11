@@ -13,59 +13,6 @@ from symro.src.mat.util import *
 from symro.src.mat.state import State
 
 
-class AdditionNode(ArithmeticOperationNode):
-
-    def __init__(self,
-                 operands: List[ArithmeticExpressionNode],
-                 is_prioritized: bool = False):
-        super().__init__(operator=ADDITION_OPERATOR,
-                         operands=operands,
-                         is_prioritized=is_prioritized)
-
-
-class SubtractionNode(ArithmeticOperationNode):
-
-    def __init__(self,
-                 lhs_operand: ArithmeticExpressionNode = None,
-                 rhs_operand: ArithmeticExpressionNode = None,
-                 is_prioritized: bool = False):
-        super().__init__(operator=SUBTRACTION_OPERATOR,
-                         operands=[lhs_operand, rhs_operand],
-                         is_prioritized=is_prioritized)
-
-
-class MultiplicationNode(ArithmeticOperationNode):
-
-    def __init__(self,
-                 operands: List[ArithmeticExpressionNode],
-                 is_prioritized: bool = False):
-        super().__init__(operator=MULTIPLICATION_OPERATOR,
-                         operands=operands,
-                         is_prioritized=is_prioritized)
-
-
-class DivisionNode(ArithmeticOperationNode):
-
-    def __init__(self,
-                 lhs_operand: ArithmeticExpressionNode = None,
-                 rhs_operand: ArithmeticExpressionNode = None,
-                 is_prioritized: bool = False):
-        super().__init__(operator=DIVISION_OPERATOR,
-                         operands=[lhs_operand, rhs_operand],
-                         is_prioritized=is_prioritized)
-
-
-class ExponentiationNode(ArithmeticOperationNode):
-
-    def __init__(self,
-                 lhs_operand: ArithmeticExpressionNode = None,
-                 rhs_operand: ArithmeticExpressionNode = None,
-                 is_prioritized: bool = False):
-        super().__init__(operator=EXPONENTIATION_OPERATOR,
-                         operands=[lhs_operand, rhs_operand],
-                         is_prioritized=is_prioritized)
-
-
 class ArithmeticTransformationNode(ArithmeticExpressionNode):
 
     def __init__(self,
@@ -601,12 +548,14 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
         y = np.zeros(shape=mp)
 
         for ip in range(mp):
-            index = None
+
+            idx = None
             if indices is not None:
-                index = indices[ip]
-            entity = state.get_entity(self.symbol, index)
-            if entity is None:
-                x = 2
+                idx = indices[ip]
+
+            # build the entity if nonexistent and retrieve it
+            entity = state.build_entity(self.symbol, idx, self.__entity_type)
+
             y[ip] = entity.get_value()
 
         return y
@@ -622,7 +571,8 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
                                          idx_set=OrderedSet([idx_set_member]),
                                          dummy_element=dummy_element)
 
-        entity = state.get_entity(symbol=self.symbol, idx=idx)
+        # build the entity if nonexistent and retrieve it
+        entity = state.build_entity(self.symbol, idx, self.__entity_type)
 
         return partial(lambda e: e.value, entity)
 

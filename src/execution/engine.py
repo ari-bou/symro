@@ -66,18 +66,19 @@ class Engine(ABC):
                    ub: Union[int, float]):
 
         if self.problem.state.entity_exists(symbol=symbol, idx=idx):
-            var = self.problem.state.get_entity(symbol=symbol, idx=idx)
+            var = self.problem.state.get_variable(symbol=symbol, idx=idx)
             var.value = value
             var.ub = ub
             var.lb = lb
 
         else:
-            var = mat.Variable(symbol=symbol,
-                               idx=idx,
-                               value=value,
-                               lb=lb,
-                               ub=ub)
-            self.problem.state.add_variable(var)
+            self.problem.state.build_variable(
+                symbol=symbol,
+                idx=idx,
+                value=value,
+                lb=lb,
+                ub=ub
+            )
 
     def _store_obj(self,
                    symbol: str,
@@ -85,14 +86,15 @@ class Engine(ABC):
                    value: Union[int, float]):
 
         if self.problem.state.entity_exists(symbol=symbol, idx=idx):
-            obj = self.problem.state.get_entity(symbol=symbol, idx=idx)
+            obj = self.problem.state.get_objective(symbol=symbol, idx=idx)
             obj.value = value
 
         else:
-            obj = mat.Objective(symbol=symbol,
-                                idx=idx,
-                                value=value)
-            self.problem.state.add_objective(obj)
+            self.problem.state.build_objective(
+                symbol=symbol,
+                idx=idx,
+                value=value
+            )
 
     def _store_con(self,
                    symbol: str,
@@ -102,21 +104,22 @@ class Engine(ABC):
                    ub: Union[int, float],
                    dual: Union[int, float]):
 
-        if self.problem.state.entity_exists(symbol=symbol, idx=idx):
-            con = self.problem.state.get_entity(symbol=symbol, idx=idx)
+        if self.problem.state.con_exists(symbol=symbol, idx=idx):
+            con = self.problem.state.get_constraint(symbol=symbol, idx=idx)
             con.value = body
             con.ub = ub
             con.lb = lb
             con.dual = dual
 
         else:
-            con = mat.Constraint(symbol=symbol,
-                                 idx=idx,
-                                 value=body,
-                                 lb=lb,
-                                 ub=ub,
-                                 dual=dual)
-            self.problem.state.add_constraint(con)
+            self.problem.state.build_constraint(
+                symbol=symbol,
+                idx=idx,
+                body=body,
+                lb=lb,
+                ub=ub,
+                dual=dual
+            )
 
     # Accessors and Mutators
     # ------------------------------------------------------------------------------------------------------------------

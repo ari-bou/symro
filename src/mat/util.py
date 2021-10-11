@@ -113,6 +113,7 @@ def get_element_literal(element: Union[int, float, str]):
     """
     Transform an element into a string literal. Delimiters are added to string elements, whereas numeric elements are
     converted to strings. Element cannot be a dummy or a parameter.
+
     :param element: a non-dummy element
     :return: element string literal
     """
@@ -131,6 +132,7 @@ def cartesian_product(sets: List[IndexingSet]) -> IndexingSet:
     """
     Evaluate the cartesian product of two or more sets. Each element of the combined set is a unique combination of 1
     element from each of the constituent sets.
+
     :param sets: list of constituent ordered sets
     :return: ordered set of elements comprising the combined set
     """

@@ -8,7 +8,7 @@ import numpy as np
 import symro.src.mat as mat
 from symro.src.prob.problem import Problem
 import symro.src.handlers.nodebuilder as nb
-import symro.src.handlers.entitybuilder as eb
+import symro.src.handlers.metaentitybuilder as eb
 
 
 # Model Standardization
@@ -455,6 +455,7 @@ def substitute(root_node: mat.ExpressionNode,
                sub_map: Dict[str, Tuple[mat.ExpressionNode, Iterable[str]]]) -> mat.ExpressionNode:
     """
     Substitute select declared entity nodes with corresponding expression nodes.
+
     :param root_node: root node of the expression in which substitution(s) are to take place
     :param sub_map: mapping of the symbols of the original declared entities to the corresponding substitutes
     :return: root node

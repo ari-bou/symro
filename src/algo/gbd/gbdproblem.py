@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Tuple
 import symro.src.constants as const
 import symro.src.mat as mat
 from symro.src.prob.problem import Problem, BaseProblem
-import symro.src.handlers.entitybuilder as eb
+import symro.src.handlers.metaentitybuilder as eb
 
 
 DEFAULT_MP_SYMBOL = "Master"

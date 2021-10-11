@@ -230,7 +230,12 @@ def _build_idx_meta_sets_of_problem(problem: Problem, subproblem: BaseProblem = 
 def _build_idx_meta_sets_of_meta_entity(problem: Problem,
                                         idx_set_node: mat.CompoundSetNode,
                                         expr_nodes: Iterable[mat.ExpressionNode]):
-    blacklist = nb.retrieve_unbound_symbols_of_nodes(expr_nodes)
+    blacklist = set()
+
+    for root_node in expr_nodes:
+        if root_node is not None:
+            blacklist = blacklist.union(nb.retrieve_unbound_symbols(root_node))
+
     return build_idx_meta_sets(problem=problem, idx_set_node=idx_set_node, unb_syms_blacklist=blacklist)
 
 
@@ -461,6 +466,7 @@ def __compare_super_and_sub_idx_sets(problem: Problem,
                                      entity_idx_node: mat.CompoundDummyNode):
     """
     Verify whether a subset membership operation node is necessary.
+
     :param idx_set_node: indexing set of the parent meta-entity
     :param idx_subset_node: indexing set of the sub-meta-entity
     :param entity_idx_node: index node of the sub-meta-entity
@@ -699,9 +705,9 @@ def __build_middle_scope_idx_set_node(problem: Problem,
 
         middle_idx_set_node = mat.CompoundSetNode(set_nodes=middle_set_nodes)
 
-        middle_rep_map = nb.generate_unbound_symbol_clash_replacement_map(
+        middle_rep_map = nb.generate_unbound_symbol_mapping(
             problem=problem,
-            node=middle_idx_set_node,
+            root_node=middle_idx_set_node,
             blacklisted_unb_syms=outer_unb_syms)
 
         tfm_middle_scope_unbound_syms = OrderedSet()
@@ -760,9 +766,9 @@ def __build_inner_scope_idx_set_node(problem: Problem,
     inner_idx_set_node = mat.CompoundSetNode(set_nodes=inner_set_nodes,
                                              constraint_node=inner_idx_set_con_node)
 
-    inner_rep_map = nb.generate_unbound_symbol_clash_replacement_map(
+    inner_rep_map = nb.generate_unbound_symbol_mapping(
         problem=problem,
-        node=inner_idx_set_node,
+        root_node=inner_idx_set_node,
         outer_unb_syms=tfm_middle_unb_syms,
         blacklisted_unb_syms=tfm_inner_unb_syms | set(outer_unb_syms))
 

@@ -14,6 +14,7 @@ def replace_declared_symbols(node: mat.ExpressionNode, mapping: Dict[str, str]):
     """
     Replace a selection of declared symbols in an expression tree. Modifies the declared entity nodes and set nodes
     in place rather than replacing them with new objects.
+
     :param node: root of the expression tree
     :param mapping: dictionary of original declared symbols mapped to replacement declared symbols.
     :return: None
@@ -48,6 +49,7 @@ def retrieve_unbound_symbols(root_node: mat.ExpressionNode,
     """
     Retrieve the unbound symbols that are present in an expression tree. Includes unbound symbols defined in scope
     and in the outer scope.
+
     :param root_node: root of the expression tree
     :param in_filter: inclusive filter set of symbols to retrieve if present in the expression tree
     :return: set of unbound symbols present in the expression tree
@@ -75,18 +77,11 @@ def retrieve_unbound_symbols(root_node: mat.ExpressionNode,
     return unb_syms
 
 
-def retrieve_unbound_symbols_of_nodes(root_nodes: Iterable[mat.ExpressionNode]):
-    unb_syms = set()
-    for root_node in root_nodes:
-        if root_node is not None:
-            unb_syms = unb_syms.union(retrieve_unbound_symbols(root_node))
-    return unb_syms
-
-
 def replace_unbound_symbols(node: mat.ExpressionNode, mapping: Dict[str, str]):
     """
     Replace a selection of unbound symbols in an expression tree. Modifies the dummy nodes in place rather than
     replacing them with new objects.
+
     :param node: root of the expression tree
     :param mapping: dictionary of original unbound symbols mapped to replacement unbound symbols.
     :return: None
@@ -118,6 +113,7 @@ def replace_dummy_nodes(root_node: mat.ExpressionNode,
     """
     Replace a selection of dummy nodes in an expression tree. The replaced dummy nodes are discarded and substituted
     with deep copies of the supplied replacement nodes.
+
     :param root_node: root of the expression tree
     :param mapping: dictionary of original dummy symbols mapped to replacement nodes.
     :return: root node
@@ -164,7 +160,8 @@ def map_unbound_symbols_to_controlling_sets(set_nodes: List[mat.SetExpressionNod
                                             outer_unb_syms: Iterable[str] = None
                                             ) -> Dict[str, mat.IndexingSetNode]:
     """
-    Generate a mapping of unbound symbols to their corresponding defining set nodes
+    Generate a mapping of unbound symbols to their corresponding defining set nodes.
+
     :param set_nodes: list of set expression nodes
     :param outer_unb_syms: unbound symbols defined in the outer scope
     :return: dictionary of unbound symbols mapped to indexing set nodes
@@ -196,14 +193,24 @@ def map_unbound_symbols_to_controlling_sets(set_nodes: List[mat.SetExpressionNod
     return mapping
 
 
-def generate_unbound_symbol_clash_replacement_map(problem: Problem,
-                                                  node: mat.ExpressionNode,
-                                                  outer_unb_syms: Iterable[str] = None,
-                                                  blacklisted_unb_syms: Iterable[str] = None):
+def generate_unbound_symbol_mapping(problem: Problem,
+                                    root_node: mat.ExpressionNode,
+                                    outer_unb_syms: Iterable[str] = None,
+                                    blacklisted_unb_syms: Iterable[str] = None) -> Dict[str, str]:
+    """
+    Identifies unbound symbols defined in the current scope that clash with unbound symbols defined in the outer scope.
+    Returns a mapping of clashing unbound symbols to newly-generated, unique, unbound symbols. Note that this method
+    does not apply the mapping to the supplied expression node, and that the latter is unchanged.
 
-    # TODO: consider moving this method to the entity builder
+    :param problem: problem object
+    :param root_node: root node of the expression
+    :param outer_unb_syms: set of unbound symbols defined in the outer scope
+    :param blacklisted_unb_syms: set of blacklisted unbound symbols flagged for replacement
+    :return: mapping of old unbound symbols to new, unique, unbound symbols
+    """
 
     mapping = {}
+
     current_scope_unbound_syms = set()
     if outer_unb_syms is None:
         outer_unb_syms = set()
@@ -211,7 +218,7 @@ def generate_unbound_symbol_clash_replacement_map(problem: Problem,
         blacklisted_unb_syms = set()
 
     queue = Queue()
-    queue.put(node)
+    queue.put(root_node)
 
     while not queue.empty():
 
@@ -296,11 +303,13 @@ def build_entity_idx_set_node(problem: Problem,
     """
     Build an indexing set node for a meta-entity. By default, the dummy indices are based on the default dummy
     symbols of the indexing meta-sets.
+    A dummy symbol in the custom_dummy_syms parameter will override the default dummy symbol of the corresponding
+    meta-set. Use a tuple for multi-dimensional sets.
+
     :param problem: problem object
     :param meta_entity: meta-entity for which an indexing set node is built.
-    :param remove_sets: List of indexing meta-sets (or their symbols) to be excluded from the indexing set node.
-    :param custom_dummy_syms: Mapping of meta-set symbols to custom dummy symbols. A dummy symbol in this dict will
-    override the default dummy symbol of the corresponding meta-set. Use a tuple for multi-dimensional sets.
+    :param remove_sets: list of indexing meta-sets (or their symbols) to be excluded from the indexing set node
+    :param custom_dummy_syms: mapping of meta-set symbols to custom dummy symbols
     :return: indexing set node
     """
 
@@ -336,13 +345,15 @@ def build_idx_set_node(problem: Problem,
                        ) -> Optional[mat.CompoundSetNode]:
     """
     Build an indexing set node from a collection of a indexing meta-sets and an optional set constraint.
+    A dummy symbol in custom_unb_syms parameter will override the default dummy symbol of the corresponding meta-set.
+    Use a tuple for multi-dimensional sets.
+    The unb_sym_mapping parameter is updated in-place with symbol-pairs elicited from the custom_unb_syms argument.
+
     :param problem: problem object
-    :param idx_meta_sets: Collection of indexing meta-sets.
+    :param idx_meta_sets: collection of indexing meta-sets
     :param idx_set_con_literal: string literal of the set constraint
-    :param custom_unb_syms: Mapping of meta-set symbols to custom dummy symbols. A dummy symbol in this dict will
-    override the default dummy symbol of the corresponding meta-set. Use a tuple for multi-dimensional sets.
-    :param unb_sym_mapping: Mapping of existing unbound symbols with corresponding replacement unbound symbols. The
-    mapping is updated in-place with symbol-pairs elicited from the custom_unb_syms argument.
+    :param custom_unb_syms: mapping of meta-set symbols to custom dummy symbols.
+    :param unb_sym_mapping: mapping of existing unbound symbols with corresponding replacement unbound symbols
     :return: indexing set node
     """
 

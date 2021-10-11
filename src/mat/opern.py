@@ -714,6 +714,59 @@ class ArithmeticOperationNode(ArithmeticExpressionNode):
             return s
 
 
+class AdditionNode(ArithmeticOperationNode):
+
+    def __init__(self,
+                 operands: List[ArithmeticExpressionNode],
+                 is_prioritized: bool = False):
+        super().__init__(operator=ADDITION_OPERATOR,
+                         operands=operands,
+                         is_prioritized=is_prioritized)
+
+
+class SubtractionNode(ArithmeticOperationNode):
+
+    def __init__(self,
+                 lhs_operand: ArithmeticExpressionNode = None,
+                 rhs_operand: ArithmeticExpressionNode = None,
+                 is_prioritized: bool = False):
+        super().__init__(operator=SUBTRACTION_OPERATOR,
+                         operands=[lhs_operand, rhs_operand],
+                         is_prioritized=is_prioritized)
+
+
+class MultiplicationNode(ArithmeticOperationNode):
+
+    def __init__(self,
+                 operands: List[ArithmeticExpressionNode],
+                 is_prioritized: bool = False):
+        super().__init__(operator=MULTIPLICATION_OPERATOR,
+                         operands=operands,
+                         is_prioritized=is_prioritized)
+
+
+class DivisionNode(ArithmeticOperationNode):
+
+    def __init__(self,
+                 lhs_operand: ArithmeticExpressionNode = None,
+                 rhs_operand: ArithmeticExpressionNode = None,
+                 is_prioritized: bool = False):
+        super().__init__(operator=DIVISION_OPERATOR,
+                         operands=[lhs_operand, rhs_operand],
+                         is_prioritized=is_prioritized)
+
+
+class ExponentiationNode(ArithmeticOperationNode):
+
+    def __init__(self,
+                 lhs_operand: ArithmeticExpressionNode = None,
+                 rhs_operand: ArithmeticExpressionNode = None,
+                 is_prioritized: bool = False):
+        super().__init__(operator=EXPONENTIATION_OPERATOR,
+                         operands=[lhs_operand, rhs_operand],
+                         is_prioritized=is_prioritized)
+
+
 class StringOperationNode(StringExpressionNode):
 
     def __init__(self,

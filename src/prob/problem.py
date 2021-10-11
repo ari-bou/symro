@@ -401,9 +401,10 @@ class Problem(BaseProblem):
                                symbol_blacklist: Iterable[str] = None) -> str:
         """
         Generate a unique entity symbol that has not been assigned to a previously declared entity.
+
         :param base_symbol: prefix of the symbol
         :param symbol_blacklist: string literals to omit when eliciting a unique symbol
-        :return:
+        :return: unique symbol
         """
 
         if base_symbol is None:

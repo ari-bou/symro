@@ -1016,7 +1016,7 @@ class AMPLParser:
 
         if entity_type == mat.SET_TYPE:
             return mat.DeclaredSetNode(symbol=token,
-                                       entity_index_node=index_node,
+                                       idx_node=index_node,
                                        suffix=suffix)
         else:
             return mat.DeclaredEntityNode(symbol=token,
@@ -1153,6 +1153,7 @@ class AMPLParser:
     def _next_token(self, can_skip_whitespace: bool = True) -> bool:
         """
         Update the token of the active script to the next token.
+
         :param can_skip_whitespace: if true, skip all whitespace tokens until the first non-whitespace token is found.
         :return: true if a succeeding token exists, false if no succeeding token exists
         """

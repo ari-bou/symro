@@ -151,6 +151,7 @@ class MetaEntity(ABC):
         """
         Get the positional index of the first dimension of the meta-entity's indexing set controlled by the supplied
         meta-set.
+
         :param meta_set: meta-set for the first positional index is returned
         :return: positional index or None if the meta-entity is not indexed with respect to the meta-set
         """
@@ -182,6 +183,7 @@ class MetaEntity(ABC):
     def is_owner(self, entity: Entity, state: State):
         """
         Check whether the meta-entity owns the supplied entity.
+
         :param entity: algebraic entity
         :param state: problem state
         :return: True if the meta-entity is the owner of the entity argument

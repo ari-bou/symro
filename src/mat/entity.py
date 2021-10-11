@@ -13,6 +13,7 @@ class Entity(ABC):
                  is_dim_aggregated: List[bool] = None):
         """
         Constructor of the Entity class.
+
         :param symbol: unique declared symbol that identifies the entity
         :param idx: unique indexing set element that identifies the entity if indexed, None otherwise
         :param is_dim_aggregated: list of Boolean flags that indicates which dimensions are aggregated
@@ -60,10 +61,14 @@ class Entity(ABC):
         pass
 
     @staticmethod
-    def generate_entity_id(symbol: str, indices: Tuple[Union[int, float, str], ...]) -> str:
-        if indices is not None and len(indices) > 0:
-            indices = [str(i) for i in indices]
-            return "{0}[{1}]".format(symbol, ','.join(indices))
+    def generate_entity_id(symbol: str, idx: Element) -> str:
+
+        # indexed entity
+        if idx is not None and len(idx) > 0:
+            idx = [str(i) for i in idx]
+            return "{0}[{1}]".format(symbol, ','.join(idx))
+
+        # scalar entity
         else:
             return symbol
 
@@ -218,7 +223,7 @@ class Variable(Entity):
 
     def __init__(self,
                  symbol: str,
-                 idx: Element,
+                 idx: Element = None,
                  is_dim_aggregated: List[bool] = None,
                  value: float = 0,
                  lb: float = 0,
@@ -243,7 +248,7 @@ class Objective(Entity):
 
     def __init__(self,
                  symbol: str,
-                 idx: Element,
+                 idx: Element = None,
                  is_dim_aggregated: List[bool] = None,
                  value: float = 0):
         super(Objective, self).__init__(symbol=symbol,
@@ -264,7 +269,7 @@ class Constraint(Entity):
 
     def __init__(self,
                  symbol: str,
-                 idx: Element,
+                 idx: Element = None,
                  is_dim_aggregated: List[bool] = None,
                  value: float = 0,
                  lb: float = 0,

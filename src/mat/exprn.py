@@ -49,11 +49,12 @@ class ExpressionNode(ABC):
                   idx_set_member: Element = None,
                   dummy_element: Tuple[str, ...] = None) -> Callable:
         """
-        Generate an anonymous function that evaluates the expression at a unique static indexing set member.
-        :param state: object containing the state of the problem
-        :param idx_set_member: member of the indexing set for which the anonymous function will be generated; 
-        None if scalar
-        :param dummy_element: the unbound symbols of the indexing set of an indexed expression; None if scalar
+        Generate an anonymous function that evaluates the expression at a unique static indexing set member. Set the
+        idx_set_member and dummy_element parameters to None if the expression node is not indexed.
+
+        :param state: state object
+        :param idx_set_member: member of the indexing set for which the anonymous function will be generated
+        :param dummy_element: the unbound symbols of the indexing set of an indexed expression
         :return: callable
         """
         pass
@@ -64,8 +65,9 @@ class ExpressionNode(ABC):
 
     def is_controlled(self, dummy_element: List[str] = None) -> bool:
         """
-        Returns True if the node contains a dummy node whose symbol is in the dummy_syms argument. If dummy_syms is
+        Returns True if the node contains a dummy node whose symbol is in the dummy_syms argument. If dummy_element is
         None, then returns True if the node contains a dummy node with any symbol.
+
         :param dummy_element: list of dummy symbols
         :return: bool
         """

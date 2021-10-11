@@ -1,5 +1,5 @@
 import symro
-import symro.src.handlers.entitybuilder as eb
+import symro.src.handlers.metaentitybuilder as eb
 from symro.src.parsing.amplparser import AMPLParser
 from symro.test.test_util import *
 

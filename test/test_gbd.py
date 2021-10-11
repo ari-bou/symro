@@ -58,7 +58,7 @@ def gbd_scenario_wise_lp() -> bool:
                              primal_sp_obj_symbol="OBJ_SUB",
                              init_lb=-100000,
                              init_ub=100000)
-    gbd.add_decomposition_axes(idx_set_symbols=["S"])
+    gbd.add_decomposition_axes(idx_set_defs=["S"])
     gbd.setup()
     v, y = gbd.run(mp_solve_options={"solver": "gurobi"},
                    sp_solve_options={"solver": "gurobi"},
@@ -86,7 +86,7 @@ def gbd_scenario_wise_convex_qp_production() -> bool:
                              primal_sp_obj_symbol="OBJ_SUB",
                              init_lb=-1000000,
                              init_ub=1000000)
-    gbd.add_decomposition_axes(idx_set_symbols=["SCENARIOS"])
+    gbd.add_decomposition_axes(idx_set_defs=["SCENARIOS"])
     gbd.setup()
     v, y = gbd.run(mp_solve_options={"solver": "cplex"},
                    sp_solve_options={"solver": "cplex"},

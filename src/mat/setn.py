@@ -51,11 +51,11 @@ class DeclaredSetNode(BaseSetNode):
 
     def __init__(self,
                  symbol: str,
-                 entity_index_node: CompoundDummyNode = None,
+                 idx_node: CompoundDummyNode = None,
                  suffix: str = None):
         super().__init__()
         self.symbol: str = symbol
-        self.entity_index_node: CompoundDummyNode = entity_index_node
+        self.idx_node: CompoundDummyNode = idx_node
         self.suffix: str = suffix
 
     def evaluate(self,
@@ -81,7 +81,7 @@ class DeclaredSetNode(BaseSetNode):
         return y
 
     def is_indexed(self) -> bool:
-        return self.entity_index_node is not None
+        return self.idx_node is not None
 
     def is_constant(self) -> bool:
         return True
@@ -92,7 +92,7 @@ class DeclaredSetNode(BaseSetNode):
     def get_entity_id(self, state: State) -> str:
         indices = None
         if self.is_indexed():
-            indices = self.entity_index_node.evaluate(state)[0]
+            indices = self.idx_node.evaluate(state)[0]
             if not isinstance(indices, tuple):
                 indices = [indices]
         return Entity.generate_entity_id(self.symbol, indices)
@@ -109,7 +109,7 @@ class DeclaredSetNode(BaseSetNode):
     def get_literal(self) -> str:
         literal = self.symbol
         if self.is_indexed():
-            literal += "[{0}]".format(','.join([str(n) for n in self.entity_index_node.component_nodes]))
+            literal += "[{0}]".format(','.join([str(n) for n in self.idx_node.component_nodes]))
         if self.suffix is not None:
             literal += ".{0}".format(self.suffix)
         if self.is_prioritized:
@@ -419,6 +419,7 @@ class CompoundSetNode(BaseSetNode):
         """
         Combine the indexing set of the outer scope and the component sets together.
         Note that the indexing set constraint is not applied.
+
         :param state: problem state
         :param idx_set: indexing set of length mp
         :param dummy_element: tuple of unbound symbols of length np
@@ -495,6 +496,7 @@ class CompoundSetNode(BaseSetNode):
         """
         Retrieve ordered set of unbound symbols defined by the compound set node. The order corresponds to the order in
         which the unbound symbols are defined.
+
         :param outer_unb_syms: set of unbound symbols defined in the outer scope (exclusive filter)
         :return: ordered set of defined unbound symbols
         """

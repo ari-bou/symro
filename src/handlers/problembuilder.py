@@ -9,7 +9,7 @@ import symro.src.mat as mat
 from symro.src.prob.problem import BaseProblem, Problem
 import symro.src.prob.statement as stm
 import symro.src.handlers.nodebuilder as nb
-import symro.src.handlers.entitybuilder as eb
+import symro.src.handlers.metaentitybuilder as eb
 from symro.src.execution.amplengine import AMPLEngine
 from symro.src.parsing.amplscriptparser import AMPLScriptParser
 import symro.src.util.util as util
@@ -214,10 +214,11 @@ def __retrieve_set_data_from_ampl_engine(problem: Problem,
         if ampl_set.indexarity() == 0:  # non-indexed set
             raw_elements = [m for m in ampl_set.members()]
             elements = __process_set_elements(raw_elements)
-            aset = mat.SSet(symbol=sym,
-                            dim=ampl_set.arity(),
-                            elements=elements)
-            problem.state.add_set(aset)
+            problem.state.build_set(
+                symbol=sym,
+                dim=ampl_set.arity(),
+                elements=elements
+            )
 
         else:  # indexed set
             for raw_indices, ampl_set_instance in ampl_set.instances():
@@ -226,11 +227,12 @@ def __retrieve_set_data_from_ampl_engine(problem: Problem,
                 raw_elements = [m for m in ampl_set_instance.getValues().toDict().keys()]
                 elements = __process_set_elements(raw_elements)
 
-                aset = mat.SSet(symbol=sym,
-                                idx=indices,
-                                dim=ampl_set.arity(),
-                                elements=elements)
-                problem.state.add_set(aset)
+                problem.state.build_set(
+                    symbol=sym,
+                    idx=indices,
+                    dim=ampl_set.arity(),
+                    elements=elements
+                )
 
 
 def __retrieve_param_data_from_ampl_engine(problem: Problem,
@@ -240,17 +242,20 @@ def __retrieve_param_data_from_ampl_engine(problem: Problem,
 
         param: amplpy.Parameter
 
+        # scalar parameter
         if param.indexarity() == 0:
-            problem.state.add_parameter(mat.Parameter(symbol=sym,
-                                                      value=param.value()))
+            problem.state.build_parameter(symbol=sym,
+                                          value=param.value())
+
+        # indexed parameter
         else:
             for raw_indices, value in param.instances():
                 indices = __standardize_indices_from_ampl_engine(raw_indices)
                 if value is None:
                     value = 0
-                problem.state.add_parameter(mat.Parameter(symbol=sym,
-                                                          idx=indices,
-                                                          value=value))
+                problem.state.build_parameter(symbol=sym,
+                                              idx=indices,
+                                              value=value)
 
 
 def __standardize_indices_from_ampl_engine(raw_indices: Union[int, float, str,

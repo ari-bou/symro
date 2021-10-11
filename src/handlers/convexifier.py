@@ -7,7 +7,7 @@ import symro.src.mat as mat
 from symro.src.prob.problem import Problem
 import symro.src.handlers.nodebuilder as nb
 import symro.src.handlers.formulator as fmr
-import symro.src.handlers.entitybuilder as eb
+import symro.src.handlers.metaentitybuilder as eb
 
 """
 References:

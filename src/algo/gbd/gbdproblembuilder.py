@@ -11,7 +11,7 @@ import symro.src.prob.statement as stm
 
 import symro.src.handlers.formulator as fmr
 import symro.src.handlers.nodebuilder as nb
-import symro.src.handlers.entitybuilder as eb
+import symro.src.handlers.metaentitybuilder as eb
 from symro.src.handlers.scriptbuilder import ScriptBuilder
 
 from symro.src.parsing.amplparser import AMPLParser
@@ -82,6 +82,33 @@ class GBDProblemBuilder:
         self.gbd_problem.build_mp_constructs(init_lb)
 
         return self.gbd_problem
+
+    def add_decomposition_axes(self, idx_set_defs: List[str]):
+
+        idx_meta_sets = {}
+
+        ampl_parser = AMPLParser(self.gbd_problem)
+
+        for idx_set_def in idx_set_defs:
+
+            # parse indexing set definition
+            set_expr = ampl_parser.parse_set_expression(idx_set_def)
+
+            if isinstance(set_expr, mat.DeclaredSetNode):
+
+                if not set_expr.is_indexed():
+                    ms = self.gbd_problem.meta_sets[set_expr.symbol]
+                    idx_meta_sets[idx_set_def] = ms
+
+                else:
+                    raise NotImplementedError("GBD problem builder currently does not support indexed sets"
+                                              + " as the decomposition axes of a problem")
+
+            else:
+                raise NotImplementedError("GBD problem builder currently does not support undeclared sets"
+                                          + " as the decomposition axes of a problem")
+
+        self.gbd_problem.idx_meta_sets.update(idx_meta_sets)
 
     def build_gbd_constructs(self) -> GBDProblem:
 
@@ -1546,8 +1573,15 @@ class GBDProblemBuilder:
     def __build_subproblem_containers(self):
 
         idx_sets = []
-        for sym in self.gbd_problem.idx_meta_sets:
-            idx_sets.append(self.gbd_problem.state.get_set(sym).elements)
+        for ims in self.gbd_problem.idx_meta_sets.values():
+
+            # scalar
+            if not ims.is_indexed():
+                idx_sets.append(self.gbd_problem.state.get_set(ims.get_symbol()).elements)
+
+            # indexed
+            else:
+                raise NotImplementedError("GBD problem builder does not support indexed sets as decomposition axes")
 
         sp_idx_set = mat.cartesian_product(idx_sets)
 

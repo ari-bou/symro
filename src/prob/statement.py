@@ -389,7 +389,7 @@ class ParameterDataStatement(BaseStatement):
         value = clean_data_statement_element(value)
 
         # scalar entity
-        if element is None:
+        if element is None or len(element) == 0:
             return value
 
         # indexed entity

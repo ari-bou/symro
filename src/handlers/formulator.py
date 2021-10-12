@@ -989,7 +989,10 @@ def simplify_node_to_scalar_value(problem: Problem,
                 if vals[0] != vals[i]:
                     return None
 
-        return vals[0]
+        if len(vals) == 0:
+            return 0
+        else:
+            return vals[0]
 
     return None
 

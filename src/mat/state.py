@@ -6,17 +6,11 @@ class State:
 
     def __init__(self):
 
-        self.sets: Dict[str, SSet] = {}
-        self.params: Dict[str, Parameter] = {}
-        self.vars: Dict[str, Variable] = {}
-        self.objs: Dict[str, Objective] = {}
-        self.cons: Dict[str, Constraint] = {}
-
-        self.set_collections: Dict[str, EntityCollection] = {}
-        self.param_collections: Dict[str, EntityCollection] = {}
-        self.var_collections: Dict[str, EntityCollection] = {}
-        self.obj_collections: Dict[str, EntityCollection] = {}
-        self.con_collections: Dict[str, EntityCollection] = {}
+        self.sets: Dict[tuple, SSet] = {}
+        self.params: Dict[tuple, Parameter] = {}
+        self.vars: Dict[tuple, Variable] = {}
+        self.objs: Dict[tuple, Objective] = {}
+        self.cons: Dict[tuple, Constraint] = {}
 
     # Checkers
     # ------------------------------------------------------------------------------------------------------------------
@@ -29,64 +23,61 @@ class State:
         :param idx: indexing set element that identifies the entity if indexed, None otherwise
         :return: True if the entity exists within the state
         """
-        if symbol in self.set_collections and idx in self.set_collections[symbol].entity_map:
+
+        entity_id = Entity.generate_entity_id(symbol, idx)
+
+        if entity_id in self.sets:
             return True
-        elif symbol in self.param_collections and idx in self.param_collections[symbol].entity_map:
+        elif entity_id in self.params:
             return True
-        elif symbol in self.var_collections and idx in self.var_collections[symbol].entity_map:
+        elif entity_id in self.vars:
             return True
-        elif symbol in self.obj_collections and idx in self.obj_collections[symbol].entity_map:
+        elif entity_id in self.objs:
             return True
-        elif symbol in self.con_collections and idx in self.con_collections[symbol].entity_map:
+        elif entity_id in self.cons:
             return True
         else:
             return False
 
     def set_exists(self, symbol: str, idx: Element = None) -> bool:
-        return symbol in self.set_collections and idx in self.set_collections[symbol].entity_map
+        entity_id = Entity.generate_entity_id(symbol, idx)
+        return entity_id in self.sets
 
     def param_exists(self, symbol: str, idx: Element = None) -> bool:
-        return symbol in self.param_collections and idx in self.param_collections[symbol].entity_map
+        entity_id = Entity.generate_entity_id(symbol, idx)
+        return entity_id in self.params
 
     def var_exists(self, symbol: str, idx: Element = None) -> bool:
-        return symbol in self.var_collections and idx in self.var_collections[symbol].entity_map
+        entity_id = Entity.generate_entity_id(symbol, idx)
+        return entity_id in self.vars
 
     def obj_exists(self, symbol: str, idx: Element = None) -> bool:
-        return symbol in self.obj_collections and idx in self.obj_collections[symbol].entity_map
+        entity_id = Entity.generate_entity_id(symbol, idx)
+        return entity_id in self.objs
 
     def con_exists(self, symbol: str, idx: Element = None) -> bool:
-        return symbol in self.con_collections and idx in self.con_collections[symbol].entity_map
+        entity_id = Entity.generate_entity_id(symbol, idx)
+        return entity_id in self.cons
 
     # Accessors
     # ------------------------------------------------------------------------------------------------------------------
 
-    def get_entity(self, symbol: str, idx: Element = None) -> Optional[Entity]:
-        if symbol in self.set_collections:
-            return self.set_collections[symbol].entity_map[idx]
-        elif symbol in self.param_collections:
-            return self.param_collections[symbol].entity_map[idx]
-        elif symbol in self.var_collections:
-            return self.var_collections[symbol].entity_map[idx]
-        elif symbol in self.obj_collections:
-            return self.obj_collections[symbol].entity_map[idx]
-        elif symbol in self.con_collections:
-            return self.con_collections[symbol].entity_map[idx]
+    def get_entity(self, symbol: str, idx: Element = None) -> Entity:
+
+        entity_id = Entity.generate_entity_id(symbol, idx)
+
+        if entity_id in self.sets:
+            return self.sets[entity_id]
+        elif entity_id in self.params:
+            return self.params[entity_id]
+        elif entity_id in self.vars:
+            return self.vars[entity_id]
+        elif entity_id in self.objs:
+            return self.objs[entity_id]
+        elif entity_id in self.cons:
+            return self.cons[entity_id]
         else:
             raise ValueError("Entity '{0}' does not exist".format(Entity.generate_entity_id(symbol, idx)))
-
-    def get_collection(self, symbol: str) -> Optional[EntityCollection]:
-        if symbol in self.set_collections:
-            return self.set_collections[symbol]
-        elif symbol in self.param_collections:
-            return self.param_collections[symbol]
-        elif symbol in self.var_collections:
-            return self.var_collections[symbol]
-        elif symbol in self.obj_collections:
-            return self.obj_collections[symbol]
-        elif symbol in self.con_collections:
-            return self.con_collections[symbol]
-        else:
-            return None
 
     def get_set(self, symbol: str, idx: Element = None) -> SSet:
         return self.sets[Entity.generate_entity_id(symbol, idx)]
@@ -140,13 +131,6 @@ class State:
 
             self.sets[sset.entity_id] = sset
 
-            if sset.symbol in self.set_collections:
-                self.set_collections[sset.symbol].entity_map[sset.idx] = sset
-            else:
-                collection = EntityCollection(sset.symbol)
-                collection.entity_map[sset.idx] = sset
-                self.set_collections[sset.symbol] = collection
-
             return sset
 
         else:
@@ -166,13 +150,6 @@ class State:
             )
 
             self.params[param.entity_id] = param
-
-            if param.symbol in self.param_collections:
-                self.param_collections[param.symbol].entity_map[param.idx] = param
-            else:
-                collection = EntityCollection(param.symbol)
-                collection.entity_map[param.idx] = param
-                self.param_collections[param.symbol] = collection
 
             return param
 
@@ -198,13 +175,6 @@ class State:
 
             self.vars[var.entity_id] = var
 
-            if var.symbol in self.var_collections:
-                self.var_collections[var.symbol].entity_map[var.idx] = var
-            else:
-                collection = EntityCollection(var.symbol)
-                collection.entity_map[var.idx] = var
-                self.var_collections[var.symbol] = collection
-
             return var
 
         else:
@@ -224,13 +194,6 @@ class State:
             )
 
             self.objs[obj.entity_id] = obj
-
-            if obj.symbol in self.obj_collections:
-                self.obj_collections[obj.symbol].entity_map[obj.idx] = obj
-            else:
-                collection = EntityCollection(obj.symbol)
-                collection.entity_map[obj.idx] = obj
-                self.obj_collections[obj.symbol] = collection
 
             return obj
 
@@ -257,13 +220,6 @@ class State:
             )
 
             self.cons[con.entity_id] = con
-
-            if con.symbol in self.con_collections:
-                self.con_collections[con.symbol].entity_map[con.idx] = con
-            else:
-                collection = EntityCollection(con.symbol)
-                collection.entity_map[con.idx] = con
-                self.con_collections[con.symbol] = collection
 
             return con
 

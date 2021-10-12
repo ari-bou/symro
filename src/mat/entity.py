@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import re
 from typing import Dict, List, Optional, Tuple, Union
 
 from symro.src.mat.util import IndexingSet, Element
@@ -21,7 +20,7 @@ class Entity(ABC):
 
         self.symbol: str = symbol
         self.idx: Optional[Element] = idx  # length: dim
-        self.entity_id: str = self.generate_entity_id(self.symbol, self.idx)
+        self.entity_id: tuple = self.generate_entity_id(self.symbol, self.idx)
         self.is_dim_aggregated: List[bool] = is_dim_aggregated  # length: dim
 
         if self.is_dim_aggregated is None:
@@ -61,16 +60,11 @@ class Entity(ABC):
         pass
 
     @staticmethod
-    def generate_entity_id(symbol: str, idx: Element) -> str:
-
-        # indexed entity
-        if idx is not None and len(idx) > 0:
-            idx = [str(i) for i in idx]
-            return "{0}[{1}]".format(symbol, ','.join(idx))
-
-        # scalar entity
+    def generate_entity_id(symbol: str, idx: Element = None) -> tuple:
+        if idx is None:
+            return tuple([symbol])
         else:
-            return symbol
+            return tuple([symbol]) + idx
 
 
 class SSet(Entity):

@@ -210,7 +210,7 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
+                                  dummy_element: Element = None) -> Dict[tuple, Union[Parameter, Variable]]:
 
         if self.is_reductive():
 
@@ -401,7 +401,7 @@ class ArithmeticConditionalNode(ArithmeticExpressionNode):
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_element: Element = None) -> Dict[str, Union[Variable, Parameter]]:
+                                  dummy_element: Element = None) -> Dict[tuple, Union[Variable, Parameter]]:
         count_p = 1
         if idx_set is not None:
             count_p = len(idx_set)
@@ -579,7 +579,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
+                                  dummy_element: Element = None) -> Dict[tuple, Union[Parameter, Variable]]:
         entities = {}
 
         entity_indices = None
@@ -785,16 +785,6 @@ class NumericNode(ArithmeticExpressionNode):
                   idx_set_member: Element = None,
                   dummy_element: Element = None):
         return partial(lambda c: c, self.value)
-
-    def is_constant(self) -> bool:
-        return True
-
-    def is_null(self) -> bool:
-        return self.__is_null
-
-    def nullify(self):
-        self.value = 0
-        self.__is_null = True
 
     def get_children(self) -> list:
         return []

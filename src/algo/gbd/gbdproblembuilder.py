@@ -42,7 +42,7 @@ class GBDProblemBuilder:
         self.comp_con_expressions: Dict[str, mat.ArithmeticExpressionNode] = {}
 
         # Entities
-        self.comp_vars: Dict[str, mat.Variable] = {}
+        self.comp_vars: Dict[tuple, mat.Variable] = {}
 
         # Flags
         self.__is_primal_sp_obj_comp: Dict[str, bool] = {}
@@ -308,7 +308,7 @@ class GBDProblemBuilder:
         vars = {k: v for k, v in entities.items() if isinstance(v, mat.Variable)}  # filter out parameters
 
         # Identify complicating variables
-        vars: Dict[str, mat.Variable]
+        vars: Dict[tuple, mat.Variable]
         comp_vars = {}
         for var_id, var in vars.items():
             for comp_meta_var_id, comp_meta_var in comp_meta_vars.items():

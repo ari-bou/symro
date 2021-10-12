@@ -458,9 +458,9 @@ class Problem(BaseProblem):
 
         dat_script = stm.Script(file_name)  # generate data script
 
-        for symbol, var_collection in self.state.var_collections.items():
+        for mv in self.model_meta_vars:
 
-            mv = self.meta_vars[symbol]
+            sym = mv.get_symbol()
 
             can_include = True
             if mv.is_defined() and not include_defined:
@@ -470,10 +470,13 @@ class Problem(BaseProblem):
 
             if can_include:
 
+                # retrieve values
+                values = {k[1:]: v.value for k, v in self.state.vars.items() if k[0] == sym}
+
                 # generate data statement
-                data_statement = stm.ParameterDataStatement(symbol=symbol,
+                data_statement = stm.ParameterDataStatement(symbol=sym,
                                                             type="var",
-                                                            values=var_collection.generate_value_dict())
+                                                            values=values)
 
                 dat_script.statements.append(data_statement)  # append statement to script
 
@@ -488,12 +491,17 @@ class Problem(BaseProblem):
 
         dat_script = stm.Script(file_name)  # generate data script
 
-        for symbol, con_collection in self.state.con_collections.items():
+        for mc in self.model_meta_cons:
+
+            sym = mc.get_symbol()
+
+            # retrieve duals
+            duals = {k[1:]: v.dual for k, v in self.state.cons.items() if k[0] == sym}
 
             # generate data statement
-            data_statement = stm.ParameterDataStatement(symbol=symbol,
+            data_statement = stm.ParameterDataStatement(symbol=sym,
                                                         type="var",
-                                                        values=con_collection.generate_dual_dict())
+                                                        values=duals)
 
             dat_script.statements.append(data_statement)  # append statement to script
 

@@ -16,10 +16,11 @@ set L = {(1, 'A'), (2, 'B'), (3, 'C')};
 var x {(i,'A') in K, (i,l) in L};
 """
 
-SUB_SET_SCRIPT = """set NUM_SET = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+SUB_SET_SCRIPT = """
+set NUM_SET = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 set EVEN_SET = {0, 2, 4, 6, 8};
-set LETTER_SET = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'};
-set VOWEL_SET = {'A', 'E', 'I'};
+set LETTER_SET = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', "I", 'J'};
+set VOWEL_SET = {'A', 'E', "I"};
 set NUM_LETTER_SET = {NUM_SET, LETTER_SET};
 set INDEXED_SET{i in NUM_SET} = 0..i;
 set INDEXED_SET_2{i in NUM_SET} = {(i,j) in NUM_LETTER_SET};

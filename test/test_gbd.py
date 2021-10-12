@@ -20,6 +20,7 @@ def gbd_lp() -> bool:
                               working_dir_path=SCRIPT_DIR_PATH,
                               engine=engine,
                               can_clean_script=True)
+    print(problem.primal_to_dat("sol.dat"))
 
     engine.solve(solve_options={"solver": "gurobi", "gurobi_options": "outlev=1"})
     v_benchmark = engine.get_obj_value("OBJ")

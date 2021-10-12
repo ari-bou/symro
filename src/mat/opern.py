@@ -316,7 +316,7 @@ class RelationalOperationNode(LogicalExpressionNode):
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
+                                  dummy_element: Element = None) -> Dict[tuple, Union[Parameter, Variable]]:
         entities = self.lhs_operand.collect_declared_entities(state, idx_set, dummy_element)
         entities.update(self.rhs_operand.collect_declared_entities(state, idx_set, dummy_element))
         return entities
@@ -568,7 +568,7 @@ class ArithmeticOperationNode(ArithmeticExpressionNode):
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
+                                  dummy_element: Element = None) -> Dict[tuple, Union[Parameter, Variable]]:
         vars = {}
         for operand in self.operands:
             vars.update(operand.collect_declared_entities(state, idx_set, dummy_element))

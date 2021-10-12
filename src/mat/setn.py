@@ -34,12 +34,6 @@ class BaseSetNode(SetExpressionNode, ABC):
     def get_dim(self, state: State) -> int:
         pass
 
-    def is_constant(self) -> bool:
-        return True
-
-    def is_null(self) -> bool:
-        return False
-
     def get_children(self) -> list:
         return []
 
@@ -64,18 +58,33 @@ class DeclaredSetNode(BaseSetNode):
                  dummy_element: Element = None
                  ) -> np.ndarray:
 
-        elements = OrderedSet()
-        if self.symbol in state.sets:
-            a_set = state.sets[self.symbol]
-            for element in a_set.elements:
-                elements.add(element)
-
         mp = 1
         if idx_set is not None:
             mp = len(idx_set)
 
+        idx_list = None
+        if self.is_indexed():
+            idx_list = self.idx_node.evaluate(state=state, idx_set=idx_set, dummy_element=dummy_element)
+
         y = np.ndarray(shape=(mp,), dtype=object)
+
         for ip in range(mp):
+
+            idx = None
+            if self.is_indexed():
+                idx = idx_list[ip]
+
+            entity_id = Entity.generate_entity_id(self.symbol, idx)
+
+            elements = OrderedSet()
+
+            if entity_id in state.sets:
+
+                a_set = state.sets[entity_id]
+
+                for element in a_set.elements:
+                    elements.add(element)
+
             y[ip] = elements
 
         return y
@@ -83,22 +92,13 @@ class DeclaredSetNode(BaseSetNode):
     def is_indexed(self) -> bool:
         return self.idx_node is not None
 
-    def is_constant(self) -> bool:
-        return True
-
-    def is_null(self) -> bool:
-        return False
-
-    def get_entity_id(self, state: State) -> str:
-        indices = None
-        if self.is_indexed():
-            indices = self.idx_node.evaluate(state)[0]
-            if not isinstance(indices, tuple):
-                indices = [indices]
-        return Entity.generate_entity_id(self.symbol, indices)
-
     def get_dim(self, state: State) -> int:
-        return state.sets[self.get_entity_id(state)].dim
+
+        for entity_id in state.sets:
+            if entity_id[0] == self.symbol:
+                return state.sets[entity_id].dim
+
+        raise ValueError("Declared set '{0}' is not stored in the state".format(self.symbol))
 
     def get_children(self) -> list:
         return []
@@ -430,7 +430,7 @@ class CompoundSetNode(BaseSetNode):
         if idx_set is not None:
             mp = len(idx_set)
 
-        # Combine dummy sub-elements from the indexing set and each component set
+        # combine dummy sub-elements from the indexing set and each component set
         combined_dummy_sub_elements = None if dummy_element is None else list(dummy_element)
         for set_node in self.set_nodes:
             component_dummy_syms = list(set_node.get_dummy_element(state))

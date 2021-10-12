@@ -41,7 +41,7 @@ class ExpressionNode(ABC):
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
+                                  dummy_element: Element = None) -> Dict[tuple, Union[Parameter, Variable]]:
         return {}
 
     def to_lambda(self,
@@ -58,10 +58,6 @@ class ExpressionNode(ABC):
         :return: callable
         """
         pass
-
-    def is_constant(self) -> bool:
-        are_operands_const = [o.is_constant() for o in self.get_children()]
-        return all(are_operands_const)
 
     def is_controlled(self, dummy_element: List[str] = None) -> bool:
         """
@@ -211,7 +207,7 @@ class ArithmeticExpressionNode(ExpressionNode, ABC):
     def collect_declared_entities(self,
                                   state: State,
                                   idx_set: IndexingSet = None,
-                                  dummy_element: Element = None) -> Dict[str, Union[Parameter, Variable]]:
+                                  dummy_element: Element = None) -> Dict[tuple, Union[Parameter, Variable]]:
         return {}
 
     def evaluate(self,

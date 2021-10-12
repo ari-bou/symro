@@ -222,7 +222,8 @@ def __retrieve_set_data_from_ampl_engine(problem: Problem,
 
         else:  # indexed set
             for raw_indices, ampl_set_instance in ampl_set.instances():
-                indices = mat.Entity.standardize_indices(raw_indices)
+
+                indices = AMPLEngine.standardize_indices(raw_indices)
 
                 raw_elements = [m for m in ampl_set_instance.getValues().toDict().keys()]
                 elements = __process_set_elements(raw_elements)
@@ -250,9 +251,12 @@ def __retrieve_param_data_from_ampl_engine(problem: Problem,
         # indexed parameter
         else:
             for raw_indices, value in param.instances():
-                indices = __standardize_indices_from_ampl_engine(raw_indices)
+
+                indices = AMPLEngine.standardize_indices(raw_indices)
+
                 if value is None:
                     value = 0
+
                 problem.state.build_parameter(symbol=sym,
                                               idx=indices,
                                               value=value)

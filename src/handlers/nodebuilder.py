@@ -284,7 +284,7 @@ def build_default_entity_index_node(meta_entity: mat.MetaEntity) -> Optional[mat
         return None
 
     component_nodes = []
-    dummy_symbols = meta_entity.get_idx_set_dummy_element()
+    dummy_symbols = meta_entity.get_idx_set_reduced_dummy_element()
     for ds in dummy_symbols:
         component_nodes.append(mat.DummyNode(symbol=ds))
 

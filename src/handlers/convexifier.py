@@ -96,7 +96,7 @@ class Convexifier:
             # reformulate the objective expression into a list of standardized terms
             terms = self.__standardize_expression(root_node=expr_node,
                                                   idx_set_node=mo.idx_set_node,
-                                                  dummy_element=tuple(mo.get_idx_set_dummy_element()))
+                                                  dummy_element=tuple(mo.get_idx_set_reduced_dummy_element()))
 
             # retrieve indexing set of the constraint
             idx_set = None
@@ -136,7 +136,7 @@ class Convexifier:
 
                 terms = self.__standardize_expression(root_node=lhs_operand,
                                                       idx_set_node=mc.idx_set_node,
-                                                      dummy_element=tuple(mc.get_idx_set_dummy_element()))
+                                                      dummy_element=tuple(mc.get_idx_set_reduced_dummy_element()))
 
                 # retrieve indexing set of the constraint
                 idx_set = None

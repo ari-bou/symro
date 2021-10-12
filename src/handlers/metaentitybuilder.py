@@ -253,12 +253,13 @@ def build_idx_meta_sets(problem: Problem,
 
     def_unb_syms = set()
 
-    # Pass 1:
-    # - retrieve component set symbols, dimensions, and dummies
-    # - store declared dummy symbols
+    # iterate over each component set node
     for i, cmpt_set_node in enumerate(idx_set_node.set_nodes):
 
         cmpt_dim = cmpt_set_node.get_dim(problem.state)
+        cmpt_dummy_element = []
+        reduced_cmpt_dummy_element = []
+        is_dim_fixed = [False] * cmpt_dim
 
         # indexing set node
         if isinstance(cmpt_set_node, mat.IndexingSetNode):
@@ -272,9 +273,29 @@ def build_idx_meta_sets(problem: Problem,
             else:
                 raise ValueError("Entity builder expected a dummy node while resolving a component indexing set node")
 
-            for dummy_node in dummy_nodes:
+            # iterate over dummy nodes
+            for j, dummy_node in enumerate(dummy_nodes):
+
+                cmpt_dummy_sub_element = dummy_node.get_literal()  # retrieve the dummy sub-element
+
+                cmpt_dummy_element.append(cmpt_dummy_sub_element)  # add the sub-element to the dummy element
+
+                # dummy
                 if isinstance(dummy_node, mat.DummyNode):
-                    def_unb_syms.add(dummy_node.symbol)
+
+                    # already-defined unbound symbol
+                    if dummy_node.symbol in def_unb_syms:
+                        is_dim_fixed[j] = True
+
+                    # newly-defined unbound symbol
+                    else:
+                        # add the sub-element to the reduced dummy element
+                        reduced_cmpt_dummy_element.append(cmpt_dummy_sub_element)
+                        def_unb_syms.add(dummy_node.symbol)  # store new unbound symbol to set
+
+                # arithmetic or string expression
+                else:
+                    is_dim_fixed[j] = True
 
         # non-indexing set node
         else:
@@ -292,11 +313,18 @@ def build_idx_meta_sets(problem: Problem,
 
                     # unbound symbol clashes with previously-defined symbol
                     if d in def_unb_syms:
+
+                        # generate new unique symbol
                         d = problem.generate_unique_symbol(d, symbol_blacklist=def_unb_syms)
+
+                        # add unbound symbol to problem
                         problem.unbound_symbols.add(d)
                         def_unb_syms.add(d)
 
-                    dummy_nodes.append(mat.DummyNode(d))
+                    cmpt_dummy_element.append(d)  # add sub-element to the dummy element
+                    reduced_cmpt_dummy_element.append(d)  # add sub-element to the reduced dummy element
+
+                    dummy_nodes.append(mat.DummyNode(d))  # build new dummy node
 
             # other
             else:
@@ -324,6 +352,9 @@ def build_idx_meta_sets(problem: Problem,
                     problem.unbound_symbols.add(unb_sym)
                     def_unb_syms.add(unb_sym)
 
+                    cmpt_dummy_element.append(unb_sym)  # add sub-element to the dummy element
+                    reduced_cmpt_dummy_element.append(unb_sym)  # add sub-element to the reduced dummy element
+
                     # build new dummy node
                     dummy_nodes.append(mat.DummyNode(unb_sym))
 
@@ -341,22 +372,6 @@ def build_idx_meta_sets(problem: Problem,
                 dummy_node=dummy_node,
                 set_node=cmpt_set_node
             )
-
-        cmpt_dummy_element = []
-        reduced_cmpt_dummy_element = []
-        is_dim_fixed = []
-
-        # retrieve dummy element and fixed dimensions of the meta-set
-        for cmpt_node in dummy_nodes:
-
-            cmpt_dummy_element.append(cmpt_node.get_literal())
-
-            if isinstance(cmpt_node, mat.DummyNode):
-                is_dim_fixed.append(False)
-                reduced_cmpt_dummy_element.append(cmpt_node.get_literal())
-
-            else:
-                is_dim_fixed.append(True)
 
         # compute reduced dimension of the meta-set
         reduced_cmpt_dim = len(reduced_cmpt_dummy_element)
@@ -420,7 +435,7 @@ def __build_sub_meta_entity_idx_set_node(problem: Problem,
         idx_set_con_operands.append(idx_set_node.constraint_node)
 
     # retrieve standard dummy symbols of the indexing set
-    outer_unb_syms = meta_entity.get_idx_set_dummy_element()
+    outer_unb_syms = meta_entity.get_idx_set_reduced_dummy_element()
 
     # process the index node of the sub-meta-entity
     (is_sub_membership_op_required,

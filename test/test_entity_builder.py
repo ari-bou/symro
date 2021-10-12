@@ -7,6 +7,15 @@ from symro.test.test_util import *
 # Scripts
 # ----------------------------------------------------------------------------------------------------------------------
 
+FIXED_DIM_SCRIPT = """
+set I = {1, 2, 3};
+set J = {'A', 'B', 'C'};
+set K = {(1, 'A'), (2, 'B'), (3, 'C')};
+set L = {(1, 'A'), (2, 'B'), (3, 'C')};
+
+var x {(i,'A') in K, (i,l) in L};
+"""
+
 SUB_SET_SCRIPT = """set NUM_SET = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 set EVEN_SET = {0, 2, 4, 6, 8};
 set LETTER_SET = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'};
@@ -27,8 +36,23 @@ display {i in NUM_SET: 1 in union{i1 in NUM_SET}{1..1: i == 5}};
 
 
 def run_entity_builder_test_group():
-    tests = [("Build sub-meta-entities", sub_meta_entity_builder_test)]
+    tests = [("Build meta-entity with fixed dimensions", fixed_dimension_test),
+             ("Build sub-meta-entities", sub_meta_entity_builder_test)]
     return run_tests(tests)
+
+
+def fixed_dimension_test():
+
+    problem = symro.read_ampl(script_literal=FIXED_DIM_SCRIPT,
+                              working_dir_path=SCRIPT_DIR_PATH)
+
+    results = []
+
+    x = problem.get_meta_entity("x")
+    results.append(check_str_result(x.get_idx_set_reduced_dim(), 2))
+    results.append(check_str_result(x.get_idx_set_reduced_dummy_element(), ['i', 'l']))
+
+    return results
 
 
 def sub_meta_entity_builder_test():

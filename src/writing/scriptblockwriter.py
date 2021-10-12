@@ -22,7 +22,7 @@ def generate_entity_instance(meta_entity: mat.MetaEntity,
 
     if can_write_index and len(meta_entity.get_idx_meta_sets()) > 0:
 
-        index_symbols = list(meta_entity.get_idx_set_dummy_element())
+        index_symbols = list(meta_entity.get_idx_set_reduced_dummy_element())
 
         for meta_set, symbol in symbol_surrogates:
             if meta_entity.is_indexed_with(meta_set):

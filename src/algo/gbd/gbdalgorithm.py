@@ -724,7 +724,7 @@ class GBDAlgorithm:
                                    sp_index: List[Union[int, float, str]] = None):
 
         if entity_index is None:
-            entity_index = list(meta_entity.get_idx_set_dummy_element())  # retrieve default entity index
+            entity_index = list(meta_entity.get_idx_set_reduced_dummy_element())  # retrieve default entity index
 
         sp_idx_pos = 0  # first index position of the current indexing meta-set
         for idx_meta_set in self.gbd_problem.idx_meta_sets.values():

@@ -375,3 +375,33 @@ class AMPLEngine(Engine):
         var = self.api.getVariable(symbol)
         var = self.get_entity_instance(var, idx)
         var.set(value)
+
+    # Utility
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @staticmethod
+    def standardize_indices(raw_indices: Union[int, float, str,
+                                               Tuple[Union[int, float, str], ...],
+                                               List[Union[int, float, str]]]
+                            ) -> Tuple[Union[int, float, str], ...]:
+
+        if not isinstance(raw_indices, tuple) and not isinstance(raw_indices, list):
+            raw_indices = [raw_indices]
+
+        indices = list(raw_indices)
+        for i, raw_index in enumerate(raw_indices):
+
+            if isinstance(raw_index, str):
+                if len(raw_index) > 0:
+                    if raw_index[0] in ["'", '"']:
+                        raw_index = raw_index[1:]
+                if len(raw_index) > 0:
+                    if raw_index[len(raw_index) - 1] in ["'", '"']:
+                        raw_index = raw_index[:-1]
+                indices[i] = raw_index
+
+            elif isinstance(raw_index, float):
+                if raw_index.is_integer():
+                    indices[i] = int(raw_index)
+
+        return tuple(indices)

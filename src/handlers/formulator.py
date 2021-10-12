@@ -521,7 +521,7 @@ def substitute_defined_variables(problem: Problem):
     sub_map = {}  # map of defined variable symbols to their defined values
     for mv in problem.model_meta_vars:
         if mv.is_defined():
-            sub_map[mv.get_symbol()] = (mv.get_defined_value_node(), mv.get_idx_set_dummy_element())
+            sub_map[mv.get_symbol()] = (mv.get_defined_value_node(), mv.get_idx_set_reduced_dummy_element())
 
     if len(sub_map) > 0:
 

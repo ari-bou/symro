@@ -41,6 +41,9 @@ class BaseProblem:
         self.deepcopy(self, clone)
         return clone
 
+    # Copying
+    # ------------------------------------------------------------------------------------------------------------------
+
     @staticmethod
     def copy(source: "BaseProblem", clone: "BaseProblem"):
 
@@ -65,8 +68,14 @@ class BaseProblem:
         clone.model_meta_objs = deepcopy(source.model_meta_objs)
         clone.model_meta_cons = deepcopy(source.model_meta_cons)
 
+    # Accessors
+    # ------------------------------------------------------------------------------------------------------------------
+
     def get_symbol(self) -> str:
         return self.symbol
+
+    # Addition
+    # ------------------------------------------------------------------------------------------------------------------
 
     def add_meta_entity_to_model(self, meta_entity: mat.MetaEntity):
         if isinstance(meta_entity, mat.MetaSet):
@@ -94,6 +103,9 @@ class BaseProblem:
 
     def add_meta_constraint_to_model(self, meta_con: mat.MetaConstraint):
         self.model_meta_cons.append(meta_con)
+
+    # Replacement
+    # ------------------------------------------------------------------------------------------------------------------
 
     def replace_model_meta_constraint(self,
                                       old_symbol: str,

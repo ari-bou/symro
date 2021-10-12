@@ -118,15 +118,15 @@ def sub_meta_entity_builder_test():
     s = "var VAR_1{i in NUM_SET: i in union{i4 in NUM_SET}{j2 in INDEXED_SET[i]}}"
     results.append(check_str_result(sub_meta_entity, s))
 
-    # test 6: {i in NUM_SET, (j,k) in INDEXED_SET_2[i]} VAR_2[j,k]
-    idx_subset_node = ampl_parser.parse_indexing_set_definition("{i in NUM_SET, (j,k) in INDEXED_SET_2[i]}")
+    # test 6: {i in NUM_SET, j in INDEXED_SET_2[i]} VAR_2[i,j]
+    idx_subset_node = ampl_parser.parse_indexing_set_definition("{i in NUM_SET, j in INDEXED_SET_2[i]}")
     idx_node = ampl_parser.parse_entity_index("[j,k]")
     sub_meta_entity = eb.build_sub_meta_entity(
         problem=problem,
         idx_subset_node=idx_subset_node,
         meta_entity=mv_2,
         entity_idx_node=idx_node)
-    s = "var VAR_2{i in NUM_SET, j in LETTER_SET: (i,j) in union{i5 in NUM_SET}{(j3,k1) in INDEXED_SET_2[i]}}"
+    s = "var VAR_2{i in NUM_SET, j in LETTER_SET}"
     results.append(check_str_result(sub_meta_entity, s))
 
     # problem.engine.api.reset()

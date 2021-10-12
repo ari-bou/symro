@@ -312,7 +312,7 @@ class IndexingSetNode(SetExpressionNode):
                 for element_c_ip_ic in set_c_ip:
                     is_member = True
                     for jc in range(dim_c):
-                        if is_dim_fixed[jc] and challenge_element_ip[jc] != element_c_ip_ic[jc]:
+                        if challenge_element_ip[jc] != element_c_ip_ic[jc] and is_dim_fixed[jc]:
                             is_member = False
                             break
                     if is_member:

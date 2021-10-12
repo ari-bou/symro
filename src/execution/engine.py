@@ -104,9 +104,9 @@ class Engine(ABC):
                    ub: Union[int, float],
                    dual: Union[int, float]):
 
-        if self.problem.state.con_exists(symbol=symbol, idx=idx):
+        if self.problem.state.constraint_exists(symbol=symbol, idx=idx):
             con = self.problem.state.get_constraint(symbol=symbol, idx=idx)
-            con.value = body
+            con.body = body
             con.ub = ub
             con.lb = lb
             con.dual = dual

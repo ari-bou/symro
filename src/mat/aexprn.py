@@ -545,7 +545,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
         if idx_set is not None:
             mp = len(idx_set)
 
-        y = np.zeros(shape=mp)
+        entities = []
 
         for ip in range(mp):
 
@@ -555,10 +555,29 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
 
             # build the entity if nonexistent and retrieve it
             entity = state.build_entity(self.symbol, idx, self.__entity_type)
+            entities.append(entity)
 
-            y[ip] = entity.get_value()
+        if self.suffix is None:
+            return np.array([e.get_value() for e in entities])
 
-        return y
+        elif self.suffix == "lb":
+            return np.array([e.get_lb() for e in entities])
+
+        elif self.suffix == "ub":
+            return np.array([e.get_ub() for e in entities])
+
+        elif self.suffix == "val":
+            return np.array([e.get_value() for e in entities])
+
+        elif self.suffix == "body":
+            return np.array([e.get_body() for e in entities])
+
+        elif self.suffix == "dual":
+            return np.array([e.get_value() for e in entities])
+
+        else:
+            raise ValueError("Unable to resolve suffix '{0}'".format(self.suffix)
+                             + " of declared entity node '{0}'".format(self))
 
     def to_lambda(self,
                   state: State,
@@ -574,7 +593,27 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
         # build the entity if nonexistent and retrieve it
         entity = state.build_entity(self.symbol, idx, self.__entity_type)
 
-        return partial(lambda e: e.value, entity)
+        if self.suffix is None:
+            return partial(lambda e: e.get_value(), entity)
+
+        elif self.suffix == "lb":
+            return partial(lambda e: e.lb, entity)
+
+        elif self.suffix == "ub":
+            return partial(lambda e: e.ub, entity)
+
+        elif self.suffix == "val":
+            return partial(lambda e: e.dual, entity)
+
+        elif self.suffix == "body":
+            return partial(lambda e: e.body, entity)
+
+        elif self.suffix == "dual":
+            return partial(lambda e: e.dual, entity)
+
+        else:
+            raise ValueError("Unable to resolve suffix '{0}'".format(self.suffix)
+                             + " of declared entity node '{0}'".format(self))
 
     def collect_declared_entities(self,
                                   state: State,

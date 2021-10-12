@@ -1,5 +1,6 @@
-from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple, Union
+from abc import ABC
+from ordered_set import OrderedSet
+from typing import List, Optional, Union
 
 from symro.src.mat.util import IndexingSet, Element
 
@@ -55,9 +56,17 @@ class Entity(ABC):
         else:
             return len(self.idx)
 
-    @abstractmethod
     def get_value(self):
-        pass
+        raise TypeError("Entity type '{0}' does not possess a value property".format(type(self)))
+
+    def get_lb(self):
+        raise TypeError("Entity type '{0}' does not possess a lower bound property".format(type(self)))
+
+    def get_ub(self):
+        raise TypeError("Entity type '{0}' does not possess an upper bound property".format(type(self)))
+
+    def get_body(self):
+        raise TypeError("Entity type '{0}' does not possess a body property".format(type(self)))
 
     @staticmethod
     def generate_entity_id(symbol: str, idx: Element = None) -> tuple:
@@ -81,16 +90,23 @@ class SSet(Entity):
         self.dim: int = dim
         self.elements: IndexingSet = elements
 
-    def __eq__(self, other):
-        if isinstance(other, SSet) and self.entity_id == other.entity_id:
-            return True
-        return False
+        if self.elements is None:
+            self.elements = OrderedSet()
 
     def __len__(self):
         return len(self.elements)
 
+    def __eq__(self, other):
+        if isinstance(other, SSet):
+            return self.elements == other.elements
+        else:
+            return False
+
+    def __getitem__(self, item: int):
+        return self.elements[item]
+
     def get_value(self):
-        return None
+        return self.elements
 
 
 class Parameter(Entity):
@@ -106,9 +122,10 @@ class Parameter(Entity):
         self.value: Union[float, str] = value
 
     def __eq__(self, other):
-        if isinstance(other, Parameter) and self.entity_id == other.entity_id:
-            return True
-        return False
+        if isinstance(other, Parameter):
+            return self.value == other.value
+        else:
+            return False
 
     def get_value(self):
         return self.value
@@ -131,12 +148,19 @@ class Variable(Entity):
         self.ub: float = float(ub)
 
     def __eq__(self, other):
-        if isinstance(other, Variable) and self.entity_id == other.entity_id:
-            return True
-        return False
+        if isinstance(other, Variable):
+            return self.value == other.value
+        else:
+            return False
 
     def get_value(self):
         return self.value
+
+    def get_lb(self):
+        return self.lb
+
+    def get_ub(self):
+        return self.ub
 
 
 class Objective(Entity):
@@ -152,9 +176,10 @@ class Objective(Entity):
         self.value: Union[float, str] = value
 
     def __eq__(self, other):
-        if isinstance(other, Objective) and self.entity_id == other.entity_id:
-            return True
-        return False
+        if isinstance(other, Objective):
+            return self.value == other.value
+        else:
+            return False
 
     def get_value(self):
         return self.value
@@ -173,54 +198,25 @@ class Constraint(Entity):
         super(Constraint, self).__init__(symbol=symbol,
                                          idx=idx,
                                          is_dim_aggregated=is_dim_aggregated)
-        self.value: Union[float, str] = value  # body
+        self.body: Union[float, str] = value  # body
         self.lb: float = float(lb)
         self.ub: float = float(ub)
         self.dual: float = dual
 
     def __eq__(self, other):
-        if isinstance(other, Constraint) and self.entity_id == other.entity_id:
-            return True
-        return False
+        if isinstance(other, Constraint):
+            return self.dual == other.dual
+        else:
+            return False
 
     def get_value(self):
-        return self.value
+        return self.dual
 
+    def get_lb(self):
+        return self.lb
 
-# Entity Collection
-# ----------------------------------------------------------------------------------------------------------------------
+    def get_ub(self):
+        return self.ub
 
-class EntityCollection:
-
-    def __init__(self, symbol):
-
-        self.symbol: str = symbol  # name of entity collection
-
-        # key: index of entity instance; value: entity.
-        # key is None if the entity is scalar
-        self.entity_map: Dict[Element, Entity] = {}
-
-    def filter(self, indices_filter: Tuple[Optional[str], ...]):
-
-        filtered_map = {}
-
-        for entity_indices, entity in self.entity_map.items():
-            index_in_filter = []
-            for entity_index, index_filter in zip(entity_indices, indices_filter):
-                if index_filter is not None and index_filter != "":
-                    index_in_filter.append(entity_index == index_filter)
-                else:
-                    index_in_filter.append(True)
-            entity_in_filter = all(index_in_filter)
-            if entity_in_filter:
-                filtered_map[entity_indices] = entity
-
-        return filtered_map
-
-    def generate_value_dict(self):
-        self.entity_map: Dict[Element, Union[Parameter, Variable, Objective, Constraint]]
-        return {k: v.value for k, v in self.entity_map.items()}
-
-    def generate_dual_dict(self):
-        self.entity_map: Dict[Element, Union[Constraint]]
-        return {k: v.dual for k, v in self.entity_map.items()}
+    def get_body(self):
+        return self.body

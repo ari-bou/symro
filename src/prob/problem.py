@@ -1,7 +1,8 @@
 from copy import copy, deepcopy
+from ordered_set import OrderedSet
 import os
 import pickle
-from typing import Any, Dict, Iterable, List, Optional, Set, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Union
 import warnings
 
 import symro.src.mat as mat
@@ -188,6 +189,64 @@ class Problem(BaseProblem):
         clone = Problem()
         self.deepcopy(self, clone)
         return clone
+
+    def __getitem__(self, item: Sequence):
+
+        sym = item[0]
+        idx = item[1:]
+        entity_id = mat.Entity.generate_entity_id(sym, idx)
+
+        if sym in self.meta_sets:
+            entity = self.state.sets.get(entity_id, self.state.build_set(symbol=sym, idx=idx))
+            return entity.get_value()
+
+        elif sym in self.meta_params:
+            entity = self.state.parameters.setdefault(entity_id, self.state.build_parameter(symbol=sym, idx=idx))
+            return entity.get_value()
+
+        elif sym in self.meta_vars:
+            entity = self.state.variables.get(entity_id, self.state.build_variable(symbol=sym, idx=idx))
+            return entity.get_value()
+
+        elif sym in self.meta_objs:
+            entity = self.state.objectives.get(entity_id, self.state.build_objective(symbol=sym, idx=idx))
+            return entity.get_value()
+
+        elif sym in self.meta_cons:
+            entity = self.state.constraints.get(entity_id, self.state.build_constraint(symbol=sym, idx=idx))
+            return entity.get_value()
+
+        else:
+            raise ValueError("Symbol '{0}' is undefined".format(sym))
+
+    def __setitem__(self, key: Sequence, value: Union[int, float, str, mat.IndexingSet]):
+
+        sym = key[0]
+        idx = key[1:]
+        entity_id = mat.Entity.generate_entity_id(sym, idx)
+
+        if sym in self.meta_sets:
+            entity = self.state.sets.setdefault(entity_id, self.state.build_set(symbol=sym, idx=idx))
+            entity.elements = OrderedSet(value)
+
+        elif sym in self.meta_params:
+            entity = self.state.parameters.setdefault(entity_id, self.state.build_parameter(symbol=sym, idx=idx))
+            entity.value = value
+
+        elif sym in self.meta_vars:
+            entity = self.state.variables.get(entity_id, self.state.build_variable(symbol=sym, idx=idx))
+            entity.value = value
+
+        elif sym in self.meta_objs:
+            entity = self.state.objectives.get(entity_id, self.state.build_objective(symbol=sym, idx=idx))
+            entity.value = value
+
+        elif sym in self.meta_cons:
+            entity = self.state.constraints.get(entity_id, self.state.build_constraint(symbol=sym, idx=idx))
+            entity.dual = value
+
+        else:
+            raise ValueError("Symbol '{0}' is undefined".format(sym))
 
     @staticmethod
     def copy(source: "Problem", clone: "Problem"):
@@ -471,7 +530,7 @@ class Problem(BaseProblem):
             if can_include:
 
                 # retrieve values
-                values = {k[1:]: v.value for k, v in self.state.vars.items() if k[0] == sym}
+                values = {k[1:]: v.value for k, v in self.state.variables.items() if k[0] == sym}
 
                 # generate data statement
                 data_statement = stm.ParameterDataStatement(symbol=sym,
@@ -496,7 +555,7 @@ class Problem(BaseProblem):
             sym = mc.get_symbol()
 
             # retrieve duals
-            duals = {k[1:]: v.dual for k, v in self.state.cons.items() if k[0] == sym}
+            duals = {k[1:]: v.dual for k, v in self.state.constraints.items() if k[0] == sym}
 
             # generate data statement
             data_statement = stm.ParameterDataStatement(symbol=sym,

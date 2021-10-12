@@ -983,31 +983,31 @@ class AMPLParser:
 
     def _parse_declared_entity(self) -> Union[mat.DeclaredEntityNode, mat.DeclaredSetNode]:
 
-        token = self.get_token()
+        symbol = self.get_token()
+        self._next_token()  # skip symbol
 
         entity_type = mat.PARAM_TYPE
-        if token in self.problem.meta_sets:
+        if symbol in self.problem.meta_sets:
             entity_type = mat.SET_TYPE
-        if token in self.problem.meta_params:
+        if symbol in self.problem.meta_params:
             entity_type = mat.PARAM_TYPE
-        elif token in self.problem.meta_vars:
+        elif symbol in self.problem.meta_vars:
             entity_type = mat.VAR_TYPE
-        elif token in self.problem.meta_objs:
+        elif symbol in self.problem.meta_objs:
             entity_type = mat.OBJ_TYPE
-        elif token in self.problem.meta_cons:
+        elif symbol in self.problem.meta_cons:
             entity_type = mat.CON_TYPE
-        elif token in self.problem.meta_tables:
+        elif symbol in self.problem.meta_tables:
             entity_type = mat.TABLE_TYPE
-        elif token in self.problem.subproblems:
+        elif symbol in self.problem.subproblems:
             entity_type = mat.PROB_TYPE
 
-        # Index
-        self._next_token()
+        # index
         index_node = None
         if self.get_token() == '[':
             index_node = self.__parse_entity_index()
 
-        # Suffix
+        # suffix
         suffix = None
         if self.get_token() == '.':
             self._next_token()  # skip '.'
@@ -1015,11 +1015,11 @@ class AMPLParser:
             self._next_token()  # skip suffix
 
         if entity_type == mat.SET_TYPE:
-            return mat.DeclaredSetNode(symbol=token,
+            return mat.DeclaredSetNode(symbol=symbol,
                                        idx_node=index_node,
                                        suffix=suffix)
         else:
-            return mat.DeclaredEntityNode(symbol=token,
+            return mat.DeclaredEntityNode(symbol=symbol,
                                           idx_node=index_node,
                                           suffix=suffix,
                                           type=entity_type)

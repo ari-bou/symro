@@ -1,3 +1,5 @@
+from typing import Dict, Sequence
+
 from symro.src.mat.util import *
 from symro.src.mat.entity import *
 
@@ -7,10 +9,44 @@ class State:
     def __init__(self):
 
         self.sets: Dict[tuple, SSet] = {}
-        self.params: Dict[tuple, Parameter] = {}
-        self.vars: Dict[tuple, Variable] = {}
-        self.objs: Dict[tuple, Objective] = {}
-        self.cons: Dict[tuple, Constraint] = {}
+        self.parameters: Dict[tuple, Parameter] = {}
+        self.variables: Dict[tuple, Variable] = {}
+        self.objectives: Dict[tuple, Objective] = {}
+        self.constraints: Dict[tuple, Constraint] = {}
+
+    def __getitem__(self, item: Sequence):
+
+        entity_id = Entity.generate_entity_id(item[0], item[1:])
+
+        if entity_id in self.sets:
+            return self.sets[entity_id].get_value()
+        elif entity_id in self.parameters:
+            return self.parameters[entity_id].get_value()
+        elif entity_id in self.variables:
+            return self.variables[entity_id].get_value()
+        elif entity_id in self.objectives:
+            return self.objectives[entity_id].get_value()
+        elif entity_id in self.constraints:
+            return self.constraints[entity_id].get_value()
+        else:
+            raise ValueError("State does not own an entity with id '{0}'".format(entity_id))
+
+    def __setitem__(self, key: Sequence, value: Union[int, float, str, Iterable]):
+
+        entity_id = Entity.generate_entity_id(key[0], key[1:])
+
+        if entity_id in self.sets:
+            self.sets[entity_id].elements = OrderedSet(value)
+        elif entity_id in self.parameters:
+            self.parameters[entity_id].value = value
+        elif entity_id in self.variables:
+            self.variables[entity_id].value = value
+        elif entity_id in self.objectives:
+            self.objectives[entity_id].value = value
+        elif entity_id in self.constraints:
+            self.constraints[entity_id].dual = value
+        else:
+            raise ValueError("State does not own an entity with id '{0}'".format(entity_id))
 
     # Checkers
     # ------------------------------------------------------------------------------------------------------------------
@@ -28,13 +64,13 @@ class State:
 
         if entity_id in self.sets:
             return True
-        elif entity_id in self.params:
+        elif entity_id in self.parameters:
             return True
-        elif entity_id in self.vars:
+        elif entity_id in self.variables:
             return True
-        elif entity_id in self.objs:
+        elif entity_id in self.objectives:
             return True
-        elif entity_id in self.cons:
+        elif entity_id in self.constraints:
             return True
         else:
             return False
@@ -43,23 +79,23 @@ class State:
         entity_id = Entity.generate_entity_id(symbol, idx)
         return entity_id in self.sets
 
-    def param_exists(self, symbol: str, idx: Element = None) -> bool:
+    def parameter_exists(self, symbol: str, idx: Element = None) -> bool:
         entity_id = Entity.generate_entity_id(symbol, idx)
-        return entity_id in self.params
+        return entity_id in self.parameters
 
-    def var_exists(self, symbol: str, idx: Element = None) -> bool:
+    def variable_exists(self, symbol: str, idx: Element = None) -> bool:
         entity_id = Entity.generate_entity_id(symbol, idx)
-        return entity_id in self.vars
+        return entity_id in self.variables
 
-    def obj_exists(self, symbol: str, idx: Element = None) -> bool:
+    def objective_exists(self, symbol: str, idx: Element = None) -> bool:
         entity_id = Entity.generate_entity_id(symbol, idx)
-        return entity_id in self.objs
+        return entity_id in self.objectives
 
-    def con_exists(self, symbol: str, idx: Element = None) -> bool:
+    def constraint_exists(self, symbol: str, idx: Element = None) -> bool:
         entity_id = Entity.generate_entity_id(symbol, idx)
-        return entity_id in self.cons
+        return entity_id in self.constraints
 
-    # Accessors
+    # Accessors and Mutators
     # ------------------------------------------------------------------------------------------------------------------
 
     def get_entity(self, symbol: str, idx: Element = None) -> Entity:
@@ -68,14 +104,14 @@ class State:
 
         if entity_id in self.sets:
             return self.sets[entity_id]
-        elif entity_id in self.params:
-            return self.params[entity_id]
-        elif entity_id in self.vars:
-            return self.vars[entity_id]
-        elif entity_id in self.objs:
-            return self.objs[entity_id]
-        elif entity_id in self.cons:
-            return self.cons[entity_id]
+        elif entity_id in self.parameters:
+            return self.parameters[entity_id]
+        elif entity_id in self.variables:
+            return self.variables[entity_id]
+        elif entity_id in self.objectives:
+            return self.objectives[entity_id]
+        elif entity_id in self.constraints:
+            return self.constraints[entity_id]
         else:
             raise ValueError("Entity '{0}' does not exist".format(Entity.generate_entity_id(symbol, idx)))
 
@@ -83,16 +119,20 @@ class State:
         return self.sets[Entity.generate_entity_id(symbol, idx)]
 
     def get_parameter(self, symbol: str, idx: Element = None) -> Parameter:
-        return self.params[Entity.generate_entity_id(symbol, idx)]
+        return self.parameters[Entity.generate_entity_id(symbol, idx)]
 
     def get_variable(self, symbol: str, idx: Element = None) -> Variable:
-        return self.vars[Entity.generate_entity_id(symbol, idx)]
+        return self.variables[Entity.generate_entity_id(symbol, idx)]
 
     def get_objective(self, symbol: str, idx: Element = None) -> Objective:
-        return self.objs[Entity.generate_entity_id(symbol, idx)]
+        return self.objectives[Entity.generate_entity_id(symbol, idx)]
 
     def get_constraint(self, symbol: str, idx: Element = None) -> Constraint:
-        return self.cons[Entity.generate_entity_id(symbol, idx)]
+        return self.constraints[Entity.generate_entity_id(symbol, idx)]
+
+    def set_variable_value(self, value: Union[int, float, str], symbol: str, idx: Element = None):
+        entity_id = Entity.generate_entity_id(symbol, idx)
+        self.variables[entity_id].value = value
 
     # Entity Construction
     # ------------------------------------------------------------------------------------------------------------------
@@ -119,42 +159,26 @@ class State:
                   idx: Element = None,
                   dim: int = 0,
                   elements: IndexingSet = None) -> SSet:
-
-        if not self.set_exists(symbol, idx):
-
-            sset = SSet(
-                symbol=symbol,
-                idx=idx,
-                dim=dim,
-                elements=elements
-            )
-
-            self.sets[sset.entity_id] = sset
-
-            return sset
-
-        else:
-            return self.get_set(symbol, idx)
+        sset = SSet(
+            symbol=symbol,
+            idx=idx,
+            dim=dim,
+            elements=elements
+        )
+        self.sets[sset.entity_id] = sset
+        return sset
 
     def build_parameter(self,
                         symbol: str,
                         idx: Element = None,
                         value: float = 0) -> Parameter:
-
-        if not self.param_exists(symbol, idx):
-
-            param = Parameter(
-                symbol=symbol,
-                idx=idx,
-                value=value
-            )
-
-            self.params[param.entity_id] = param
-
-            return param
-
-        else:
-            return self.get_parameter(symbol, idx)
+        param = Parameter(
+            symbol=symbol,
+            idx=idx,
+            value=value
+        )
+        self.parameters[param.entity_id] = param
+        return param
 
     def build_variable(self,
                        symbol: str,
@@ -162,43 +186,27 @@ class State:
                        value: float = 0,
                        lb: float = 0,
                        ub: float = 0) -> Variable:
-
-        if not self.var_exists(symbol, idx):
-
-            var = Variable(
-                symbol=symbol,
-                idx=idx,
-                value=value,
-                lb=lb,
-                ub=ub
-            )
-
-            self.vars[var.entity_id] = var
-
-            return var
-
-        else:
-            return self.get_variable(symbol, idx)
+        var = Variable(
+            symbol=symbol,
+            idx=idx,
+            value=value,
+            lb=lb,
+            ub=ub
+        )
+        self.variables[var.entity_id] = var
+        return var
 
     def build_objective(self,
                         symbol: str,
                         idx: Element = None,
                         value: float = 0) -> Objective:
-
-        if not self.obj_exists(symbol, idx):
-
-            obj = Objective(
-                symbol=symbol,
-                idx=idx,
-                value=value
-            )
-
-            self.objs[obj.entity_id] = obj
-
-            return obj
-
-        else:
-            return self.get_objective(symbol, idx)
+        obj = Objective(
+            symbol=symbol,
+            idx=idx,
+            value=value
+        )
+        self.objectives[obj.entity_id] = obj
+        return obj
 
     def build_constraint(self,
                          symbol: str,
@@ -207,21 +215,13 @@ class State:
                          lb: float = 0,
                          ub: float = 0,
                          dual: float = 0) -> Constraint:
-
-        if not self.con_exists(symbol, idx):
-
-            con = Constraint(
-                symbol=symbol,
-                idx=idx,
-                value=body,
-                lb=lb,
-                ub=ub,
-                dual=dual
-            )
-
-            self.cons[con.entity_id] = con
-
-            return con
-
-        else:
-            return self.get_constraint(symbol, idx)
+        con = Constraint(
+            symbol=symbol,
+            idx=idx,
+            value=body,
+            lb=lb,
+            ub=ub,
+            dual=dual
+        )
+        self.constraints[con.entity_id] = con
+        return con

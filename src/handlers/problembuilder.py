@@ -214,7 +214,7 @@ def __retrieve_set_data_from_ampl_engine(problem: Problem,
         if ampl_set.indexarity() == 0:  # non-indexed set
             raw_elements = [m for m in ampl_set.members()]
             elements = __process_set_elements(raw_elements)
-            problem.state.build_set(
+            problem.state.add_set(
                 symbol=sym,
                 dim=ampl_set.arity(),
                 elements=elements
@@ -228,7 +228,7 @@ def __retrieve_set_data_from_ampl_engine(problem: Problem,
                 raw_elements = [m for m in ampl_set_instance.getValues().toDict().keys()]
                 elements = __process_set_elements(raw_elements)
 
-                problem.state.build_set(
+                problem.state.add_set(
                     symbol=sym,
                     idx=indices,
                     dim=ampl_set.arity(),
@@ -245,8 +245,8 @@ def __retrieve_param_data_from_ampl_engine(problem: Problem,
 
         # scalar parameter
         if param.indexarity() == 0:
-            problem.state.build_parameter(symbol=sym,
-                                          value=param.value())
+            problem.state.add_parameter(symbol=sym,
+                                        value=param.value())
 
         # indexed parameter
         else:
@@ -257,9 +257,9 @@ def __retrieve_param_data_from_ampl_engine(problem: Problem,
                 if value is None:
                     value = 0
 
-                problem.state.build_parameter(symbol=sym,
-                                              idx=indices,
-                                              value=value)
+                problem.state.add_parameter(symbol=sym,
+                                            idx=indices,
+                                            value=value)
 
 
 def __standardize_indices_from_ampl_engine(raw_indices: Union[int, float, str,

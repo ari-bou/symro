@@ -72,7 +72,7 @@ class Engine(ABC):
             var.lb = lb
 
         else:
-            self.problem.state.build_variable(
+            self.problem.state.add_variable(
                 symbol=symbol,
                 idx=idx,
                 value=value,
@@ -90,7 +90,7 @@ class Engine(ABC):
             obj.value = value
 
         else:
-            self.problem.state.build_objective(
+            self.problem.state.add_objective(
                 symbol=symbol,
                 idx=idx,
                 value=value
@@ -104,7 +104,7 @@ class Engine(ABC):
                    ub: Union[int, float],
                    dual: Union[int, float]):
 
-        if self.problem.state.constraint_exists(symbol=symbol, idx=idx):
+        if self.problem.state.entity_exists(symbol=symbol, idx=idx):
             con = self.problem.state.get_constraint(symbol=symbol, idx=idx)
             con.body = body
             con.ub = ub
@@ -112,7 +112,7 @@ class Engine(ABC):
             con.dual = dual
 
         else:
-            self.problem.state.build_constraint(
+            self.problem.state.add_constraint(
                 symbol=symbol,
                 idx=idx,
                 body=body,

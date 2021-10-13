@@ -31,18 +31,11 @@ class ExpressionNode(ABC):
                 setattr(clone, k, deepcopy(v, memo))
         return clone
 
-    @abstractmethod
     def evaluate(self,
                  state: State,
                  idx_set: IndexingSet = None,
                  dummy_element: Element = None) -> np.ndarray:
-        pass
-
-    def collect_declared_entities(self,
-                                  state: State,
-                                  idx_set: IndexingSet = None,
-                                  dummy_element: Element = None) -> Dict[tuple, Union[Parameter, Variable]]:
-        return {}
+        raise NotImplementedError("evaluate method has not yet been implemented for '{0}'".format(type(self)))
 
     def to_lambda(self,
                   state: State,
@@ -57,7 +50,13 @@ class ExpressionNode(ABC):
         :param dummy_element: the unbound symbols of the indexing set of an indexed expression
         :return: callable
         """
-        pass
+        raise NotImplementedError("to_lambda method has not yet been implemented for '{0}'".format(type(self)))
+
+    def collect_declared_entities(self,
+                                  state: State,
+                                  idx_set: IndexingSet = None,
+                                  dummy_element: Element = None) -> Dict[tuple, Union[Parameter, Variable]]:
+        return {}
 
     def is_controlled(self, dummy_element: List[str] = None) -> bool:
         """
@@ -128,6 +127,13 @@ class SetExpressionNode(ExpressionNode, ABC):
     def __xor__(self, other: "SetExpressionNode"):
         pass
 
+    def evaluate(self,
+                 state: State,
+                 idx_set: IndexingSet = None,
+                 dummy_element: Element = None
+                 ) -> np.ndarray:
+        return np.array([OrderedSet()])
+
     @abstractmethod
     def get_dim(self, state: State) -> int:
         pass
@@ -139,13 +145,6 @@ class SetExpressionNode(ExpressionNode, ABC):
     def get_dummy_element(self, state: State) -> Element:
         dummy_syms = [None] * self.get_dim(state)
         return tuple(dummy_syms)
-
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_element: Element = None
-                 ) -> np.ndarray:
-        return np.array([OrderedSet()])
 
 
 class ArithmeticExpressionNode(ExpressionNode, ABC):

@@ -554,7 +554,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
                 idx = indices[ip]
 
             # build the entity if nonexistent and retrieve it
-            entity = state.build_entity(self.symbol, idx, self.__entity_type)
+            entity = state.get_entity(self.symbol, idx, self.__entity_type)
             entities.append(entity)
 
         if self.suffix is None:
@@ -588,10 +588,10 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
         if self.is_indexed():
             idx = self.idx_node.evaluate(state=state,
                                          idx_set=OrderedSet([idx_set_member]),
-                                         dummy_element=dummy_element)
+                                         dummy_element=dummy_element)[0]
 
         # build the entity if nonexistent and retrieve it
-        entity = state.build_entity(self.symbol, idx, self.__entity_type)
+        entity = state.get_entity(self.symbol, idx, self.__entity_type)
 
         if self.suffix is None:
             return partial(lambda e: e.get_value(), entity)

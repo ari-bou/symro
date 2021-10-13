@@ -74,16 +74,8 @@ class DeclaredSetNode(BaseSetNode):
             if self.is_indexed():
                 idx = idx_list[ip]
 
-            entity_id = Entity.generate_entity_id(self.symbol, idx)
-
-            elements = OrderedSet()
-
-            if entity_id in state.sets:
-
-                a_set = state.sets[entity_id]
-
-                for element in a_set.elements:
-                    elements.add(element)
+            sset = state.get_set(self.symbol, idx)
+            elements = OrderedSet(sset.elements)
 
             y[ip] = elements
 
@@ -94,9 +86,8 @@ class DeclaredSetNode(BaseSetNode):
 
     def get_dim(self, state: State) -> int:
 
-        for entity_id in state.sets:
-            if entity_id[0] == self.symbol:
-                return state.sets[entity_id].dim
+        for sset in state.sets.setdefault(self.symbol, {}).values():
+            return sset.dim
 
         raise ValueError("Declared set '{0}' is not stored in the state".format(self.symbol))
 

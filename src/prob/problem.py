@@ -194,26 +194,25 @@ class Problem(BaseProblem):
 
         sym = item[0]
         idx = item[1:]
-        entity_id = mat.Entity.generate_entity_id(sym, idx)
 
         if sym in self.meta_sets:
-            entity = self.state.sets.get(entity_id, self.state.build_set(symbol=sym, idx=idx))
+            entity = self.state.get_set(sym, idx)
             return entity.get_value()
 
         elif sym in self.meta_params:
-            entity = self.state.parameters.setdefault(entity_id, self.state.build_parameter(symbol=sym, idx=idx))
+            entity = self.state.get_parameter(sym, idx)
             return entity.get_value()
 
         elif sym in self.meta_vars:
-            entity = self.state.variables.get(entity_id, self.state.build_variable(symbol=sym, idx=idx))
+            entity = self.state.get_variable(sym, idx)
             return entity.get_value()
 
         elif sym in self.meta_objs:
-            entity = self.state.objectives.get(entity_id, self.state.build_objective(symbol=sym, idx=idx))
+            entity = self.state.get_objective(sym, idx)
             return entity.get_value()
 
         elif sym in self.meta_cons:
-            entity = self.state.constraints.get(entity_id, self.state.build_constraint(symbol=sym, idx=idx))
+            entity = self.state.get_constraint(sym, idx)
             return entity.get_value()
 
         else:
@@ -223,26 +222,25 @@ class Problem(BaseProblem):
 
         sym = key[0]
         idx = key[1:]
-        entity_id = mat.Entity.generate_entity_id(sym, idx)
 
         if sym in self.meta_sets:
-            entity = self.state.sets.setdefault(entity_id, self.state.build_set(symbol=sym, idx=idx))
+            entity = self.state.get_set(sym, idx)
             entity.elements = OrderedSet(value)
 
         elif sym in self.meta_params:
-            entity = self.state.parameters.setdefault(entity_id, self.state.build_parameter(symbol=sym, idx=idx))
+            entity = self.state.get_parameter(sym, idx)
             entity.value = value
 
         elif sym in self.meta_vars:
-            entity = self.state.variables.get(entity_id, self.state.build_variable(symbol=sym, idx=idx))
+            entity = self.state.get_variable(sym, idx)
             entity.value = value
 
         elif sym in self.meta_objs:
-            entity = self.state.objectives.get(entity_id, self.state.build_objective(symbol=sym, idx=idx))
+            entity = self.state.get_objective(sym, idx)
             entity.value = value
 
         elif sym in self.meta_cons:
-            entity = self.state.constraints.get(entity_id, self.state.build_constraint(symbol=sym, idx=idx))
+            entity = self.state.get_constraint(sym, idx)
             entity.dual = value
 
         else:
@@ -530,7 +528,7 @@ class Problem(BaseProblem):
             if can_include:
 
                 # retrieve values
-                values = {k[1:]: v.value for k, v in self.state.variables.items() if k[0] == sym}
+                values = {k[1:]: v.value for k, v in self.state.variables[sym].items() if k[0] == sym}
 
                 # generate data statement
                 data_statement = stm.ParameterDataStatement(symbol=sym,
@@ -555,7 +553,7 @@ class Problem(BaseProblem):
             sym = mc.get_symbol()
 
             # retrieve duals
-            duals = {k[1:]: v.dual for k, v in self.state.constraints.items() if k[0] == sym}
+            duals = {k[1:]: v.dual for k, v in self.state.constraints[sym].items() if k[0] == sym}
 
             # generate data statement
             data_statement = stm.ParameterDataStatement(symbol=sym,

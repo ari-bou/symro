@@ -3,6 +3,7 @@ from symro.src.handlers.problembuilder import read_ampl, build_subproblem
 from symro.src.handlers.scriptbuilder import model_to_ampl
 from symro.src.handlers.convexifier import convexify
 from symro.src.execution.amplengine import AMPLEngine
+from symro.src.parsing.amplparser import AMPLParser
 from symro.src.writing.almdatawriter import to_alamo
 from symro.src.algo.gbd.gbdalgorithm import GBDAlgorithm
 

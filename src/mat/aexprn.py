@@ -823,7 +823,7 @@ class NumericNode(ArithmeticExpressionNode):
                   state: State,
                   idx_set_member: Element = None,
                   dummy_element: Element = None):
-        return partial(lambda c: c, self.value)
+        return lambda: self.value
 
     def get_children(self) -> list:
         return []

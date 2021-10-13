@@ -27,7 +27,7 @@ def to_alamo(x: np.ndarray,  # (m, n_x)
     # validation split
     if valid_split is not None and valid_split > 0:
 
-        split_pos = int(np.floor(valid_split * data.shape[0]))
+        split_pos = int(np.floor((1 - valid_split) * data.shape[0]))
 
         data_train = data[:split_pos, :]
         data_valid = data[split_pos:, :]

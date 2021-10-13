@@ -9,7 +9,6 @@ from symro.src.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpres
     StringExpressionNode
 from symro.src.mat.opern import SetOperationNode
 from symro.src.mat.dummyn import BaseDummyNode, DummyNode, CompoundDummyNode
-from symro.src.mat.entity import Entity
 from symro.src.mat.state import State
 
 
@@ -85,11 +84,7 @@ class DeclaredSetNode(BaseSetNode):
         return self.idx_node is not None
 
     def get_dim(self, state: State) -> int:
-
-        for sset in state.sets.setdefault(self.symbol, {}).values():
-            return sset.dim
-
-        raise ValueError("Declared set '{0}' is not stored in the state".format(self.symbol))
+        return state.set_dims[self.symbol]
 
     def get_children(self) -> list:
         return []

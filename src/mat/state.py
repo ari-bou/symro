@@ -8,11 +8,13 @@ class State:
 
     def __init__(self):
 
-        self.sets: Dict[str, Dict[Element, SSet]] = {}
-        self.parameters: Dict[str, Dict[Element, Parameter]] = {}
-        self.variables: Dict[str, Dict[Element, Variable]] = {}
-        self.objectives: Dict[str, Dict[Element, Objective]] = {}
-        self.constraints: Dict[str, Dict[Element, Constraint]] = {}
+        self.sets: Dict[tuple, SSet] = {}
+        self.parameters: Dict[tuple, Parameter] = {}
+        self.variables: Dict[tuple, Variable] = {}
+        self.objectives: Dict[tuple, Objective] = {}
+        self.constraints: Dict[tuple, Constraint] = {}
+
+        self.set_dims: Dict[str, int] = {}
 
     def __getitem__(self, item: Sequence):
 
@@ -62,15 +64,17 @@ class State:
         :return: True if the entity exists within the state
         """
 
-        if symbol in self.sets and idx in self.sets[symbol]:
+        entity_id = Entity.generate_entity_id(symbol, idx)
+
+        if entity_id in self.sets:
             return True
-        elif symbol in self.parameters and idx in self.parameters[symbol]:
+        elif entity_id in self.parameters:
             return True
-        elif symbol in self.variables and idx in self.variables[symbol]:
+        elif entity_id in self.variables:
             return True
-        elif symbol in self.objectives and idx in self.objectives[symbol]:
+        elif entity_id in self.objectives:
             return True
-        elif symbol in self.constraints and idx in self.constraints[symbol]:
+        elif entity_id in self.constraints:
             return True
         else:
             return False
@@ -99,36 +103,36 @@ class State:
             raise ValueError("Unable to resolve '{0}' as an entity type".format(entity_type))
 
     def get_set(self, symbol: str, idx: Element = None) -> SSet:
-        entity_dict = self.sets.setdefault(symbol, {})
-        entity = entity_dict.get(idx, None)
+        entity_id = Entity.generate_entity_id(symbol, idx)
+        entity = self.sets.get(entity_id, None)
         if entity is None:
             entity = self.add_set(symbol, idx)
         return entity
 
     def get_parameter(self, symbol: str, idx: Element = None) -> Parameter:
-        entity_dict = self.parameters.setdefault(symbol, {})
-        entity = entity_dict.get(idx, None)
+        entity_id = Entity.generate_entity_id(symbol, idx)
+        entity = self.parameters.get(entity_id, None)
         if entity is None:
             entity = self.add_parameter(symbol, idx)
         return entity
 
     def get_variable(self, symbol: str, idx: Element = None) -> Variable:
-        entity_dict = self.variables.setdefault(symbol, {})
-        entity = entity_dict.get(idx, None)
+        entity_id = Entity.generate_entity_id(symbol, idx)
+        entity = self.variables.get(entity_id, None)
         if entity is None:
             entity = self.add_variable(symbol, idx)
         return entity
 
     def get_objective(self, symbol: str, idx: Element = None) -> Objective:
-        entity_dict = self.objectives.setdefault(symbol, {})
-        entity = entity_dict.get(idx, None)
+        entity_id = Entity.generate_entity_id(symbol, idx)
+        entity = self.objectives.get(entity_id, None)
         if entity is None:
             entity = self.add_objective(symbol, idx)
         return entity
 
     def get_constraint(self, symbol: str, idx: Element = None) -> Constraint:
-        entity_dict = self.constraints.setdefault(symbol, {})
-        entity = entity_dict.get(idx, None)
+        entity_id = Entity.generate_entity_id(symbol, idx)
+        entity = self.constraints.get(entity_id, None)
         if entity is None:
             entity = self.add_constraint(symbol, idx)
         return entity
@@ -164,7 +168,9 @@ class State:
             dim=dim,
             elements=elements
         )
-        self.sets.setdefault(symbol, {})[idx] = sset
+        self.sets[sset.entity_id] = sset
+        if symbol not in self.set_dims:
+            self.set_dims[symbol] = dim
         return sset
 
     def add_parameter(self,
@@ -176,7 +182,7 @@ class State:
             idx=idx,
             value=value
         )
-        self.parameters.setdefault(symbol, {})[idx] = param
+        self.parameters[param.entity_id] = param
         return param
 
     def add_variable(self,
@@ -192,7 +198,7 @@ class State:
             lb=lb,
             ub=ub
         )
-        self.variables.setdefault(symbol, {})[idx] = var
+        self.variables[var.entity_id] = var
         return var
 
     def add_objective(self,
@@ -204,7 +210,7 @@ class State:
             idx=idx,
             value=value
         )
-        self.objectives.setdefault(symbol, {})[idx] = obj
+        self.objectives[obj.entity_id] = obj
         return obj
 
     def add_constraint(self,
@@ -222,5 +228,5 @@ class State:
             ub=ub,
             dual=dual
         )
-        self.constraints.setdefault(symbol, {})[idx] = con
+        self.constraints[con.entity_id] = con
         return con

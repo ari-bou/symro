@@ -528,7 +528,7 @@ class Problem(BaseProblem):
             if can_include:
 
                 # retrieve values
-                values = {k[1:]: v.value for k, v in self.state.variables[sym].items() if k[0] == sym}
+                values = {k[1:]: v.value for k, v in self.state.variables.items() if k[0] == sym}
 
                 # generate data statement
                 data_statement = stm.ParameterDataStatement(symbol=sym,
@@ -553,7 +553,7 @@ class Problem(BaseProblem):
             sym = mc.get_symbol()
 
             # retrieve duals
-            duals = {k[1:]: v.dual for k, v in self.state.constraints[sym].items() if k[0] == sym}
+            duals = {k[1:]: v.dual for k, v in self.state.constraints.items() if k[0] == sym}
 
             # generate data statement
             data_statement = stm.ParameterDataStatement(symbol=sym,

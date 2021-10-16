@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from ordered_set import OrderedSet
-from typing import List, Optional, Set, Tuple, Union
+from typing import Callable, List, Optional, Set, Tuple, Union
 
 from symro.src.mat.util import Element, IndexingSet, cartesian_product, remove_set_dimensions
 from symro.src.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode, ArithmeticExpressionNode, \
@@ -80,6 +80,12 @@ class DeclaredSetNode(BaseSetNode):
 
         return y
 
+    def to_lambda(self,
+                  state: State,
+                  idx_set_member: Element = None,
+                  dummy_element: Tuple[str, ...] = None) -> Callable:
+        raise NotImplementedError("to_lambda method has not yet been implemented for '{0}'".format(type(self)))
+
     def is_indexed(self) -> bool:
         return self.idx_node is not None
 
@@ -135,6 +141,12 @@ class OrderedSetNode(BaseSetNode):
             y[ip] = elements
 
         return y
+
+    def to_lambda(self,
+                  state: State,
+                  idx_set_member: Element = None,
+                  dummy_element: Tuple[str, ...] = None) -> Callable:
+        raise NotImplementedError("to_lambda method has not yet been implemented for '{0}'".format(type(self)))
 
     def get_dim(self, state: State) -> int:
         return 1
@@ -197,6 +209,12 @@ class EnumeratedSet(BaseSetNode):
             y[ip] = elements_ip
 
         return y
+
+    def to_lambda(self,
+                  state: State,
+                  idx_set_member: Element = None,
+                  dummy_element: Tuple[str, ...] = None) -> Callable:
+        raise NotImplementedError("to_lambda method has not yet been implemented for '{0}'".format(type(self)))
 
     def get_dim(self, state: State) -> int:
         if len(self.element_nodes) > 0:
@@ -308,6 +326,12 @@ class IndexingSetNode(SetExpressionNode):
 
         return y
 
+    def to_lambda(self,
+                  state: State,
+                  idx_set_member: Element = None,
+                  dummy_element: Tuple[str, ...] = None) -> Callable:
+        raise NotImplementedError("to_lambda method has not yet been implemented for '{0}'".format(type(self)))
+
     def get_dim(self, state: State) -> int:
         return self.dummy_node.get_dim()
 
@@ -366,6 +390,12 @@ class CompoundSetNode(BaseSetNode):
             dummy_element=dummy_element,
             can_reduce=True
         )
+
+    def to_lambda(self,
+                  state: State,
+                  idx_set_member: Element = None,
+                  dummy_element: Tuple[str, ...] = None) -> Callable:
+        raise NotImplementedError("to_lambda method has not yet been implemented for '{0}'".format(type(self)))
 
     def generate_combined_idx_sets(self,
                                    state: State,

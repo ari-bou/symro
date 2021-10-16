@@ -384,6 +384,12 @@ class SetOperationNode(SetExpressionNode):
         else:
             raise ValueError("Unable to resolve operator '{0}' as a set operator".format(self.operator))
 
+    def to_lambda(self,
+                  state: State,
+                  idx_set_member: Element = None,
+                  dummy_element: Tuple[str, ...] = None) -> Callable:
+        raise NotImplementedError("to_lambda method has not yet been implemented for '{0}'".format(type(self)))
+
     @staticmethod
     def union(lhs_operand: SetExpressionNode, rhs_operand: SetExpressionNode):
         return SetOperationNode(operator=UNION_OPERATOR,

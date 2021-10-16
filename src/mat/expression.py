@@ -210,6 +210,27 @@ def get_var_nodes(root_node: ExpressionNode) -> List[DeclaredEntityNode]:
     return var_nodes
 
 
+def get_param_and_var_nodes(root_node: ExpressionNode) -> List[DeclaredEntityNode]:
+
+    nodes = []
+
+    queue = Queue()
+    queue.put(root_node)
+
+    while not queue.empty():
+
+        node: ExpressionNode = queue.get()
+
+        if isinstance(node, DeclaredEntityNode):
+            nodes.append(node)
+
+        else:
+            for child in node.get_children():
+                queue.put(child)
+
+    return nodes
+
+
 # Expression
 # ----------------------------------------------------------------------------------------------------------------------
 class Expression:

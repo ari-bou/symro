@@ -26,11 +26,12 @@ minimize OBJ: 0;
 # ----------------------------------------------------------------------------------------------------------------------
 
 def run_formulator_test_group():
-    tests = [("Expand expressions", formulator_expansion_test)]
+    tests = [("Expression expansion test", test_expansion),
+             ("Expression simplification test", test_simplification)]
     return run_tests(tests)
 
 
-def formulator_expansion_test():
+def test_expansion():
 
     problem = symro.read_ampl(script_literal=SCRIPT,
                               working_dir_path=SCRIPT_DIR_PATH)
@@ -43,7 +44,7 @@ def formulator_expansion_test():
     literal = "x + 1 - 2 + 3 * x + 4 / x"
     node = ampl_parser.parse_arithmetic_expression(literal)
     node = __standardize_expression(problem, node)
-    results.append(check_str_result(node, "(x) + (1) + (-2) + (3 * x) + (4 * (1 / x))"))
+    results.append(check_str_result(node, "x + (1) + (-2) + (3 * x) + (4 * (1 / x))"))
 
     # test 2
     literal = "(1 + x) * (2 + 3 * x)"
@@ -57,10 +58,9 @@ def formulator_expansion_test():
     node = __standardize_expression(problem, node)
     results.append(check_str_result(
         node,
-        "((x) * (x) * 6 * x * 8) + ((x) * (x) * 6 * x * 9 * (1 / x)) + ((x) * (x) * 7 * 8)"
-        " + ((x) * (x) * 7 * 9 * (1 / x)) + (4 * x * 6 * x * 8) + (4 * x * 6 * x * 9 * (1 / x)) + (4 * x * 7 * 8)"
-        " + (4 * x * 7 * 9 * (1 / x)) + (5 * 6 * x * 8) + (5 * 6 * x * 9 * (1 / x)) + (5 * 7 * 8)"
-        " + (5 * 7 * 9 * (1 / x))"
+        "(x * x * 6 * x * 8) + (x * x * 6 * x * 9 * (1 / x)) + (x * x * 7 * 8) + (x * x * 7 * 9 * (1 / x))"
+        " + (4 * x * 6 * x * 8) + (4 * x * 6 * x * 9 * (1 / x)) + (4 * x * 7 * 8) + (4 * x * 7 * 9 * (1 / x))"
+        " + (5 * 6 * x * 8) + (5 * 6 * x * 9 * (1 / x)) + (5 * 7 * 8) + (5 * 7 * 9 * (1 / x))"
     ))
 
     # test 4
@@ -69,7 +69,7 @@ def formulator_expansion_test():
     node = __standardize_expression(problem, node)
     results.append(check_str_result(
         node,
-        "(x * (x) * (x)) + (x * 3) + (sum {i in I} (2 * y[i] * (x) * (x))) + (sum {i in I} (2 * y[i] * 3))"
+        "(x * x * x) + (x * 3) + (sum {i in I} (2 * y[i] * x * x)) + (sum {i in I} (2 * y[i] * 3))"
     ))
 
     # test 5
@@ -78,7 +78,7 @@ def formulator_expansion_test():
     node = __standardize_expression(problem, node)
     results.append(check_str_result(
         node,
-        "(sum {i in I} (x * x * (y[i]))) + (sum {i in I, i1 in I} (2 * y[i] * x * (y[i1])))"
+        "(sum {i in I} (x * x * y[i])) + (sum {i in I, i1 in I} (2 * y[i] * x * y[i1]))"
     ))
 
     # test 6
@@ -87,7 +87,7 @@ def formulator_expansion_test():
     node = __standardize_expression(problem, node)
     results.append(check_str_result(
         node,
-        "(sum {i in I: (1 < 2)} (x * (y[i]))) + (sum {i in I: (! (1 < 2))} (x * (y[i]) * (y[i])))"
+        "(sum {i in I: (1 < 2)} (x * y[i])) + (sum {i in I: (! (1 < 2))} (x * y[i] * y[i]))"
     ))
 
     # test 7
@@ -96,8 +96,8 @@ def formulator_expansion_test():
     node = __standardize_expression(problem, node)
     results.append(check_str_result(
         node,
-        "(sum {i in I: (1 < 2)} ((x) * (y[i]))) + (if (1 < 2) then ((x) * 10))"
-        + " + (sum {i in I: (! (1 < 2))} ((5) * (y[i]))) + (if (! (1 < 2)) then ((5) * 10))"
+        "(sum {i in I: (1 < 2)} (x * y[i])) + (if (1 < 2) then (x * 10))"
+        " + (sum {i in I: (! (1 < 2))} ((5) * y[i])) + (if (! (1 < 2)) then ((5) * 10))"
     ))
 
     # test 8
@@ -108,6 +108,30 @@ def formulator_expansion_test():
         node,
         "((2 ^ (1 * (1 / 0.8))))"
     ))
+
+    return results
+
+
+def test_simplification():
+
+    problem = symro.read_ampl(script_literal=SCRIPT,
+                              working_dir_path=SCRIPT_DIR_PATH)
+
+    ampl_parser = AMPLParser(problem)
+
+    results = []
+
+    # test 1
+    literal = "1 - 4 + x"
+    node = ampl_parser.parse_arithmetic_expression(literal)
+    node = frm.simplify(problem, node)
+    results.append(check_str_result(node, "-3 + x"))
+
+    # test 2
+    literal = "if 1 > 0 then x else if 1 < 0 then 5"
+    node = ampl_parser.parse_arithmetic_expression(literal)
+    node = frm.simplify(problem, node)
+    results.append(check_str_result(node, "x"))
 
     return results
 

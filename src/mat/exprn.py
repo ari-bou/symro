@@ -99,12 +99,6 @@ class LogicalExpressionNode(ExpressionNode, ABC):
     def __or__(self, other: "LogicalExpressionNode"):
         pass
 
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_element: Element = None) -> np.ndarray:
-        return np.array([False])
-
 
 class SetExpressionNode(ExpressionNode, ABC):
 
@@ -126,13 +120,6 @@ class SetExpressionNode(ExpressionNode, ABC):
     @abstractmethod
     def __xor__(self, other: "SetExpressionNode"):
         pass
-
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_element: Element = None
-                 ) -> np.ndarray:
-        return np.array([OrderedSet()])
 
     @abstractmethod
     def get_dim(self, state: State) -> int:
@@ -209,12 +196,6 @@ class ArithmeticExpressionNode(ExpressionNode, ABC):
                                   dummy_element: Element = None) -> Dict[tuple, Union[Parameter, Variable]]:
         return {}
 
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_element: Element = None) -> np.ndarray:
-        return np.array([0])
-
 
 class StringExpressionNode(ExpressionNode, ABC):
 
@@ -248,9 +229,3 @@ class StringExpressionNode(ExpressionNode, ABC):
     @abstractmethod
     def __ge__(self, other: "StringExpressionNode"):
         pass
-
-    def evaluate(self,
-                 state: State,
-                 idx_set: IndexingSet = None,
-                 dummy_element: Element = None) -> np.ndarray:
-        return np.array([""])

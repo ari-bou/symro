@@ -1,4 +1,3 @@
-from copy import deepcopy
 from datetime import datetime
 import numpy as np
 import pprint as pprint
@@ -55,9 +54,6 @@ class GBDAlgorithm:
         self.abs_opt_tol: Optional[float] = None
         self.rel_opt_tol: float = 0.01
         self.fbl_tol: float = 0.001
-
-        self.lb: float = -np.inf
-        self.ub: float = np.inf
 
         self.verbosity: int = 0
         self.can_catch_exceptions: bool = False
@@ -155,15 +151,15 @@ class GBDAlgorithm:
     def __run_algorithm(self):
 
         start_time = datetime.now()
-        is_feasible, v_ub, y, dual_mult = self.__run_loop()
+        is_feasible, v_ub, y = self.__run_loop()
         sol_time = datetime.now() - start_time
 
         self.__print_solution(is_feasible, v_ub, y, sol_time.total_seconds())
 
         if is_feasible:
-            self.__log_message("Algorithm terminated with feasible solution")
+            self.__log_message("GBD algorithm terminated with feasible solution")
         else:
-            self.__log_message("Algorithm terminated with infeasible solution")
+            self.__log_message("GBD algorithm terminated with infeasible solution")
 
         return v_ub, y
 
@@ -172,8 +168,7 @@ class GBDAlgorithm:
 
     def __run_loop(self) -> Tuple[bool,
                                   float,
-                                  Dict[str, Union[float, Dict[tuple, float]]],
-                                  Dict[str, Dict[tuple, float]]]:
+                                  Dict[str, Union[float, Dict[tuple, float]]]]:
 
         is_feasible = False
         ub = 0
@@ -181,7 +176,6 @@ class GBDAlgorithm:
         global_ub = self.init_ub
         y_ub = {}
         dual_soln = {}
-        dual_soln_ub = {}
 
         iter = 0
         can_iterate = True
@@ -192,6 +186,7 @@ class GBDAlgorithm:
 
             is_it_feasible = False
 
+            # set master problem as active problem
             self.__set_problem(self.gbd_problem.mp.symbol)
 
             # solve master problem
@@ -199,76 +194,74 @@ class GBDAlgorithm:
 
             if can_iterate:
 
-                # Update lower bound
+                # update lower bound
                 if lb > global_lb:
                     global_lb = lb
                     self.__log_indexed_message("Updated global lower bound", iter)
 
-                # Increment cut count
+                # increment cut count
                 self.__increment_cut_count()
 
-                # Store complicating variables
+                # store complicating variables
                 self.__log_indexed_message("Storing complicating variables", iter)
                 y_i = self.__store_complicating_variables()
 
-                self.__set_is_feasible_flag(True)
-                self.__set_stored_obj_value(0)
+                self.__set_is_feasible_flag(True)  # set default value of feasibility flag
+                self.__set_stored_obj_value(0)  # set default value of the objective
 
-                # Solve primal subproblems
+                # solve primal subproblems
                 is_it_feasible, ub = self.__solve_primal_problem(iter=iter, dual_soln=dual_soln)
                 self.__log_indexed_message("Objective is {0}".format(ub), iter)
 
-                self.__set_stored_obj_value(ub)
+                self.__set_stored_obj_value(ub)  # store upper bound of current iteration
 
                 self.__log_indexed_message("Storing dual multipliers", iter)
-                self.__assign_values_to_dual_params(dual_soln)
+                self.__set_duality_multipliers(dual_soln)  # set duality multipliers
 
-                # Update Global Upper Bound
+                # update global upper bound
                 if ub < global_ub and is_it_feasible:
                     global_ub = ub
                     y_ub = y_i
-                    dual_soln_ub = deepcopy(dual_soln)
                     is_feasible = True
                     self.__log_indexed_message("Updated global upper bound", iter)
 
-            # Output
+            # output
             self.__print_iteration_output(iter,
                                           global_lb,
                                           global_ub,
                                           is_it_feasible)
 
-            # Termination Criteria
+            iter += 1  # increment iteration counter
 
-            iter += 1
+            # termination criteria
 
-            if iter >= self.max_iter_count:
+            if iter >= self.max_iter_count:  # iteration limit reached
                 self.__log_indexed_message("Termination: iteration limit", iter)
                 can_iterate = False
 
-            elif global_lb >= global_ub:
+            elif global_lb >= global_ub:  # lower bound surpassed upper bound
                 self.__log_indexed_message("Termination: lower bound >= upper bound", iter)
                 can_iterate = False
 
             else:
 
                 epsilon_rel = abs(2 * (global_ub - global_lb) / (abs(global_ub) + abs(global_lb)))
-                if epsilon_rel <= self.rel_opt_tol:
+                if epsilon_rel <= self.rel_opt_tol:  # relative error within tolerance
                     message = "Termination: epsilon-optimal solution with relative error = {0}".format(epsilon_rel)
                     self.__log_indexed_message(message, iter)
                     can_iterate = False
 
                 elif self.abs_opt_tol is not None:
                     epsilon_abs = global_ub - global_lb
-                    if epsilon_abs <= self.abs_opt_tol:
+                    if epsilon_abs <= self.abs_opt_tol:  # absolute error within tolerance
                         message = "Termination: epsilon-optimal solution with absolute error = {0}".format(epsilon_abs)
                         self.__log_indexed_message(message, iter)
                         can_iterate = False
 
-        if not is_feasible:
+        if not is_feasible:  # no feasible solution was found
             global_ub = ub
-            dual_soln_ub = deepcopy(dual_soln)
 
-        return is_feasible, global_ub, y_ub, dual_soln_ub
+        return is_feasible, global_ub, y_ub
 
     def __solve_primal_problem(self,
                                iter: int,
@@ -614,7 +607,7 @@ class GBDAlgorithm:
                     sp_dual_soln_c[con_index] = retrieve_dual_value(mod_con_sym, con_index)
                 dual_soln[dual_mult_sym] = sp_dual_soln_c
 
-    def __assign_values_to_dual_params(self, dual_mult_values: Dict[str, Union[float, Dict[tuple, float]]]):
+    def __set_duality_multipliers(self, dual_mult_values: Dict[str, Union[float, Dict[tuple, float]]]):
 
         cut_count = self.__get_cut_count()
 

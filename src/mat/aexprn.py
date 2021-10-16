@@ -686,8 +686,6 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
             literal += "[{0}]".format(','.join([str(n) for n in self.idx_node.component_nodes]))
         if self.suffix is not None:
             literal += ".{0}".format(self.suffix)
-        if self.is_prioritized:
-            literal = '(' + literal + ')'
         return literal
 
 

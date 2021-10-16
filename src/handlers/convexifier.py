@@ -1,5 +1,5 @@
-import numbers
 from copy import deepcopy
+from numbers import Number
 from ordered_set import OrderedSet
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 import warnings
@@ -99,26 +99,40 @@ class Convexifier:
                                                   idx_set_node=mo.idx_set_node,
                                                   dummy_element=tuple(mo.get_idx_set_reduced_dummy_element()))
 
-            # retrieve indexing set of the constraint
+            # retrieve indexing set of the objective
             idx_set = None
             dummy_element = None
             if mo.is_indexed():
                 idx_set = mo.idx_set_node.evaluate(state=self.convex_relaxation.state)[0]
                 dummy_element = mo.idx_set_node.get_dummy_element(state=self.convex_relaxation.state)
 
-            convex_terms = []  # list of convexified terms
+            # meta-objective is empty
+            if idx_set is not None and len(idx_set) == 0:
+                warnings.warn("Convexifier was unable to convexify indexed meta-objective '{0}'".format(mo)
+                              + " because it has an empty indexing set")
 
-            # convexify each term in the expression
-            for term in terms:
-                convex_terms.append(self.__convexify_node(
-                    node=term,
+            # meta-objective is not empty
+            else:
+
+                convex_terms = []  # list of convexified terms
+
+                # convexify each term in the expression
+                for term in terms:
+                    convex_terms.append(self.__convexify_node(
+                        node=term,
+                        idx_set=idx_set,
+                        dummy_element=dummy_element
+                    ))
+
+                convex_root_node = nb.build_addition_node(convex_terms)
+                spl_root_node = fmr.simplify(
+                    problem=self.convex_relaxation,
+                    node=convex_root_node,
                     idx_set=idx_set,
                     dummy_element=dummy_element
-                ))
+                )
 
-            convex_root_node = nb.build_addition_node(convex_terms)
-
-            expr.root_node = convex_root_node
+                expr.root_node = spl_root_node
 
     def __convexify_constraints(self):
 
@@ -146,16 +160,16 @@ class Convexifier:
                     idx_set = mc.idx_set_node.evaluate(state=self.convex_relaxation.state)[0]
                     dummy_element = mc.idx_set_node.get_dummy_element(state=self.convex_relaxation.state)
 
-                convex_terms = []  # list of convexified terms
-
                 # meta-constraint is empty
                 if idx_set is not None and len(idx_set) == 0:
-                    convex_terms = terms
                     warnings.warn("Convexifier was unable to convexify indexed meta-constraint '{0}'".format(mc)
                                   + " because it has an empty indexing set")
 
                 # meta-constraint is not empty
                 else:
+
+                    convex_terms = []  # list of convexified terms
+
                     # convexify each term of the constraint expression
                     for term in terms:
                         convex_terms.append(self.__convexify_node(
@@ -164,9 +178,15 @@ class Convexifier:
                             dummy_element=dummy_element
                         ))
 
-                convex_root_node = nb.build_addition_node(convex_terms)
+                    convex_root_node = nb.build_addition_node(convex_terms)
+                    spl_root_node = fmr.simplify(
+                        problem=self.convex_relaxation,
+                        node=convex_root_node,
+                        idx_set=idx_set,
+                        dummy_element=dummy_element
+                    )
 
-                root_node.lhs_operand = convex_root_node
+                    root_node.lhs_operand = spl_root_node
 
     # Expression Standardization
     # ------------------------------------------------------------------------------------------------------------------
@@ -442,7 +462,7 @@ class Convexifier:
                 if exp_val is None:  # exponent value cannot be resolved as a scalar
                     return mat.GENERAL_NONCONVEX
 
-                elif isinstance(exp_val, numbers.Number):
+                elif isinstance(exp_val, Number):
 
                     node.set_rhs_operand(mat.NumericNode(exp_val))
 
@@ -925,6 +945,12 @@ class Convexifier:
                                                         ue_id[1],  # sign
                                                         ''.join([str(s)[0].upper() for s in ue_id[2:]]))
 
+        idx_set = None
+        dummy_element = None
+        if ue_meta_var.is_indexed():
+            idx_set = ue_meta_var.idx_set_node.evaluate(state=self.convex_relaxation.state)
+            dummy_element = ue_meta_var.idx_set_node.combined_dummy_element
+
         ue_node = nb.build_default_entity_node(ue_meta_var)
 
         ce_expr_nodes = self.__build_multivariate_convex_envelope(factors, is_negative=is_negative)
@@ -933,9 +959,16 @@ class Convexifier:
 
             ue_bound_sym = self.convex_relaxation.generate_unique_symbol("{0}_{1}".format(base_ue_bound_sym, i))
 
+            spl_ce_expr_node = fmr.simplify(
+                problem=self.convex_relaxation,
+                node=ce_expr_node,
+                idx_set=idx_set,
+                dummy_element=dummy_element
+            )
+
             rel_op_node = mat.RelationalOperationNode(
                 operator=mat.LESS_EQUAL_INEQUALITY_OPERATOR,
-                lhs_operand=nb.build_subtraction_node(ce_expr_node, deepcopy(ue_node)),
+                lhs_operand=nb.build_subtraction_node(spl_ce_expr_node, deepcopy(ue_node)),
                 rhs_operand=mat.NumericNode(0)
             )
 
@@ -1310,11 +1343,24 @@ class Convexifier:
                                                       is_negative=is_negative,
                                                       is_lower=is_lower)
 
+        idx_set = None
+        dummy_element = None
+        if idx_set_node is not None:
+            idx_set = idx_set_node.evaluate(state=self.convex_relaxation.state)[0]
+            dummy_element = idx_set_node.combined_dummy_element
+
+        spl_bound_node = fmr.simplify(
+            problem=self.convex_relaxation,
+            node=bound_node,
+            idx_set=idx_set,
+            dummy_element=dummy_element
+        )
+
         mp = eb.build_meta_param(
             problem=self.convex_relaxation,
             symbol=bound_sym,
             idx_set_node=idx_set_node,
-            defined_value=bound_node
+            defined_value=spl_bound_node
         )
 
         self.n_linear_bound_params[bound_id] = mp
@@ -1474,10 +1520,12 @@ class Convexifier:
 
         bound_nodes = [[lb_node, ub_node] for lb_node, ub_node in zip(lb_nodes, ub_nodes)]
 
-        return mat.ArithmeticTransformationNode(
+        bound_node = mat.ArithmeticTransformationNode(
             symbol="min" if is_lower else "max",
             operands=fmr.expand_factors_n(bound_nodes)
         )
+
+        return bound_node
 
     def __build_fractional_lower_bound_node(self, operand: mat.ArithmeticOperationNode):
 

@@ -1,5 +1,6 @@
-from typing import Optional
+from typing import Optional, Callable
 
+import numpy as np
 from symro.src.mat.util import *
 from symro.src.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode
 from symro.src.mat.opern import SetOperationNode
@@ -27,6 +28,18 @@ class SetConditionalNode(SetExpressionNode):
 
     def __xor__(self, other: SetExpressionNode):
         return SetOperationNode.symmetric_difference(self, other)
+
+    def evaluate(self,
+                 state: State,
+                 idx_set: IndexingSet = None,
+                 dummy_element: Element = None) -> np.ndarray:
+        raise NotImplementedError("evaluate method has not yet been implemented for '{0}'".format(type(self)))
+
+    def to_lambda(self,
+                  state: State,
+                  idx_set_member: Element = None,
+                  dummy_element: Tuple[str, ...] = None) -> Callable:
+        raise NotImplementedError("to_lambda method has not yet been implemented for '{0}'".format(type(self)))
 
     @staticmethod
     def generate_negated_combined_condition(conditions: List[str]):
@@ -99,6 +112,18 @@ class SetReductionNode(SetExpressionNode):
 
     def __xor__(self, other: SetExpressionNode):
         return SetOperationNode.symmetric_difference(self, other)
+
+    def evaluate(self,
+                 state: State,
+                 idx_set: IndexingSet = None,
+                 dummy_element: Element = None) -> np.ndarray:
+        raise NotImplementedError("evaluate method has not yet been implemented for '{0}'".format(type(self)))
+
+    def to_lambda(self,
+                  state: State,
+                  idx_set_member: Element = None,
+                  dummy_element: Tuple[str, ...] = None) -> Callable:
+        raise NotImplementedError("to_lambda method has not yet been implemented for '{0}'".format(type(self)))
 
     def get_dim(self, state: State) -> int:
         return self.operand.get_dim(state)

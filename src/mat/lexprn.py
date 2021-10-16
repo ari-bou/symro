@@ -56,6 +56,12 @@ class SetMembershipOperationNode(LogicalExpressionNode):
 
         return y
 
+    def to_lambda(self,
+                  state: State,
+                  idx_set_member: Element = None,
+                  dummy_element: Tuple[str, ...] = None) -> Callable:
+        raise NotImplementedError("to_lambda method has not yet been implemented for '{0}'".format(type(self)))
+
     def add_operand(self, operand: Optional[ExpressionNode]):
         if self.member_node is None:
             self.member_node = operand
@@ -104,6 +110,12 @@ class SetComparisonOperationNode(LogicalExpressionNode):
                  dummy_element: Element = None) -> np.ndarray:
         raise NotImplementedError("evaluate method of Set Comparison Operation Node has not been implemented")
 
+    def to_lambda(self,
+                  state: State,
+                  idx_set_member: Element = None,
+                  dummy_element: Tuple[str, ...] = None) -> Callable:
+        raise NotImplementedError("to_lambda method has not yet been implemented for '{0}'".format(type(self)))
+
     def add_operand(self, operand: Optional[ExpressionNode]):
         if self.lhs_operand is None:
             self.lhs_operand = operand
@@ -147,6 +159,18 @@ class LogicalReductionNode(LogicalExpressionNode):
     def __or__(self, other: LogicalExpressionNode):
         return LogicalOperationNode.disjunction(self, other)
 
+    def evaluate(self,
+                 state: State,
+                 idx_set: IndexingSet = None,
+                 dummy_element: Element = None) -> np.ndarray:
+        raise NotImplementedError("evaluate method has not yet been implemented for '{0}'".format(type(self)))
+
+    def to_lambda(self,
+                  state: State,
+                  idx_set_member: Element = None,
+                  dummy_element: Tuple[str, ...] = None) -> Callable:
+        raise NotImplementedError("to_lambda method has not yet been implemented for '{0}'".format(type(self)))
+
     def get_children(self) -> List[ExpressionNode]:
         if self.idx_set_node is None:
             return [self.operand]
@@ -168,9 +192,9 @@ class LogicalReductionNode(LogicalExpressionNode):
 
 class BooleanNode(LogicalExpressionNode):
 
-    def __init__(self, value: bool):
+    def __init__(self, value: Union[bool, np.bool_]):
         super().__init__()
-        self.value: bool = value
+        self.value: bool = (value == True)  # convert argument to type bool
 
     def __invert__(self):
         self.value = not self.value

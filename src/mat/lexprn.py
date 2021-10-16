@@ -129,14 +129,14 @@ class SetComparisonOperationNode(LogicalExpressionNode):
 class LogicalReductionNode(LogicalExpressionNode):
 
     def __init__(self,
-                 symbol: str,
+                 operator: int,
                  idx_set_node: CompoundSetNode,
-                 operand: ExpressionNode = None):
+                 operand: LogicalExpressionNode = None):
 
         super().__init__()
-        self.symbol: str = symbol
+        self.operator: int = operator
         self.idx_set_node: CompoundSetNode = idx_set_node
-        self.operand: ExpressionNode = operand
+        self.operand: LogicalExpressionNode = operand
 
     def __invert__(self):
         return LogicalOperationNode.invert(self)
@@ -160,7 +160,7 @@ class LogicalReductionNode(LogicalExpressionNode):
                 self.idx_set_node = operands[1]
 
     def get_literal(self) -> str:
-        literal = self.symbol + str(self.idx_set_node) + str(self.operand)
+        literal = AMPL_OPERATOR_SYMBOLS[self.operator] + str(self.idx_set_node) + str(self.operand)
         if self.is_prioritized:
             literal = '(' + literal + ')'
         return literal

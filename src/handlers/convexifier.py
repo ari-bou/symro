@@ -1,3 +1,4 @@
+import numbers
 from copy import deepcopy
 from ordered_set import OrderedSet
 from typing import Dict, Iterable, List, Optional, Tuple, Union
@@ -440,10 +441,28 @@ class Convexifier:
 
                 if exp_val is None:  # exponent value cannot be resolved as a scalar
                     return mat.GENERAL_NONCONVEX
-                elif exp_val % 2 != 0:  # scalar exponent value is not even
+
+                elif isinstance(exp_val, numbers.Number):
+
+                    node.set_rhs_operand(mat.NumericNode(exp_val))
+
+                    if isinstance(exp_val, float):
+                        if exp_val.is_integer():
+                            exp_val = int(exp_val)
+
+                    if isinstance(exp_val, int):  # integer exponent
+                        #  assumption: x is defined over R
+                        if exp_val % 2 == 0:  # scalar exponent value is even
+                            return mat.UNIVARIATE_NONLINEAR
+                        else:  # scalar exponent value is odd
+                            return mat.GENERAL_NONCONVEX
+
+                    else:  # fractional exponent
+                        #  assumption: x is only defined over the positive ray of R
+                        return mat.UNIVARIATE_NONLINEAR
+
+                else:
                     return mat.GENERAL_NONCONVEX
-                else:  # scalar exponent value is an even number
-                    return mat.UNIVARIATE_NONLINEAR
 
             else:
                 # all other non-factorizable exponentiation operations assumed to be general nonconvexities
@@ -1154,8 +1173,11 @@ class Convexifier:
 
         elif isinstance(unl_node, mat.ArithmeticOperationNode) and unl_node.operator == mat.EXPONENTIATION_OPERATOR:
 
+            unl_lhs_operand = unl_node.get_lhs_operand()
+            unl_rhs_operand = unl_node.get_rhs_operand()
+
             # base is constant and exponent is univariate: +/- b^x
-            if mat.is_constant(unl_node.get_lhs_operand()):
+            if mat.is_constant(unl_lhs_operand):
 
                 # special case: +b^x
                 if not is_negative:
@@ -1163,11 +1185,21 @@ class Convexifier:
 
                 x_node = unl_node.get_rhs_operand()
 
-            # base is univariate and exponent evaluates to an even number: +/- x^c
-            elif mat.is_constant(unl_node.get_rhs_operand()):
+            # base is univariate and exponent is constant: +/- x^c
+            elif mat.is_constant(unl_rhs_operand):
 
-                # special case: +x^c
-                if not is_negative:
+                if not isinstance(unl_rhs_operand, mat.NumericNode):
+                    raise ValueError("Convexifier encountered an unexpected node '{0}'".format(unl_node)
+                                     + " while constructing a convex envelope for a general univariate nonlinear term")
+
+                exp_val = unl_rhs_operand.value
+
+                # special case: +x^c where c is even
+                if not is_negative and exp_val % 2 == 0:
+                    return deepcopy(unl_node)  # function is convex
+
+                # special case: -x^c where c is fractional
+                elif is_negative and exp_val % 1 != 0:
                     return deepcopy(unl_node)  # function is convex
 
                 x_node = unl_node.get_lhs_operand()

@@ -100,6 +100,15 @@ def formulator_expansion_test():
         + " + (sum {i in I: (! (1 < 2))} ((5) * (y[i]))) + (if (! (1 < 2)) then ((5) * 10))"
     ))
 
+    # test 8
+    literal = "2 ^ (1/0.8)"
+    node = ampl_parser.parse_arithmetic_expression(literal)
+    node = __standardize_expression(problem, node)
+    results.append(check_str_result(
+        node,
+        "((2 ^ (1 * (1 / 0.8))))"
+    ))
+
     return results
 
 

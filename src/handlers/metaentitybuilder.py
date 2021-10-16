@@ -201,7 +201,7 @@ def _build_value_node(value: Union[None, int, float, str, mat.ExpressionNode]
     return node
 
 
-# Indexing Set Construction
+# Indexing Meta-Set Construction
 # ------------------------------------------------------------------------------------------------------------------
 
 def build_all_idx_meta_sets(problem: Problem):
@@ -271,7 +271,9 @@ def build_idx_meta_sets(problem: Problem,
             elif isinstance(dummy_node, mat.DummyNode):
                 dummy_nodes = [dummy_node]
             else:
-                raise ValueError("Entity builder expected a dummy node while resolving a component indexing set node")
+                raise ValueError(
+                    "Meta-entity builder expected a dummy node while resolving a component indexing set node"
+                )
 
             # iterate over dummy nodes
             for j, dummy_node in enumerate(dummy_nodes):
@@ -319,7 +321,8 @@ def build_idx_meta_sets(problem: Problem,
 
                         # add unbound symbol to problem
                         problem.unbound_symbols.add(d)
-                        def_unb_syms.add(d)
+
+                    def_unb_syms.add(d)
 
                     cmpt_dummy_element.append(d)  # add sub-element to the dummy element
                     reduced_cmpt_dummy_element.append(d)  # add sub-element to the reduced dummy element

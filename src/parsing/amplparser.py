@@ -286,7 +286,6 @@ class AMPLParser:
         # logical reduction
         if token in ["exists", "forall"]:
 
-            operator = token
             self._next_token()  # skip operator
 
             # parse indexing set
@@ -296,7 +295,13 @@ class AMPLParser:
 
             operand = self.__parse_logical_operand()
 
-            return mat.LogicalReductionNode(symbol=operator,
+            # retrieve operator
+            if token == "exists":
+                operator = mat.EXISTS_OPERATOR
+            else:
+                operator = mat.FOR_ALL_OPERATOR
+
+            return mat.LogicalReductionNode(operator=operator,
                                             idx_set_node=idx_set_node,
                                             operand=operand)
 

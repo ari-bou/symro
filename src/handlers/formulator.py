@@ -540,9 +540,7 @@ def substitute_defined_variables(problem: Problem):
 # ------------------------------------------------------------------------------------------------------------------
 
 def simplify(problem: Problem,
-             node: mat.ExpressionNode,
-             idx_set: mat.IndexingSet = None,
-             dummy_element: mat.Element = None):
+             node: mat.ExpressionNode):
 
     # dummy
     if isinstance(node, mat.DummyNode):
@@ -553,61 +551,48 @@ def simplify(problem: Problem,
         for i, cmpt_node in enumerate(node.component_nodes):
             node.component_nodes[i] = simplify(
                 problem=problem,
-                node=cmpt_node,
-                idx_set=idx_set,
-                dummy_element=dummy_element
+                node=cmpt_node
             )
+        return node
 
     # conditional
     elif isinstance(node, mat.ArithmeticConditionalNode) or isinstance(node, mat.SetConditionalNode):
         return __simplify_conditional_expression(
             problem=problem,
-            node=node,
-            idx_set=idx_set,
-            dummy_element=dummy_element
+            node=node
         )
 
     # arithmetic
     elif isinstance(node, mat.ArithmeticExpressionNode):
         return __simplify_arithmetic_expression(
             problem=problem,
-            node=node,
-            idx_set=idx_set,
-            dummy_element=dummy_element
+            node=node
         )
 
     # logical
     elif isinstance(node, mat.LogicalExpressionNode):
         return __simplify_logical_expression(
             problem=problem,
-            node=node,
-            idx_set=idx_set,
-            dummy_element=dummy_element
+            node=node
         )
 
     # set
     elif isinstance(node, mat.SetExpressionNode):
         return __simplify_set_expression(
             problem=problem,
-            node=node,
-            idx_set=idx_set,
-            dummy_element=dummy_element
+            node=node
         )
 
     # string
     elif isinstance(node, mat.StringExpressionNode):
         return __simplify_string_expression(
             problem=problem,
-            node=node,
-            idx_set=idx_set,
-            dummy_element=dummy_element
+            node=node
         )
 
 
 def __simplify_conditional_expression(problem: Problem,
-                                      node: Union[mat.ArithmeticConditionalNode, mat.SetConditionalNode],
-                                      idx_set: mat.IndexingSet,
-                                      dummy_element: mat.Element):
+                                      node: Union[mat.ArithmeticConditionalNode, mat.SetConditionalNode]):
     spl_operands = []
     spl_conditions = []
 
@@ -615,18 +600,14 @@ def __simplify_conditional_expression(problem: Problem,
     for o in node.operands:
         spl_operands.append(simplify(
             problem=problem,
-            node=o,
-            idx_set=idx_set,
-            dummy_element=dummy_element
+            node=o
         ))
 
     # simplify conditional nodes
     for o in node.conditions:
         spl_conditions.append(__simplify_logical_expression(
             problem=problem,
-            node=o,
-            idx_set=idx_set,
-            dummy_element=dummy_element
+            node=o
         ))
 
     red_spl_operands = []
@@ -643,20 +624,13 @@ def __simplify_conditional_expression(problem: Problem,
 
         if spl_condition is not None:
 
-            condition_value: Optional[bool] = simplify_node_to_scalar_value(
-                problem=problem,
-                node=spl_condition,
-                idx_set=idx_set,
-                dummy_element=dummy_element
-            )
-
             # condition cannot be simplified to an explicit boolean value
-            if condition_value is None:
+            if not isinstance(spl_condition, mat.BooleanNode):
                 red_spl_operands.append(spl_operands[i])
                 red_spl_conditions.append(spl_condition)
 
             # condition simplifies to explicit True
-            elif condition_value:
+            elif spl_condition.value:
                 red_spl_operands.append(spl_operands[i])
                 # discard the corresponding condition
                 break  # discard remaining conditions
@@ -676,9 +650,7 @@ def __simplify_conditional_expression(problem: Problem,
 
 
 def __simplify_arithmetic_expression(problem: Problem,
-                                     node: mat.ArithmeticExpressionNode,
-                                     idx_set: mat.IndexingSet,
-                                     dummy_element: mat.Element):
+                                     node: mat.ArithmeticExpressionNode):
 
     # numeric
     if isinstance(node, mat.NumericNode):
@@ -690,370 +662,343 @@ def __simplify_arithmetic_expression(problem: Problem,
 
     # transformation
     elif isinstance(node, mat.ArithmeticTransformationNode):
-
-        outer_idx_set = idx_set
-        outer_dummy_element = dummy_element
-
-        if node.is_reductive():
-
-            spl_idx_set_node = __simplify_set_expression(
-                problem=problem,
-                node=node.idx_set_node,
-                idx_set=idx_set,
-                dummy_element=dummy_element
-            )
-
-            if not isinstance(spl_idx_set_node, mat.CompoundSetNode):
-                raise ValueError("Formulator encountered an unexpected node '{0}'".format(spl_idx_set_node)
-                                 + " while simplifying an arithmetic transformation node")
-
-            node.idx_set_node = spl_idx_set_node
-
-            idx_sets = node.idx_set_node.generate_combined_idx_sets(
-                state=problem.state,
-                idx_set=idx_set,
-                dummy_element=dummy_element,
-                can_reduce=False
-            )
-            idx_set = OrderedSet().union(*idx_sets)
-            dummy_element = node.idx_set_node.combined_dummy_element
-
-            # check length of indexing set
-            if len(idx_set) == 0:
-                # return 0 if the indexing set is empty
-                return mat.NumericNode(0)
-
-        spl_operands = []
-
-        for o in node.operands:
-            spl_operands.append(__simplify_arithmetic_expression(
-                problem=problem,
-                node=o,
-                idx_set=idx_set,
-                dummy_element=dummy_element
-            ))
-
-        node.operands = spl_operands
-
-        # special case: all operands are numeric nodes
-        if all([isinstance(spl_operand, mat.NumericNode) for spl_operand in spl_operands]):
-            value = node.evaluate(problem.state, outer_idx_set, outer_dummy_element)[0]  # evaluate the transformation
-            return mat.NumericNode(value)  # return a numeric node
-
-        # one or more non-numeric operand nodes
-        else:
-            return node  # return transformation node
+        return __simplify_arithmetic_transformation(
+            problem=problem,
+            node=node
+        )
 
     # operation
     elif isinstance(node, mat.ArithmeticOperationNode):
+        return __simplify_arithmetic_operation(
+            problem=problem,
+            node=node
+        )
 
-        spl_operands = []  # list of simplified operand nodes
+    # conditional
+    elif isinstance(node, mat.ArithmeticConditionalNode):
+        return __simplify_conditional_expression(
+            problem=problem,
+            node=node
+        )
 
-        # simplify operand nodes
-        for o in node.operands:
-            spl_operands.append(__simplify_arithmetic_expression(
-                problem=problem,
-                node=o,
-                idx_set=idx_set,
-                dummy_element=dummy_element
-            ))
+    # other
+    else:
+        raise ValueError("Formulator encountered an unexpected node '{0}'".format(node)
+                         + " while simplifying an arithmetic expression")
 
-        # unary positive
-        if node.operator == mat.UNARY_POSITIVE_OPERATOR:
-            return spl_operands[0]
 
-        # unary negative
-        elif node.operator == mat.UNARY_NEGATION_OPERATOR:
+def __simplify_arithmetic_transformation(problem: Problem,
+                                         node: mat.ArithmeticTransformationNode):
 
-            spl_operand = spl_operands[0]
+    if node.is_reductive():
 
-            # special case: operand is a numeric node
+        # check number of component indexing set nodes
+        if len(node.idx_set_node.set_nodes) == 0:
+            # return 0 if the indexing set is empty
+            return mat.NumericNode(0)
+
+    spl_operands = []
+
+    for o in node.operands:
+        spl_operands.append(__simplify_arithmetic_expression(
+            problem=problem,
+            node=o
+        ))
+
+    node.operands = spl_operands
+
+    # special case: all operands are numeric nodes
+    if all([isinstance(spl_operand, mat.NumericNode) for spl_operand in spl_operands]):
+        value = node.evaluate(problem.state)[0]  # evaluate the transformation
+        return mat.NumericNode(value)  # return a numeric node
+
+    # one or more non-numeric operand nodes
+    else:
+        return node  # return transformation node
+
+
+def __simplify_arithmetic_operation(problem: Problem,
+                                    node: mat.ArithmeticOperationNode):
+
+    spl_operands = []  # list of simplified operand nodes
+
+    # simplify operand nodes
+    for o in node.operands:
+        spl_operands.append(__simplify_arithmetic_expression(
+            problem=problem,
+            node=o
+        ))
+
+    # unary positive
+    if node.operator == mat.UNARY_POSITIVE_OPERATOR:
+        return spl_operands[0]
+
+    # unary negative
+    elif node.operator == mat.UNARY_NEGATION_OPERATOR:
+
+        spl_operand = spl_operands[0]
+
+        # special case: operand is a numeric node
+        if isinstance(spl_operand, mat.NumericNode):
+            spl_operand.value *= -1
+            return spl_operand
+
+        # operand is non-numeric
+        else:
+            node.operands[0] = spl_operand
+            return node
+
+    # addition and multiplication
+    elif node.operator in (mat.ADDITION_OPERATOR, mat.MULTIPLICATION_OPERATOR):
+
+        flat_spl_operands = []  # flattened list of simplified operands
+
+        # flatten embedded arithmetic operation nodes with same operator as the root node
+        for spl_operand in spl_operands:
+
+            # operation with identical operator
+            if isinstance(spl_operand, mat.ArithmeticOperationNode) and spl_operand.operator == node.operator:
+                flat_spl_operands.extend(spl_operand.operands)
+
+            else:  # other
+                flat_spl_operands.append(spl_operand)
+
+        # initialize the default constant value
+        if node.operator == mat.ADDITION_OPERATOR:
+            const_val = 0  # default term
+        else:
+            const_val = 1  # default factor
+
+        non_num_spl_operands = []
+
+        # combine numeric nodes together into a single constant term or coefficient
+        for spl_operand in flat_spl_operands:
+
+            # numeric
             if isinstance(spl_operand, mat.NumericNode):
-                spl_operand.value *= -1
-                return spl_operand
 
-            # operand is non-numeric
-            else:
-                node.operands[0] = spl_operand
-                return node
+                # update constant value
+                if node.operator == mat.ADDITION_OPERATOR:  # addition
+                    const_val += spl_operand.value
+                else:  # multiplication
+                    const_val *= spl_operand.value
 
-        # addition and multiplication
-        elif node.operator in (mat.ADDITION_OPERATOR, mat.MULTIPLICATION_OPERATOR):
+            else:  # other
+                non_num_spl_operands.append(spl_operand)
 
-            flat_spl_operands = []  # flattened list of simplified operands
+        # all operands were simplified to numeric constants
+        if len(non_num_spl_operands) == 0:
+            return mat.NumericNode(const_val)  # return single operand
 
-            # flatten embedded arithmetic operation nodes with same operator as the root node
-            for spl_operand in spl_operands:
-
-                # operation with identical operator
-                if isinstance(spl_operand, mat.ArithmeticOperationNode) and spl_operand.operator == node.operator:
-                    flat_spl_operands.extend(spl_operand.operands)
-
-                else:  # other
-                    flat_spl_operands.append(spl_operand)
-
-            # initialize the default constant value
-            if node.operator == mat.ADDITION_OPERATOR:
-                const_val = 0  # default term
-            else:
-                const_val = 1  # default factor
-
-            non_num_spl_operands = []
-
-            # combine numeric nodes together into a single constant term or coefficient
-            for spl_operand in flat_spl_operands:
-
-                # numeric
-                if isinstance(spl_operand, mat.NumericNode):
-
-                    # update constant value
-                    if node.operator == mat.ADDITION_OPERATOR:  # addition
-                        const_val += spl_operand.value
-                    else:  # multiplication
-                        const_val *= spl_operand.value
-
-                else:  # other
-                    non_num_spl_operands.append(spl_operand)
-
-            # all operands were simplified to numeric constants
-            if len(non_num_spl_operands) == 0:
-                return mat.NumericNode(const_val)  # return single operand
-
-            # at least one non-numeric node remaining after simplification
-            else:
-
-                # insert constant node into the list of simplified operands
-                if (node.operator == mat.ADDITION_OPERATOR and const_val != 0) \
-                        or (node.operator == mat.MULTIPLICATION_OPERATOR and const_val != 1):
-                    non_num_spl_operands.insert(0, mat.NumericNode(const_val))
-
-                node.set_children(non_num_spl_operands)  # update operands of the operation node
-
-                return node  # return simplified operation node
-
-        # subtraction, division, exponentiation
+        # at least one non-numeric node remaining after simplification
         else:
 
-            lhs_operand = spl_operands[0]
-            rhs_operand = spl_operands[1]
+            # insert constant node into the list of simplified operands
+            if (node.operator == mat.ADDITION_OPERATOR and const_val != 0) \
+                    or (node.operator == mat.MULTIPLICATION_OPERATOR and const_val != 1):
+                non_num_spl_operands.insert(0, mat.NumericNode(const_val))
 
-            node.set_children(spl_operands)
+            node.set_children(non_num_spl_operands)  # update operands of the operation node
 
-            # both operand nodes are numeric
-            if isinstance(lhs_operand, mat.NumericNode) and isinstance(rhs_operand, mat.NumericNode):
-                value = node.evaluate(problem.state, idx_set, dummy_element)[0]  # evaluate the operation node
-                return mat.NumericNode(value)  # return numeric node with simplified value
+            return node  # return simplified operation node
 
-            # at least one of the operand nodes is non-numeric
-            else:
-                return node  # return operation node with simplified operands
+    # subtraction, division, exponentiation
+    else:
+
+        lhs_operand = spl_operands[0]
+        rhs_operand = spl_operands[1]
+
+        node.set_children(spl_operands)
+
+        # both operand nodes are numeric
+        if isinstance(lhs_operand, mat.NumericNode) and isinstance(rhs_operand, mat.NumericNode):
+            value = node.evaluate(problem.state)[0]  # evaluate the operation node
+            return mat.NumericNode(value)  # return numeric node with simplified value
+
+        # at least one of the operand nodes is non-numeric
+        else:
+            return node  # return operation node with simplified operands
 
 
 def __simplify_logical_expression(problem: Problem,
-                                  node: mat.LogicalExpressionNode,
-                                  idx_set: mat.IndexingSet,
-                                  dummy_element: mat.Element):
+                                  node: mat.LogicalExpressionNode):
 
+    # logical reduction
     if isinstance(node, mat.LogicalReductionNode):
-
-        outer_idx_set = idx_set
-        outer_dummy_element = dummy_element
-
-        spl_idx_set_node = __simplify_set_expression(
+        return __simplify_logical_reduction(
             problem=problem,
-            node=node.idx_set_node,
-            idx_set=idx_set,
-            dummy_element=dummy_element
+            node=node
         )
 
-        if not isinstance(spl_idx_set_node, mat.CompoundSetNode):
-            raise ValueError("Formulator encountered an unexpected node '{0}'".format(spl_idx_set_node)
-                             + " while simplifying a logical reduction node")
-
-        node.idx_set_node = spl_idx_set_node
-
-        idx_sets = node.idx_set_node.generate_combined_idx_sets(
-            state=problem.state,
-            idx_set=idx_set,
-            dummy_element=dummy_element,
-            can_reduce=False
-        )
-        idx_set = OrderedSet().union(*idx_sets)
-        dummy_element = node.idx_set_node.combined_dummy_element
-
-        # check length of indexing set
-        if len(idx_set) == 0:
-
-            if node.operator == mat.EXISTS_OPERATOR:  # exists
-                return mat.BooleanNode(False)
-
-            else:  # for all
-                return mat.BooleanNode(True)
-
-        node.operand = __simplify_logical_expression(
+    # logical operation
+    elif isinstance(node, mat.LogicalOperationNode):
+        return __simplify_logical_operation(
             problem=problem,
-            node=node.operand,
-            idx_set=idx_set,
-            dummy_element=dummy_element
+            node=node
         )
 
-        # special case: operand is a boolean node
-        if isinstance(node.operand, mat.BooleanNode):
-            value = node.evaluate(problem.state, outer_idx_set, outer_dummy_element)[0]  # evaluate the reduction
-            return mat.BooleanNode(value)  # return a boolean node
-
-        # operand is a more complex logical expression
-        else:
-            return node  # return logical reduction node
+    # relational operation
+    elif isinstance(node, mat.RelationalOperationNode):
+        return __simplify_relational_operation(
+            problem=problem,
+            node=node
+        )
 
     # other logical expression node
     else:
+        return node
 
-        spl_operands = []
 
-        for child in node.get_children():
-            spl_operands.append(simplify(
-                problem=problem,
-                node=child,
-                idx_set=idx_set,
-                dummy_element=dummy_element
-            ))
+def __simplify_logical_reduction(problem: Problem,
+                                 node: mat.LogicalReductionNode):
+
+    node.idx_set_node = __simplify_set_expression(
+        problem=problem,
+        node=node.idx_set_node
+    )
+
+    # check number of component indexing set nodes
+    if len(node.idx_set_node.set_nodes) == 0:
+
+        if node.operator == mat.EXISTS_OPERATOR:  # exists
+            return mat.BooleanNode(False)
+
+        else:  # for all
+            return mat.BooleanNode(True)
+
+    node.operand = __simplify_logical_expression(
+        problem=problem,
+        node=node.operand
+    )
+
+    # special case: operand is a boolean node
+    if isinstance(node.operand, mat.BooleanNode):
+        value = node.evaluate(problem.state)[0]  # evaluate the reduction
+        return mat.BooleanNode(value)  # return a boolean node
+
+    # operand is a more complex logical expression
+    else:
+        return node  # return logical reduction node
+
+
+def __simplify_logical_operation(problem: Problem,
+                                 node: mat.LogicalOperationNode):
+
+    spl_operands = []  # list of simplified operand nodes
+
+    # simplify operand nodes
+    for o in node.operands:
+        spl_operands.append(simplify(
+            problem=problem,
+            node=o
+        ))
+
+    # inversion
+    if node.operator == mat.UNARY_INVERSION_OPERATOR:
+
+        spl_operand = spl_operands[0]
+
+        # special case: operand is boolean
+        if isinstance(spl_operand, mat.BooleanNode):
+            spl_operand.value = not spl_operand.value
+            return spl_operand
+
+        # operand is non-numeric
+        else:
+            node.operands[0] = spl_operand
+            return node
+
+    # binary logical operation
+    else:
 
         node.set_children(spl_operands)
 
-        val: Optional[bool] = simplify_node_to_scalar_value(
-            problem=problem,
-            node=node,
-            idx_set=idx_set,
-            dummy_element=dummy_element
-        )
+        # check whether the operands are elementary
+        all_elementary = True
+        for spl_operand in spl_operands:
+            if not (isinstance(spl_operand, mat.BooleanNode)
+                    or isinstance(spl_operand, mat.NumericNode)
+                    or isinstance(spl_operand, mat.StringNode)):
+                all_elementary = False
 
-        if val is None:
-            return node
+        if all_elementary:
+            return mat.BooleanNode(node.evaluate(problem.state)[0])  # return boolean node with simplified value
 
+        # at least one of the operand nodes is non-elementary
         else:
-            return mat.BooleanNode(val)
+            return node  # return operation node with simplified operands
+
+
+def __simplify_relational_operation(problem: Problem,
+                                    node: mat.RelationalOperationNode):
+
+    spl_operands = []  # list of simplified operand nodes
+
+    # simplify operand nodes
+    for o in [node.lhs_operand, node.rhs_operand]:
+        spl_operands.append(simplify(
+            problem=problem,
+            node=o
+        ))
+
+    lhs_operand = spl_operands[0]
+    rhs_operand = spl_operands[1]
+
+    node.set_children(spl_operands)
+
+    # both operand nodes are elementary
+    if ((isinstance(lhs_operand, mat.BooleanNode)
+            or isinstance(lhs_operand, mat.NumericNode)
+            or isinstance(lhs_operand, mat.StringNode))
+            and (isinstance(rhs_operand, mat.BooleanNode)
+                 or isinstance(rhs_operand, mat.NumericNode)
+                 or isinstance(rhs_operand, mat.StringNode))):
+        value = node.evaluate(problem.state)[0]  # evaluate the operation node
+        return mat.BooleanNode(value)  # return numeric node with simplified value
+
+    # at least one of the operand nodes is non-numeric
+    else:
+        return node  # return operation node with simplified operands
 
 
 def __simplify_set_expression(problem: Problem,
-                              node: mat.SetExpressionNode,
-                              idx_set: mat.IndexingSet,
-                              dummy_element: mat.Element):
+                              node: mat.SetExpressionNode):
 
+    # compound set
     if isinstance(node, mat.CompoundSetNode):
 
-        inter_idx_set = idx_set
-        inter_dummy_element = dummy_element
-
-        # simplify component set nodes
-        for i, cmpt_set_node in enumerate(node.set_nodes):
-
-            # build the indexing set and the dummy element for the outer scope of the current component set node
-            if i > 0:
-                prev_cmpt_set_node = node.set_nodes[i - 1]  # retrieve the previous component set node
-
-                # add the set defined by the previous component set node (i - 1)
-                inter_idx_set = mat.cartesian_product(
-                    [
-                        inter_idx_set,
-                        prev_cmpt_set_node.evaluate(
-                            state=problem.state,
-                            idx_set=inter_idx_set,
-                            dummy_element=inter_dummy_element
-                        )
-                    ]
-                )
-
-                # add the dummy sub-elements of the previous component set node (i - 1)
-                inter_dummy_element += prev_cmpt_set_node.get_dummy_element(problem.state)
-
-            # simplify the current component set node (i)
-            node.set_nodes[i] = __simplify_set_expression(
-                problem=problem,
-                node=cmpt_set_node,
-                idx_set=inter_idx_set,
-                dummy_element=inter_dummy_element
-            )
-
         if node.constraint_node is not None:
-            # simplify constraint node
             node.constraint_node = __simplify_logical_expression(
                 problem=problem,
-                node=node.constraint_node,
-                idx_set=idx_set,
-                dummy_element=dummy_element
+                node=node.constraint_node
             )
-
-        idx_set = node.evaluate(problem.state, idx_set, dummy_element)  # evaluate compound set node
-
-        # check length of indexing set
-        if len(idx_set) == 0:
-            # return empty set if the indexing set is empty
-            return mat.EnumeratedSet()
-
-        else:
-            return node
-
-    elif isinstance(node, mat.SetReductionNode):
-
-        spl_idx_set_node = __simplify_set_expression(
-            problem=problem,
-            node=node.idx_set_node,
-            idx_set=idx_set,
-            dummy_element=dummy_element
-        )
-
-        if not isinstance(spl_idx_set_node, mat.CompoundSetNode):
-            raise ValueError("Formulator encountered an unexpected node '{0}'".format(spl_idx_set_node)
-                             + " while simplifying an arithmetic transformation node")
-
-        node.idx_set_node = spl_idx_set_node
-
-        idx_sets = node.idx_set_node.generate_combined_idx_sets(
-            state=problem.state,
-            idx_set=idx_set,
-            dummy_element=dummy_element,
-            can_reduce=False
-        )
-        idx_set = OrderedSet().union(*idx_sets)
-        dummy_element = node.idx_set_node.combined_dummy_element
-
-        # check length of indexing set
-        if len(idx_set) == 0:
-            # return empty set if the indexing set is empty
-            return mat.EnumeratedSet()
-
-        node.operand = __simplify_set_expression(
-            problem=problem,
-            node=node.operand,
-            idx_set=idx_set,
-            dummy_element=dummy_element
-        )
 
         return node
 
+    # reduction
+    elif isinstance(node, mat.SetReductionNode):
+
+        # check number of component indexing sets
+        if len(node.idx_set_node.set_nodes) == 0:
+            # return empty set if the indexing set is empty
+            return mat.EnumeratedSet()
+
+        return node
+
+    # conditional
+    elif isinstance(node, mat.SetConditionalNode):
+        return __simplify_conditional_expression(
+            problem=problem,
+            node=node
+        )
+
     # other set expression node
     else:
-
-        spl_operands = []
-
-        for child in node.get_children():
-            spl_operands.append(simplify(
-                problem=problem,
-                node=child,
-                idx_set=idx_set,
-                dummy_element=dummy_element
-            ))
-
-        node.set_children(spl_operands)
-
         return node
 
 
 def __simplify_string_expression(problem: Problem,
-                                 node: mat.StringExpressionNode,
-                                 idx_set: mat.IndexingSet,
-                                 dummy_element: mat.Element):
+                                 node: mat.StringExpressionNode):
 
     # string operation
     if isinstance(node, mat.StringOperationNode):
@@ -1064,9 +1009,7 @@ def __simplify_string_expression(problem: Problem,
         for o in node.operands:
             spl_operands.append(simplify(
                 problem=problem,
-                node=o,
-                idx_set=idx_set,
-                dummy_element=dummy_element
+                node=o
             ))
 
         const_val = ""  # initialize the default constant value
@@ -1113,19 +1056,19 @@ def simplify_node_to_scalar_value(problem: Problem,
 
     if len(declared_entity_nodes) == 0:
 
-        vals = node.evaluate(state=problem.state,
-                             idx_set=idx_set,
-                             dummy_element=dummy_element)
+        values = node.evaluate(state=problem.state,
+                               idx_set=idx_set,
+                               dummy_element=dummy_element)
 
-        if len(vals) > 1:
-            for i in range(1, len(vals)):
-                if vals[0] != vals[i]:
+        if len(values) > 1:
+            for i in range(1, len(values)):
+                if values[0] != values[i]:
                     return None
 
-        if len(vals) == 0:
+        if len(values) == 0:
             return 0
         else:
-            return vals[0]
+            return values[0]
 
     return None
 

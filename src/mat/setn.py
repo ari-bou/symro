@@ -403,7 +403,7 @@ class CompoundSetNode(BaseSetNode):
                                    dummy_element: Element = None,
                                    can_reduce: bool = True):
 
-        combined_sets = self.__combine_idx_sets(state, idx_set, dummy_element)
+        combined_sets = self.combine_idx_sets(state, idx_set, dummy_element)
 
         mp = 1
         if idx_set is not None:
@@ -428,10 +428,10 @@ class CompoundSetNode(BaseSetNode):
 
         return y
 
-    def __combine_idx_sets(self,
-                           state: State,
-                           idx_set: IndexingSet = None,  # length mp
-                           dummy_element: Element = None):
+    def combine_idx_sets(self,
+                         state: State,
+                         idx_set: IndexingSet = None,  # length mp
+                         dummy_element: Element = None):
         """
         Combine the indexing set of the outer scope and the component sets together.
         Note that the indexing set constraint is not applied.

@@ -37,7 +37,7 @@ minimize OBJ: x;
 #CON10: x^2 = 0;
 
 #CON11{i in I}: sum {r in R, t in T, s in S} a[i,r] * sum {j in J} b[j,s] * sum {k in K} c[k,t] <= 0; 
-CON12{i in I}: -(sum {r in R, s in S} a[i,r] * sum {j in J} b[j,s]) * sum {r in R} a[i,r] <= 0; 
+CON12{i in I}: -(sum {r in R, s in S} a[i,r] * sum {j in J} b[j,s]) * sum {r in R} a[2,r] <= 0; 
 
 """
 

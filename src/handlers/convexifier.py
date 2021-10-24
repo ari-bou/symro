@@ -26,30 +26,41 @@ def convexify(problem: Problem,
               description: str = None,
               working_dir_path: str = None):
     convexifier = Convexifier()
-    return convexifier.convexify(problem=problem,
-                                 problem_symbol=problem_symbol,
-                                 description=description,
-                                 working_dir_path=working_dir_path)
+    return convexifier.convexify_problem(problem=problem,
+                                         problem_symbol=problem_symbol,
+                                         description=description,
+                                         working_dir_path=working_dir_path)
 
 
 class Convexifier:
 
     def __init__(self):
 
-        self.convex_relaxation: Optional[Problem] = None
+        self.__problem: Optional[Problem] = None
 
         self.lb_params: Dict[str, mat.MetaParameter] = {}
         self.ub_params: Dict[str, mat.MetaParameter] = {}
 
-        self.n_linear_bound_params: Dict[tuple, mat.MetaParameter] = {}
-
         self.ue_meta_vars: Dict[str, mat.MetaVariable] = {}
+        self.ue_env_meta_cons: Dict[str, mat.MetaConstraint] = {}
 
-    def convexify(self,
-                  problem: Problem,
-                  problem_symbol: str = None,
-                  description: str = None,
-                  working_dir_path: str = None):
+    # Core
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def __setup(self):
+        self.__problem = None
+        self.lb_params.clear()
+        self.ub_params.clear()
+        self.ue_meta_vars.clear()
+        self.ue_env_meta_cons.clear()
+
+    def convexify_problem(self,
+                          problem: Problem,
+                          problem_symbol: str = None,
+                          description: str = None,
+                          working_dir_path: str = None):
+
+        self.__setup()
 
         if problem_symbol is None:
             problem_symbol = problem.symbol
@@ -61,31 +72,48 @@ class Convexifier:
         if working_dir_path is None:
             working_dir_path = problem.working_dir_path
 
-        self.convex_relaxation = Problem(symbol=problem_symbol,
-                                         description=description,
-                                         working_dir_path=working_dir_path)
-        Problem.deepcopy(problem, self.convex_relaxation)
+        self.__problem = Problem(symbol=problem_symbol,
+                                 description=description,
+                                 working_dir_path=working_dir_path)
+        Problem.deepcopy(problem, self.__problem)
 
-        fmr.substitute_defined_variables(self.convex_relaxation)
-        fmr.standardize_model(self.convex_relaxation)
+        fmr.substitute_defined_variables(self.__problem)
+        fmr.standardize_model(self.__problem)
         self.__reformulate_nonlinear_equality_constraints()
 
         self.__convexify_objectives()
         self.__convexify_constraints()
 
-        self.__add_bound_meta_parameters_to_problem()
+        self.__add_generated_meta_entities_to_problem()
 
-        return self.convex_relaxation
+        return self.__problem
+
+    def convexify_expression(self,
+                             problem: Problem,
+                             root_node: mat.ArithmeticExpressionNode,
+                             idx_set_node: mat.CompoundSetNode = None):
+        self.__setup()
+        self.__problem = problem
+
+        convex_root_node = self.__convexify_expression(
+            root_node=deepcopy(root_node),
+            idx_set_node=idx_set_node
+        )
+
+        return convex_root_node, self.lb_params, self.ub_params, self.ue_meta_vars, self.ue_env_meta_cons
+
+    # Problem Convexification
+    # ------------------------------------------------------------------------------------------------------------------
 
     def __reformulate_nonlinear_equality_constraints(self):
-        for mc in list(self.convex_relaxation.model_meta_cons):
+        for mc in list(self.__problem.model_meta_cons):
             if mc.get_constraint_type() == mat.MetaConstraint.EQUALITY_TYPE \
                     and not mat.is_linear(mc.get_expression().root_node):
-                fmr.convert_equality_to_inequality_constraints(self.convex_relaxation, mc)
+                fmr.convert_equality_to_inequality_constraints(self.__problem, mc)
 
     def __convexify_objectives(self):
 
-        for mo in self.convex_relaxation.model_meta_objs:
+        for mo in self.__problem.model_meta_objs:
 
             expr = mo.get_expression()
 
@@ -98,7 +126,7 @@ class Convexifier:
 
     def __convexify_constraints(self):
 
-        for mc in self.convex_relaxation.model_meta_cons:
+        for mc in self.__problem.model_meta_cons:
 
             if mc.get_constraint_type() == mat.MetaConstraint.INEQUALITY_TYPE:
 
@@ -115,53 +143,35 @@ class Convexifier:
                                 me: mat.MetaEntity,
                                 root_node: mat.ArithmeticExpressionNode):
 
-        terms = self.__standardize_expression(root_node=root_node,
-                                              idx_set_node=me.idx_set_node,
-                                              dummy_element=tuple(me.get_idx_set_reduced_dummy_element()))
-
-        cmpt_set_nodes = []
-        cmpt_con_nodes = []
-        idx_set = None
-        dummy_element = None
-
-        # retrieve component indexing nodes and indexing set of the constraint
-        if me.is_indexed():
-
-            cmpt_set_nodes.extend(me.idx_set_node.set_nodes)
-            if me.idx_set_node.constraint_node is not None:
-                cmpt_con_nodes.append(me.idx_set_node.constraint_node)
-
-            idx_set = me.idx_set_node.evaluate(state=self.convex_relaxation.state)[0]
-            dummy_element = me.idx_set_node.get_dummy_element(state=self.convex_relaxation.state)
-
-        # meta-entity is empty
-        if idx_set is not None and len(idx_set) == 0:
-            warnings.warn("Convexifier was unable to convexify the expression of the meta-entity '{0}'".format(me)
-                          + " because it has an empty indexing set")
-            return root_node
-
-        # meta-entity is not empty
-        else:
-
-            convex_terms = []  # list of convexified terms
-
-            # convexify each term of the expression
-            for term in terms:
-                convex_terms.append(self.__convexify_node(
-                    node=term,
-                    cmpt_set_nodes=cmpt_set_nodes,
-                    cmpt_con_nodes=cmpt_con_nodes,
-                    idx_set=idx_set,
-                    dummy_element=dummy_element
-                ))
-
-            convex_root_node = nb.build_addition_node(convex_terms)
-            spl_root_node = fmr.simplify(
-                problem=self.convex_relaxation,
-                node=convex_root_node
+        try:
+            return self.__convexify_expression(
+                root_node=root_node,
+                idx_set_node=me.idx_set_node
             )
 
-            return spl_root_node
+        except Exception as e:
+            warnings.warn("Convexifier was unable to convexify the expression"
+                          + " of the meta-entity '{0}':".format(me.get_symbol())
+                          + " {0}".format(e))
+            return root_node
+
+    def __add_generated_meta_entities_to_problem(self):
+
+        bound_mps = []
+        for mp_lb, mp_ub in zip(self.lb_params.values(), self.ub_params.values()):
+            bound_mps.append((mp_lb.get_symbol(), mp_lb, mp_ub))
+
+        bound_mps.sort(key=lambda t: t[0])
+
+        for _, mp_lb, mp_ub in bound_mps:
+            self.__problem.add_meta_parameter(mp_lb, is_in_model=True)
+            self.__problem.add_meta_parameter(mp_ub, is_in_model=True)
+
+        for mv in self.ue_meta_vars.values():
+            self.__problem.add_meta_variable(mv, is_in_model=True)
+
+        for mc in self.ue_env_meta_cons.values():
+            self.__problem.add_meta_constraint(mc, is_in_model=True)
 
     # Expression Standardization
     # ------------------------------------------------------------------------------------------------------------------
@@ -169,20 +179,19 @@ class Convexifier:
     def __standardize_expression(self,
                                  root_node: mat.ArithmeticExpressionNode,
                                  idx_set_node: mat.CompoundSetNode = None,
+                                 idx_set: mat.IndexingSet = None,
                                  dummy_element: mat.Element = None):
 
         root_node = fmr.reformulate_arithmetic_conditional_expressions(root_node)
         root_node = fmr.reformulate_subtraction_and_unary_negation(root_node)
 
         if idx_set_node is None:
-            idx_set = None
             outer_unb_syms = None
         else:
-            idx_set = idx_set_node.evaluate(state=self.convex_relaxation.state)[0]
             outer_unb_syms = idx_set_node.get_defined_unbound_symbols()
 
         terms = fmr.expand_multiplication(
-            problem=self.convex_relaxation,
+            problem=self.__problem,
             node=root_node,
             idx_set=idx_set,
             dummy_element=dummy_element)
@@ -192,7 +201,7 @@ class Convexifier:
         for term in terms:
 
             ref_term = fmr.combine_arithmetic_reduction_nodes(
-                problem=self.convex_relaxation,
+                problem=self.__problem,
                 node=term,
                 outer_unb_syms=outer_unb_syms)
 
@@ -202,6 +211,52 @@ class Convexifier:
 
     # Expression Convexification
     # ------------------------------------------------------------------------------------------------------------------
+
+    def __convexify_expression(self,
+                               root_node: mat.ArithmeticExpressionNode,
+                               idx_set_node: mat.CompoundSetNode):
+
+        cmpt_set_nodes = []
+        cmpt_con_nodes = []
+        idx_set = None
+        dummy_element = None
+
+        if idx_set_node is not None:
+
+            cmpt_set_nodes.extend(idx_set_node.set_nodes)
+            if idx_set_node.constraint_node is not None:
+                cmpt_con_nodes.append(idx_set_node.constraint_node)
+
+            idx_set = idx_set_node.evaluate(state=self.__problem.state)[0]
+            dummy_element = idx_set_node.get_dummy_element(state=self.__problem.state)
+
+        if idx_set is not None and len(idx_set) == 0:
+            raise ValueError("indexing set of the supplied expression is empty")
+
+        terms = self.__standardize_expression(root_node=root_node,
+                                              idx_set_node=idx_set_node,
+                                              idx_set=idx_set,
+                                              dummy_element=dummy_element)
+
+        convex_terms = []  # list of convexified terms
+
+        # convexify each term of the expression
+        for term in terms:
+            convex_terms.append(self.__convexify_node(
+                node=term,
+                cmpt_set_nodes=cmpt_set_nodes,
+                cmpt_con_nodes=cmpt_con_nodes,
+                idx_set=idx_set,
+                dummy_element=dummy_element
+            ))
+
+        convex_root_node = nb.build_addition_node(convex_terms)
+        spl_root_node = fmr.simplify(
+            problem=self.__problem,
+            node=convex_root_node
+        )
+
+        return spl_root_node
 
     def __convexify_node(self,
                          node: mat.ArithmeticExpressionNode,
@@ -219,7 +274,7 @@ class Convexifier:
 
             # retrieve the combined indexing set
             idx_sets = node.idx_set_node.generate_combined_idx_sets(
-                state=self.convex_relaxation.state,
+                state=self.__problem.state,
                 idx_set=idx_set,
                 dummy_element=dummy_element,
                 can_reduce=False
@@ -297,7 +352,7 @@ class Convexifier:
 
                 if mat.is_univariate(
                     root_node=bilinear_node,
-                    state=self.convex_relaxation.state,
+                    state=self.__problem.state,
                     idx_set=idx_set,
                     dummy_element=dummy_element
                 ):
@@ -418,7 +473,7 @@ class Convexifier:
             # denominator is a linear univariate function
             if mat.is_linear(node.get_rhs_operand()) and mat.is_univariate(
                 root_node=node,
-                state=self.convex_relaxation.state,
+                state=self.__problem.state,
                 idx_set=idx_set,
                 dummy_element=dummy_element
             ):
@@ -439,7 +494,7 @@ class Convexifier:
                 # exponent is linear and univariate
                 if mat.is_linear(exponent_node) and mat.is_univariate(
                         root_node=exponent_node,
-                        state=self.convex_relaxation.state,
+                        state=self.__problem.state,
                         idx_set=idx_set,
                         dummy_element=dummy_element):
                     return mat.UNIVARIATE_NONLINEAR
@@ -455,7 +510,7 @@ class Convexifier:
 
                 # simplify exponent node to a scalar value
                 exp_val = fmr.simplify_node_to_scalar_value(
-                    problem=self.convex_relaxation,
+                    problem=self.__problem,
                     node=exponent_node,
                     idx_set=idx_set,
                     dummy_element=dummy_element
@@ -498,7 +553,7 @@ class Convexifier:
 
                 # retrieve the combined indexing set
                 idx_sets = node.idx_set_node.generate_combined_idx_sets(
-                    state=self.convex_relaxation.state,
+                    state=self.__problem.state,
                     idx_set=idx_set,
                     dummy_element=dummy_element,
                     can_reduce=False
@@ -526,7 +581,7 @@ class Convexifier:
                     # operand is linear and univariate
                     if mat.is_linear(operand) and mat.is_univariate(
                             root_node=operand,
-                            state=self.convex_relaxation.state,
+                            state=self.__problem.state,
                             idx_set=idx_set,
                             dummy_element=dummy_element):
                         return mat.UNIVARIATE_NONLINEAR
@@ -574,7 +629,6 @@ class Convexifier:
 
         id_sym_type_tuples = []
         id_to_factor_map = {}
-        id_to_var_node_map = {}
 
         for factor in factors:
 
@@ -582,7 +636,6 @@ class Convexifier:
             if isinstance(factor, mat.NumericNode):
                 sym = str(abs(int(factor.value)))
                 fcn_type = mat.CONSTANT
-                id_to_var_node_map[id(factor)] = None
 
                 factor.is_prioritized = False
 
@@ -591,7 +644,6 @@ class Convexifier:
 
                 sym = factor.symbol
                 fcn_type = mat.LINEAR
-                id_to_var_node_map[id(factor)] = factor
 
                 factor.is_prioritized = False
 
@@ -607,7 +659,6 @@ class Convexifier:
 
                 sym = den_node.symbol
                 fcn_type = mat.FRACTIONAL
-                id_to_var_node_map[id(factor)] = den_node
 
                 factor.is_prioritized = True
 
@@ -627,90 +678,11 @@ class Convexifier:
         types = [fcn_type for factor_id, sym, fcn_type in id_sym_type_tuples]
 
         factors = [id_to_factor_map[factor_id] for factor_id, sym, fcn_type in id_sym_type_tuples]
-        var_nodes = [id_to_var_node_map.get(factor_id, None) for factor_id, sym, fcn_type in id_sym_type_tuples]
 
-        idx_nodes = []
-
-        for var_node in var_nodes:
-            if var_node is not None and var_node.idx_node is not None:
-                idx_nodes.append(var_node.idx_node)
-            else:
-                idx_nodes.append(None)
-
-        return factors, var_nodes, idx_nodes, syms, types
+        return factors, syms, types
 
     # General Entity Construction
     # ------------------------------------------------------------------------------------------------------------------
-
-    def __build_combined_idx_set_nodes_of_meta_entities(self,
-                                                        entity_nodes: List[Optional[mat.DeclaredEntityNode]]
-                                                        ) -> Tuple[Optional[mat.CompoundSetNode],
-                                                                   List[Optional[OrderedSet[str]]]]:
-
-        cmpt_set_nodes = []
-        conj_operands = []
-
-        var_unb_syms = []
-        def_unb_syms = set()
-
-        i = 0
-        for entity_node in entity_nodes:
-
-            var_unb_syms.append(None)
-
-            if entity_node is not None:
-                mv = self.convex_relaxation.meta_vars[entity_node.symbol]
-
-                if mv.is_indexed():
-
-                    var_idx_set_node = deepcopy(mv.idx_set_node)
-
-                    unb_syms = nb.retrieve_unbound_symbols(var_idx_set_node)  # retrieve unbound symbols
-                    clashing_unb_syms = unb_syms & def_unb_syms  # retrieving clashing unbound symbols
-                    def_unb_syms = def_unb_syms | unb_syms  # update set of defined unbound symbols
-
-                    # identify and resolve unbound symbol conflicts
-                    if len(clashing_unb_syms) > 0:
-
-                        # generate map of clashing unbound symbols to unique unbound symbols
-                        mapping = {}
-                        for clashing_sym in clashing_unb_syms:
-                            mapping[clashing_sym] = self.convex_relaxation.generate_unique_symbol(
-                                clashing_sym,
-                                symbol_blacklist=def_unb_syms
-                            )
-
-                        # replace the conflicting symbols with unique symbols
-                        nb.replace_unbound_symbols(node=var_idx_set_node, mapping=mapping)
-
-                        # update set of defined unbound symbols with newly-generated symbols
-                        def_unb_syms = def_unb_syms | set(mapping.values())
-
-                    # add component set nodes of the variable indexing set node to the list of component set nodes
-                    cmpt_set_nodes.extend(var_idx_set_node.set_nodes)
-
-                    var_unb_syms[i] = var_idx_set_node.get_defined_unbound_symbols()
-
-                    # add the constraint node of the variable indexing set node to the list of constraint operands
-                    if var_idx_set_node.constraint_node is not None:
-                        conj_operands.append(var_idx_set_node.constraint_node)
-
-            i += 1
-
-        if len(cmpt_set_nodes) == 0:
-            return None, var_unb_syms
-
-        else:
-
-            if len(conj_operands) == 0:
-                con_node = None
-            else:
-                con_node = nb.build_conjunction_node(conj_operands)
-
-            combined_idx_set_node = mat.CompoundSetNode(set_nodes=cmpt_set_nodes,
-                                                        constraint_node=con_node)
-
-            return combined_idx_set_node, var_unb_syms
 
     @staticmethod
     def __build_declared_entity_node(meta_entity: mat.MetaEntity):
@@ -733,39 +705,6 @@ class Convexifier:
         # build a declared entity node for the underestimating variable
         return mat.DeclaredEntityNode(symbol=meta_entity.get_symbol(),
                                       idx_node=idx_node)
-
-    @staticmethod
-    def __modify_idx_nodes(operands: Iterable[mat.ArithmeticExpressionNode],
-                           entity_unb_syms: List[Optional[OrderedSet[str]]]):
-
-        mod_operands = []
-
-        for operand, unb_syms in zip(operands, entity_unb_syms):
-
-            if unb_syms is not None:
-
-                dummy_nodes = [mat.DummyNode(unb_sym) for unb_sym in unb_syms]
-                idx_node = mat.CompoundDummyNode(component_nodes=dummy_nodes)
-
-                # linear variable or constant
-                if isinstance(operand, mat.DeclaredEntityNode):
-                    operand = deepcopy(operand)
-                    operand.idx_node = idx_node
-
-                # fractional
-                elif isinstance(operand, mat.ArithmeticOperationNode) and operand.operator == mat.DIVISION_OPERATOR:
-
-                    den_node = operand.get_rhs_operand()
-                    if not isinstance(den_node, mat.DeclaredEntityNode):
-                        raise ValueError("Convexifier encountered an unexpected operand '{0}'".format(operand)
-                                         + " while modifying the index nodes of declared entity nodes")
-
-                    operand = deepcopy(den_node)
-                    operand.idx_node = idx_node
-
-            mod_operands.append(operand)
-
-        return mod_operands
 
     # Underestimator Construction
     # ------------------------------------------------------------------------------------------------------------------
@@ -793,7 +732,7 @@ class Convexifier:
             coefficient_node = nb.build_multiplication_node(coefficient_nodes, is_prioritized=True)
 
             values = coefficient_node.evaluate(
-                state=self.convex_relaxation.state,
+                state=self.__problem.state,
                 idx_set=idx_set,
                 dummy_element=dummy_element)
 
@@ -883,8 +822,6 @@ class Convexifier:
             # deterministically sort the factors and retrieve any identifying information
             (
                 factors,  # sorted list of factor nodes
-                var_nodes,  # sorted list of variable nodes embedded within each factor
-                idx_nodes,  # sorted list of indexing nodes of the embedded variable nodes
                 syms,  # sorted list of characteristic symbols for each factor
                 types  # sorted list of function types for each factor
             ) = self.__process_factors(factors)
@@ -948,16 +885,16 @@ class Convexifier:
         base_ue_sym = "UE_{0}_{1}_{2}".format(ue_id[0],  # underestimator type
                                               ue_id[1],  # sign
                                               ''.join([str(s)[0].upper() for s in ue_id[2:]]))
-        ue_sym = self.convex_relaxation.generate_unique_symbol(base_ue_sym)
+        ue_sym = self.__problem.generate_unique_symbol(base_ue_sym)
 
         # build meta-variable for underestimator
         ue_meta_var = eb.build_meta_var(
-            problem=self.convex_relaxation,
+            problem=self.__problem,
             symbol=ue_sym,
             idx_set_node=idx_set_node)
 
         self.ue_meta_vars[ue_sym] = ue_meta_var
-        self.convex_relaxation.add_meta_variable(ue_meta_var, is_in_model=True)
+        self.__problem.symbols.add(ue_sym)
 
         return ue_meta_var
 
@@ -967,9 +904,9 @@ class Convexifier:
                                             factors: List[mat.ArithmeticExpressionNode],
                                             is_negative: bool):
 
-        base_ue_bound_sym = "UE_ENV_{0}_{1}_{2}".format(ue_id[0],  # underestimator type
-                                                        ue_id[1],  # sign
-                                                        ''.join([str(s)[0].upper() for s in ue_id[2:]]))
+        base_ue_env_sym = "UE_ENV_{0}_{1}_{2}".format(ue_id[0],  # underestimator type
+                                                      ue_id[1],  # sign
+                                                      ''.join([str(s)[0].upper() for s in ue_id[2:]]))
 
         ue_node = nb.build_default_entity_node(ue_meta_var)
 
@@ -977,7 +914,7 @@ class Convexifier:
 
         for i, ce_expr_node in enumerate(ce_expr_nodes, start=1):
 
-            ue_bound_sym = self.convex_relaxation.generate_unique_symbol("{0}_{1}".format(base_ue_bound_sym, i))
+            ue_env_sym = self.__problem.generate_unique_symbol("{0}_{1}".format(base_ue_env_sym, i))
 
             rel_op_node = mat.RelationalOperationNode(
                 operator=mat.LESS_EQUAL_INEQUALITY_OPERATOR,
@@ -986,13 +923,15 @@ class Convexifier:
             )
 
             meta_con = eb.build_meta_con(
-                problem=self.convex_relaxation,
-                symbol=ue_bound_sym,
+                problem=self.__problem,
+                symbol=ue_env_sym,
                 idx_set_node=deepcopy(ue_meta_var.idx_set_node),
                 expression=mat.Expression(rel_op_node)
             )
 
-            self.convex_relaxation.add_meta_constraint(meta_con, is_in_model=True)
+            self.__problem.symbols.add(ue_env_sym)
+
+            self.ue_env_meta_cons[ue_env_sym] = meta_con
 
     def __build_multivariate_convex_envelope(self,
                                              factors: List[mat.ArithmeticExpressionNode],
@@ -1308,10 +1247,10 @@ class Convexifier:
 
         if var_sym not in self.lb_params:
 
-            meta_var = self.convex_relaxation.meta_vars[var_sym]
+            meta_var = self.__problem.meta_vars[var_sym]
 
-            param_syms = (self.convex_relaxation.generate_unique_symbol("{0}_L".format(var_sym)),
-                          self.convex_relaxation.generate_unique_symbol("{0}_U".format(var_sym)))
+            param_syms = (self.__problem.generate_unique_symbol("{0}_L".format(var_sym)),
+                          self.__problem.generate_unique_symbol("{0}_U".format(var_sym)))
 
             default_value_nodes = (deepcopy(meta_var.get_lower_bound_node()),
                                    deepcopy(meta_var.get_upper_bound_node()))
@@ -1325,64 +1264,16 @@ class Convexifier:
                     idx_set_node = deepcopy(meta_var.idx_set_node)
 
                 meta_param = eb.build_meta_param(
-                    problem=self.convex_relaxation,
+                    problem=self.__problem,
                     symbol=param_sym,
                     idx_set_node=idx_set_node,
                     default_value=default_value_node)
 
                 meta_params.append(meta_param)
-                self.convex_relaxation.symbols.add(param_sym)
+                self.__problem.symbols.add(param_sym)
 
             self.lb_params[var_sym] = meta_params[0]
             self.ub_params[var_sym] = meta_params[1]
-
-    def __build_n_linear_bound_meta_parameter(self,
-                                              bound_id: tuple,
-                                              factors: List[mat.ArithmeticExpressionNode],
-                                              var_nodes: List[mat.DeclaredEntityNode],
-                                              is_negative: bool,
-                                              is_lower: bool) -> mat.MetaParameter:
-
-        # generate unique symbol for underestimator meta-variable
-        base_ue_sym = "{0}_{1}_{2}".format(''.join([str(s)[0].upper() for s in bound_id[2:]]),
-                                           "N" if is_negative else "P",  # sign
-                                           "L" if is_lower else "U")  # bound type
-        bound_sym = self.convex_relaxation.generate_unique_symbol(base_ue_sym)
-
-        idx_set_node, var_unb_syms = self.__build_combined_idx_set_nodes_of_meta_entities(entity_nodes=var_nodes)
-        factors = self.__modify_idx_nodes(operands=factors,
-                                          entity_unb_syms=var_unb_syms)
-
-        bound_node = self.__build_n_linear_bound_node(factors=factors,
-                                                      is_negative=is_negative,
-                                                      is_lower=is_lower)
-
-        mp = eb.build_meta_param(
-            problem=self.convex_relaxation,
-            symbol=bound_sym,
-            idx_set_node=idx_set_node,
-            defined_value=bound_node
-        )
-
-        self.n_linear_bound_params[bound_id] = mp
-        self.convex_relaxation.symbols.add(bound_sym)
-
-        return mp
-
-    def __add_bound_meta_parameters_to_problem(self):
-
-        bound_mps = []
-        for mp_lb, mp_ub in zip(self.lb_params.values(), self.ub_params.values()):
-            bound_mps.append((mp_lb.get_symbol(), mp_lb, mp_ub))
-
-        bound_mps.sort(key=lambda t: t[0])
-
-        for _, mp_lb, mp_ub in bound_mps:
-            self.convex_relaxation.add_meta_parameter(mp_lb, is_in_model=True)
-            self.convex_relaxation.add_meta_parameter(mp_ub, is_in_model=True)
-
-        for _, mp in self.n_linear_bound_params.items():
-            self.convex_relaxation.add_meta_parameter(mp, is_in_model=True)
 
     # Bound Node Construction
     # ------------------------------------------------------------------------------------------------------------------
@@ -1477,36 +1368,6 @@ class Convexifier:
     def __build_linear_upper_bound_node(self, operand: mat.DeclaredEntityNode):
         ub_param = self.ub_params[operand.symbol]
         return self.__build_declared_bound_node(ub_param, operand.idx_node)  # x_U
-
-    def __build_and_retrieve_n_linear_bound_node(self,
-                                                 factors: List[mat.ArithmeticExpressionNode],
-                                                 is_negative: bool,
-                                                 is_lower: bool):
-        # TODO: deprecated
-        # deterministically sort the factors and retrieve any identifying information
-        (
-            factors,  # sorted list of factor nodes
-            var_nodes,  # sorted list of variable nodes embedded within each factor
-            idx_nodes,  # sorted list of indexing nodes of the embedded variable nodes
-            syms,  # sorted list of characteristic symbols for each factor
-            types  # sorted list of function types for each factor
-        ) = self.__process_factors(factors)
-
-        bound_id = tuple([is_lower, is_negative]) + tuple(syms) + tuple(types)
-
-        if bound_id in self.n_linear_bound_params:
-            bound_mp = self.n_linear_bound_params[bound_id]
-
-        else:
-            bound_mp = self.__build_n_linear_bound_meta_parameter(
-                bound_id=bound_id,
-                factors=factors,
-                var_nodes=var_nodes,
-                is_negative=is_negative,
-                is_lower=is_lower
-            )
-
-        return self.__build_declared_entity_node(bound_mp)
 
     def __build_n_linear_bound_node(self,
                                     factors: List[mat.ArithmeticExpressionNode],

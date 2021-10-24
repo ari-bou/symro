@@ -1107,7 +1107,7 @@ class AMPLScriptParser(AMPLParser):
 
             # check if the statement is a problem declaration
             if prob_node.symbol not in self.problem.subproblems:
-                prob_node.set_type(const.PROB_TYPE)  # set entity type
+                prob_node.set_type(mat.PROB_TYPE)  # set entity type
 
         return stm.ProblemStatement(prob_node=prob_node,
                                     idx_set_node=idx_set_node,

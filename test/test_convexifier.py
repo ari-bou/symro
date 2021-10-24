@@ -56,7 +56,7 @@ def convexifier_test():
                               working_dir_path=SCRIPT_DIR_PATH)
 
     convexifier = Convexifier()
-    convex_relax = convexifier.convexify(problem)
+    convex_relax = convexifier.convexify_problem(problem)
 
     symro.model_to_ampl(convex_relax, file_name="convex_relaxation_test.mod")
 

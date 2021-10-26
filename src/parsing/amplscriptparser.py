@@ -322,8 +322,8 @@ class AMPLScriptParser(AMPLParser):
                                defined_value_node=defined_value_node,
                                default_value_node=default_value_node)
 
-        is_in_model = self._can_include_in_model and self._can_evaluate
-        self.problem.add_meta_set(meta_set, is_in_model=is_in_model)
+        is_auxiliary = not self._can_include_in_model or not self._can_evaluate
+        self.problem.add_meta_set(meta_set, is_auxiliary=is_auxiliary)
 
         # build statement
         return stm.ModelEntityDeclaration(meta_set)
@@ -409,8 +409,8 @@ class AMPLScriptParser(AMPLParser):
                                        default_value=default_node,
                                        super_set_node=super_set_node)
 
-        is_in_model = self._can_include_in_model and self._can_evaluate
-        self.problem.add_meta_parameter(meta_param, is_in_model=is_in_model)
+        is_auxiliary = not self._can_include_in_model or not self._can_evaluate
+        self.problem.add_meta_parameter(meta_param, is_auxiliary=is_auxiliary)
 
         # Statement
         return stm.ModelEntityDeclaration(meta_param)
@@ -504,8 +504,8 @@ class AMPLScriptParser(AMPLParser):
                                     lower_bound=lower_bound_node,
                                     upper_bound=upper_bound_node)
 
-        is_in_model = self._can_include_in_model and self._can_evaluate
-        self.problem.add_meta_variable(meta_var, is_in_model=is_in_model)
+        is_auxiliary = not self._can_include_in_model or not self._can_evaluate
+        self.problem.add_meta_variable(meta_var, is_auxiliary=is_auxiliary)
 
         # Statement
         return stm.ModelEntityDeclaration(meta_var)
@@ -554,8 +554,8 @@ class AMPLScriptParser(AMPLParser):
                                      direction=direction,
                                      expression=expression)
 
-        is_in_model = self._can_include_in_model and self._can_evaluate
-        self.problem.add_meta_objective(meta_obj, is_in_model=is_in_model)
+        is_auxiliary = not self._can_include_in_model or not self._can_evaluate
+        self.problem.add_meta_objective(meta_obj, is_auxiliary=is_auxiliary)
 
         # Statement
         return stm.ModelEntityDeclaration(meta_obj)
@@ -600,8 +600,8 @@ class AMPLScriptParser(AMPLParser):
                                       idx_set_node=idx_set_node,
                                       expression=expression)
 
-        is_in_model = self._can_include_in_model and self._can_evaluate
-        self.problem.add_meta_constraint(meta_con, is_in_model=is_in_model)
+        is_auxiliary = not self._can_include_in_model or not self._can_evaluate
+        self.problem.add_meta_constraint(meta_con, is_auxiliary=is_auxiliary)
 
         meta_con.elicit_constraint_type()
 

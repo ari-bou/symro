@@ -157,7 +157,7 @@ class GBDProblem(Problem):
             problem=self,
             symbol=self.cut_count_sym,
             default_value=0)
-        self.add_meta_parameter(self.cut_count, is_in_model=False)
+        self.add_meta_parameter(self.cut_count, is_auxiliary=True)
 
         self.cuts_unb_sym = self.generate_unique_symbol("ct")
         ord_set_node = mat.OrderedSetNode(start_node=mat.NumericNode(value=1),
@@ -170,21 +170,21 @@ class GBDProblem(Problem):
             dummy_symbols=[self.cuts_unb_sym],
             reduced_dummy_symbols=[self.cuts_unb_sym],
             defined_value_node=ord_set_node)
-        self.add_meta_set(self.cuts, is_in_model=False)
+        self.add_meta_set(self.cuts, is_auxiliary=True)
 
         self.is_feasible = eb.build_meta_param(
             problem=self,
             symbol=self.is_feasible_sym,
             idx_meta_sets=[self.cuts],
             default_value=0)
-        self.add_meta_parameter(self.is_feasible, is_in_model=False)
+        self.add_meta_parameter(self.is_feasible, is_auxiliary=True)
 
         self.stored_obj = eb.build_meta_param(
             problem=self,
             symbol=self.stored_obj_sym,
             idx_meta_sets=[self.cuts],
             default_value=0)
-        self.add_meta_parameter(self.stored_obj, is_in_model=False)
+        self.add_meta_parameter(self.stored_obj, is_auxiliary=True)
 
         # Meta-Variables
 
@@ -192,7 +192,7 @@ class GBDProblem(Problem):
             problem=self,
             symbol=self.eta_sym,
             lower_bound=init_lb)
-        self.add_meta_variable(self.eta, is_in_model=False)
+        self.add_meta_variable(self.eta, is_auxiliary=True)
 
     def get_idx_meta_sets(self) -> List[mat.MetaSet]:
         return [ms for ms in self.idx_meta_sets.values()]

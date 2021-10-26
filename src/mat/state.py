@@ -5,6 +5,21 @@ from symro.src.mat.entity import *
 
 
 class State:
+    """
+    class State
+
+    A container object that manages the data of a problem instance, including:
+        - the elements of all defined sets,
+        - the dimensions of all defined sets,
+        - the values of all defined parameters,
+        - the values and bounds of all defined variables,
+        - the values of all defined objectives,
+        - the bodies, bounds, and dual values of all defined constraints.
+    The data associated with a particular problem entity is stored in a corresponding Entity object.
+    Attempting to manipulate a set or a parameter for which no data has been supplied raises a value error. Otherwise,
+    attempting to manipulate a variable, an objective, or a constraint will result in the automatic construction of the
+    appropriate Entity object with all properties defaulting to 0.
+    """
 
     def __init__(self):
 
@@ -32,7 +47,7 @@ class State:
         elif sym in self.constraints:
             return self.get_constraint(sym, idx).get_value()
         else:
-            raise ValueError("State does not own an entity with id '{0}'".format(item))
+            raise ValueError("Entity with id {0} does not exist in the problem state".format(item))
 
     def __setitem__(self, key: Sequence, value: Union[int, float, str, Iterable]):
 
@@ -50,7 +65,7 @@ class State:
         elif sym in self.constraints:
             self.get_constraint(sym, idx).dual = value
         else:
-            raise ValueError("State does not own an entity with id '{0}'".format(key))
+            raise ValueError("Entity with id {0} does not exist in the problem state".format(key))
 
     # Checkers
     # ------------------------------------------------------------------------------------------------------------------
@@ -103,17 +118,31 @@ class State:
             raise ValueError("Unable to resolve '{0}' as an entity type".format(entity_type))
 
     def get_set(self, symbol: str, idx: Element = None) -> SSet:
+
         entity_id = Entity.generate_entity_id(symbol, idx)
         entity = self.sets.get(entity_id, None)
+
         if entity is None:
-            entity = self.add_set(symbol, idx)
+            if idx is None:
+                set_literal = symbol
+            else:
+                set_literal = "{0}[{1}]".format(symbol, ','.join([str(i) for i in idx]))
+            raise ValueError("Instance of set {0} does not exist in the state".format(set_literal))
+
         return entity
 
     def get_parameter(self, symbol: str, idx: Element = None) -> Parameter:
+
         entity_id = Entity.generate_entity_id(symbol, idx)
         entity = self.parameters.get(entity_id, None)
+
         if entity is None:
-            entity = self.add_parameter(symbol, idx)
+            if idx is None:
+                param_literal = symbol
+            else:
+                param_literal = "{0}[{1}]".format(symbol, ','.join([str(i) for i in idx]))
+            raise ValueError("Instance of parameter {0} does not exist in the state".format(param_literal))
+
         return entity
 
     def get_variable(self, symbol: str, idx: Element = None) -> Variable:

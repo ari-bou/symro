@@ -62,7 +62,7 @@ def build_subproblem(problem: Problem,
                      idx_set_node=sp_idx_set_node)
 
     for me in meta_entities:
-        sp.add_meta_entity_to_model(me)
+        sp.add_meta_entity(me)
 
     problem.add_subproblem(sp)
 
@@ -84,7 +84,7 @@ def __build_subproblem_from_nodes(problem: Problem,
     )
 
     for me in meta_entities:
-        sp.add_meta_entity_to_model(me)
+        sp.add_meta_entity(me)
 
     return sp
 

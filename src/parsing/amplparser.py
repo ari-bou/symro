@@ -626,8 +626,7 @@ class AMPLParser:
     def _parse_arithmetic_expression(self,
                                      precedence: int = 12
                                      ) -> Union[mat.ArithmeticExpressionNode,
-                                                mat.StringExpressionNode,
-                                                mat.BaseDummyNode]:
+                                                mat.StringExpressionNode]:
         # parse first operand
 
         if precedence == 12:

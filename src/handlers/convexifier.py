@@ -12,7 +12,6 @@ import symro.src.handlers.metaentitybuilder as eb
 
 """
 References:
-
 -   Maranas, C.D., Floudas, C.A. Finding all solutions of nonlinearly constrained systems of equations. J Glob Optim 7, 
     143–182 (1995). https://doi.org/10.1007/BF01097059
 -   C.S. Adjiman, S. Dallwig, C.A. Floudas, A. Neumaier, A global optimization method, αBB, for general 
@@ -21,15 +20,34 @@ References:
 """
 
 
-def convexify(problem: Problem,
-              problem_symbol: str = None,
-              description: str = None,
-              working_dir_path: str = None):
+def convexify_problem(problem: Problem,
+                      problem_symbol: str = None,
+                      description: str = None,
+                      working_dir_path: str = None):
     convexifier = Convexifier()
     return convexifier.convexify_problem(problem=problem,
                                          problem_symbol=problem_symbol,
                                          description=description,
                                          working_dir_path=working_dir_path)
+
+
+def convexify_expression(problem: Problem,
+                         root_node: mat.ArithmeticExpressionNode,
+                         idx_set_node: mat.CompoundSetNode = None
+                         ) -> Tuple[mat.ArithmeticExpressionNode,
+                                    Dict[str, mat.MetaParameter],
+                                    Dict[str, mat.MetaParameter],
+                                    Dict[str, mat.MetaVariable],
+                                    Dict[str, mat.MetaConstraint]]:
+    convexifier = Convexifier()
+    convex_root_node = convexifier.convexify_expression(problem=problem,
+                                                        root_node=root_node,
+                                                        idx_set_node=idx_set_node)
+    return (convex_root_node,
+            convexifier.lb_params,
+            convexifier.ub_params,
+            convexifier.ue_meta_vars,
+            convexifier.ue_env_meta_cons)
 
 
 class Convexifier:
@@ -100,7 +118,7 @@ class Convexifier:
             idx_set_node=idx_set_node
         )
 
-        return convex_root_node, self.lb_params, self.ub_params, self.ue_meta_vars, self.ue_env_meta_cons
+        return convex_root_node
 
     # Problem Convexification
     # ------------------------------------------------------------------------------------------------------------------
@@ -164,14 +182,14 @@ class Convexifier:
         bound_mps.sort(key=lambda t: t[0])
 
         for _, mp_lb, mp_ub in bound_mps:
-            self.__problem.add_meta_parameter(mp_lb, is_in_model=True)
-            self.__problem.add_meta_parameter(mp_ub, is_in_model=True)
+            self.__problem.add_meta_parameter(mp_lb, is_auxiliary=False)
+            self.__problem.add_meta_parameter(mp_ub, is_auxiliary=False)
 
         for mv in self.ue_meta_vars.values():
-            self.__problem.add_meta_variable(mv, is_in_model=True)
+            self.__problem.add_meta_variable(mv, is_auxiliary=False)
 
         for mc in self.ue_env_meta_cons.values():
-            self.__problem.add_meta_constraint(mc, is_in_model=True)
+            self.__problem.add_meta_constraint(mc, is_auxiliary=False)
 
     # Expression Standardization
     # ------------------------------------------------------------------------------------------------------------------

@@ -266,17 +266,17 @@ class IndexingSetNode(SetExpressionNode):
                  dummy_element: Element = None
                  ) -> np.ndarray:
 
-        dim_c = self.dummy_node.get_dim()  # length nc
+        dim_c = self.get_dim(state)  # length nc
 
         challenge_elements = self.dummy_node.evaluate(state, idx_set, dummy_element)
-        if self.dummy_node.get_dim() == 1:
+        if dim_c == 1:
             challenge_elements = [tuple([e]) for e in challenge_elements]
 
         sets_c = self.set_node.evaluate(state, idx_set, dummy_element)
 
         # identify fixed dimensions
         is_dim_fixed = []
-        if self.dummy_node.get_dim() > 1:
+        if dim_c > 1:
 
             dummy_node = self.dummy_node
             if not isinstance(dummy_node, CompoundDummyNode):
@@ -305,7 +305,7 @@ class IndexingSetNode(SetExpressionNode):
 
             set_c_ip = sets_c[ip]
 
-            if self.dummy_node.get_dim() == 1:
+            if dim_c == 1:
                 y[ip] = set_c_ip
 
             else:
@@ -333,7 +333,7 @@ class IndexingSetNode(SetExpressionNode):
         raise NotImplementedError("to_lambda method has not yet been implemented for '{0}'".format(type(self)))
 
     def get_dim(self, state: State) -> int:
-        return self.dummy_node.get_dim()
+        return self.set_node.get_dim(state)
 
     def get_dummy_element(self, state: State) -> Tuple[Union[int, float, str, tuple], ...]:
         if isinstance(self.dummy_node, DummyNode):

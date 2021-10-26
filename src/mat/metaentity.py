@@ -107,6 +107,12 @@ class MetaEntity(ABC):
 
         return combined_fixed_dim_flags
 
+    def get_idx_set_dummy_element(self) -> List[str]:
+        dummy_element = []
+        for meta_set in self.get_idx_meta_sets():
+            dummy_element.extend(meta_set.get_dummy_element())
+        return dummy_element
+
     def get_idx_set_reduced_dummy_element(self) -> List[str]:
         dummy_element = []
         for meta_set in self.get_idx_meta_sets():

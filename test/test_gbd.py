@@ -7,9 +7,11 @@ VERBOSITY = 1
 
 
 def run_gbd_test_group():
-    tests = [("Run GBD on an LP", gbd_lp),
-             ("Run scenario-wise GBD on an LP", gbd_scenario_wise_lp),
-             ("Run scenario-wise GBD on a production problem (convex QCP)", gbd_scenario_wise_convex_qp_production)]
+    tests = [
+        #("Run GBD on an LP", gbd_lp),
+        ("Run scenario-wise GBD on an LP", gbd_scenario_wise_lp),
+        ("Run scenario-wise GBD on a production problem (convex QCP)", gbd_scenario_wise_convex_qp_production)
+    ]
     return run_tests(tests)
 
 
@@ -63,7 +65,7 @@ def gbd_scenario_wise_lp() -> bool:
     gbd.setup()
     v, y = gbd.run(mp_solve_options={"solver": "gurobi"},
                    sp_solve_options={"solver": "gurobi"},
-                   verbosity=VERBOSITY)
+                   verbosity=3)
 
     return check_num_result(v, v_benchmark, 0.01)
 

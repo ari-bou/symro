@@ -225,7 +225,7 @@ class GBDProblemBuilder:
                                                   expression=expression)
 
                 # add the new meta-objective to the problem
-                self.gbd_problem.add_meta_objective(primal_sp_obj)
+                self.gbd_problem.add_meta_objective(primal_sp_obj, is_auxiliary=False)
                 primal_sp.model_meta_objs.clear()
                 primal_sp.model_meta_objs.append(primal_sp_obj)
 
@@ -415,12 +415,12 @@ class GBDProblemBuilder:
             # add slack meta-variables to the problem
             for mv in sl_meta_var_list:
                 self.gbd_problem.slack_vars[mv.get_symbol()] = mv
-                self.gbd_problem.add_meta_variable(mv, is_in_model=False)
+                self.gbd_problem.add_meta_variable(mv, is_auxiliary=True)
 
             # add slackened meta-constraint to the problem
             if len(sl_meta_var_list) > 0:
                 self.gbd_problem.sl_fbl_cons[sl_meta_con.get_symbol()] = sl_meta_con
-                self.gbd_problem.add_meta_constraint(sl_meta_con, is_in_model=False)
+                self.gbd_problem.add_meta_constraint(sl_meta_con, is_auxiliary=True)
 
             # add slack meta-variables and slackened meta-constraint to mapping
             if len(sl_meta_var_list) > 0:
@@ -438,7 +438,7 @@ class GBDProblemBuilder:
 
         # add meta-objective to the problem
         self.gbd_problem.fbl_sp_objs[obj_sym] = fbl_meta_obj
-        self.gbd_problem.add_meta_objective(fbl_meta_obj, is_in_model=False)
+        self.gbd_problem.add_meta_objective(fbl_meta_obj, is_auxiliary=True)
 
         return fbl_meta_obj
 
@@ -509,7 +509,7 @@ class GBDProblemBuilder:
 
                 # Add storage meta-parameter to problem
                 self.gbd_problem.stored_comp_decisions[meta_var.get_symbol()] = stored_comp_param
-                self.gbd_problem.add_meta_parameter(stored_comp_param, is_in_model=False)
+                self.gbd_problem.add_meta_parameter(stored_comp_param, is_auxiliary=True)
 
     # Master Objective
     # ------------------------------------------------------------------------------------------------------------------
@@ -537,7 +537,7 @@ class GBDProblemBuilder:
 
         # Add meta-objective to problem
         self.gbd_problem.master_obj = meta_obj
-        self.gbd_problem.add_meta_objective(meta_obj, is_in_model=False)
+        self.gbd_problem.add_meta_objective(meta_obj, is_auxiliary=True)
 
     # Master Problem Auxiliary Constructs
     # ------------------------------------------------------------------------------------------------------------------
@@ -604,7 +604,7 @@ class GBDProblemBuilder:
 
         # Add meta-variable to the problem
         self.gbd_problem.aux_f_meta_var = aux_f_meta_var
-        self.gbd_problem.add_meta_variable(aux_f_meta_var, is_in_model=False)
+        self.gbd_problem.add_meta_variable(aux_f_meta_var, is_auxiliary=True)
 
     def __build_master_problem_auxiliary_constructs_g(self):
 
@@ -654,7 +654,7 @@ class GBDProblemBuilder:
 
             # Add meta-variable to the problem
             self.gbd_problem.aux_g_meta_vars[i] = gv
-            self.gbd_problem.add_meta_variable(gv, is_in_model=False)
+            self.gbd_problem.add_meta_variable(gv, is_auxiliary=True)
 
             # Build duality multiplier meta-parameter
             self.__build_duality_multiplier(meta_con, i)
@@ -679,7 +679,7 @@ class GBDProblemBuilder:
 
         # Add duality multiplier meta-parameter to the problem
         self.gbd_problem.duality_multipliers[id] = duality_multiplier
-        self.gbd_problem.add_meta_parameter(duality_multiplier, is_in_model=False)
+        self.gbd_problem.add_meta_parameter(duality_multiplier, is_auxiliary=True)
 
         return duality_multiplier
 
@@ -1275,7 +1275,7 @@ class GBDProblemBuilder:
 
         # add meta-constraint to the problem
         self.gbd_problem.gbd_cuts[meta_con.get_symbol()] = meta_con
-        self.gbd_problem.add_meta_constraint(meta_con, is_in_model=False)
+        self.gbd_problem.add_meta_constraint(meta_con, is_auxiliary=True)
 
     def __build_feasibility_cut(self):
 
@@ -1303,7 +1303,7 @@ class GBDProblemBuilder:
 
         # add meta-constraint to the problem
         self.gbd_problem.gbd_cuts[self.gbd_problem.fbl_cut_con_sym] = meta_con
-        self.gbd_problem.add_meta_constraint(meta_con, is_in_model=False)
+        self.gbd_problem.add_meta_constraint(meta_con, is_auxiliary=True)
 
     def __build_canonical_integer_cut(self):
 
@@ -1322,7 +1322,7 @@ class GBDProblemBuilder:
 
         # add meta-constraint to the problem
         self.gbd_problem.gbd_cuts[self.gbd_problem.can_int_cut_con_sym] = meta_con
-        self.gbd_problem.add_meta_constraint(meta_con, is_in_model=False)
+        self.gbd_problem.add_meta_constraint(meta_con, is_auxiliary=True)
 
     def __build_optimality_cut_expression(self):
 

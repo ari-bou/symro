@@ -30,7 +30,7 @@ class BaseProblem:
 
         if model_meta_entities is not None:
             for me in model_meta_entities:
-                self.add_meta_entity_to_model(me)
+                self.add_meta_entity(me)
 
     def __copy__(self):
         clone = BaseProblem()
@@ -78,32 +78,19 @@ class BaseProblem:
     # Addition
     # ------------------------------------------------------------------------------------------------------------------
 
-    def add_meta_entity_to_model(self, meta_entity: mat.MetaEntity):
+    def add_meta_entity(self,
+                        meta_entity: mat.MetaEntity,
+                        is_auxiliary: bool = False):
         if isinstance(meta_entity, mat.MetaSet):
-            self.add_meta_set_to_model(meta_entity)
+            self.model_meta_sets_params.append(meta_entity)
         elif isinstance(meta_entity, mat.MetaParameter):
-            self.add_meta_parameter_to_model(meta_entity)
+            self.model_meta_sets_params.append(meta_entity)
         elif isinstance(meta_entity, mat.MetaVariable):
-            self.add_meta_variable_to_model(meta_entity)
+            self.model_meta_vars.append(meta_entity)
         elif isinstance(meta_entity, mat.MetaObjective):
-            self.add_meta_objective_to_model(meta_entity)
+            self.model_meta_objs.append(meta_entity)
         elif isinstance(meta_entity, mat.MetaConstraint):
-            self.add_meta_constraint_to_model(meta_entity)
-
-    def add_meta_set_to_model(self, meta_set: mat.MetaSet):
-        self.model_meta_sets_params.append(meta_set)
-
-    def add_meta_parameter_to_model(self, meta_param: mat.MetaParameter):
-        self.model_meta_sets_params.append(meta_param)
-
-    def add_meta_variable_to_model(self, meta_var: mat.MetaVariable):
-        self.model_meta_vars.append(meta_var)
-
-    def add_meta_objective_to_model(self, meta_obj: mat.MetaObjective):
-        self.model_meta_objs.append(meta_obj)
-
-    def add_meta_constraint_to_model(self, meta_con: mat.MetaConstraint):
-        self.model_meta_cons.append(meta_con)
+            self.model_meta_cons.append(meta_entity)
 
     # Replacement
     # ------------------------------------------------------------------------------------------------------------------
@@ -391,47 +378,161 @@ class Problem(BaseProblem):
         self.symbols.add(sp.symbol)
         self.subproblems[sp.symbol] = sp
 
-    def add_meta_entity(self, meta_entity: mat.MetaEntity, is_in_model: bool = True):
+    def add_meta_entity(self,
+                        meta_entity: mat.MetaEntity,
+                        is_auxiliary: bool = False):
         if isinstance(meta_entity, mat.MetaSet):
-            self.add_meta_set(meta_entity, is_in_model)
+            self.add_meta_set(meta_entity, is_auxiliary)
         elif isinstance(meta_entity, mat.MetaParameter):
-            self.add_meta_parameter(meta_entity, is_in_model)
+            self.add_meta_parameter(meta_entity, is_auxiliary)
         elif isinstance(meta_entity, mat.MetaVariable):
-            self.add_meta_variable(meta_entity, is_in_model)
+            self.add_meta_variable(meta_entity, is_auxiliary)
         elif isinstance(meta_entity, mat.MetaObjective):
-            self.add_meta_objective(meta_entity, is_in_model)
+            self.add_meta_objective(meta_entity, is_auxiliary)
         elif isinstance(meta_entity, mat.MetaConstraint):
-            self.add_meta_constraint(meta_entity, is_in_model)
+            self.add_meta_constraint(meta_entity, is_auxiliary)
 
-    def add_meta_set(self, meta_set: mat.MetaSet, is_in_model: bool = True):
+    def add_meta_set(self,
+                     meta_set: mat.MetaSet,
+                     is_auxiliary: bool = False):
         self.symbols.add(meta_set.get_symbol())
         self.meta_sets[meta_set.get_symbol()] = meta_set
-        if is_in_model:
-            BaseProblem.add_meta_set_to_model(self, meta_set)
+        if not is_auxiliary:
+            self.model_meta_sets_params.append(meta_set)
+        self._evaluate_default_or_defined_set(meta_set)
 
-    def add_meta_parameter(self, meta_param: mat.MetaParameter, is_in_model: bool = True):
+    def _evaluate_default_or_defined_set(self, meta_set: mat.MetaSet):
+
+        default_value = meta_set.get_default_value_node()
+        defined_value = meta_set.get_defined_value_node()
+
+        if default_value is not None:
+            set_node = default_value
+        elif defined_value is not None:
+            set_node = defined_value
+        else:
+            set_node = None
+
+        if set_node is not None:
+
+            symbol = meta_set.get_symbol()  # symbol of the meta-set
+            m = 0  # length of indexing set
+            idx_set: Optional[mat.IndexingSet] = None  # indexing set
+            dummy_element = None  # dummy element of indexing set
+
+            if meta_set.idx_set_node is not None:
+                try:
+                    idx_set = meta_set.idx_set_node.evaluate(self.state)[0]
+                except (ValueError, KeyError):
+                    return
+                dummy_element = meta_set.idx_set_node.get_dummy_element(self.state)
+                m = len(idx_set)
+
+            try:
+                dim = set_node.get_dim(self.state)
+                sets = set_node.evaluate(
+                    state=self.state,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element
+                )
+
+            except (ValueError, KeyError):
+                return
+
+            for i in range(m):
+
+                idx: Optional[mat.Element] = None
+                if idx_set is not None:
+                    idx = idx_set[i]
+
+                self.state.add_set(
+                    symbol=symbol,
+                    idx=idx,
+                    dim=dim,
+                    elements=sets[i]
+                )
+
+    def add_meta_parameter(self,
+                           meta_param: mat.MetaParameter,
+                           is_auxiliary: bool = False):
         self.symbols.add(meta_param.get_symbol())
         self.meta_params[meta_param.get_symbol()] = meta_param
-        if is_in_model:
-            BaseProblem.add_meta_parameter_to_model(self, meta_param)
+        if not is_auxiliary:
+            self.model_meta_sets_params.append(meta_param)
+        self._evaluate_default_or_defined_param(meta_param)
 
-    def add_meta_variable(self, meta_var: mat.MetaVariable, is_in_model: bool = True):
+    def _evaluate_default_or_defined_param(self, meta_param: mat.MetaParameter):
+
+        default_value = meta_param.get_default_value_node()
+        defined_value = meta_param.get_defined_value_node()
+
+        if default_value is not None:
+            expr_node = default_value
+        elif defined_value is not None:
+            expr_node = defined_value
+        else:
+            expr_node = None
+
+        if expr_node is not None:
+
+            symbol = meta_param.get_symbol()  # symbol of the meta-set
+            m = 0  # length of indexing set
+            idx_set: Optional[mat.IndexingSet] = None  # indexing set
+            dummy_element = None  # dummy element of indexing set
+
+            if meta_param.idx_set_node is not None:
+                try:
+                    idx_set = meta_param.idx_set_node.evaluate(self.state)[0]
+                except (ValueError, KeyError):
+                    return
+                dummy_element = meta_param.idx_set_node.get_dummy_element(self.state)
+                m = len(idx_set)
+
+            try:
+                values = expr_node.evaluate(
+                    state=self.state,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element
+                )
+
+            except (ValueError, KeyError):
+                return
+
+            for i in range(m):
+
+                idx: Optional[mat.Element] = None
+                if idx_set is not None:
+                    idx = idx_set[i]
+
+                self.state.add_parameter(
+                    symbol=symbol,
+                    idx=idx,
+                    value=values[i]
+                )
+
+    def add_meta_variable(self,
+                          meta_var: mat.MetaVariable,
+                          is_auxiliary: bool = False):
         self.symbols.add(meta_var.get_symbol())
         self.meta_vars[meta_var.get_symbol()] = meta_var
-        if is_in_model:
-            BaseProblem.add_meta_variable_to_model(self, meta_var)
+        if not is_auxiliary:
+            self.model_meta_vars.append(meta_var)
 
-    def add_meta_objective(self, meta_obj: mat.MetaObjective, is_in_model: bool = True):
+    def add_meta_objective(self,
+                           meta_obj: mat.MetaObjective,
+                           is_auxiliary: bool = False):
         self.symbols.add(meta_obj.get_symbol())
         self.meta_objs[meta_obj.get_symbol()] = meta_obj
-        if is_in_model:
-            BaseProblem.add_meta_objective_to_model(self, meta_obj)
+        if not is_auxiliary:
+            self.model_meta_objs.append(meta_obj)
 
-    def add_meta_constraint(self, meta_con: mat.MetaConstraint, is_in_model: bool = True):
+    def add_meta_constraint(self,
+                            meta_con: mat.MetaConstraint,
+                            is_auxiliary: bool = False):
         self.symbols.add(meta_con.get_symbol())
         self.meta_cons[meta_con.get_symbol()] = meta_con
-        if is_in_model:
-            BaseProblem.add_meta_constraint_to_model(self, meta_con)
+        if not is_auxiliary:
+            self.model_meta_cons.append(meta_con)
 
     def add_script_command(self, script_command: SpecialCommand):
         if script_command.symbol in self.script_commands:
@@ -453,7 +554,7 @@ class Problem(BaseProblem):
         self.meta_cons.pop(old_symbol)
 
         for new_mc in new_meta_cons:
-            self.add_meta_constraint(new_mc, is_in_model=False)
+            self.add_meta_constraint(new_mc)
 
         self.replace_model_meta_constraint(old_symbol=old_symbol,
                                            new_meta_cons=new_meta_cons)

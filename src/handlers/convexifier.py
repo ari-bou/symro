@@ -23,31 +23,26 @@ References:
 def convexify_problem(problem: Problem,
                       problem_symbol: str = None,
                       description: str = None,
-                      working_dir_path: str = None):
+                      working_dir_path: str = None,
+                      auxiliary: bool = False):
     convexifier = Convexifier()
     return convexifier.convexify_problem(problem=problem,
                                          problem_symbol=problem_symbol,
                                          description=description,
-                                         working_dir_path=working_dir_path)
+                                         working_dir_path=working_dir_path,
+                                         auxiliary=auxiliary)
 
 
 def convexify_expression(problem: Problem,
                          root_node: mat.ArithmeticExpressionNode,
-                         idx_set_node: mat.CompoundSetNode = None
-                         ) -> Tuple[mat.ArithmeticExpressionNode,
-                                    Dict[str, mat.MetaParameter],
-                                    Dict[str, mat.MetaParameter],
-                                    Dict[str, mat.MetaVariable],
-                                    Dict[str, mat.MetaConstraint]]:
+                         idx_set_node: mat.CompoundSetNode = None,
+                         auxiliary: bool = True) -> mat.ArithmeticExpressionNode:
     convexifier = Convexifier()
     convex_root_node = convexifier.convexify_expression(problem=problem,
                                                         root_node=root_node,
-                                                        idx_set_node=idx_set_node)
-    return (convex_root_node,
-            convexifier.lb_params,
-            convexifier.ub_params,
-            convexifier.ue_meta_vars,
-            convexifier.ue_env_meta_cons)
+                                                        idx_set_node=idx_set_node,
+                                                        auxiliary=auxiliary)
+    return convex_root_node
 
 
 class Convexifier:
@@ -61,24 +56,29 @@ class Convexifier:
 
         self.ue_meta_vars: Dict[str, mat.MetaVariable] = {}
         self.ue_env_meta_cons: Dict[str, mat.MetaConstraint] = {}
+        self.var_to_env_map: Dict[str, List[str]] = {}
+
+        self.__auxiliary: bool = False
 
     # Core
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __setup(self):
+    def reset(self):
         self.__problem = None
         self.lb_params.clear()
         self.ub_params.clear()
         self.ue_meta_vars.clear()
         self.ue_env_meta_cons.clear()
+        self.var_to_env_map.clear()
 
     def convexify_problem(self,
                           problem: Problem,
                           problem_symbol: str = None,
                           description: str = None,
-                          working_dir_path: str = None):
+                          working_dir_path: str = None,
+                          auxiliary: bool = False):
 
-        self.__setup()
+        self.__auxiliary = auxiliary
 
         if problem_symbol is None:
             problem_symbol = problem.symbol
@@ -102,16 +102,16 @@ class Convexifier:
         self.__convexify_objectives()
         self.__convexify_constraints()
 
-        self.__add_generated_meta_entities_to_problem()
-
         return self.__problem
 
     def convexify_expression(self,
                              problem: Problem,
                              root_node: mat.ArithmeticExpressionNode,
-                             idx_set_node: mat.CompoundSetNode = None):
-        self.__setup()
+                             idx_set_node: mat.CompoundSetNode = None,
+                             auxiliary: bool = True) -> mat.ArithmeticExpressionNode:
+
         self.__problem = problem
+        self.__auxiliary = auxiliary
 
         convex_root_node = self.__convexify_expression(
             root_node=deepcopy(root_node),
@@ -125,15 +125,15 @@ class Convexifier:
 
     def __reformulate_nonlinear_equality_constraints(self):
         for mc in list(self.__problem.model_meta_cons):
-            if mc.get_constraint_type() == mat.MetaConstraint.EQUALITY_TYPE \
-                    and not mat.is_linear(mc.get_expression().root_node):
+            if mc.constraint_type == mat.MetaConstraint.EQUALITY_TYPE \
+                    and not mat.is_linear(mc.expression.root_node):
                 fmr.convert_equality_to_inequality_constraints(self.__problem, mc)
 
     def __convexify_objectives(self):
 
         for mo in self.__problem.model_meta_objs:
 
-            expr = mo.get_expression()
+            expr = mo.expression
 
             expr_node = expr.root_node
             if not isinstance(expr_node, mat.ArithmeticExpressionNode):
@@ -146,9 +146,9 @@ class Convexifier:
 
         for mc in self.__problem.model_meta_cons:
 
-            if mc.get_constraint_type() == mat.MetaConstraint.INEQUALITY_TYPE:
+            if mc.constraint_type == mat.MetaConstraint.INEQUALITY_TYPE:
 
-                expr = mc.get_expression()
+                expr = mc.expression
 
                 root_node = expr.root_node
                 if not isinstance(root_node, mat.RelationalOperationNode):
@@ -169,27 +169,9 @@ class Convexifier:
 
         except Exception as e:
             warnings.warn("Convexifier was unable to convexify the expression"
-                          + " of the meta-entity '{0}':".format(me.get_symbol())
+                          + " of the meta-entity '{0}':".format(me.symbol)
                           + " {0}".format(e))
             return root_node
-
-    def __add_generated_meta_entities_to_problem(self):
-
-        bound_mps = []
-        for mp_lb, mp_ub in zip(self.lb_params.values(), self.ub_params.values()):
-            bound_mps.append((mp_lb.get_symbol(), mp_lb, mp_ub))
-
-        bound_mps.sort(key=lambda t: t[0])
-
-        for _, mp_lb, mp_ub in bound_mps:
-            self.__problem.add_meta_parameter(mp_lb, is_auxiliary=False)
-            self.__problem.add_meta_parameter(mp_ub, is_auxiliary=False)
-
-        for mv in self.ue_meta_vars.values():
-            self.__problem.add_meta_variable(mv, is_auxiliary=False)
-
-        for mc in self.ue_env_meta_cons.values():
-            self.__problem.add_meta_constraint(mc, is_auxiliary=False)
 
     # Expression Standardization
     # ------------------------------------------------------------------------------------------------------------------
@@ -232,7 +214,7 @@ class Convexifier:
 
     def __convexify_expression(self,
                                root_node: mat.ArithmeticExpressionNode,
-                               idx_set_node: mat.CompoundSetNode):
+                               idx_set_node: mat.CompoundSetNode) -> mat.ArithmeticExpressionNode:
 
         cmpt_set_nodes = []
         cmpt_con_nodes = []
@@ -283,7 +265,7 @@ class Convexifier:
                          idx_set: Optional[mat.IndexingSet],
                          dummy_element: Optional[mat.Element]) -> mat.ArithmeticExpressionNode:
 
-        if isinstance(node, mat.ArithmeticTransformationNode) and node.symbol == "sum":
+        if isinstance(node, mat.ArithmeticTransformationNode) and node.fcn == mat.SUMMATION_FUNCTION:
 
             # retrieve the component indexing nodes of the current scope
             cmpt_set_nodes = cmpt_set_nodes + node.idx_set_node.set_nodes
@@ -580,7 +562,7 @@ class Convexifier:
                 dummy_element = node.idx_set_node.combined_dummy_element
 
                 # summation
-                if node.symbol == "sum":
+                if node.fcn == mat.SUMMATION_FUNCTION:
                     return self.__identify_node(node.operands[0],
                                                 idx_set=idx_set,
                                                 dummy_element=dummy_element)
@@ -592,7 +574,8 @@ class Convexifier:
             # non-reductive transformation
             else:
 
-                if node.symbol in ("log", "log10", "exp", "cos", "sin", "tan"):
+                if node.fcn in (mat.NATURAL_LOGARITHM_FUNCTION, mat.BASE_10_LOGARITHM_FUNCTION,
+                                mat.EXPONENTIAL_FUNCTION):
 
                     operand = node.operands[0]
 
@@ -708,7 +691,7 @@ class Convexifier:
         dummy_nodes = []
 
         # build dummy nodes for each unbound symbol in the reduced dummy element
-        for unb_sym in meta_entity.get_idx_set_reduced_dummy_element():
+        for unb_sym in meta_entity.idx_set_reduced_dummy_element:
             dummy_nodes.append(mat.DummyNode(unb_sym))
 
         # scalar
@@ -721,8 +704,9 @@ class Convexifier:
             idx_node = mat.CompoundDummyNode(component_nodes=dummy_nodes)
 
         # build a declared entity node for the underestimating variable
-        return mat.DeclaredEntityNode(symbol=meta_entity.get_symbol(),
-                                      idx_node=idx_node)
+        return mat.DeclaredEntityNode(symbol=meta_entity.symbol,
+                                      idx_node=idx_node,
+                                      type=meta_entity.type)
 
     # Underestimator Construction
     # ------------------------------------------------------------------------------------------------------------------
@@ -912,7 +896,7 @@ class Convexifier:
             idx_set_node=idx_set_node)
 
         self.ue_meta_vars[ue_sym] = ue_meta_var
-        self.__problem.symbols.add(ue_sym)
+        self.__problem.add_meta_variable(ue_meta_var)
 
         return ue_meta_var
 
@@ -947,9 +931,10 @@ class Convexifier:
                 expression=mat.Expression(rel_op_node)
             )
 
-            self.__problem.symbols.add(ue_env_sym)
+            self.__problem.add_meta_constraint(meta_con)
 
             self.ue_env_meta_cons[ue_env_sym] = meta_con
+            self.var_to_env_map.setdefault(ue_meta_var.symbol, []).append(ue_env_sym)
 
     def __build_multivariate_convex_envelope(self,
                                              factors: List[mat.ArithmeticExpressionNode],
@@ -1082,7 +1067,29 @@ class Convexifier:
                                            is_negative: bool,
                                            coefficient: mat.ArithmeticExpressionNode = None):
 
-        if is_negative:
+        can_append_coeff = True
+
+        # constant (c) or linear (x)
+        if isinstance(operand, mat.NumericNode) or isinstance(operand, mat.DeclaredEntityNode):
+            ue_node = deepcopy(operand)
+
+        # fractional (1/x)
+        elif isinstance(operand, mat.ArithmeticOperationNode) and operand.operator == mat.DIVISION_OPERATOR:
+            can_append_coeff = False
+            ue_node = self.__build_convex_envelope_for_univariate_fractional_function(
+                operand=operand,
+                is_negative=is_negative,
+                coefficient=coefficient
+            )
+
+        # general univariate concave term
+        else:
+            ue_node = self.__build_convex_envelope_for_general_univariate_nonlinear_function(
+                unl_node=operand,
+                is_negative=is_negative
+            )
+
+        if is_negative and can_append_coeff:
             if coefficient is None:
                 coefficient = mat.NumericNode(-1)
             else:
@@ -1093,83 +1100,84 @@ class Convexifier:
                     ]
                 )
 
-        # constant (c) or linear (x)
-        if isinstance(operand, mat.NumericNode) or isinstance(operand, mat.DeclaredEntityNode):
-            if coefficient is None:
-                return deepcopy(operand)
-            else:
-                return nb.build_multiplication_node([deepcopy(coefficient), deepcopy(operand)])
-
-        # fractional (1/x)
-        elif isinstance(operand, mat.ArithmeticOperationNode) and operand.operator == mat.DIVISION_OPERATOR:
-
-            operand_lb_node = self.__build_lower_bound_node(operand=operand.get_rhs_operand(), is_negative=is_negative)
-            operand_ub_node = self.__build_upper_bound_node(operand=operand.get_rhs_operand(), is_negative=is_negative)
-
-            if coefficient is None:
-                coefficient = mat.NumericNode(1)
-
-            cond_operands = [
-                nb.build_multiplication_node(
-                    [
-                        deepcopy(coefficient),
-                        deepcopy(operand)
-                    ]),
-                nb.build_multiplication_node(
-                    [
-                        deepcopy(coefficient),
-                        nb.build_addition_node(
-                            [
-                                deepcopy(operand_lb_node),
-                                deepcopy(operand_ub_node),
-                                nb.append_negative_unity_coefficient(deepcopy(operand.get_rhs_operand()))
-                            ],
-                            is_prioritized=True
-                        ),
-                        nb.build_fractional_node_with_unity_numerator(deepcopy(operand_lb_node),
-                                                                      is_prioritized=True),
-                        nb.build_fractional_node_with_unity_numerator(deepcopy(operand_ub_node),
-                                                                      is_prioritized=True)
-                    ])
-            ]
-
-            conditions = [
-                mat.RelationalOperationNode(operator=mat.GREATER_EQUAL_INEQUALITY_OPERATOR,
-                                            lhs_operand=deepcopy(coefficient),
-                                            rhs_operand=mat.NumericNode(0)),
-            ]
-
-            return mat.ArithmeticConditionalNode(
-                operands=cond_operands,
-                conditions=conditions,
-                is_prioritized=True
-            )
-
-        # general univariate concave term
+        if coefficient is None or not can_append_coeff:
+            return ue_node
         else:
-            ue_node = self.__build_convex_envelope_for_general_univariate_nonlinear_function(operand,
-                                                                                             is_negative=is_negative)
-            if coefficient is None:
-                return ue_node
-            else:
-                return nb.build_multiplication_node([deepcopy(coefficient), ue_node])
+            return nb.build_multiplication_node([deepcopy(coefficient), ue_node])
 
-    def __build_convex_envelope_for_general_univariate_nonlinear_function(self,
-                                                                          unl_node: mat.ArithmeticExpressionNode,
-                                                                          is_negative: bool = False):
+    def __build_convex_envelope_for_univariate_fractional_function(
+            self,
+            operand: mat.ArithmeticOperationNode,
+            is_negative: bool,
+            coefficient: mat.ArithmeticExpressionNode = None
+    ):
+
+        den_node = deepcopy(operand.get_rhs_operand())
+        operand_lb_node = self.__build_lower_bound_node(operand=operand.get_rhs_operand(), is_negative=False)
+        operand_ub_node = self.__build_upper_bound_node(operand=operand.get_rhs_operand(), is_negative=False)
+
+        if coefficient is None:
+            coefficient = mat.NumericNode(1)
+
+        cdn_operand_1 = mat.MultiplicationNode([deepcopy(coefficient), deepcopy(operand)])
+
+        cdn_operand_2 = mat.MultiplicationNode(
+            [
+                deepcopy(coefficient),
+                nb.build_addition_node(
+                    [
+                        deepcopy(operand_lb_node),
+                        deepcopy(operand_ub_node),
+                        den_node if is_negative else nb.append_negative_unity_coefficient(den_node)
+                    ],
+                    is_prioritized=True
+                ),
+                nb.build_fractional_node_with_unity_numerator(deepcopy(operand_lb_node),
+                                                              is_prioritized=True),
+                nb.build_fractional_node_with_unity_numerator(deepcopy(operand_ub_node),
+                                                              is_prioritized=True)
+            ]
+        )
+
+        if is_negative:
+            cdn_operand_1.operands.insert(0, mat.NumericNode(-1))
+            cdn_operand_2.operands.insert(0, mat.NumericNode(-1))
+
+        if is_negative:
+            cdn_rel_operator = mat.LESS_INEQUALITY_OPERATOR
+        else:
+            cdn_rel_operator = mat.GREATER_INEQUALITY_OPERATOR
+
+        conditions = [
+            mat.RelationalOperationNode(operator=cdn_rel_operator,
+                                        lhs_operand=deepcopy(coefficient),
+                                        rhs_operand=mat.NumericNode(0)),
+        ]
+
+        return mat.ArithmeticConditionalNode(
+            operands=[cdn_operand_1, cdn_operand_2],
+            conditions=conditions,
+            is_prioritized=True
+        )
+
+    def __build_convex_envelope_for_general_univariate_nonlinear_function(
+            self,
+            unl_node: mat.ArithmeticExpressionNode,
+            is_negative: bool = False
+    ):
 
         if isinstance(unl_node, mat.ArithmeticTransformationNode):
 
             # special case: -log(x) and -log10(x)
-            if unl_node.symbol in ('log', 'log10') and is_negative:
+            if unl_node.fcn in (mat.NATURAL_LOGARITHM_FUNCTION, mat.BASE_10_LOGARITHM_FUNCTION) and is_negative:
                 return deepcopy(unl_node)  # function is convex
 
             # special case: +exp(x)
-            elif unl_node.symbol == "exp" and not is_negative:
+            elif unl_node.fcn == mat.EXPONENTIAL_FUNCTION and not is_negative:
                 return deepcopy(unl_node)  # function is convex
 
             # special case: sin(x), cos(x), and tan(x)
-            elif unl_node.symbol in ("sin", "cos", "tan"):
+            elif unl_node.fcn in (mat.SINE_FUNCTION, mat.COSINE_FUNCTION, mat.TANGENT_FUNCTION):
                 raise NotImplementedError("Convexification logic for trigonometric functions not yet implemented")
 
             x_node = unl_node.operands[0]
@@ -1221,23 +1229,24 @@ class Convexifier:
         self.__build_bound_meta_entities(var_sym)  # build bounding meta-parameters
 
         # generate mappings of replacement symbols
-        lb_mapping = {var_sym: self.lb_params[var_sym].get_symbol()}
-        ub_mapping = {var_sym: self.ub_params[var_sym].get_symbol()}
+        lb_mapping = {var_sym: self.lb_params[var_sym].symbol}
+        ub_mapping = {var_sym: self.ub_params[var_sym].symbol}
+        type_mapping = {var_sym: mat.PARAM_TYPE}
 
         # build elemental nodes
 
         uc_lb_node = deepcopy(unl_node)
-        nb.replace_declared_symbols(uc_lb_node, lb_mapping)
+        nb.replace_declared_symbols(uc_lb_node, lb_mapping, type_mapping)
 
         uc_ub_node = deepcopy(unl_node)
-        nb.replace_declared_symbols(uc_ub_node, ub_mapping)
+        nb.replace_declared_symbols(uc_ub_node, ub_mapping, type_mapping)
 
         x_lb_node = deepcopy(x_node)
         x_lb_node.is_prioritized = True
-        nb.replace_declared_symbols(x_lb_node, lb_mapping)
+        nb.replace_declared_symbols(x_lb_node, lb_mapping, type_mapping)
 
         x_ub_node = deepcopy(x_node)
-        nb.replace_declared_symbols(x_ub_node, ub_mapping)
+        nb.replace_declared_symbols(x_ub_node, ub_mapping, type_mapping)
 
         # build underestimator node
 
@@ -1245,7 +1254,7 @@ class Convexifier:
         num_node.get_rhs_operand().is_prioritized = True
         den_node = nb.build_subtraction_node(x_ub_node, x_lb_node, is_prioritized=True)
 
-        return nb.build_addition_node(
+        ue_node = nb.build_addition_node(
             [
                 uc_lb_node,
                 nb.build_multiplication_node(
@@ -1253,6 +1262,23 @@ class Convexifier:
                         nb.build_fractional_node(num_node, den_node, is_prioritized=True),
                         nb.build_subtraction_node(deepcopy(x_node), deepcopy(x_lb_node), is_prioritized=True)
                     ]
+                )
+            ],
+            is_prioritized=True
+        )
+
+        x_lb_node.is_prioritized = False
+
+        return mat.ArithmeticConditionalNode(
+            operands=[
+                deepcopy(x_node),
+                ue_node
+            ],
+            conditions=[
+                mat.RelationalOperationNode(
+                    operator=mat.EQUALITY_OPERATOR,
+                    lhs_operand=deepcopy(x_lb_node),
+                    rhs_operand=deepcopy(x_ub_node)
                 )
             ],
             is_prioritized=True
@@ -1270,8 +1296,8 @@ class Convexifier:
             param_syms = (self.__problem.generate_unique_symbol("{0}_L".format(var_sym)),
                           self.__problem.generate_unique_symbol("{0}_U".format(var_sym)))
 
-            default_value_nodes = (deepcopy(meta_var.get_lower_bound_node()),
-                                   deepcopy(meta_var.get_upper_bound_node()))
+            default_value_nodes = (deepcopy(meta_var.lower_bound_node),
+                                   deepcopy(meta_var.upper_bound_node))
 
             meta_params = []
 
@@ -1288,7 +1314,7 @@ class Convexifier:
                     default_value=default_value_node)
 
                 meta_params.append(meta_param)
-                self.__problem.symbols.add(param_sym)
+                self.__problem.add_meta_parameter(meta_param)
 
             self.lb_params[var_sym] = meta_params[0]
             self.ub_params[var_sym] = meta_params[1]
@@ -1406,7 +1432,7 @@ class Convexifier:
         bound_nodes = [[lb_node, ub_node] for lb_node, ub_node in zip(lb_nodes, ub_nodes)]
 
         bound_node = mat.ArithmeticTransformationNode(
-            symbol="min" if is_lower else "max",
+            fcn=mat.MINIMUM_FUNCTION if is_lower else mat.MAXIMUM_FUNCTION,
             operands=fmr.expand_factors_n(bound_nodes)
         )
 
@@ -1440,5 +1466,6 @@ class Convexifier:
 
     @staticmethod
     def __build_declared_bound_node(meta_param: mat.MetaParameter, idx_node: Optional[mat.CompoundDummyNode]):
-        return mat.DeclaredEntityNode(symbol=meta_param.get_symbol(),
-                                      idx_node=deepcopy(idx_node))
+        return mat.DeclaredEntityNode(symbol=meta_param.symbol,
+                                      idx_node=deepcopy(idx_node),
+                                      type=mat.PARAM_TYPE)

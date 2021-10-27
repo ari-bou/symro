@@ -1,6 +1,5 @@
 from typing import Dict, List, Optional, Tuple
 
-import symro.src.constants as const
 import symro.src.mat as mat
 from symro.src.prob.problem import Problem, BaseProblem
 import symro.src.handlers.metaentitybuilder as eb
@@ -198,4 +197,4 @@ class GBDProblem(Problem):
         return [ms for ms in self.idx_meta_sets.values()]
 
     def get_comp_var_syms(self) -> List[str]:
-        return [mv.get_symbol() for mv in self.comp_meta_vars.values()]
+        return [mv.symbol for mv in self.comp_meta_vars.values()]

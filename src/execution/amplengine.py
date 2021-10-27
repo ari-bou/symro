@@ -9,7 +9,8 @@ from typing import Dict, List, Tuple, Union, Optional
 import symro.src.constants as const
 import symro.src.mat as mat
 from symro.src.prob.problem import Problem
-import symro.src.prob.statement as stm
+import symro.src.scripting.script as scr
+import symro.src.scripting.amplstatement as ampl_stm
 from symro.src.execution.engine import Engine
 
 
@@ -61,16 +62,16 @@ class AMPLEngine(Engine):
         self.api.eval(script_literal + '\n')
 
     @staticmethod
-    def __clean_script(script: stm.Script) -> str:
+    def __clean_script(script: ampl_stm.Script) -> str:
 
-        def validate(sta: stm.BaseStatement):
-            if isinstance(sta, stm.SolveStatement):
+        def validate(sta: ampl_stm.BaseStatement):
+            if isinstance(sta, ampl_stm.SolveStatement):
                 return False
-            elif isinstance(sta, stm.DisplayStatement):
+            elif isinstance(sta, ampl_stm.DisplayStatement):
                 return False
-            elif isinstance(sta, stm.Comment):
+            elif isinstance(sta, ampl_stm.Comment):
                 return False
-            elif isinstance(sta, stm.SpecialCommandStatement):
+            elif isinstance(sta, scr.SpecialCommandStatement):
                 return False
             else:
                 return True
@@ -80,7 +81,7 @@ class AMPLEngine(Engine):
         for statement in script.statements:
 
             # TODO: handle nested @OMIT commands
-            if isinstance(statement, stm.SpecialCommandStatement):
+            if isinstance(statement, scr.SpecialCommandStatement):
                 if statement.special_command.symbol == const.SPECIAL_COMMAND_NOEVAL:
                     can_omit = True
                 elif statement.special_command.symbol == const.SPECIAL_COMMAND_EVAL:
@@ -90,7 +91,7 @@ class AMPLEngine(Engine):
                 if not can_omit:
                     cleaned_statements.append(statement)
 
-        cleaned_script = stm.Script(statements=cleaned_statements)
+        cleaned_script = ampl_stm.Script(statements=cleaned_statements)
         return cleaned_script.get_validated_literal(validator=validate)
 
     # Modelling
@@ -171,14 +172,14 @@ class AMPLEngine(Engine):
         # retrieve variable data
         for meta_var in p.model_meta_vars:
 
-            if not meta_var.is_indexed():
+            if not meta_var.is_indexed:
                 idx_set = [None]
             else:
-                idx_set = meta_var.get_reduced_idx_set(self.problem.state)
+                idx_set = meta_var.evaluate_reduced_idx_set(self.problem.state)
 
             for idx in idx_set:
 
-                var = self.get_var(symbol=meta_var.get_symbol(), idx=idx)
+                var = self.get_var(symbol=meta_var.symbol, idx=idx)
 
                 try:
                     lb = var.lb()
@@ -188,7 +189,7 @@ class AMPLEngine(Engine):
                     lb = -np.inf
                     ub = np.inf
 
-                self._store_var(symbol=meta_var.get_symbol(),
+                self._store_var(symbol=meta_var.symbol,
                                 idx=idx,
                                 value=var.value(),
                                 lb=lb,
@@ -197,28 +198,28 @@ class AMPLEngine(Engine):
         # retrieve objective data
         for meta_obj in p.model_meta_objs:
 
-            if not meta_obj.is_indexed():
+            if not meta_obj.is_indexed:
                 idx_set = [None]
             else:
-                idx_set = meta_obj.get_reduced_idx_set(self.problem.state)
+                idx_set = meta_obj.evaluate_reduced_idx_set(self.problem.state)
 
             for idx in idx_set:
-                obj = self.get_obj(symbol=meta_obj.get_symbol(), idx=idx)
-                self._store_obj(symbol=meta_obj.get_symbol(),
+                obj = self.get_obj(symbol=meta_obj.symbol, idx=idx)
+                self._store_obj(symbol=meta_obj.symbol,
                                 idx=idx,
                                 value=obj.value())
 
         # retrieve constraint data
         for meta_con in p.model_meta_cons:
 
-            if not meta_con.is_indexed():
+            if not meta_con.is_indexed:
                 idx_set = [None]
             else:
-                idx_set = meta_con.get_reduced_idx_set(self.problem.state)
+                idx_set = meta_con.evaluate_reduced_idx_set(self.problem.state)
 
             for idx in idx_set:
 
-                con = self.get_con(symbol=meta_con.get_symbol(), idx=idx)
+                con = self.get_con(symbol=meta_con.symbol, idx=idx)
 
                 body = 0
                 lb = -np.inf
@@ -233,7 +234,7 @@ class AMPLEngine(Engine):
                 except Exception as e:
                     warnings.warn(str(e))
 
-                self._store_con(symbol=meta_con.get_symbol(),
+                self._store_con(symbol=meta_con.symbol,
                                 idx=idx,
                                 body=body,
                                 lb=lb,

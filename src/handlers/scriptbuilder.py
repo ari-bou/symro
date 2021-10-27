@@ -1,9 +1,9 @@
 from typing import Dict, Iterable, List, Optional, Set, Union
 
-import symro.src.constants as const
 import symro.src.mat as mat
 from symro.src.prob.problem import BaseProblem, Problem
-import symro.src.prob.statement as stm
+import symro.src.scripting.script as scr
+import symro.src.scripting.amplstatement as ampl_stm
 import symro.src.handlers.nodebuilder as nb
 
 
@@ -24,7 +24,7 @@ def model_to_ampl(problem: Problem,
 class ScriptBuilder:
 
     def __init__(self):
-        self._script: Optional[stm.Script] = None
+        self._script: Optional[scr.Script] = None
         self._defined_syms: Optional[Set[str]] = None
 
     # Model Script
@@ -57,7 +57,7 @@ class ScriptBuilder:
                               include_params: bool = True,
                               include_variables: bool = True,
                               include_objectives: bool = True,
-                              include_constraints: bool = True) -> stm.Script:
+                              include_constraints: bool = True) -> scr.Script:
 
         def transform_entity_collection(entity_collection):
             if entity_collection is None:
@@ -83,7 +83,7 @@ class ScriptBuilder:
                 model_file_name = model_file_name[:-4]
             model_file_name += model_file_extension
 
-        self._script = stm.Script(name=model_file_name)
+        self._script = scr.Script(name=model_file_name)
         self._defined_syms = set()
 
         if (include_sets or include_params) and len(meta_sets_params) > 0:
@@ -112,9 +112,9 @@ class ScriptBuilder:
 
     def __generate_entity_declarations(self, meta_entities: Iterable[mat.MetaEntity]):
         for meta_entity in meta_entities:
-            if meta_entity.get_symbol() not in self._defined_syms:
-                if meta_entity.is_sub():
-                    meta_entity = meta_entity.get_parent()
+            if meta_entity.symbol not in self._defined_syms:
+                if meta_entity.is_sub:
+                    meta_entity = meta_entity.parent
                 self.__add_entity_declaration(meta_entity)
 
     def __generate_set_and_param_statements(self,
@@ -123,10 +123,10 @@ class ScriptBuilder:
                                             include_params: bool):
 
         for meta_entity in meta_sets_params:
-            if meta_entity.get_symbol() not in self._defined_syms:
+            if meta_entity.symbol not in self._defined_syms:
 
-                if meta_entity.is_sub():
-                    meta_entity = meta_entity.get_parent()
+                if meta_entity.is_sub:
+                    meta_entity = meta_entity.parent
 
                 if isinstance(meta_entity, mat.MetaSet) and include_sets:
                     self.__add_entity_declaration(meta_entity)
@@ -151,7 +151,7 @@ class ScriptBuilder:
 
         custom_dummy_syms = None
         if idx_meta_sets is not None:
-            custom_dummy_syms = {ms.get_symbol(): ms.get_dummy_element() for ms in idx_meta_sets}
+            custom_dummy_syms = {ms.symbol: ms.dummy_element for ms in idx_meta_sets}
 
         # collect the meta-variables, meta-objectives, and meta-constraints of the problem in a single list
         meta_entities = []
@@ -166,11 +166,11 @@ class ScriptBuilder:
             if len(unb_sym_mapping) > 0:
                 nb.replace_unbound_symbols(entity_idx_node, unb_sym_mapping)
 
-            entity_node = mat.DeclaredEntityNode(symbol=meta_entity.get_symbol(),
+            entity_node = mat.DeclaredEntityNode(symbol=meta_entity.symbol,
                                                  idx_node=entity_idx_node,
-                                                 type=meta_entity.get_type())
+                                                 type=meta_entity.type)
 
-            if meta_entity.get_idx_set_reduced_dim() == 0:
+            if meta_entity.idx_set_reduced_dim == 0:
                 return None, entity_node
             else:
                 # build a new indexing set node with modified dummy symbols
@@ -184,36 +184,46 @@ class ScriptBuilder:
         node_tuples = [build_indexing_and_entity_node_tuple(me) for me in meta_entities]
 
         # build the problem declaration
-        decl = stm.ProblemStatement(prob_node=prob_node,
-                                    idx_set_node=idx_set_node,
-                                    item_nodes=node_tuples)
+        decl = ampl_stm.ProblemStatement(
+            prob_node=prob_node,
+            idx_set_node=idx_set_node,
+            item_nodes=node_tuples
+        )
         return decl
 
     # Utility
     # ------------------------------------------------------------------------------------------------------------------
 
     def __add_entity_declaration(self, meta_entity: mat.MetaEntity):
-        statement = stm.ModelEntityDeclaration(meta_entity)
+        statement = ampl_stm.ModelEntityDeclaration(meta_entity)
         self.__add_statement(statement)
-        self._defined_syms.add(meta_entity.get_symbol())
+        self._defined_syms.add(meta_entity.symbol)
 
     def __generate_region_heading(self, name: str):
-        comment = stm.Comment(comment=" {0}".format(name.upper()),
-                              is_multi=False)
+        comment = ampl_stm.Comment(
+            comment=" {0}".format(name.upper()),
+            is_multi=False
+        )
         self.__add_statement(comment)
 
-        comment = stm.Comment(comment=" {0}".format('-' * 98),
-                              is_multi=False)
+        comment = ampl_stm.Comment(
+            comment=" {0}".format('-' * 98),
+            is_multi=False
+        )
         self.__add_statement(comment)
 
-        comment = stm.Comment(comment=" beginregion",
-                              is_multi=False)
+        comment = ampl_stm.Comment(
+            comment=" beginregion",
+            is_multi=False
+        )
         self.__add_statement(comment)
 
     def __generate_region_footer(self):
-        comment = stm.Comment(comment=" endregion \n\n",
-                              is_multi=False)
+        comment = ampl_stm.Comment(
+            comment=" endregion \n\n",
+            is_multi=False
+        )
         self.__add_statement(comment)
 
-    def __add_statement(self, statement: stm.BaseStatement):
+    def __add_statement(self, statement: scr.BaseStatement):
         self._script.statements.append(statement)

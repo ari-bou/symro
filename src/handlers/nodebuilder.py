@@ -1,4 +1,3 @@
-from numbers import Number
 from queue import Queue
 from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
@@ -10,20 +9,27 @@ from symro.src.parsing.amplparser import AMPLParser
 # Symbols
 # ------------------------------------------------------------------------------------------------------------------
 
-def replace_declared_symbols(node: mat.ExpressionNode, mapping: Dict[str, str]):
+def replace_declared_symbols(node: mat.ExpressionNode,
+                             sym_mapping: Dict[str, str],
+                             type_mapping: Dict[str, str] = None):
     """
     Replace a selection of declared symbols in an expression tree. Modifies the declared entity nodes and set nodes
     in place rather than replacing them with new objects.
+    The type_mapping may include the following values: set, param, var, obj, con.
 
     :param node: root of the expression tree
-    :param mapping: dictionary of original declared symbols mapped to replacement declared symbols.
+    :param sym_mapping: dictionary of original declared symbols mapped to replacement declared symbols
+    :param type_mapping: dictionary of original declared symbols mapped to replacement entity types
     :return: None
     """
 
-    if mapping is None:
+    if sym_mapping is None:
         return
-    if len(mapping) == 0:
+    if len(sym_mapping) == 0:
         return
+
+    if type_mapping is None:
+        type_mapping = {}
 
     queue = Queue()
     queue.put(node)
@@ -33,8 +39,11 @@ def replace_declared_symbols(node: mat.ExpressionNode, mapping: Dict[str, str]):
         node = queue.get()
 
         if isinstance(node, mat.DeclaredEntityNode) or isinstance(node, mat.DeclaredSetNode):
-            if node.symbol in mapping:
-                node.symbol = mapping[node.symbol]
+            if isinstance(node, mat.DeclaredEntityNode) and node.symbol in type_mapping:
+                node.type = type_mapping[node.symbol]
+            if node.symbol in sym_mapping:
+                node.symbol = sym_mapping[node.symbol]
+
         else:
             children = node.get_children()
             for child in children:
@@ -273,18 +282,18 @@ def generate_unbound_symbol_mapping(problem: Problem,
 
 def build_default_entity_node(meta_entity: mat.MetaEntity) -> mat.DeclaredEntityNode:
     entity_index_node = build_default_entity_index_node(meta_entity)
-    return mat.DeclaredEntityNode(symbol=meta_entity.get_symbol(),
+    return mat.DeclaredEntityNode(symbol=meta_entity.symbol,
                                   idx_node=entity_index_node,
-                                  type=meta_entity.get_type())
+                                  type=meta_entity.type)
 
 
 def build_default_entity_index_node(meta_entity: mat.MetaEntity) -> Optional[mat.CompoundDummyNode]:
 
-    if meta_entity.get_idx_set_reduced_dim() == 0:
+    if meta_entity.idx_set_reduced_dim == 0:
         return None
 
     component_nodes = []
-    dummy_symbols = meta_entity.get_idx_set_reduced_dummy_element()
+    dummy_symbols = meta_entity.idx_set_reduced_dummy_element
     for ds in dummy_symbols:
         component_nodes.append(mat.DummyNode(symbol=ds))
 
@@ -317,23 +326,23 @@ def build_entity_idx_set_node(problem: Problem,
         if isinstance(s, str):
             return s
         elif isinstance(s, mat.MetaSet):
-            return s.get_symbol()
+            return s.symbol
 
-    if meta_entity.get_idx_set_dim() == 0:
+    if meta_entity.idx_set_dim == 0:
         return None
 
-    idx_meta_sets = list(meta_entity.get_idx_meta_sets())
+    idx_meta_sets = list(meta_entity.idx_meta_sets)
 
     # Remove controlled sets
     if remove_sets is not None:
         if isinstance(remove_sets, dict):
             remove_sets = [ms for ms in remove_sets.values()]
         remove_sets = [get_set_sym(s) for s in remove_sets]
-        idx_meta_sets = [ms for ms in idx_meta_sets if ms.get_symbol() not in remove_sets]
+        idx_meta_sets = [ms for ms in idx_meta_sets if ms.symbol not in remove_sets]
 
     return build_idx_set_node(problem,
                               idx_meta_sets,
-                              meta_entity.get_idx_set_con_literal(),
+                              meta_entity.idx_set_con_literal,
                               custom_dummy_syms)
 
 
@@ -378,13 +387,13 @@ def build_idx_set_node(problem: Problem,
         # add all custom dummy symbols to the mapping
         for idx_meta_set in idx_meta_sets:
 
-            if idx_meta_set.get_symbol() in custom_unb_syms:
+            if idx_meta_set.symbol in custom_unb_syms:
 
                 # retrieve the default dummy symbols of the component set
-                default_dummy_syms_i = idx_meta_set.get_dummy_element()
+                default_dummy_syms_i = idx_meta_set.dummy_element
 
                 # retrieve the custom dummy symbols of the indexing meta-set
-                custom_dummy_syms_i = custom_unb_syms[idx_meta_set.get_symbol()]
+                custom_dummy_syms_i = custom_unb_syms[idx_meta_set.symbol]
 
                 # convert the custom dummy symbols to a list
                 if isinstance(custom_dummy_syms_i, int) or isinstance(custom_dummy_syms_i, float) \
@@ -400,10 +409,10 @@ def build_idx_set_node(problem: Problem,
         # identify non-unique default dummy symbols and generate unique replacement symbols
         for idx_meta_set in idx_meta_sets:
 
-            if idx_meta_set.get_symbol() not in custom_unb_syms:
+            if idx_meta_set.symbol not in custom_unb_syms:
 
                 # retrieve the default dummy symbols of the component set
-                default_dummy_syms_i = idx_meta_set.get_dummy_element()
+                default_dummy_syms_i = idx_meta_set.dummy_element
 
                 for dummy_sym in default_dummy_syms_i:
 
@@ -427,7 +436,7 @@ def build_idx_set_node(problem: Problem,
     # build component set nodes
     for idx_meta_set in idx_meta_sets:
 
-        dummy_syms = idx_meta_set.get_dummy_element()  # retrieve the dummy symbols of the component set
+        dummy_syms = idx_meta_set.dummy_element  # retrieve the dummy symbols of the component set
 
         if len(unb_sym_mapping) > 0:
             dummy_syms = [unb_sym_mapping.get(d, d) for d in dummy_syms]  # replace selected dummy symbols
@@ -440,7 +449,7 @@ def build_idx_set_node(problem: Problem,
         else:  # build a compound dummy node if there are multiple elements
             dummy_node = mat.CompoundDummyNode(component_nodes=dummy_element_nodes)
 
-        set_node = ampl_parser.parse_set_expression(idx_meta_set.get_symbol())
+        set_node = ampl_parser.parse_set_expression(idx_meta_set.symbol)
 
         # replace selected dummy nodes belonging to the set node
         if len(unb_sym_mapping) > 0:
@@ -577,6 +586,8 @@ def build_fractional_node(numerator: mat.ArithmeticExpressionNode,
 
 def build_fractional_node_with_unity_numerator(denominator: mat.ArithmeticExpressionNode,
                                                is_prioritized: bool = True):
+    if not isinstance(denominator, mat.DeclaredEntityNode) and not isinstance(denominator, mat.NumericNode):
+        denominator.is_prioritized = True
     return build_fractional_node(numerator=mat.NumericNode(1),
                                  denominator=denominator,
                                  is_prioritized=is_prioritized)

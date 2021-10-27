@@ -20,7 +20,7 @@ def is_constant(root_node: ExpressionNode) -> bool:
 
         node: ExpressionNode = queue.get()
 
-        if isinstance(node, DeclaredEntityNode) and not node.is_constant():
+        if isinstance(node, DeclaredEntityNode) and not node.is_constant:
             return False
 
         for child in node.get_children():
@@ -55,7 +55,7 @@ def is_linear(root_node: ExpressionNode) -> bool:
                 return False
 
         elif isinstance(node, ArithmeticTransformationNode):   # transformation
-            if node.symbol != "sum":
+            if node.fcn != SUMMATION_FUNCTION:
                 is_const = [is_constant(child) for child in node.get_children()]
                 if len(is_const) > 0:
                     return False
@@ -178,7 +178,7 @@ def get_param_nodes(root_node: ExpressionNode) -> List[DeclaredEntityNode]:
         node: ExpressionNode = queue.get()
 
         if isinstance(node, DeclaredEntityNode):
-            if node.is_constant():
+            if node.is_constant:
                 param_nodes.append(node)
 
         else:
@@ -200,7 +200,7 @@ def get_var_nodes(root_node: ExpressionNode) -> List[DeclaredEntityNode]:
         node: ExpressionNode = queue.get()
 
         if isinstance(node, DeclaredEntityNode):
-            if not node.is_constant():
+            if not node.is_constant:
                 var_nodes.append(node)
 
         else:

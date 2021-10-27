@@ -3,7 +3,7 @@ import numpy as np
 
 import symro.src.mat as mat
 from symro.src.prob.problem import Problem
-import symro.src.prob.statement as stm
+import symro.src.scripting.script as stm
 
 
 class AMPLParser:
@@ -20,28 +20,35 @@ class AMPLParser:
     ARITH_BIN_OPR_SYMBOLS_16 = ['^', "**"]
     ARITH_BIN_OPR_SYMBOLS = ARITH_BIN_OPR_SYMBOLS_12 + ARITH_BIN_OPR_SYMBOLS_14 + ARITH_BIN_OPR_SYMBOLS_16
 
-    ARITH_FUNCTION_SYMBOLS = ["abs",
-                              "alias",
-                              "Beta",
-                              "Cauchy",
-                              "ceil", "floor",
-                              "cos", "cosh", "acos", "acosh",
-                              "exp",
-                              "Exponential",
-                              "Gamma",
-                              "Irand224",
-                              "log", "log10",
-                              "max", "min",
-                              "Normal", "Normal01",
-                              "Poisson",
-                              "round", "precision",
-                              "sin", "sinh", "asin", "asinh",
-                              "sqrt",
-                              "sum", "prod",
-                              "tan", "tanh", "atan", "atanh", "atanh2",
-                              "time", "ctime",
-                              "trunc",
-                              "Uniform", "Uniform01"]
+    ARITH_FUNCTION_SYMBOLS = {
+        "abs": mat.ABSOLUTE_VALUE_FUNCTION,
+        "alias": mat.ALIAS_FUNCTION,
+        "Beta": mat.BETA_RNG_FUNCTION,
+        "Cauchy": mat.CAUCHY_RNG_FUNCTION,
+        "ceil": mat.CEILING_FUNCTION, "floor": mat.FLOOR_FUNCTION,
+        "cos": mat.COSINE_FUNCTION, "cosh": mat.HYPERBOLIC_COSINE_FUNCTION,
+        "acos": mat.INVERSE_COSINE_FUNCTION, "acosh": mat.INVERSE_HYPERBOLIC_COSINE_FUNCTION,
+        "exp": mat.EXPONENTIAL_FUNCTION,
+        "Exponential": mat.EXPONENTIAL_RNG_FUNCTION,
+        "Gamma": mat.GAMMA_RNG_FUNCTION,
+        "Irand224": mat.Irand224_RNG_FUNCTION,
+        "log": mat.NATURAL_LOGARITHM_FUNCTION, "log10": mat.BASE_10_LOGARITHM_FUNCTION,
+        "ln": mat.NATURAL_LOGARITHM_FUNCTION,
+        "max": mat.MAXIMUM_FUNCTION, "min": mat.MINIMUM_FUNCTION,
+        "Normal": mat.NORMAL_RNG_FUNCTION, "Normal01": mat.STANDARD_NORMAL_RNG_FUNCTION,
+        "Poisson": mat.POISSON_RNG_FUNCTION,
+        "round": mat.ROUND_FUNCTION, "precision": mat.PRECISION_FUNCTION,
+        "sin": mat.SINE_FUNCTION, "sinh": mat.HYPERBOLIC_SINE_FUNCTION,
+        "asin": mat.INVERSE_SINE_FUNCTION, "asinh": mat.INVERSE_HYPERBOLIC_SINE_FUNCTION,
+        "sqrt": mat.SQUARE_ROOT_FUNCTION,
+        "sum": mat.SUMMATION_FUNCTION, "prod": mat.PRODUCT_FUNCTION,
+        "tan": mat.TANGENT_FUNCTION, "tanh": mat.HYPERBOLIC_TANGENT_FUNCTION,
+        "atan": mat.INVERSE_TANGENT_FUNCTION, "atanh": mat.INVERSE_HYPERBOLIC_TANGENT_FUNCTION,
+        "atanh2": mat.INVERSE_HYPERBOLIC_TANGENT_FUNCTION_2,
+        "time": mat.TIME_FUNCTION, "ctime": mat.CTIME_FUNCTION,
+        "trunc": mat.TRUNCATION_FUNCTION,
+        "Uniform": mat.UNIFORM_RNG_FUNCTION, "Uniform01": mat.STANDARD_UNIFORM_RNG_FUNCTION
+    }
 
     # --- Logical Operation Symbols ---
 
@@ -647,7 +654,7 @@ class AMPLParser:
 
         while self.get_token() in operators:  # parse next arithmetic operation
 
-            operator = self.get_token()
+            operator_sym = self.get_token()
             self._next_token()  # skip operator
 
             if precedence == 12:  # precedence level 12
@@ -662,16 +669,16 @@ class AMPLParser:
             # - integer division
             # - modulus
             # - exponentiation
-            if operator in ["less", "div", "mod", '^', "**"]:
+            if operator_sym in ["less", "div", "mod", '^', "**"]:
 
                 # less
-                if operator == "less":
+                if operator_sym == "less":
                     root_operation = self.__convert_less_operation_to_non_negative_max(lhs_operand=root_operation,
                                                                                        rhs_operand=rhs_operand)
 
                 # div or mod
-                elif operator == "div" or operator == "mod":
-                    root_operation = mat.ArithmeticTransformationNode(symbol=operator,
+                elif operator_sym == "div" or operator_sym == "mod":
+                    root_operation = mat.ArithmeticTransformationNode(fcn=self.ARITH_FUNCTION_SYMBOLS[operator_sym],
                                                                       operands=[root_operation, rhs_operand])
 
                 # exponentiation
@@ -689,18 +696,18 @@ class AMPLParser:
             else:
 
                 # convert subtraction operation to addition operation
-                if operator == '-':
-                    operator = '+'  # change the operator
+                if operator_sym == '-':
+                    operator_sym = '+'  # change the operator
                     rhs_operand = self.append_negative_unity_coefficient(rhs_operand)
 
                 # convert division operation to multiplication operation
-                elif operator == '/':
-                    operator = '*'  # change the operator
+                elif operator_sym == '/':
+                    operator_sym = '*'  # change the operator
                     rhs_operand = self.__convert_divisor_to_fraction(divisor=rhs_operand)
 
                 # build a new arithmetic operation node if it does not exist yet
                 if arith_operation is None:
-                    if operator == '+':
+                    if operator_sym == '+':
                         arith_operation = mat.AdditionNode(operands=[root_operation, rhs_operand])
                     else:
                         arith_operation = mat.MultiplicationNode(operands=[root_operation, rhs_operand])
@@ -718,7 +725,7 @@ class AMPLParser:
         zero_node = mat.NumericNode(value=0)
         rhs_operand = self.append_negative_unity_coefficient(rhs_operand)
         sub_node = mat.AdditionNode(operands=[lhs_operand, rhs_operand])
-        return mat.ArithmeticTransformationNode(symbol="max",
+        return mat.ArithmeticTransformationNode(fcn=mat.MAXIMUM_FUNCTION,
                                                 idx_set_node=None,
                                                 operands=[sub_node, zero_node])
 
@@ -867,9 +874,11 @@ class AMPLParser:
 
             self._next_token()  # skip closing parenthesis ')'
 
-        function_operation = mat.ArithmeticTransformationNode(symbol=function_sym,
-                                                              idx_set_node=idx_set_node,
-                                                              operands=operands)
+        function_operation = mat.ArithmeticTransformationNode(
+            fcn=self.ARITH_FUNCTION_SYMBOLS[function_sym],
+            idx_set_node=idx_set_node,
+            operands=operands
+        )
 
         return function_operation
 

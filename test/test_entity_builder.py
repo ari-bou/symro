@@ -50,8 +50,8 @@ def fixed_dimension_test():
     results = []
 
     x = problem.get_meta_entity("x")
-    results.append(check_str_result(x.get_idx_set_reduced_dim(), 2))
-    results.append(check_str_result(x.get_idx_set_reduced_dummy_element(), ['i', 'l']))
+    results.append(check_str_result(x.idx_set_reduced_dim, 2))
+    results.append(check_str_result(x.idx_set_reduced_dummy_element, ['i', 'l']))
 
     return results
 

@@ -27,10 +27,10 @@ def standardize_model(problem: Problem) -> Dict[str, List[mat.MetaConstraint]]:
 
     for meta_con in problem.model_meta_cons:
 
-        problem.meta_cons.pop(meta_con.get_symbol())  # remove original meta-constraint
+        problem.meta_cons.pop(meta_con.symbol)  # remove original meta-constraint
 
         std_meta_con_list = __standardize_constraint(problem, meta_con)
-        original_to_standard_con_map[meta_con.get_symbol()] = std_meta_con_list
+        original_to_standard_con_map[meta_con.symbol] = std_meta_con_list
 
         std_meta_cons.extend(std_meta_con_list)
 
@@ -47,9 +47,9 @@ def standardize_model(problem: Problem) -> Dict[str, List[mat.MetaConstraint]]:
         for meta_con in sp.model_meta_cons:  # iterate over all meta-constraints in the subproblem
 
             # retrieve the standardized parent meta-constraint
-            std_meta_cons_c = original_to_standard_con_map[meta_con.get_symbol()]
+            std_meta_cons_c = original_to_standard_con_map[meta_con.symbol]
 
-            if not meta_con.is_sub():  # original meta-constraint
+            if not meta_con.is_sub:  # original meta-constraint
                 # add the standardized parent meta-constraints to the list
                 std_sp_meta_cons.extend(std_meta_cons_c)
 
@@ -70,11 +70,11 @@ def standardize_model(problem: Problem) -> Dict[str, List[mat.MetaConstraint]]:
 
 
 def __standardize_objective(meta_obj: mat.MetaObjective):
-    if meta_obj.get_direction() == mat.MetaObjective.MAXIMIZE_DIRECTION:
+    if meta_obj.direction == mat.MetaObjective.MAXIMIZE_DIRECTION:
 
-        meta_obj.set_direction(mat.MetaObjective.MINIMIZE_DIRECTION)
+        meta_obj.direction = mat.MetaObjective.MINIMIZE_DIRECTION
 
-        expression = meta_obj.get_expression()
+        expression = meta_obj.expression
         operand = expression.root_node
         if not isinstance(operand, mat.ArithmeticExpressionNode):
             raise ValueError("Formulator expected an arithmetic expression node"
@@ -110,13 +110,13 @@ def __standardize_constraint(problem: Problem, meta_con: mat.MetaConstraint) -> 
 def __is_constraint_standardized(meta_con: mat.MetaConstraint):
 
     # double inequality
-    if meta_con.get_constraint_type() == mat.MetaConstraint.DOUBLE_INEQUALITY_TYPE:
+    if meta_con.constraint_type == mat.MetaConstraint.DOUBLE_INEQUALITY_TYPE:
         return False
 
     # single inequality or equality
     else:
 
-        rel_node = meta_con.get_expression().root_node
+        rel_node = meta_con.expression.root_node
         if not isinstance(rel_node, mat.RelationalOperationNode):
             raise ValueError("Formulator expected a relational operation node"
                              " while verifying whether the constraint '{0}' is in standard form".format(meta_con))
@@ -138,28 +138,28 @@ def __is_constraint_standardized(meta_con: mat.MetaConstraint):
 
 def __standardize_equality_constraint(meta_con: mat.MetaConstraint) -> mat.MetaConstraint:
 
-    eq_op_node = meta_con.get_expression().root_node
+    eq_op_node = meta_con.expression.root_node
     if not isinstance(eq_op_node, mat.RelationalOperationNode):
         raise ValueError("Formulator encountered unexpected expression node"
                          + " while standardizing equality constraint '{0}'".format(meta_con))
 
     __move_relational_expression_operands_to_lhs(eq_op_node)
 
-    meta_con.get_expression().link_nodes()
+    meta_con.expression.link_nodes()
 
     return meta_con
 
 
 def __standardize_inequality_constraint(meta_con: mat.MetaConstraint) -> mat.MetaConstraint:
 
-    ineq_op_node = meta_con.get_expression().root_node
+    ineq_op_node = meta_con.expression.root_node
     if not isinstance(ineq_op_node, mat.RelationalOperationNode):
         raise ValueError("Formulator encountered unexpected expression node"
                          + " while standardizing inequality constraint '{0}'".format(meta_con))
 
     __move_relational_expression_operands_to_lhs(ineq_op_node)
 
-    meta_con.get_expression().link_nodes()
+    meta_con.expression.link_nodes()
 
     return meta_con
 
@@ -191,10 +191,10 @@ def __standardize_double_inequality_constraint(problem: Problem,
 
         mc_clone = deepcopy(meta_con)
 
-        new_sym = problem.generate_unique_symbol("{0}_I{1}".format(meta_con.get_symbol(), i + 1))
-        mc_clone.set_symbol(new_sym)
+        new_sym = problem.generate_unique_symbol("{0}_I{1}".format(meta_con.symbol, i + 1))
+        mc_clone.symbol = new_sym
 
-        expr_clone = mc_clone.get_expression()
+        expr_clone = mc_clone.expression
         expr_clone.root_node = ref_ineq_op_node
         expr_clone.link_nodes()
 
@@ -207,7 +207,7 @@ def __standardize_double_inequality_constraint(problem: Problem,
 
 def __extract_operands_from_double_inequality(meta_con: mat.MetaConstraint):
 
-    ineq_op_node = meta_con.get_expression().root_node
+    ineq_op_node = meta_con.expression.root_node
 
     if not isinstance(ineq_op_node, mat.RelationalOperationNode):
         raise ValueError("Formulator encountered unexpected expression node"
@@ -292,16 +292,16 @@ def __move_relational_expression_operands_to_lhs(rel_op_node: mat.RelationalOper
 def convert_equality_to_inequality_constraints(problem: Problem, meta_con: mat.MetaConstraint):
 
     ref_meta_cons = []
-    old_sym = meta_con.get_symbol()
+    old_sym = meta_con.symbol
 
     for i in range(2):
 
         ref_meta_con = deepcopy(meta_con)
 
         new_sym = problem.generate_unique_symbol("{0}_E{1}".format(old_sym, i + 1))
-        ref_meta_con.set_symbol(new_sym)
+        ref_meta_con.symbol = new_sym
 
-        eq_op_node = ref_meta_con.get_expression().root_node
+        eq_op_node = ref_meta_con.expression.root_node
         if not isinstance(eq_op_node, mat.RelationalOperationNode):
             raise ValueError("Formulator encountered unexpected expression node"
                              + " while converting equality constraint '{0}'".format(meta_con)
@@ -358,10 +358,10 @@ def formulate_slackened_constraint(problem: Problem,
                          + " while building a slackened constraint for '{0}'".format(meta_con))
 
     sl_meta_con = deepcopy(meta_con)
-    expr_clone = deepcopy(meta_con.get_expression())
+    expr_clone = deepcopy(meta_con.expression)
 
-    con_sym = problem.generate_unique_symbol("{0}_F".format(meta_con.get_symbol()))
-    sl_meta_con.set_symbol(con_sym)
+    con_sym = problem.generate_unique_symbol("{0}_F".format(meta_con.symbol))
+    sl_meta_con.symbol = con_sym
 
     rel_op_node = expr_clone.root_node
     if not isinstance(rel_op_node, mat.RelationalOperationNode):
@@ -372,7 +372,7 @@ def formulate_slackened_constraint(problem: Problem,
     rel_op_node.lhs_operand = nb.build_addition_node([rel_op_node.lhs_operand, rhs_node])
 
     expr_clone.link_nodes()
-    sl_meta_con.set_expression(expr_clone)
+    sl_meta_con.expression = expr_clone
 
     return sl_meta_vars, sl_meta_con
 
@@ -381,9 +381,9 @@ def __generate_slack_var(problem: Problem,
                          meta_con: mat.MetaConstraint,
                          symbol_suffix: str = ""):
 
-    sym = problem.generate_unique_symbol("{0}_SL{1}".format(meta_con.get_symbol(), symbol_suffix))
+    sym = problem.generate_unique_symbol("{0}_SL{1}".format(meta_con.symbol, symbol_suffix))
     sl_meta_var = mat.MetaVariable(symbol=sym,
-                                   idx_meta_sets=deepcopy(meta_con.get_idx_meta_sets()),
+                                   idx_meta_sets=deepcopy(meta_con.idx_meta_sets),
                                    idx_set_node=meta_con.idx_set_node,
                                    default_value=mat.NumericNode(0),
                                    lower_bound=mat.NumericNode(0))
@@ -409,10 +409,10 @@ def formulate_slack_min_objective(problem: Problem,
     for sl_meta_var in sl_meta_vars:
 
         entity_index_node = nb.build_default_entity_index_node(sl_meta_var)
-        slack_node = mat.DeclaredEntityNode(symbol=sl_meta_var.get_symbol(),
+        slack_node = mat.DeclaredEntityNode(symbol=sl_meta_var.symbol,
                                             idx_node=entity_index_node)
 
-        if sl_meta_var.get_idx_set_reduced_dim() == 0:
+        if sl_meta_var.idx_set_reduced_dim == 0:
             operand = slack_node
         else:
             idx_set_node = nb.build_entity_idx_set_node(problem=problem,
@@ -421,7 +421,7 @@ def formulate_slack_min_objective(problem: Problem,
             if idx_set_node is None:
                 operand = slack_node
             else:
-                operand = mat.ArithmeticTransformationNode(symbol="sum",
+                operand = mat.ArithmeticTransformationNode(fcn=mat.SUMMATION_FUNCTION,
                                                            idx_set_node=idx_set_node,
                                                            operands=slack_node)
 
@@ -520,20 +520,20 @@ def substitute_defined_variables(problem: Problem):
 
     sub_map = {}  # map of defined variable symbols to their defined values
     for mv in problem.model_meta_vars:
-        if mv.is_defined():
-            sub_map[mv.get_symbol()] = (mv.get_defined_value_node(), mv.get_idx_set_reduced_dummy_element())
+        if mv.is_defined:
+            sub_map[mv.symbol] = (mv.defined_value_node, mv.idx_set_reduced_dummy_element)
 
     if len(sub_map) > 0:
 
         # modify meta-objective expressions
         for mo in problem.model_meta_objs:
-            mo.get_expression().root_node = substitute(root_node=mo.get_expression().root_node,
-                                                       sub_map=sub_map)
+            mo.expression.root_node = substitute(root_node=mo.expression.root_node,
+                                                 sub_map=sub_map)
 
         # modify meta-constraint expressions
         for mc in problem.model_meta_cons:
-            mc.get_expression().root_node = substitute(root_node=mc.get_expression().root_node,
-                                                       sub_map=sub_map)
+            mc.expression.root_node = substitute(root_node=mc.expression.root_node,
+                                                 sub_map=sub_map)
 
 
 # Simplification
@@ -636,6 +636,9 @@ def __simplify_conditional_expression(problem: Problem,
                 break  # discard remaining conditions
 
             # if the condition simplifies to explicit False, then the entire operand is discarded
+
+        else:
+            red_spl_operands.append(spl_operands[i])
 
         i += 1  # increment index
 
@@ -1218,7 +1221,7 @@ def __expand_multiplication(problem: Problem,
         elif isinstance(node, mat.ArithmeticTransformationNode):
 
             # reductive summation
-            if node.is_reductive() and node.symbol == "sum":
+            if node.is_reductive() and node.fcn == mat.SUMMATION_FUNCTION:
 
                 idx_sets = node.idx_set_node.generate_combined_idx_sets(
                     state=problem.state,
@@ -1510,7 +1513,7 @@ def combine_arithmetic_reduction_nodes(problem: Problem,
                                                constraint_node=constraint_node)
 
             # build the combined summation node
-            return mat.ArithmeticTransformationNode(symbol="sum",
+            return mat.ArithmeticTransformationNode(fcn=mat.SUMMATION_FUNCTION,
                                                     idx_set_node=idx_set_node,
                                                     operands=prod_node)
 
@@ -1564,7 +1567,7 @@ def __extract_idx_set_nodes_and_constraint_nodes(problem: Problem,
         return ref_factors, cmpt_set_nodes, con_nodes
 
     # summation
-    elif isinstance(node, mat.ArithmeticTransformationNode) and node.symbol == "sum":
+    elif isinstance(node, mat.ArithmeticTransformationNode) and node.fcn == mat.SUMMATION_FUNCTION:
 
         middle_unb_syms = nb.retrieve_unbound_symbols(node.idx_set_node)
 

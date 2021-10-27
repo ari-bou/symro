@@ -7,7 +7,7 @@ import warnings
 
 import symro.src.mat as mat
 from symro.src.prob.problem import BaseProblem, Problem
-import symro.src.prob.statement as stm
+import symro.src.scripting.amplstatement as ampl_stm
 import symro.src.handlers.nodebuilder as nb
 import symro.src.handlers.metaentitybuilder as eb
 from symro.src.execution.amplengine import AMPLEngine
@@ -20,7 +20,7 @@ import symro.src.util.util as util
 
 def __complete_meta_entity_construction(problem: Problem):
     eb.build_all_idx_meta_sets(problem)
-    __build_declared_subproblems(problem)
+    __build_declared_subproblems_from_script(problem)
 
 
 # Subproblem Construction
@@ -115,26 +115,24 @@ def __build_subproblem_meta_entities_from_nodes(problem: Problem,
     return meta_entities
 
 
-def __build_declared_subproblems(problem: Problem):
+def __build_declared_subproblems_from_script(problem: Problem):
 
-    prob_statements = []
+    scripts = [problem.compound_script.main_script] + list(problem.compound_script.included_scripts.values())
 
-    for statement in problem.compound_script.main_script.statements:
-        if isinstance(statement, stm.ProblemStatement):
-            prob_statements.append(statement)
-
-    for script in problem.compound_script.included_scripts.values():
+    for script in scripts:
         for statement in script.statements:
-            if isinstance(statement, stm.ProblemStatement):
-                prob_statements.append(statement)
 
-    for prob_statement in prob_statements:
-        sp = __build_subproblem_from_nodes(
-            problem=problem,
-            sp_sym=prob_statement.prob_node.symbol,
-            sp_idx_set_node=prob_statement.idx_set_node,
-            entity_nodes=prob_statement.item_nodes)
-        problem.add_subproblem(sp)
+            # AMPL problem declaration
+            if isinstance(statement, ampl_stm.ProblemStatement) and statement.item_nodes is not None:
+
+                # build subproblem
+                sp = __build_subproblem_from_nodes(
+                    problem=problem,
+                    sp_sym=statement.prob_node.symbol,
+                    sp_idx_set_node=statement.idx_set_node,
+                    entity_nodes=statement.item_nodes)
+
+                problem.add_subproblem(sp)  # add subproblem to script
 
 
 # AMPL Input
@@ -205,7 +203,7 @@ def __retrieve_set_data_from_ampl_engine(problem: Problem,
 
         # set the dimension of the meta-set
         meta_set = problem.meta_sets[sym]
-        meta_set.set_dim(ampl_set.arity())
+        meta_set.dim = ampl_set.arity()
         if not meta_set.is_init:
             meta_set.initialize()
 

@@ -504,12 +504,13 @@ class ArithmeticOperationNode(ArithmeticExpressionNode):
 
         # n-ary operation
         else:
-
+            y_list = [x_lhs[0]]
             for i in range(1, len(self.operands)):
 
                 x_rhs = self.operands[i].evaluate(state, idx_set, dummy_element)
 
                 if self.operator == ADDITION_OPERATOR:  # addition
+                    y_list.append(x_rhs[0])
                     y = x_lhs + x_rhs
                 elif self.operator == SUBTRACTION_OPERATOR:  # subtraction
                     y = x_lhs - x_rhs

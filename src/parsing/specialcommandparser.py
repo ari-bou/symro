@@ -1,7 +1,7 @@
 import json
 from typing import List
 
-from symro.src.prob.specialcommand import SpecialCommand
+from symro.src.scripting.specialcommand import SpecialCommand
 
 
 class SpecialCommandParser:

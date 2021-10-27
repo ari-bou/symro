@@ -3,7 +3,8 @@ from typing import List, Tuple, Union
 import symro.src.constants as const
 import symro.src.mat as mat
 from symro.src.prob.problem import Problem
-import symro.src.prob.statement as stm
+import symro.src.scripting.script as scr
+import symro.src.scripting.amplstatement as ampl_stm
 from symro.src.parsing.amplparser import AMPLParser
 from symro.src.parsing.specialcommandparser import SpecialCommandParser
 import symro.src.util.util as util
@@ -23,7 +24,7 @@ class AMPLScriptParser(AMPLParser):
     # Script Parsing
     # ------------------------------------------------------------------------------------------------------------------
 
-    def parse_script(self, literal: str) -> stm.CompoundScript:
+    def parse_script(self, literal: str) -> ampl_stm.CompoundScript:
         script = self._tokenize(literal)
         self._active_script = script
         self.__parse_script()
@@ -58,7 +59,7 @@ class AMPLScriptParser(AMPLParser):
         self.__parse_script()
         self._active_script = prev_script
 
-    def __parse_sentence(self) -> Tuple[bool, Union[stm.BaseStatement, List[stm.BaseStatement]]]:
+    def __parse_sentence(self) -> Tuple[bool, Union[ampl_stm.BaseStatement, List[ampl_stm.BaseStatement]]]:
 
         token = self.get_token()
         sentence = None
@@ -75,11 +76,11 @@ class AMPLScriptParser(AMPLParser):
         # --- Comments ---
 
         # Comment
-        elif token in ['#', "/*"]:
+        elif token in ('#', "/*"):
             is_statement = False
             sentence = self.__parse_comment()
 
-        # --- Environment Commands ---
+        # --- General Commands ---
 
         elif token == "include":
             is_statement = False
@@ -88,16 +89,15 @@ class AMPLScriptParser(AMPLParser):
         elif token == "commands":
             sentence = self.__parse_file_command()
 
-        elif token in ["model", "data"]:
+        elif token in ("model", "data"):
             sentence = self.__parse_mode_command()
 
         elif token == "option":
             sentence = self.__parse_option_statement()
 
-        elif token in ["read", "write"]:
-            sentence = self.__parse_io_statement()
+        # --- Printing/Display Commands ---
 
-        elif token in ["display", "_display", "csvdisplay", "print", "printf"]:
+        elif token in ("display", "_display", "csvdisplay", "print", "printf"):
             sentence = self.__parse_display_print_statement()
 
         # --- Modelling Commands ---
@@ -105,14 +105,36 @@ class AMPLScriptParser(AMPLParser):
         elif token == "solve":
             sentence = self.__parse_solve_statement()
 
-        elif token in ["drop", "restore", "objective"]:
-            sentence = self.__parse_non_assignment_entity_command()
+        elif token in ("read", "write"):
+            sentence = self.__parse_io_statement()
 
-        elif token in ["fix", "unfix", "let"]:
-            sentence = self.__parse_assignment_entity_command()
+        elif token in ("drop", "restore", "objective"):
+            sentence = self.__parse_entity_inclusion_command()
+
+        elif token in ("fix", "unfix"):
+            sentence = self.__parse_fix_command()
+
+        elif token in ("reset", "update", "let"):
+            sentence = self.__parse_data_manipulation_command()
 
         elif token == "problem":
             sentence = self.__parse_problem_statement()
+
+        elif token == "environ":
+            raise NotImplementedError("Parsing logic for environ command not implemented yet")
+
+        elif token in ("solution", "delete", "purge", "redeclare"):
+            raise NotImplementedError("Parsing logic for command {0} not yet implemented".format(token))
+
+        # --- Model Examination Commands ---
+
+        elif token in ("show", "xref", "expand", "check"):
+            raise NotImplementedError("Parsing logic for command {0} not yet implemented".format(token))
+
+        # --- Computational Environment Commands ---
+
+        elif token in ("shell", "cd", "quit", "exit", "end"):
+            raise NotImplementedError("Parsing logic for command {0} not yet implemented".format(token))
 
         # --- Control Logic ---
 
@@ -131,7 +153,7 @@ class AMPLScriptParser(AMPLParser):
             # TODO: implement parsing logic for while/until loop
             raise NotImplementedError("Parsing logic for while/until loop not yet implemented")
 
-        # --- Declarations ---
+        # --- Entity Declarations ---
 
         elif token == "table":
             sentence = self.__parse_table_declaration()
@@ -241,7 +263,7 @@ class AMPLScriptParser(AMPLParser):
 
         self._next_token()  # skip closing delimiter
 
-        statements = [stm.Comment(comment, is_multi=is_multi)]
+        statements = [ampl_stm.Comment(comment, is_multi=is_multi)]
         statements.extend(self.__parse_special_commands(comment))
 
         return statements
@@ -264,7 +286,7 @@ class AMPLScriptParser(AMPLParser):
                 self._can_evaluate = False
 
             self.problem.add_script_command(script_command)
-            statements.append(stm.SpecialCommandStatement(script_command))
+            statements.append(scr.SpecialCommandStatement(script_command))
 
         return statements
 
@@ -326,7 +348,7 @@ class AMPLScriptParser(AMPLParser):
         self.problem.add_meta_set(meta_set, is_auxiliary=is_auxiliary)
 
         # build statement
-        return stm.ModelEntityDeclaration(meta_set)
+        return ampl_stm.ModelEntityDeclaration(meta_set)
 
     # A.7
     def __parse_param_declaration(self):
@@ -413,7 +435,7 @@ class AMPLScriptParser(AMPLParser):
         self.problem.add_meta_parameter(meta_param, is_auxiliary=is_auxiliary)
 
         # Statement
-        return stm.ModelEntityDeclaration(meta_param)
+        return ampl_stm.ModelEntityDeclaration(meta_param)
 
     # A.8
     def __parse_var_declaration(self):
@@ -508,7 +530,7 @@ class AMPLScriptParser(AMPLParser):
         self.problem.add_meta_variable(meta_var, is_auxiliary=is_auxiliary)
 
         # Statement
-        return stm.ModelEntityDeclaration(meta_var)
+        return ampl_stm.ModelEntityDeclaration(meta_var)
 
     # A.10
     def __parse_obj_declaration(self, direction: str):
@@ -539,7 +561,7 @@ class AMPLScriptParser(AMPLParser):
             # Suffixes
             elif self.get_token() == "suffix":
                 # TODO: suffix initializations
-                pass
+                raise NotImplementedError("Parsing logic for suffix initializations not implemented yet")
 
             # Alias
             else:
@@ -558,7 +580,7 @@ class AMPLScriptParser(AMPLParser):
         self.problem.add_meta_objective(meta_obj, is_auxiliary=is_auxiliary)
 
         # Statement
-        return stm.ModelEntityDeclaration(meta_obj)
+        return ampl_stm.ModelEntityDeclaration(meta_obj)
 
     # A.9
     def __parse_con_declaration(self):
@@ -586,7 +608,7 @@ class AMPLScriptParser(AMPLParser):
             # Suffixes
             elif self.get_token() == "suffix":
                 # TODO: suffix initializations
-                pass
+                raise NotImplementedError("Parsing logic for suffix initializations not implemented yet")
 
             # Alias
             elif self.get_token() not in ['{', ':', ":=", "default"]:
@@ -606,7 +628,7 @@ class AMPLScriptParser(AMPLParser):
         meta_con.elicit_constraint_type()
 
         # Statement
-        return stm.ModelEntityDeclaration(meta_con)
+        return ampl_stm.ModelEntityDeclaration(meta_con)
 
     # Table Declaration and Access
     # ------------------------------------------------------------------------------------------------------------------
@@ -659,12 +681,14 @@ class AMPLScriptParser(AMPLParser):
                 elif self.get_token() == ';':
                     break
 
-        return stm.TableDeclaration(table_sym=table_sym,
-                                    idx_set_node=idx_set_node,
-                                    direction=direction,
-                                    opt_nodes=opt_nodes,
-                                    key_spec=key_spec,
-                                    data_specs=data_specs)
+        return ampl_stm.TableDeclaration(
+            table_sym=table_sym,
+            idx_set_node=idx_set_node,
+            direction=direction,
+            opt_nodes=opt_nodes,
+            key_spec=key_spec,
+            data_specs=data_specs
+        )
 
     # A.13
     def __parse_key_spec(self):
@@ -698,12 +722,14 @@ class AMPLScriptParser(AMPLParser):
             else:
                 self._next_token()  # skip comma ','
 
-        return stm.TableKeySpec(set_expr_node=set_expr_node,
-                                arrow_token=arrow_token,
-                                key_col_specs=key_col_specs)
+        return ampl_stm.TableDeclaration.build_table_key_spec(
+            set_expr_node=set_expr_node,
+            arrow_token=arrow_token,
+            key_col_specs=key_col_specs
+        )
 
     # A.13
-    def __parse_data_spec(self) -> Union[stm.IndexedTableDataSpec, stm.TableDataSpec]:
+    def __parse_data_spec(self) -> Union[ampl_stm.IndexedTableDataSpec, ampl_stm.TableDataSpec]:
 
         node = self._parse_set_expression()
 
@@ -731,17 +757,21 @@ class AMPLScriptParser(AMPLParser):
 
                 self._next_token()  # skip closing delimiter '>'
 
-                return stm.IndexedTableDataSpec(idx_set_node=idx_set_node,
-                                                data_spec_components=data_spec_components,
-                                                form=2)
+                return ampl_stm.IndexedTableDataSpec(
+                    idx_set_node=idx_set_node,
+                    data_spec_components=data_spec_components,
+                    form=2
+                )
 
             # Single Indexed Data Spec
             else:
                 data_col_node = self._parse_arithmetic_expression()
                 data_spec_component = self.__parse_data_spec_component(data_col_node)
-                return stm.IndexedTableDataSpec(idx_set_node=idx_set_node,
-                                                data_spec_components=[data_spec_component],
-                                                form=0)
+                return ampl_stm.IndexedTableDataSpec(
+                    idx_set_node=idx_set_node,
+                    data_spec_components=[data_spec_component],
+                    form=0
+                )
 
         # Single Data Spec
         else:
@@ -774,9 +804,11 @@ class AMPLScriptParser(AMPLParser):
         else:
             form = 1
 
-        return stm.IndexedTableDataSpec(idx_set_node=idx_set_node,
-                                        data_spec_components=data_specs,
-                                        form=form)
+        return ampl_stm.IndexedTableDataSpec(
+            idx_set_node=idx_set_node,
+            data_spec_components=data_specs,
+            form=form
+        )
 
     # A.13
     def __parse_data_spec_component(self, data_col_node: Union[mat.ArithmeticExpressionNode,
@@ -794,16 +826,20 @@ class AMPLScriptParser(AMPLParser):
         else:
             direction = None
 
-        return stm.TableDataSpec(data_expr_node=data_expr_node,
-                                 data_col_node=data_col_node,
-                                 direction=direction)
+        return ampl_stm.TableDataSpec(
+            data_expr_node=data_expr_node,
+            data_col_node=data_col_node,
+            direction=direction
+        )
 
     # A.13
     def __parse_table_access_statement(self, command: str):
         self._next_token()  # skip 'table'
         table_node = self._parse_declared_entity()
-        return stm.TableAccessStatement(command=command,
-                                        table_node=table_node)
+        return ampl_stm.TableAccessStatement(
+            command=command,
+            table_node=table_node
+        )
 
     # Environment Commands Parsing
     # ------------------------------------------------------------------------------------------------------------------
@@ -813,7 +849,7 @@ class AMPLScriptParser(AMPLParser):
         command = self.get_token()
         self._next_token()
         if self.get_token() == ';':
-            return stm.Statement(command)
+            return ampl_stm.ModeStatement(command)
         else:
             self._prev_token()
             return self.__parse_file_command()
@@ -826,18 +862,21 @@ class AMPLScriptParser(AMPLParser):
 
         file_name_node = self.__parse_argument()
 
+        # TODO: parsing logic for included data files
         if command == "commands":
             print("AMPL Parser ignored script '{0}'".format(file_name_node)
                   + " referenced in a 'commands' statement")
         elif command == "data":
             print("AMPL Parser ignored script '{0}'".format(file_name_node)
                   + " referenced in a 'data' statement")
-        else:  # TODO: parsing logic for included data files
+        else:
             file_name = file_name_node.evaluate(self.problem.state)[0]
             self.__parse_included_script(file_name)
 
-        return stm.FileStatement(command=command,
-                                 file_name_node=file_name_node)
+        return ampl_stm.FileStatement(
+            command=command,
+            file_name_node=file_name_node
+        )
 
     # A.14.1: option
     def __parse_option_statement(self):
@@ -860,8 +899,10 @@ class AMPLScriptParser(AMPLParser):
             if self.get_token() == ';':
                 break
 
-        return stm.OptionStatement(arg_nodes=arg_nodes,
-                                   redirection=redirection)
+        return ampl_stm.OptionStatement(
+            arg_nodes=arg_nodes,
+            redirection=redirection
+        )
 
     # A.15
     def __parse_redirection(self):
@@ -869,7 +910,7 @@ class AMPLScriptParser(AMPLParser):
         if operator in self.REDIRECTION_OPERATORS:
             self._next_token()  # skip redirection operator
             file_name_node = self.__parse_argument()
-            return stm.Redirection(operator=operator, file_name_node=file_name_node)
+            return ampl_stm.Redirection(operator=operator, file_name_node=file_name_node)
         else:
             return None
 
@@ -950,8 +991,9 @@ class AMPLScriptParser(AMPLParser):
 
                     self._next_token()  # skip closing parenthesis ')'
 
-                    arg_list.append(stm.IndexedArgList(idx_set_node=arg_idx_set_node,
-                                                       arg_nodes=indexed_arg_nodes))
+                    arg_list.append(ampl_stm.DisplayStatement.build_indexed_arg_list(
+                        idx_set_node=arg_idx_set_node,
+                        arg_nodes=indexed_arg_nodes))
 
                 # indexing set node is also the argument node
                 elif token == ',' or token in self.REDIRECTION_OPERATORS or token == ';':
@@ -960,8 +1002,9 @@ class AMPLScriptParser(AMPLParser):
                 # indexing set node controls a single argument node
                 else:
                     arg_node = self._parse_set_expression()
-                    arg_list.append(stm.IndexedArgList(idx_set_node=arg_idx_set_node,
-                                                       arg_nodes=[arg_node]))
+                    arg_list.append(ampl_stm.DisplayStatement.build_indexed_arg_list(
+                        idx_set_node=arg_idx_set_node,
+                        arg_nodes=[arg_node]))
 
             # argument is a single non-indexed expression node
             else:
@@ -977,10 +1020,12 @@ class AMPLScriptParser(AMPLParser):
         # Redirection
         redirection = self.__parse_redirection()
 
-        return stm.DisplayStatement(command=command,
-                                    idx_set_node=idx_set_node,
-                                    arg_list=arg_list,
-                                    redirection=redirection)
+        return ampl_stm.DisplayStatement(
+            command=command,
+            idx_set_node=idx_set_node,
+            arg_list=arg_list,
+            redirection=redirection
+        )
 
     # A.17 and A.18.3: read and write
     # TODO: parsing logic for 'read' and 'write' commands
@@ -1001,7 +1046,7 @@ class AMPLScriptParser(AMPLParser):
     def __parse_solve_statement(self):
         self._next_token()  # skip 'solve'
         redirection = self.__parse_redirection()
-        return stm.SolveStatement(redirection=redirection)
+        return ampl_stm.SolveStatement(redirection=redirection)
 
     # A.18.2: solution
     # TODO: parsing logic for 'solution' command
@@ -1013,7 +1058,7 @@ class AMPLScriptParser(AMPLParser):
     # TODO: parsing logic for 'redeclare' command
 
     # A.18.6: drop, restore, and objective
-    def __parse_non_assignment_entity_command(self):
+    def __parse_entity_inclusion_command(self):
 
         command = self.get_token()
         self._next_token()  # skip command
@@ -1026,13 +1071,15 @@ class AMPLScriptParser(AMPLParser):
 
         redirection = self.__parse_redirection()
 
-        return stm.NonAssignmentStatement(command=command,
-                                          idx_set_node=idx_set_node,
-                                          entity_node=entity_node,
-                                          redirection=redirection)
+        return ampl_stm.EntityInclusionStatement(
+            command=command,
+            idx_set_node=idx_set_node,
+            entity_node=entity_node,
+            redirection=redirection
+        )
 
-    # A.18.7 and A.18.9: fix, unfix, let
-    def __parse_assignment_entity_command(self):
+    # A.18.7 and A.18.9: fix and unfix
+    def __parse_fix_command(self):
 
         command = self.get_token()
         self._next_token()  # skip command
@@ -1050,11 +1097,13 @@ class AMPLScriptParser(AMPLParser):
 
         redirection = self.__parse_redirection()
 
-        return stm.AssignmentStatement(command=command,
-                                       idx_set_node=idx_set_node,
-                                       entity_node=entity_node,
-                                       expr_node=expr_node,
-                                       redirection=redirection)
+        return ampl_stm.FixStatement(
+            command=command,
+            idx_set_node=idx_set_node,
+            entity_node=entity_node,
+            expr_node=expr_node,
+            redirection=redirection
+        )
 
     # A.18.8: problem
     def __parse_problem_statement(self):
@@ -1089,7 +1138,7 @@ class AMPLScriptParser(AMPLParser):
 
             if self.get_token() == "suffix":
                 # TODO: suffix initializations
-                pass
+                raise NotImplementedError("Parsing logic for suffix initializations not implemented yet")
 
             if self.get_token() == ':':
                 self._next_token()  # skip colon ':'
@@ -1107,19 +1156,62 @@ class AMPLScriptParser(AMPLParser):
 
             # check if the statement is a problem declaration
             if prob_node.symbol not in self.problem.subproblems:
-                prob_node.set_type(mat.PROB_TYPE)  # set entity type
+                prob_node.type = mat.PROB_TYPE  # set entity type
 
-        return stm.ProblemStatement(prob_node=prob_node,
-                                    idx_set_node=idx_set_node,
-                                    env_sym=env_sym,
-                                    item_nodes=entities,
-                                    redirection=redirection)
+        return ampl_stm.ProblemStatement(
+            prob_node=prob_node,
+            idx_set_node=idx_set_node,
+            env_sym=env_sym,
+            item_nodes=entities,
+            redirection=redirection
+        )
 
     # A.18.8: environ
     # TODO: parsing logic for 'environ' command
 
     # A.18.9: reset and update
-    # TODO: parsing logic for 'reset' and 'update' commands
+    # TODO: parsing logic for 'reset', 'update', and 'let' commands
+    def __parse_data_manipulation_command(self):
+
+        command = self.get_token()
+        self._next_token()  # skip command
+
+        subcommand = None
+        idx_set_node = None
+        expr_node = None
+
+        if command == "let":
+
+            idx_set_node = None
+            if self.get_token() == '{':
+                idx_set_node = self._parse_indexing_set_definition()
+
+            entity_nodes = [self._parse_declared_entity()]
+
+            expr_node = None
+            if self.get_token() == ":=":
+                self._next_token()  # skip assignment operator ':='
+                expr_node = self._parse_expression()
+
+        else:  # update or reset
+
+            if self.get_token() in ("options", "data", "problem"):
+                subcommand = self.get_token()
+                self._next_token()  # skip subcommand
+
+            entity_nodes = []
+            while self.get_token() != ';':  # terminate at end of statement
+                entity_nodes.append(self._parse_declared_entity())  # parse declared entity symbol
+                if self.get_token() == ',':
+                    self._next_token()  # skip comma
+
+        return ampl_stm.DataManipulationStatement(
+            command=command,
+            subcommand=subcommand,
+            idx_set_node=idx_set_node,
+            entity_nodes=entity_nodes,
+            expr_node=expr_node
+        )
 
     # A.19: show, xref, expand, check
     # TODO: parsing logic for 'show', 'xref', 'expand', and 'check' commands
@@ -1130,7 +1222,7 @@ class AMPLScriptParser(AMPLParser):
     # A.20.1
     def __parse_if_statement(self):
         clauses = self.__parse_if_statement_clause()
-        return stm.IfStatement(clauses)
+        return ampl_stm.IfStatement(clauses)
 
     # A.20.1
     def __parse_if_statement_clause(self, is_first_clause: bool = True):
@@ -1158,10 +1250,12 @@ class AMPLScriptParser(AMPLParser):
             else:
                 break
 
-        clauses.append(stm.IfStatementClause(operator="if" if is_first_clause else "else if",
-                                             cdn_expr_node=cdn_expr_node,
-                                             statements=statements,
-                                             trailing_comments=trailing_comments))
+        clauses.append(ampl_stm.IfStatement.build_clause(
+            operator="if" if is_first_clause else "else if",
+            cdn_expr_node=cdn_expr_node,
+            statements=statements,
+            trailing_comments=trailing_comments
+        ))
 
         if self.get_token() == "else":
 
@@ -1178,9 +1272,11 @@ class AMPLScriptParser(AMPLParser):
                     statements = self.__parse_compound_statement()
                 else:  # single statement
                     _, statements = self.__parse_sentence()
-                clauses.append(stm.IfStatementClause(operator="else",
-                                                     cdn_expr_node=None,
-                                                     statements=statements))
+                clauses.append(ampl_stm.IfStatement.build_clause(
+                    operator="else",
+                    cdn_expr_node=None,
+                    statements=statements
+                ))
 
         return clauses
 
@@ -1204,6 +1300,8 @@ class AMPLScriptParser(AMPLParser):
         else:
             _, statements = self.__parse_sentence()
 
-        return stm.ForLoopStatement(loop_sym=loop_sym,
-                                    idx_set_node=idx_set_node,
-                                    statements=statements)
+        return ampl_stm.ForLoopStatement(
+            loop_sym=loop_sym,
+            idx_set_node=idx_set_node,
+            statements=statements
+        )

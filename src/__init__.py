@@ -1,3 +1,4 @@
+from symro.src.mat import *
 from symro.src.prob.problem import Problem
 from symro.src.handlers.problembuilder import read_ampl, build_subproblem
 from symro.src.handlers.scriptbuilder import model_to_ampl

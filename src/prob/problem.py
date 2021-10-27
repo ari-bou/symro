@@ -6,8 +6,9 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Union
 import warnings
 
 import symro.src.mat as mat
-from symro.src.prob.specialcommand import SpecialCommand
-import symro.src.prob.statement as stm
+from symro.src.scripting.specialcommand import SpecialCommand
+import symro.src.scripting.script as scr
+import symro.src.scripting.amplstatement as ampl_stm
 
 
 class BaseProblem:
@@ -18,7 +19,7 @@ class BaseProblem:
                  idx_set_node: mat.CompoundSetNode = None,
                  model_meta_entities: Iterable[mat.MetaEntity] = None):
 
-        self.symbol: str = symbol if symbol is not None else "Initial"
+        self._symbol: str = symbol if symbol is not None else "Initial"
         self.description = description if description is not None else ""
 
         self.idx_set_node: mat.CompoundSetNode = idx_set_node
@@ -72,8 +73,13 @@ class BaseProblem:
     # Accessors
     # ------------------------------------------------------------------------------------------------------------------
 
-    def get_symbol(self) -> str:
-        return self.symbol
+    @property
+    def symbol(self) -> str:
+        return self._symbol
+
+    @symbol.setter
+    def symbol(self, symbol):
+        self._symbol = symbol
 
     # Addition
     # ------------------------------------------------------------------------------------------------------------------
@@ -107,7 +113,7 @@ class BaseProblem:
                                    new_meta_entities: List[mat.MetaEntity],
                                    model_meta_entities: List[mat.MetaEntity]):
 
-        if len(new_meta_entities) == 1 and old_symbol == new_meta_entities[0].get_symbol():
+        if len(new_meta_entities) == 1 and old_symbol == new_meta_entities[0].symbol:
             return
 
         i = 0
@@ -115,11 +121,11 @@ class BaseProblem:
 
             old_me = self.model_meta_cons[i]
 
-            if old_me.get_symbol() == old_symbol:
+            if old_me.symbol == old_symbol:
 
                 model_meta_entities.pop(i)
 
-                if not old_me.is_sub():
+                if not old_me.is_sub:
                     replacements = new_meta_entities
                 else:
                     replacements = [new_mc.build_sub_entity(old_me.idx_set_node) for new_mc in new_meta_entities]
@@ -148,7 +154,7 @@ class Problem(BaseProblem):
 
         # --- Script ---
         self.run_script_literal: str = ""
-        self.compound_script: Optional[stm.CompoundScript] = None
+        self.compound_script: Optional[scr.CompoundScript] = None
         self.script_commands: Dict[str, List[SpecialCommand]] = {}  # Key: flag. Value: list of script commands.
 
         # --- Symbols ---
@@ -243,7 +249,7 @@ class Problem(BaseProblem):
         clone.run_script_literal = source.run_script_literal
         clone.script_commands = dict(source.script_commands)
 
-        clone.compound_script = stm.CompoundScript()
+        clone.compound_script = scr.CompoundScript()
         clone.compound_script.copy(source.compound_script)
 
         clone.symbols = set(source.symbols)
@@ -271,7 +277,7 @@ class Problem(BaseProblem):
         clone.run_script_literal = source.run_script_literal
         clone.script_commands = deepcopy(source.script_commands)
 
-        clone.compound_script = stm.CompoundScript()
+        clone.compound_script = scr.CompoundScript()
         clone.compound_script.copy(source.compound_script)
 
         clone.symbols = deepcopy(source.symbols)
@@ -286,18 +292,18 @@ class Problem(BaseProblem):
 
         for me in source.model_meta_sets_params:
             if isinstance(me, mat.MetaSet):
-                clone.model_meta_sets_params.append(clone.meta_sets[me.get_symbol()])
+                clone.model_meta_sets_params.append(clone.meta_sets[me.symbol])
             elif isinstance(me, mat.MetaParameter):
-                clone.model_meta_sets_params.append(clone.meta_params[me.get_symbol()])
+                clone.model_meta_sets_params.append(clone.meta_params[me.symbol])
 
         for me in source.model_meta_vars:
-            clone.model_meta_vars.append(clone.meta_vars[me.get_symbol()])
+            clone.model_meta_vars.append(clone.meta_vars[me.symbol])
 
         for me in source.model_meta_objs:
-            clone.model_meta_objs.append(clone.meta_objs[me.get_symbol()])
+            clone.model_meta_objs.append(clone.meta_objs[me.symbol])
 
         for me in source.model_meta_cons:
-            clone.model_meta_cons.append(clone.meta_cons[me.get_symbol()])
+            clone.model_meta_cons.append(clone.meta_cons[me.symbol])
 
         for sym, sp_source in source.subproblems.items():
 
@@ -307,25 +313,25 @@ class Problem(BaseProblem):
 
             for me in sp_source.model_meta_sets_params:
                 if isinstance(me, mat.MetaSet):
-                    sp_clone.model_meta_sets_params.append(clone.meta_sets[me.get_symbol()])
+                    sp_clone.model_meta_sets_params.append(clone.meta_sets[me.symbol])
                 elif isinstance(me, mat.MetaParameter):
-                    sp_clone.model_meta_sets_params.append(clone.meta_params[me.get_symbol()])
+                    sp_clone.model_meta_sets_params.append(clone.meta_params[me.symbol])
 
             for me in source.model_meta_vars:
-                if not me.is_sub():
-                    sp_clone.model_meta_vars.append(clone.meta_vars[me.get_symbol()])
+                if not me.is_sub:
+                    sp_clone.model_meta_vars.append(clone.meta_vars[me.symbol])
                 else:
                     sp_clone.model_meta_vars.append(deepcopy(me))
 
             for me in source.model_meta_objs:
-                if not me.is_sub():
-                    sp_clone.model_meta_objs.append(clone.meta_objs[me.get_symbol()])
+                if not me.is_sub:
+                    sp_clone.model_meta_objs.append(clone.meta_objs[me.symbol])
                 else:
                     sp_clone.model_meta_objs.append(deepcopy(me))
 
             for me in source.model_meta_cons:
-                if not me.is_sub():
-                    sp_clone.model_meta_cons.append(clone.meta_cons[me.get_symbol()])
+                if not me.is_sub:
+                    sp_clone.model_meta_cons.append(clone.meta_cons[me.symbol])
                 else:
                     sp_clone.model_meta_cons.append(deepcopy(me))
 
@@ -336,15 +342,15 @@ class Problem(BaseProblem):
 
     def is_meta_entity_in_model(self, meta_entity: mat.MetaEntity) -> bool:
         if isinstance(meta_entity, mat.MetaSet):
-            return meta_entity.get_symbol() in self.model_meta_sets_params
+            return meta_entity.symbol in self.model_meta_sets_params
         elif isinstance(meta_entity, mat.MetaParameter):
-            return meta_entity.get_symbol() in self.model_meta_sets_params
+            return meta_entity.symbol in self.model_meta_sets_params
         elif isinstance(meta_entity, mat.MetaVariable):
-            return meta_entity.get_symbol() in self.model_meta_vars
+            return meta_entity.symbol in self.model_meta_vars
         elif isinstance(meta_entity, mat.MetaObjective):
-            return meta_entity.get_symbol() in self.model_meta_objs
+            return meta_entity.symbol in self.model_meta_objs
         elif isinstance(meta_entity, mat.MetaConstraint):
-            return meta_entity.get_symbol() in self.model_meta_cons
+            return meta_entity.symbol in self.model_meta_cons
         return False
 
     def contains_script_command(self, symbol: str) -> bool:
@@ -395,16 +401,16 @@ class Problem(BaseProblem):
     def add_meta_set(self,
                      meta_set: mat.MetaSet,
                      is_auxiliary: bool = False):
-        self.symbols.add(meta_set.get_symbol())
-        self.meta_sets[meta_set.get_symbol()] = meta_set
+        self.symbols.add(meta_set.symbol)
+        self.meta_sets[meta_set.symbol] = meta_set
         if not is_auxiliary:
             self.model_meta_sets_params.append(meta_set)
         self._evaluate_default_or_defined_set(meta_set)
 
     def _evaluate_default_or_defined_set(self, meta_set: mat.MetaSet):
 
-        default_value = meta_set.get_default_value_node()
-        defined_value = meta_set.get_defined_value_node()
+        default_value = meta_set.default_value_node
+        defined_value = meta_set.defined_value_node
 
         if default_value is not None:
             set_node = default_value
@@ -415,7 +421,7 @@ class Problem(BaseProblem):
 
         if set_node is not None:
 
-            symbol = meta_set.get_symbol()  # symbol of the meta-set
+            symbol = meta_set.symbol  # symbol of the meta-set
             m = 0  # length of indexing set
             idx_set: Optional[mat.IndexingSet] = None  # indexing set
             dummy_element = None  # dummy element of indexing set
@@ -455,16 +461,16 @@ class Problem(BaseProblem):
     def add_meta_parameter(self,
                            meta_param: mat.MetaParameter,
                            is_auxiliary: bool = False):
-        self.symbols.add(meta_param.get_symbol())
-        self.meta_params[meta_param.get_symbol()] = meta_param
+        self.symbols.add(meta_param.symbol)
+        self.meta_params[meta_param.symbol] = meta_param
         if not is_auxiliary:
             self.model_meta_sets_params.append(meta_param)
         self._evaluate_default_or_defined_param(meta_param)
 
     def _evaluate_default_or_defined_param(self, meta_param: mat.MetaParameter):
 
-        default_value = meta_param.get_default_value_node()
-        defined_value = meta_param.get_defined_value_node()
+        default_value = meta_param.default_value_node
+        defined_value = meta_param.defined_value_node
 
         if default_value is not None:
             expr_node = default_value
@@ -475,7 +481,7 @@ class Problem(BaseProblem):
 
         if expr_node is not None:
 
-            symbol = meta_param.get_symbol()  # symbol of the meta-set
+            symbol = meta_param.symbol  # symbol of the meta-set
             m = 0  # length of indexing set
             idx_set: Optional[mat.IndexingSet] = None  # indexing set
             dummy_element = None  # dummy element of indexing set
@@ -513,24 +519,24 @@ class Problem(BaseProblem):
     def add_meta_variable(self,
                           meta_var: mat.MetaVariable,
                           is_auxiliary: bool = False):
-        self.symbols.add(meta_var.get_symbol())
-        self.meta_vars[meta_var.get_symbol()] = meta_var
+        self.symbols.add(meta_var.symbol)
+        self.meta_vars[meta_var.symbol] = meta_var
         if not is_auxiliary:
             self.model_meta_vars.append(meta_var)
 
     def add_meta_objective(self,
                            meta_obj: mat.MetaObjective,
                            is_auxiliary: bool = False):
-        self.symbols.add(meta_obj.get_symbol())
-        self.meta_objs[meta_obj.get_symbol()] = meta_obj
+        self.symbols.add(meta_obj.symbol)
+        self.meta_objs[meta_obj.symbol] = meta_obj
         if not is_auxiliary:
             self.model_meta_objs.append(meta_obj)
 
     def add_meta_constraint(self,
                             meta_con: mat.MetaConstraint,
                             is_auxiliary: bool = False):
-        self.symbols.add(meta_con.get_symbol())
-        self.meta_cons[meta_con.get_symbol()] = meta_con
+        self.symbols.add(meta_con.symbol)
+        self.meta_cons[meta_con.symbol] = meta_con
         if not is_auxiliary:
             self.model_meta_cons.append(meta_con)
 
@@ -547,7 +553,7 @@ class Problem(BaseProblem):
                                 old_symbol: str,
                                 new_meta_cons: List[mat.MetaConstraint]):
 
-        if len(new_meta_cons) == 1 and old_symbol == new_meta_cons[0].get_symbol():
+        if len(new_meta_cons) == 1 and old_symbol == new_meta_cons[0].symbol:
             return
 
         self.symbols.remove(old_symbol)
@@ -614,16 +620,16 @@ class Problem(BaseProblem):
 
         # TODO: filter variables by subproblem
 
-        dat_script = stm.Script(file_name)  # generate data script
+        dat_script = scr.Script(file_name)  # generate data script
 
         for mv in self.model_meta_vars:
 
-            sym = mv.get_symbol()
+            sym = mv.symbol
 
             can_include = True
-            if mv.is_defined() and not include_defined:
+            if mv.is_defined and not include_defined:
                 can_include = False
-            if mv.has_default() and not include_default:
+            if mv.has_default and not include_default:
                 can_include = False
 
             if can_include:
@@ -632,9 +638,11 @@ class Problem(BaseProblem):
                 values = {k[1:]: v.value for k, v in self.state.variables.items() if k[0] == sym}
 
                 # generate data statement
-                data_statement = stm.ParameterDataStatement(symbol=sym,
-                                                            type="var",
-                                                            values=values)
+                data_statement = ampl_stm.ParameterDataStatement(
+                    symbol=sym,
+                    type="var",
+                    values=values
+                )
 
                 dat_script.statements.append(data_statement)  # append statement to script
 
@@ -647,19 +655,21 @@ class Problem(BaseProblem):
 
         # TODO: filter variables by subproblem
 
-        dat_script = stm.Script(file_name)  # generate data script
+        dat_script = scr.Script(file_name)  # generate data script
 
         for mc in self.model_meta_cons:
 
-            sym = mc.get_symbol()
+            sym = mc.symbol
 
             # retrieve duals
             duals = {k[1:]: v.dual for k, v in self.state.constraints.items() if k[0] == sym}
 
             # generate data statement
-            data_statement = stm.ParameterDataStatement(symbol=sym,
-                                                        type="var",
-                                                        values=duals)
+            data_statement = ampl_stm.ParameterDataStatement(
+                symbol=sym,
+                type="var",
+                values=duals
+            )
 
             dat_script.statements.append(data_statement)  # append statement to script
 

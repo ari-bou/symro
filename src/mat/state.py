@@ -36,15 +36,15 @@ class State:
         sym = item[0]
         idx = item[1:]
 
-        if sym in self.sets:
+        if item in self.sets:
             return self.get_set(sym, idx).get_value()
-        elif sym in self.parameters:
+        elif item in self.parameters:
             return self.get_parameter(sym, idx).get_value()
-        elif sym in self.variables:
+        elif item in self.variables:
             return self.get_variable(sym, idx).get_value()
-        elif sym in self.objectives:
+        elif item in self.objectives:
             return self.get_objective(sym, idx).get_value()
-        elif sym in self.constraints:
+        elif item in self.constraints:
             return self.get_constraint(sym, idx).get_value()
         else:
             raise ValueError("Entity with id {0} does not exist in the problem state".format(item))
@@ -54,15 +54,15 @@ class State:
         sym = key[0]
         idx = key[1:]
 
-        if sym in self.sets:
+        if key in self.sets:
             self.get_set(sym, idx).elements = OrderedSet(value)
-        elif sym in self.parameters:
+        elif key in self.parameters:
             self.get_parameter(sym, idx).value = value
-        elif sym in self.variables:
+        elif key in self.variables:
             self.get_variable(sym, idx).value = value
-        elif sym in self.objectives:
+        elif key in self.objectives:
             self.get_objective(sym, idx).value = value
-        elif sym in self.constraints:
+        elif key in self.constraints:
             self.get_constraint(sym, idx).dual = value
         else:
             raise ValueError("Entity with id {0} does not exist in the problem state".format(key))
@@ -212,6 +212,8 @@ class State:
             value=value
         )
         self.parameters[param.entity_id] = param
+        if param.entity_id == ("Vin_L", "LGO", "DHC", 1, 1):
+            x = 2
         return param
 
     def add_variable(self,

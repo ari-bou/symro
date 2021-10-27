@@ -17,12 +17,12 @@ def generate_entity_instance(meta_entity: mat.MetaEntity,
     if symbol_surrogates is None:
         symbol_surrogates = []
 
-    name = meta_entity.get_symbol() if name_modifier is None else name_modifier(meta_entity.get_symbol())
+    name = meta_entity.symbol if name_modifier is None else name_modifier(meta_entity.symbol)
     instance = name
 
-    if can_write_index and len(meta_entity.get_idx_meta_sets()) > 0:
+    if can_write_index and len(meta_entity.idx_meta_sets) > 0:
 
-        index_symbols = list(meta_entity.get_idx_set_reduced_dummy_element())
+        index_symbols = list(meta_entity.idx_set_reduced_dummy_element)
 
         for meta_set, symbol in symbol_surrogates:
             if meta_entity.is_indexed_with(meta_set):
@@ -49,9 +49,9 @@ def generate_entity_index(index_symbols: Optional[List[Union[str, mat.MetaEntity
         if isinstance(sym, str):
             return sym
         elif isinstance(sym, mat.MetaSet):
-            return sym.get_reduced_dummy_element()[0]
+            return sym.reduced_dummy_element[0]
         elif isinstance(sym, mat.MetaParameter):
-            return sym.get_symbol()
+            return sym.symbol
         else:
             return str(sym)
 
@@ -66,17 +66,17 @@ def generate_entity_indexing_set_definition(meta_entity: mat.MetaEntity,
         if isinstance(s, str):
             return s
         elif isinstance(s, mat.MetaSet):
-            return s.get_symbol()
+            return s.symbol
 
-    indexing_meta_sets = [ms for ms in meta_entity.get_idx_meta_sets()]
+    indexing_meta_sets = [ms for ms in meta_entity.idx_meta_sets]
 
     # Remove controlled sets
     if remove_sets is not None:
         remove_sets = [get_set_name(s) for s in remove_sets]
-        indexing_meta_sets = [ms for ms in indexing_meta_sets if ms.get_symbol() not in remove_sets]
+        indexing_meta_sets = [ms for ms in indexing_meta_sets if ms.symbol not in remove_sets]
 
     return generate_indexing_set_definition(indexing_meta_sets,
-                                            meta_entity.get_idx_set_con_literal())
+                                            meta_entity.idx_set_con_literal)
 
 
 def generate_indexing_set_definition(idx_meta_sets: Optional[Union[List[mat.MetaSet], Dict[str, mat.MetaSet]]],
@@ -118,7 +118,7 @@ def generate_apply_statement(command: str,
 
     return "{0} {1}{2}{3};".format(command,
                                    indexing_set_definition,
-                                   entity.get_symbol(),
+                                   entity.symbol,
                                    index)
 
 
@@ -140,9 +140,9 @@ def generate_assignment_statement(command: str,
     source_index = generate_entity_index(source_index_symbols)
 
     if isinstance(entity, mat.MetaEntity):
-        entity = entity.get_symbol()
+        entity = entity.symbol
     if isinstance(source_entity, mat.MetaEntity):
-        source_entity = source_entity.get_symbol()
+        source_entity = source_entity.symbol
 
     if source_suffix is None:
         source_suffix = ""
@@ -162,101 +162,6 @@ def generate_assignment_statement(command: str,
 # Problem Initialization
 # ------------------------------------------------------------------------------------------------------------------
 
-def generate_initialization_subroutine(meta_vars: Dict[str, mat.MetaVariable],
-                                       omitted_vars: Union[Dict[str, Union[str, mat.MetaVariable]],
-                                                           List[Union[str, mat.MetaVariable]]] = None,
-                                       is_looped: bool = True,
-                                       controlled_sets: List[mat.MetaSet] = None,
-                                       dummy_syms: Union[List, Dict] = None,
-                                       default_values: Union[List, Dict] = None,
-                                       can_declare_indexing_param: Union[List[bool], Dict[str, bool]] = None,
-                                       indent_count: int = 0) -> List[str]:
-
-    def get_var_sym(v) -> str:
-        if isinstance(v, mat.MetaVariable):
-            return v.get_symbol()
-        else:
-            return v
-
-    if omitted_vars is None:
-        omitted_vars = []
-    if isinstance(omitted_vars, dict):
-        omitted_vars = [v for k, v in omitted_vars.items()]
-    omitted_vars = [get_var_sym(v) for v in omitted_vars]
-
-    if controlled_sets is None:
-        controlled_sets = []
-
-    if dummy_syms is None:
-        dummy_syms = []
-    if isinstance(dummy_syms, list):
-        idx_par_sym_dict = {}
-        for i, meta_set in enumerate(controlled_sets):
-            try:
-                sym = dummy_syms[i]
-                idx_par_sym_dict[meta_set.get_symbol()] = sym
-            except IndexError:
-                pass
-        dummy_syms = idx_par_sym_dict
-
-    if default_values is None:
-        default_values = []
-    if isinstance(default_values, list):
-        dft_val_dict = {}
-        for i, meta_set in enumerate(controlled_sets):
-            try:
-                dft_val = default_values[i]
-                dft_val_dict[meta_set.get_symbol()] = dft_val
-            except IndexError:
-                pass
-        default_values = dft_val_dict
-
-    if can_declare_indexing_param is None:
-        can_declare_indexing_param = []
-    if isinstance(can_declare_indexing_param, list):
-        can_decl_idx_par_dict = {}
-        for i, meta_set in enumerate(controlled_sets):
-            try:
-                can_decl = can_declare_indexing_param[i]
-                can_decl_idx_par_dict[meta_set.get_symbol()] = can_decl
-            except IndexError:
-                pass
-        can_declare_indexing_param = can_decl_idx_par_dict
-
-    assignment_indent_count = indent_count
-    lines = []
-
-    for meta_set in controlled_sets:
-        if can_declare_indexing_param.get(meta_set.get_symbol(), False):
-            sym = dummy_syms.get(meta_set.get_symbol(), meta_set.get_reduced_dummy_element()[0])
-            def_val = default_values.get(meta_set.get_symbol(), None)
-            indexing_param = mat.MetaParameter(symbol=sym,
-                                               default_value=def_val)
-            lines.append("{0}{1}".format("\t" * indent_count,
-                                         indexing_param.generate_declaration()))
-
-    if is_looped and len(controlled_sets) > 0:
-        idx_set_def = generate_indexing_set_definition(controlled_sets)
-        line = ("\t" * indent_count) + "for " + idx_set_def + " {"
-        lines.append(line)
-        assignment_indent_count += 1
-
-    for name, meta_var in meta_vars.items():
-        if name not in omitted_vars:
-            line = __generate_initial_value_assignment_statement(meta_var,
-                                                                 controlled_sets=controlled_sets,
-                                                                 indexing_param_symbols=dummy_syms,
-                                                                 can_write_indexing_sets=True,
-                                                                 can_write_index=True,
-                                                                 indent_count=assignment_indent_count)
-            lines.append(line)
-
-    if is_looped and len(controlled_sets) > 0:
-        lines.append(("\t" * indent_count) + '}')
-
-    return lines
-
-
 def __generate_initial_value_assignment_statement(meta_variable: mat.MetaEntity,
                                                   controlled_sets: List[mat.MetaSet],
                                                   indexing_param_symbols: Dict[str, str],
@@ -274,8 +179,8 @@ def __generate_initial_value_assignment_statement(meta_variable: mat.MetaEntity,
 
     symbol_surrogates = []
     for meta_set in controlled_sets:
-        if meta_set.get_symbol() in indexing_param_symbols:
-            symbol_surrogates.append((meta_set, indexing_param_symbols[meta_set.get_symbol()]))
+        if meta_set.symbol in indexing_param_symbols:
+            symbol_surrogates.append((meta_set, indexing_param_symbols[meta_set.symbol]))
     param_instance = generate_entity_instance(meta_variable,
                                               can_write_index=can_write_index,
                                               name_modifier=lambda sl: sl + "_INIT",

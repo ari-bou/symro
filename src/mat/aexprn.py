@@ -16,16 +16,16 @@ from symro.src.mat.state import State
 class ArithmeticTransformationNode(ArithmeticExpressionNode):
 
     def __init__(self,
-                 symbol: str,
+                 fcn: int,
                  idx_set_node: CompoundSetNode = None,
                  operands: Union[ArithmeticExpressionNode, List[ArithmeticExpressionNode]] = None):
 
         super().__init__()
-        self.symbol: str = symbol
+        self.fcn: int = fcn
         self.idx_set_node: Optional[CompoundSetNode] = idx_set_node
         self.operands: List[ArithmeticExpressionNode] = []
 
-        if self.symbol in ["sum", "prod"]:
+        if self.fcn in [SUMMATION_FUNCTION, PRODUCT_FUNCTION]:
             self.is_prioritized = True
 
         if operands is not None:
@@ -96,13 +96,13 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
 
         for ip in range(mp):
             x = self.operands[0].evaluate(state, combined_idx_sets[ip], combined_dummy_syms)
-            if self.symbol == "sum":  # Reductive Summation
+            if self.fcn == SUMMATION_FUNCTION:  # Reductive Summation
                 y_ip = sum(x)
-            elif self.symbol == "prod":  # Reductive Multiplication
+            elif self.fcn == PRODUCT_FUNCTION:  # Reductive Multiplication
                 y_ip = np.prod(x)
             else:
                 raise ValueError("Unable to resolve symbol '{0}'"
-                                 " as a reductive arithmetic transformation".format(self.symbol))
+                                 " as a reductive arithmetic transformation".format(self.fcn))
             y[ip] = y_ip
 
         return y
@@ -117,34 +117,34 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
         # Single Argument
         if len(self.operands) == 1:
             x_0 = x[0]
-            if self.symbol == "div":
+            if self.fcn == INTEGER_DIVISION_FUNCTION:
                 y = np.divide(x[0], x[1])
                 y = np.around(y)
-            elif self.symbol == "mod":
+            elif self.fcn == MODULUS_FUNCTION:
                 y = np.mod(x[0], x[1])
-            elif self.symbol == "sin":  # Sine
+            elif self.fcn == SINE_FUNCTION:  # Sine
                 y = np.sin(x_0)
-            elif self.symbol == "cos":  # Cosine
+            elif self.fcn == COSINE_FUNCTION:  # Cosine
                 y = np.cos(x_0)
-            elif self.symbol == "exp":  # Exponential
+            elif self.fcn == EXPONENTIAL_FUNCTION:  # Exponential
                 y = np.exp(x_0)
-            elif self.symbol == "log":  # Natural Logarithm
+            elif self.fcn == NATURAL_LOGARITHM_FUNCTION:  # Natural Logarithm
                 y = np.log(x_0)
-            elif self.symbol == "log10":  # Logarithm Base 10
+            elif self.fcn == BASE_10_LOGARITHM_FUNCTION:  # Logarithm Base 10
                 y = np.log10(x_0)
             else:
                 raise ValueError("Unable to resolve symbol '{0}'"
-                                 " as a single-argument arithmetic function".format(self.symbol))
+                                 " as a single-argument arithmetic function".format(self.fcn))
 
         # Multiple Arguments
         else:
-            if self.symbol == "max":  # Maximum
+            if self.fcn == MAXIMUM_FUNCTION:  # Maximum
                 y = np.max(x, axis=0)
-            elif self.symbol == "min":  # Minimum
+            elif self.fcn == MINIMUM_FUNCTION:  # Minimum
                 y = np.min(x, axis=0)
             else:
                 raise ValueError("Unable to resolve symbol '{0}'"
-                                 " as a multi-argument arithmetic function".format(self.symbol))
+                                 " as a multi-argument arithmetic function".format(self.fcn))
 
         return y
 
@@ -165,12 +165,12 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
             arg_0 = np.array([self.operands[0].to_lambda(state, idx, combined_dummy_syms)
                               for idx in combined_idx_set])
 
-            if self.symbol == "sum":  # reductive summation
+            if self.fcn == SUMMATION_FUNCTION:  # reductive summation
                 return partial(lambda x: np.sum([x_i() for x_i in x]), arg_0)
-            elif self.symbol == "prod":  # reductive multiplication
+            elif self.fcn == PRODUCT_FUNCTION:  # reductive multiplication
                 return partial(lambda x: np.prod([x_i() for x_i in x]), arg_0)
             else:
-                raise ValueError("Unable to resolve symbol '{0}'".format(self.symbol)
+                raise ValueError("Unable to resolve symbol '{0}'".format(self.fcn)
                                  + " as a reductive arithmetic transformation")
 
         else:
@@ -180,31 +180,31 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
             # Single Argument
             if len(self.operands) == 1:
                 arg_0 = args[0]
-                if self.symbol == "div":
+                if self.fcn == INTEGER_DIVISION_FUNCTION:
                     return partial(lambda x1, x2: int(x1() / x2()), arg_0, args[1])
-                elif self.symbol == "mod":
+                elif self.fcn == MODULUS_FUNCTION:
                     return partial(lambda x1, x2: x1() % x2(), arg_0, args[1])
-                elif self.symbol == "sin":  # Sin
+                elif self.fcn == SINE_FUNCTION:  # Sin
                     return partial(lambda x: np.sin(x()), arg_0)
-                elif self.symbol == "cos":  # Cos
+                elif self.fcn == COSINE_FUNCTION:  # Cos
                     return partial(lambda x: np.cos(x()), arg_0)
-                elif self.symbol == "exp":  # Exponential
+                elif self.fcn == EXPONENTIAL_FUNCTION:  # Exponential
                     return partial(lambda x: np.exp(x()), arg_0)
-                elif self.symbol == "log":  # Natural Logarithm
+                elif self.fcn == NATURAL_LOGARITHM_FUNCTION:  # Natural Logarithm
                     return partial(lambda x: np.log(x()), arg_0)
-                elif self.symbol == "log10":  # Logarithm Base 10
+                elif self.fcn == BASE_10_LOGARITHM_FUNCTION:  # Logarithm Base 10
                     return partial(lambda x: np.log10(x()), arg_0)
                 else:
-                    raise ValueError("Unable to resolve symbol '{0}'".format(self.symbol)
+                    raise ValueError("Unable to resolve symbol '{0}'".format(self.fcn)
                                      + " as a single-argument arithmetic transformation")
 
             # Multiple Arguments
             else:
-                if self.symbol == "max":  # Maximum
+                if self.fcn == MAXIMUM_FUNCTION:  # Maximum
                     return partial(lambda x: np.max([x_i() for x_i in x]), args)
-                elif self.symbol == "min":  # Minimum
+                elif self.fcn == MINIMUM_FUNCTION:  # Minimum
                     return partial(lambda x: np.min([x_i() for x_i in x]), args)
-                raise ValueError("Unable to resolve symbol '{0}'".format(self.symbol)
+                raise ValueError("Unable to resolve symbol '{0}'".format(self.fcn)
                                  + " as a multi-argument arithmetic transformation")
 
     def collect_declared_entities(self,
@@ -271,18 +271,18 @@ class ArithmeticTransformationNode(ArithmeticExpressionNode):
 
         # reductive transformation
         if self.is_reductive():
-            literal = "{0} {1} {2}".format(self.symbol, self.idx_set_node, self.operands[0])
+            literal = "{0} {1} {2}".format(AMPL_FUNCTION_SYMBOLS[self.fcn], self.idx_set_node, self.operands[0])
 
         # non-reductive transformation
         else:
 
-            if self.symbol == "div" or self.symbol == "mod":
+            if self.fcn == INTEGER_DIVISION_FUNCTION or self.fcn == MODULUS_FUNCTION:
                 arguments = [o.get_literal() for o in self.operands]
-                literal = "{0} {1} {2}".format(arguments[0], self.symbol, arguments[1])
+                literal = "{0} {1} {2}".format(arguments[0], AMPL_FUNCTION_SYMBOLS[self.fcn], arguments[1])
 
             else:
                 arguments = [o.get_literal() for o in self.operands]
-                literal = "{0}({1})".format(self.symbol, ', '.join(arguments))
+                literal = "{0}({1})".format(AMPL_FUNCTION_SYMBOLS[self.fcn], ', '.join(arguments))
 
         if self.is_prioritized:
             literal = '(' + literal + ')'
@@ -538,7 +538,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
                  ) -> np.ndarray:
 
         indices = None
-        if self.is_indexed():
+        if self.is_indexed:
             indices = self.idx_node.evaluate(state, idx_set, dummy_element)
 
         mp = 1
@@ -585,7 +585,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
                   dummy_element: Element = None) -> Callable:
 
         idx = None
-        if self.is_indexed():
+        if self.is_indexed:
             idx = self.idx_node.evaluate(state=state,
                                          idx_set=OrderedSet([idx_set_member]),
                                          dummy_element=dummy_element)[0]
@@ -622,7 +622,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
         entities = {}
 
         entity_indices = None
-        if self.is_indexed():
+        if self.is_indexed:
             entity_indices = self.idx_node.evaluate(state, idx_set, dummy_element)
 
         mp = 1
@@ -646,7 +646,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
                         is_dim_aggregated[j] = True
                 entity_index = tuple(entity_index_list)
 
-            if not self.is_constant():
+            if not self.is_constant:
                 var = Variable(symbol=self.symbol,
                                idx=entity_index,
                                is_dim_aggregated=is_dim_aggregated)
@@ -659,17 +659,21 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
 
         return entities
 
+    @property
     def is_indexed(self) -> bool:
         return self.idx_node is not None
 
+    @property
     def is_constant(self) -> bool:
         return self.__entity_type == PARAM_TYPE
 
-    def get_type(self) -> str:
+    @property
+    def type(self) -> str:
         return self.__entity_type
 
-    def set_type(self, entity_type: str):
-        self.__entity_type = entity_type
+    @type.setter
+    def type(self, type: str):
+        self.__entity_type = type
 
     def get_children(self) -> list:
         if self.idx_node is not None:
@@ -682,7 +686,7 @@ class DeclaredEntityNode(ArithmeticExpressionNode):
 
     def get_literal(self) -> str:
         literal = self.symbol
-        if self.is_indexed():
+        if self.is_indexed:
             literal += "[{0}]".format(','.join([str(n) for n in self.idx_node.component_nodes]))
         if self.suffix is not None:
             literal += ".{0}".format(self.suffix)
@@ -716,6 +720,7 @@ class NumericNode(ArithmeticExpressionNode):
 
     def __neg__(self):
         self.value *= -1
+        return self
 
     def __add__(self, other: ArithmeticExpressionNode):
 

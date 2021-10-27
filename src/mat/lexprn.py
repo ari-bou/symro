@@ -198,6 +198,7 @@ class BooleanNode(LogicalExpressionNode):
 
     def __invert__(self):
         self.value = not self.value
+        return self
 
     def __and__(self, other: LogicalExpressionNode):
 

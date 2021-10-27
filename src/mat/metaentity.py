@@ -42,38 +42,44 @@ class MetaEntity(ABC):
     # Type
     # ------------------------------------------------------------------------------------------------------------------
 
+    @property
     @abstractmethod
-    def get_type(self) -> str:
+    def type(self) -> str:
         pass
 
     # Properties
     # ------------------------------------------------------------------------------------------------------------------
 
-    def get_symbol(self) -> str:
+    @property
+    def symbol(self) -> str:
         if self._parent is None:
             return self._symbol
         else:
-            return self._parent.get_symbol()
+            return self._parent.symbol
 
-    def set_symbol(self, symbol: str):
+    @symbol.setter
+    def symbol(self, symbol: str):
         if self._parent is None:
             self._symbol = symbol
         else:
-            self._parent.set_symbol(symbol)
+            self._parent.symbol = symbol
 
-    def get_alias(self) -> str:
+    @property
+    def alias(self) -> str:
         if self._parent is None:
             return self._alias
         else:
-            return self._parent.get_alias()
+            return self._parent.alias
 
-    def set_alias(self, alias: str):
+    @alias.setter
+    def alias(self, alias: str):
         if self._parent is None:
             self._alias = alias
         else:
-            self._parent.set_alias(alias)
+            self._parent.alias = alias
 
-    def get_parent(self) -> Optional["MetaEntity"]:
+    @property
+    def parent(self) -> Optional["MetaEntity"]:
         if self._parent is not None:
             return self._parent
         else:
@@ -86,67 +92,75 @@ class MetaEntity(ABC):
     # Indexing
     # ------------------------------------------------------------------------------------------------------------------
 
+    @property
     def is_indexed(self) -> bool:
         return self.idx_set_node is not None
 
     def is_indexed_with(self, meta_set: "MetaSet") -> bool:
-        return any(map(lambda ms: ms.get_symbol() == meta_set.get_symbol(), self.get_idx_meta_sets()))
+        return any(map(lambda ms: ms.symbol == meta_set.symbol, self.idx_meta_sets))
 
-    def get_idx_set_dim(self) -> int:
-        return sum([meta_set.get_dim() for meta_set in self.get_idx_meta_sets()])
+    @property
+    def idx_set_dim(self) -> int:
+        return sum([meta_set.dim for meta_set in self.idx_meta_sets])
 
-    def get_idx_set_reduced_dim(self) -> int:
-        return sum([meta_set.get_reduced_dim() for meta_set in self.get_idx_meta_sets()])
+    @property
+    def idx_set_reduced_dim(self) -> int:
+        return sum([meta_set.reduced_dim for meta_set in self.idx_meta_sets])
 
     def is_idx_set_dim_fixed(self) -> List[bool]:
 
         combined_fixed_dim_flags = []
 
-        for idx_meta_set in self.get_idx_meta_sets():
-            combined_fixed_dim_flags += [idx_meta_set.is_dim_fixed(i) for i in range(idx_meta_set.get_dim())]
+        for idx_meta_set in self.idx_meta_sets:
+            combined_fixed_dim_flags += [idx_meta_set.is_dim_fixed(i) for i in range(idx_meta_set.dim)]
 
         return combined_fixed_dim_flags
 
-    def get_idx_set_dummy_element(self) -> List[str]:
+    @property
+    def idx_set_dummy_element(self) -> List[str]:
         dummy_element = []
-        for meta_set in self.get_idx_meta_sets():
-            dummy_element.extend(meta_set.get_dummy_element())
+        for meta_set in self.idx_meta_sets:
+            dummy_element.extend(meta_set.dummy_element)
         return dummy_element
 
-    def get_idx_set_reduced_dummy_element(self) -> List[str]:
+    @property
+    def idx_set_reduced_dummy_element(self) -> List[str]:
         dummy_element = []
-        for meta_set in self.get_idx_meta_sets():
-            dummy_element.extend(meta_set.get_reduced_dummy_element())
+        for meta_set in self.idx_meta_sets:
+            dummy_element.extend(meta_set.reduced_dummy_element)
         return dummy_element
 
-    def get_idx_meta_sets(self) -> List["MetaSet"]:
+    @property
+    def idx_meta_sets(self) -> List["MetaSet"]:
         if self._parent is None:
             return self._idx_meta_sets
         else:
-            return self._parent.get_idx_meta_sets()
+            return self._parent.idx_meta_sets
 
-    def set_idx_meta_sets(self, idx_meta_sets: List["MetaSet"]):
+    @idx_meta_sets.setter
+    def idx_meta_sets(self, idx_meta_sets: List["MetaSet"]):
         if self._parent is None:
             self._idx_meta_sets = idx_meta_sets
         else:
-            self._parent.set_idx_meta_sets(idx_meta_sets)
+            self._parent.idx_meta_sets = idx_meta_sets
 
-    def get_idx_set_con_literal(self) -> Optional[str]:
+    @property
+    def idx_set_con_literal(self) -> Optional[str]:
         if self.idx_set_node is not None:
             if self.idx_set_node.constraint_node is not None:
                 return self.idx_set_node.constraint_node.get_literal()
         return None
 
-    def get_reduced_idx_set(self, state: State) -> Optional[IndexingSet]:
+    def evaluate_reduced_idx_set(self, state: State) -> Optional[IndexingSet]:
 
-        if not self.is_indexed():  # scalar entity
+        if not self.is_indexed:  # scalar entity
             return None
 
         else:  # indexed entity
 
             idx_set = self.idx_set_node.evaluate(state=state)[0]
 
-            if self.get_idx_set_reduced_dim() < self.get_idx_set_dim():
+            if self.idx_set_reduced_dim < self.idx_set_dim:
                 fixed_dim_flags = self.is_idx_set_dim_fixed()
                 fixed_dim_pos = [i for i, is_fixed in enumerate(fixed_dim_flags) if is_fixed]
                 idx_set = remove_set_dimensions(set_in=idx_set, dim_positions=fixed_dim_pos)
@@ -165,21 +179,21 @@ class MetaEntity(ABC):
         # meta-entity is indexed with respect to the supplied meta-set
         if self.is_indexed_with(meta_set):
             counter = 0
-            for ms in self.get_idx_meta_sets():
-                if ms.get_symbol() == meta_set.get_symbol():
+            for ms in self.idx_meta_sets:
+                if ms.symbol == meta_set.symbol:
                     return counter
-                counter += ms.get_reduced_dim()
+                counter += ms.reduced_dim
 
         # meta-entity is not indexed with respect to the supplied meta-set
         else:
             return None  # return
 
     def get_indexing_set_by_position(self, pos: int) -> "MetaSet":
-        if pos >= self.get_idx_set_reduced_dim():
+        if pos >= self.idx_set_reduced_dim:
             raise ValueError("Position is out of range")
         p = 0
-        for ms in self.get_idx_meta_sets():
-            p += ms.get_reduced_dim()
+        for ms in self.idx_meta_sets:
+            p += ms.reduced_dim
             if p > pos:
                 return ms
 
@@ -201,7 +215,7 @@ class MetaEntity(ABC):
 
         # Check whether the entity index is a member of the meta-entity indexing set
         if self.idx_set_node is not None:
-            idx_set = self.get_reduced_idx_set(state)
+            idx_set = self.evaluate_reduced_idx_set(state)
             if entity.idx not in idx_set:
                 return False
 
@@ -210,6 +224,7 @@ class MetaEntity(ABC):
     # Sub-Entity
     # ------------------------------------------------------------------------------------------------------------------
 
+    @property
     def is_sub(self) -> bool:
         return self._parent is not None
 
@@ -265,7 +280,7 @@ class MetaSet(MetaEntity):
         self.initialize()
 
     def __str__(self):
-        return "set {0}".format(self.get_symbol())
+        return "set {0}".format(self.symbol)
 
     # Initialization
     # ------------------------------------------------------------------------------------------------------------------
@@ -323,35 +338,40 @@ class MetaSet(MetaEntity):
     # Type
     # ------------------------------------------------------------------------------------------------------------------
 
-    def get_type(self) -> str:
+    @property
+    def type(self) -> str:
         return SET_TYPE
 
     # Properties
     # ------------------------------------------------------------------------------------------------------------------
 
-    def get_dim(self) -> int:
+    @property
+    def dim(self) -> int:
         if self._parent is None:
             return self._dim
         else:
-            return self._parent.get_dim()
+            return self._parent.dim
 
-    def set_dim(self, dim: int):
+    @dim.setter
+    def dim(self, dim: int):
         if self._parent is None:
             self._dim = dim
         else:
-            self._parent.set_dim(dim)
+            self._parent.dim = dim
 
-    def get_reduced_dim(self) -> int:
+    @property
+    def reduced_dim(self) -> int:
         if self._parent is None:
             return self._reduced_dim
         else:
-            return self._parent.get_reduced_dim()
+            return self._parent.reduced_dim
 
-    def set_reduced_dim(self, reduced_dim: int):
+    @reduced_dim.setter
+    def reduced_dim(self, reduced_dim: int):
         if self._parent is None:
             self._reduced_dim = reduced_dim
         else:
-            self._parent.set_reduced_dim(reduced_dim)
+            self._parent.reduced_dim = reduced_dim
 
     def is_dim_fixed(self, pos: int) -> bool:
         if self._parent is None:
@@ -359,47 +379,54 @@ class MetaSet(MetaEntity):
         else:
             return self._parent.is_dim_fixed(pos)
 
-    def get_dummy_element(self) -> Element:
+    @property
+    def dummy_element(self) -> Element:
         if self._parent is None:
             return self._dummy_symbols
         else:
-            return self._parent.get_dummy_element()
+            return self._parent.dummy_element
 
-    def set_dummy_element(self, dummy_element: Element):
+    @dummy_element.setter
+    def dummy_element(self, dummy_element: Element):
         if self._parent is None:
             self._dummy_symbols = dummy_element
         else:
-            self._parent.set_dummy_element(dummy_element)
+            self._parent.dummy_element = dummy_element
 
-    def get_reduced_dummy_element(self) -> Element:
+    @property
+    def reduced_dummy_element(self) -> Element:
         if self._parent is None:
             return self._reduced_dummy_symbols
         else:
-            return self._parent.get_reduced_dummy_element()
+            return self._parent.reduced_dummy_element
 
-    def set_reduced_dummy_element(self, dummy_element: Element):
+    @reduced_dummy_element.setter
+    def reduced_dummy_element(self, dummy_element: Element):
         if self._parent is None:
             self._reduced_dummy_symbols = dummy_element
         else:
-            self._parent.set_reduced_dummy_element(dummy_element)
+            self._parent.reduced_dummy_element = dummy_element
 
-    def get_super_set_node(self) -> BaseSetNode:
+    @property
+    def super_set_node(self) -> BaseSetNode:
         if self._parent is None:
             return self._super_set_node
         else:
-            return self._parent.get_super_set_node()
+            return self._parent.super_set_node
 
-    def get_defined_value_node(self) -> BaseSetNode:
+    @property
+    def defined_value_node(self) -> BaseSetNode:
         if self._parent is None:
             return self._defined_value_node
         else:
-            return self._parent.get_defined_value_node()
+            return self._parent.defined_value_node
 
-    def get_default_value_node(self) -> BaseSetNode:
+    @property
+    def default_value_node(self) -> BaseSetNode:
         if self._parent is None:
             return self._default_value_node
         else:
-            return self._parent.get_default_value_node()
+            return self._parent.default_value_node
 
     def get_expression_nodes(self) -> List[ExpressionNode]:
 
@@ -408,9 +435,9 @@ class MetaSet(MetaEntity):
         if self.idx_set_node is not None:
             expr_nodes.append(self.idx_set_node)
 
-        nodes = (self.get_defined_value_node(),
-                 self.get_default_value_node(),
-                 self.get_super_set_node())
+        nodes = (self.defined_value_node,
+                 self.default_value_node,
+                 self.super_set_node)
 
         for node in nodes:
             if node is not None:
@@ -430,24 +457,24 @@ class MetaSet(MetaEntity):
 
     def generate_declaration(self) -> str:
 
-        declaration = "set {0}".format(self.get_symbol())
+        declaration = "set {0}".format(self.symbol)
 
-        alias = self.get_alias()
+        alias = self.alias
         if alias is not None:
             declaration += " {0} ".format(alias)
 
         if self.idx_set_node is not None:
             declaration += str(self.idx_set_node)
 
-        super_set_node = self.get_super_set_node()
+        super_set_node = self.super_set_node
         if super_set_node is not None:
             declaration += " within {0}".format(super_set_node)
 
-        defined_value_node = self.get_defined_value_node()
+        defined_value_node = self.defined_value_node
         if defined_value_node is not None:
             declaration += " = {0}".format(defined_value_node)
 
-        default_value_node = self.get_default_value_node()
+        default_value_node = self.default_value_node
         if default_value_node is not None:
             declaration += " default {0}".format(default_value_node)
 
@@ -497,61 +524,69 @@ class MetaParameter(MetaEntity):
         self._parent: "MetaParameter" = parent
 
     def __str__(self):
-        declaration = "param {0}".format(self.get_symbol())
-        if self.get_idx_set_dim() > 0 and self.idx_set_node is not None:
+        declaration = "param {0}".format(self.symbol)
+        if self.idx_set_dim > 0 and self.idx_set_node is not None:
             declaration += str(self.idx_set_node)
         return declaration
 
     # Type
     # ------------------------------------------------------------------------------------------------------------------
 
-    def get_type(self) -> str:
+    @property
+    def type(self) -> str:
         return PARAM_TYPE
 
     # Properties
     # ------------------------------------------------------------------------------------------------------------------
 
+    @property
     def is_binary(self) -> bool:
         if self._parent is None:
             return self._is_binary
         else:
-            return self._parent.is_binary()
+            return self._parent.is_binary
 
+    @property
     def is_integer(self) -> bool:
         if self._parent is None:
             return self._is_integer
         else:
-            return self._parent.is_integer()
+            return self._parent.is_integer
 
+    @property
     def is_symbolic(self) -> bool:
         if self._parent is None:
             return self._is_symbolic
         else:
-            return self._parent.is_symbolic()
+            return self._parent.is_symbolic
 
-    def get_defined_value_node(self) -> ExpressionNode:
+    @property
+    def defined_value_node(self) -> ExpressionNode:
         if self._parent is None:
             return self._defined_value
         else:
-            return self._parent.get_defined_value_node()
+            return self._parent.defined_value_node
 
-    def get_default_value_node(self) -> ExpressionNode:
+    @property
+    def default_value_node(self) -> ExpressionNode:
         if self._parent is None:
             return self._default_value
         else:
-            return self._parent.get_default_value_node()
+            return self._parent.default_value_node
 
-    def get_super_set_node(self) -> BaseSetNode:
+    @property
+    def super_set_node(self) -> BaseSetNode:
         if self._parent is None:
             return self._super_set_node
         else:
-            return self._parent.get_super_set_node()
+            return self._parent.super_set_node
 
-    def get_relational_constraints(self) -> Dict[str, ExpressionNode]:
+    @property
+    def relational_constraints(self) -> Dict[str, ExpressionNode]:
         if self._parent is None:
             return self._relational_constraints
         else:
-            return self._parent.get_relational_constraints()
+            return self._parent.relational_constraints
 
     def get_expression_nodes(self) -> List[ExpressionNode]:
 
@@ -560,15 +595,15 @@ class MetaParameter(MetaEntity):
         if self.idx_set_node is not None:
             expr_nodes.append(self.idx_set_node)
 
-        nodes = (self.get_defined_value_node(),
-                 self.get_default_value_node(),
-                 self.get_super_set_node())
+        nodes = (self.defined_value_node,
+                 self.default_value_node,
+                 self.super_set_node)
 
         for node in nodes:
             if node is not None:
                 expr_nodes.append(node)
 
-        for expr_node in self.get_relational_constraints().values():
+        for expr_node in self.relational_constraints.values():
             expr_nodes.append(expr_node)
 
         return expr_nodes
@@ -584,9 +619,9 @@ class MetaParameter(MetaEntity):
 
     def generate_declaration(self) -> str:
 
-        declaration = "param {0}".format(self.get_symbol())
+        declaration = "param {0}".format(self.symbol)
 
-        alias = self.get_alias()
+        alias = self.alias
         if alias is not None:
             declaration += " {0} ".format(alias)
 
@@ -595,26 +630,26 @@ class MetaParameter(MetaEntity):
 
         attributes = []
 
-        if self.is_binary():
+        if self.is_binary:
             attributes.append("binary")
-        if self.is_integer():
+        if self.is_integer:
             attributes.append("integer")
-        if self.is_symbolic():
+        if self.is_symbolic:
             attributes.append("symbolic")
 
-        super_set_node = self.get_super_set_node()
+        super_set_node = self.super_set_node
         if super_set_node is not None:
             attributes.append("in {0}".format(super_set_node))
 
-        defined_value_node = self.get_defined_value_node()
+        defined_value_node = self.defined_value_node
         if defined_value_node is not None:
             attributes.append("= {0}".format(defined_value_node))
 
-        default_value_node = self.get_default_value_node()
+        default_value_node = self.default_value_node
         if default_value_node is not None:
             attributes.append("default {0}".format(default_value_node))
 
-        for rel_opr, node in self.get_relational_constraints().items():
+        for rel_opr, node in self.relational_constraints.items():
             attributes.append("{0} {1}".format(rel_opr, node))
 
         if len(attributes) > 0:
@@ -658,73 +693,83 @@ class MetaVariable(MetaEntity):
         self._parent: "MetaVariable" = parent
 
     def __str__(self):
-        declaration = "var {0}".format(self.get_symbol())
-        if self.get_idx_set_dim() > 0 and self.idx_set_node is not None:
+        declaration = "var {0}".format(self.symbol)
+        if self.idx_set_dim > 0 and self.idx_set_node is not None:
             declaration += str(self.idx_set_node)
         return declaration
 
     # Type
     # ------------------------------------------------------------------------------------------------------------------
 
-    def get_type(self) -> str:
+    @property
+    def type(self) -> str:
         return VAR_TYPE
 
     # Properties
     # ------------------------------------------------------------------------------------------------------------------
 
+    @property
     def is_binary(self) -> bool:
         if self._parent is None:
             return self._is_binary
         else:
-            return self._parent.is_binary()
+            return self._parent.is_binary
 
+    @property
     def is_integer(self) -> bool:
         if self._parent is None:
             return self._is_integer
         else:
-            return self._parent.is_integer()
+            return self._parent.is_integer
 
+    @property
     def is_symbolic(self) -> bool:
         if self._parent is None:
             return self._is_symbolic
         else:
-            return self._parent.is_symbolic()
+            return self._parent.is_symbolic
 
+    @property
     def has_default(self):
         if self._parent is None:
             return self._default_value is not None
         else:
-            return self._parent.has_default()
+            return self._parent.has_default
 
-    def get_default_value_node(self) -> ExpressionNode:
+    @property
+    def default_value_node(self) -> ExpressionNode:
         if self._parent is None:
             return self._default_value
         else:
-            return self._parent.get_default_value_node()
+            return self._parent.default_value_node
 
+    @property
     def is_defined(self) -> bool:
         if self._parent is None:
             return self._defined_value is not None
         else:
-            return self._parent.is_defined()
+            return self._parent.is_defined
 
-    def get_defined_value_node(self) -> ExpressionNode:
+    @property
+    def defined_value_node(self) -> ExpressionNode:
         if self._parent is None:
             return self._defined_value
         else:
-            return self._parent.get_defined_value_node()
+            return self._parent.defined_value_node
 
-    def get_lower_bound_node(self) -> ExpressionNode:
+    @property
+    def lower_bound_node(self) -> ExpressionNode:
         if self._parent is None:
             return self._lower_bound
         else:
-            return self._parent.get_lower_bound_node()
+            return self._parent.lower_bound_node
 
-    def get_upper_bound_node(self) -> ExpressionNode:
+    @property
+    def upper_bound_node(self) -> ExpressionNode:
         if self._parent is None:
             return self._upper_bound
         else:
-            return self._parent.get_upper_bound_node()
+            return self._parent.upper_bound_node
 
     def get_expression_nodes(self) -> List[ExpressionNode]:
 
@@ -733,10 +778,10 @@ class MetaVariable(MetaEntity):
         if self.idx_set_node is not None:
             expr_nodes.append(self.idx_set_node)
 
-        nodes = (self.get_default_value_node(),
-                 self.get_defined_value_node(),
-                 self.get_lower_bound_node(),
-                 self.get_upper_bound_node())
+        nodes = (self.default_value_node,
+                 self.defined_value_node,
+                 self.lower_bound_node,
+                 self.upper_bound_node)
 
         for node in nodes:
             if node is not None:
@@ -755,9 +800,9 @@ class MetaVariable(MetaEntity):
 
     def generate_declaration(self) -> str:
 
-        declaration = "var {0}".format(self.get_symbol())
+        declaration = "var {0}".format(self.symbol)
 
-        alias = self.get_alias()
+        alias = self.alias
         if alias is not None:
             declaration += " {0} ".format(alias)
 
@@ -766,26 +811,26 @@ class MetaVariable(MetaEntity):
 
         attributes = []
 
-        if self.is_binary():
+        if self.is_binary:
             attributes.append("binary")
-        if self.is_integer():
+        if self.is_integer:
             attributes.append("integer")
-        if self.is_symbolic():
+        if self.is_symbolic:
             attributes.append("symbolic")
 
-        default_value_node = self.get_default_value_node()
+        default_value_node = self.default_value_node
         if default_value_node is not None:
             attributes.append(":= {0}".format(default_value_node))
 
-        defined_value_node = self.get_defined_value_node()
+        defined_value_node = self.defined_value_node
         if defined_value_node is not None:
             attributes.append("= {0}".format(defined_value_node))
 
-        lower_bound_node = self.get_lower_bound_node()
+        lower_bound_node = self.lower_bound_node
         if lower_bound_node is not None:
             attributes.append(">= {0}".format(lower_bound_node))
 
-        upper_bound_node = self.get_upper_bound_node()
+        upper_bound_node = self.upper_bound_node
         if upper_bound_node is not None:
             attributes.append("<= {0}".format(upper_bound_node))
 
@@ -825,43 +870,48 @@ class MetaObjective(MetaEntity):
         self._parent: "MetaObjective" = parent
 
     def __str__(self):
-        declaration = "{0} {1}".format(self.get_direction(), self.get_symbol())
-        if self.get_idx_set_dim() > 0 and self.idx_set_node is not None:
+        declaration = "{0} {1}".format(self.direction, self.symbol)
+        if self.idx_set_dim > 0 and self.idx_set_node is not None:
             declaration += str(self.idx_set_node)
         return declaration
 
     # Properties
     # ------------------------------------------------------------------------------------------------------------------
 
-    def get_type(self) -> str:
+    @property
+    def type(self) -> str:
         return OBJ_TYPE
 
-    def get_direction(self) -> str:
+    @property
+    def direction(self) -> str:
         if self._parent is None:
             return self._direction
         else:
-            return self._parent.get_direction()
+            return self._parent.direction
 
-    def set_direction(self, direction: str):
+    @direction.setter
+    def direction(self, direction: str):
         if self._parent is None:
             self._direction = direction
         else:
-            self._parent.set_direction(direction)
+            self._parent.direction = direction
 
-    def get_expression(self) -> Expression:
+    @property
+    def expression(self) -> Expression:
         if self._parent is None:
             return self._expression
         else:
-            return self._parent.get_expression()
+            return self._parent.expression
 
-    def set_expression(self, expr: Expression):
+    @expression.setter
+    def expression(self, expr: Expression):
         if self._parent is None:
             self._expression = expr
         else:
-            self._parent.set_expression(expr)
+            self._parent.expression = expr
 
     def get_expression_nodes(self) -> List[ExpressionNode]:
-        expr_nodes = [self.get_expression().root_node]
+        expr_nodes = [self.expression.root_node]
         if self.idx_set_node is not None:
             expr_nodes.append(self.idx_set_node)
         return expr_nodes
@@ -877,16 +927,16 @@ class MetaObjective(MetaEntity):
 
     def generate_declaration(self) -> str:
 
-        declaration = "{0} {1}".format(self._direction, self.get_symbol())
+        declaration = "{0} {1}".format(self._direction, self.symbol)
 
-        alias = self.get_alias()
+        alias = self.alias
         if alias is not None:
             declaration += " {0} ".format(alias)
 
         if self.idx_set_node is not None:
             declaration += str(self.idx_set_node)
 
-        declaration += ": {0}".format(self.get_expression())
+        declaration += ": {0}".format(self.expression)
 
         declaration += ";"
         return declaration
@@ -917,22 +967,24 @@ class MetaConstraint(MetaEntity):
         self._parent: "MetaConstraint" = parent
 
     def __str__(self):
-        declaration = "subject to {0}".format(self.get_symbol())
-        if self.get_idx_set_dim() > 0 and self.idx_set_node is not None:
+        declaration = "subject to {0}".format(self.symbol)
+        if self.idx_set_dim > 0 and self.idx_set_node is not None:
             declaration += str(self.idx_set_node)
         return declaration
 
     # Properties
     # ------------------------------------------------------------------------------------------------------------------
 
-    def get_type(self) -> str:
+    @property
+    def type(self) -> str:
         return CON_TYPE
 
-    def get_constraint_type(self) -> str:
+    @property
+    def constraint_type(self) -> str:
         if self._parent is None:
             return self._ctype
         else:
-            return self._parent.get_constraint_type()
+            return self._parent.constraint_type
 
     def elicit_constraint_type(self):
 
@@ -957,20 +1009,22 @@ class MetaConstraint(MetaEntity):
         raise ValueError("Meta-constraint '{0}' expected an equality or an inequality expression".format(self._symbol)
                          + " while eliciting the constraint type from the expression node '{0}'".format(expr_node))
 
-    def get_expression(self) -> Expression:
+    @property
+    def expression(self) -> Expression:
         if self._parent is None:
             return self._expression
         else:
-            return self._parent.get_expression()
+            return self._parent.expression
 
-    def set_expression(self, expr: Expression):
+    @expression.setter
+    def expression(self, expr: Expression):
         if self._parent is None:
             self._expression = expr
         else:
-            self._parent.set_expression(expr)
+            self._parent.expression = expr
 
     def get_expression_nodes(self) -> List[ExpressionNode]:
-        expr_nodes = [self.get_expression().root_node]
+        expr_nodes = [self.expression.root_node]
         if self.idx_set_node is not None:
             expr_nodes.append(self.idx_set_node)
         return expr_nodes
@@ -986,16 +1040,16 @@ class MetaConstraint(MetaEntity):
 
     def generate_declaration(self) -> str:
 
-        declaration = "{0}".format(self.get_symbol())
+        declaration = "{0}".format(self.symbol)
 
-        alias = self.get_alias()
+        alias = self.alias
         if alias is not None:
             declaration += " {0} ".format(alias)
 
         if self.idx_set_node is not None:
             declaration += str(self.idx_set_node)
 
-        declaration += ": {0}".format(self.get_expression())
+        declaration += ": {0}".format(self.expression)
 
         declaration += ";"
         return declaration

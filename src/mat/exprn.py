@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 import numpy as np
-from ordered_set import OrderedSet
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from symro.src.mat.util import Element, IndexingSet

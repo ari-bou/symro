@@ -220,11 +220,11 @@ def _build_idx_meta_sets_of_problem(problem: Problem, subproblem: BaseProblem = 
                         subproblem.model_meta_objs,
                         subproblem.model_meta_cons):
         for me in me_iterable:
-            me.set_idx_meta_sets(
-                _build_idx_meta_sets_of_meta_entity(
-                    problem=problem,
-                    idx_set_node=me.idx_set_node,
-                    expr_nodes=me.get_expression_nodes()))
+            me.idx_meta_sets = _build_idx_meta_sets_of_meta_entity(
+                problem=problem,
+                idx_set_node=me.idx_set_node,
+                expr_nodes=me.get_expression_nodes()
+            )
 
 
 def _build_idx_meta_sets_of_meta_entity(problem: Problem,
@@ -311,7 +311,7 @@ def build_idx_meta_sets(problem: Problem,
                 dummy_nodes = []
 
                 # retrieve default unbound symbols of the meta-set
-                for d in ms.get_reduced_dummy_element():
+                for d in ms.reduced_dummy_element:
 
                     # unbound symbol clashes with previously-defined symbol
                     if d in def_unb_syms:
@@ -401,7 +401,7 @@ def build_sub_meta_entity(problem: Problem,
 
     # return the parent meta-entity if it is scalar
     # return the parent meta-entity if no indexing subset is provided
-    if idx_subset_node is None or meta_entity.get_idx_set_reduced_dim() == 0:
+    if idx_subset_node is None or meta_entity.idx_set_reduced_dim == 0:
         return meta_entity
 
     idx_subset_node = __build_sub_meta_entity_idx_set_node(
@@ -421,8 +421,8 @@ def __build_sub_meta_entity_idx_set_node(problem: Problem,
                                          entity_idx_node: mat.CompoundDummyNode):
 
     # check if the dimension of the entity index node matches that of the parent meta-entity's indexing set
-    if entity_idx_node.get_dim() != meta_entity.get_idx_set_reduced_dim():
-        sub_entity_decl = "{0} {1}{2}".format(idx_subset_node, meta_entity.get_symbol(), entity_idx_node)
+    if entity_idx_node.get_dim() != meta_entity.idx_set_reduced_dim:
+        sub_entity_decl = "{0} {1}{2}".format(idx_subset_node, meta_entity.symbol, entity_idx_node)
         raise ValueError("Entity builder encountered an incorrect entity declaration"
                          + " '{0}' while building a sub-meta-entity:".format(sub_entity_decl)
                          + " the dimension of the entity index does not match that of the parent entity")
@@ -438,7 +438,7 @@ def __build_sub_meta_entity_idx_set_node(problem: Problem,
         idx_set_con_operands.append(idx_set_node.constraint_node)
 
     # retrieve standard dummy symbols of the indexing set
-    outer_unb_syms = meta_entity.get_idx_set_reduced_dummy_element()
+    outer_unb_syms = meta_entity.idx_set_reduced_dummy_element
 
     # process the index node of the sub-meta-entity
     (is_sub_membership_op_required,

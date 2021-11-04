@@ -40,7 +40,7 @@ def is_linear(root_node: ExpressionNode) -> bool:
 
         if isinstance(node, ArithmeticOperationNode) and node.operator == MULTIPLICATION_OPERATOR:  # multiplication
             is_const = [is_constant(child) for child in node.get_children()]
-            if len(is_const) > 1:
+            if is_const.count(False) > 1:
                 return False
 
         elif isinstance(node, ArithmeticOperationNode) and node.operator == DIVISION_OPERATOR:  # division
@@ -57,7 +57,7 @@ def is_linear(root_node: ExpressionNode) -> bool:
         elif isinstance(node, ArithmeticTransformationNode):   # transformation
             if node.fcn != SUMMATION_FUNCTION:
                 is_const = [is_constant(child) for child in node.get_children()]
-                if len(is_const) > 0:
+                if is_const.count(False) > 0:
                     return False
 
         for child in node.get_children():

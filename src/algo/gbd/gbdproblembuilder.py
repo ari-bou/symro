@@ -101,10 +101,12 @@ class GBDProblemBuilder:
                     idx_meta_sets[idx_set_def] = ms
 
                 else:
+                    # TODO: add support for indexed sets as decomposition axes in the GBD problem builder
                     raise NotImplementedError("GBD problem builder currently does not support indexed sets"
                                               + " as the decomposition axes of a problem")
 
             else:
+                # TODO: add support for undeclared sets as decomposition axes in the GBD problem builder
                 raise NotImplementedError("GBD problem builder currently does not support undeclared sets"
                                           + " as the decomposition axes of a problem")
 
@@ -134,7 +136,7 @@ class GBDProblemBuilder:
         self.__build_mp()
 
         # --- Script ---
-        self.__build_and_write_script()
+        self.__build_and_write_ampl_script()
 
         return self.gbd_problem
 
@@ -1581,6 +1583,7 @@ class GBDProblemBuilder:
 
             # indexed
             else:
+                # TODO: add support for indexed sets as decomposition axes in the GBD problem builder
                 raise NotImplementedError("GBD problem builder does not support indexed sets as decomposition axes")
 
         sp_idx_set = mat.cartesian_product(idx_sets)
@@ -1748,7 +1751,7 @@ class GBDProblemBuilder:
     # Scripts
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __build_and_write_script(self):
+    def __build_and_write_ampl_script(self):
         self.__clean_script()
         self.__build_model_scripts()
         self.__build_problem_declarations()

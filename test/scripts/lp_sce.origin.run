@@ -8,7 +8,7 @@ problem PrimalSubproblem {s in S}:
 	x1[s],
 	x2[s],
 	y[s],
-	OBJ_SUB[s],
+	OBJ_SUB_PrimalSubproblem[s],
 	CON1[s],
 	CON2[s],
 	CON3[s],

@@ -1,6 +1,6 @@
 import symro
-from symro.src.handlers.convexifier import Convexifier
-from symro.test.test_util import *
+from symro.handlers.convexifier import Convexifier
+from .test_util import *
 
 
 # Scripts
@@ -45,10 +45,10 @@ CON9: log(x) = 0;
 # Tests
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 def test_convexifier():
 
-    problem = symro.read_ampl(script_literal=SCRIPT,
-                              working_dir_path=SCRIPT_DIR_PATH)
+    problem = symro.read_ampl(script_literal=SCRIPT, working_dir_path=SCRIPT_DIR_PATH)
 
     convexifier = Convexifier()
     convex_relax = convexifier.convexify_problem(problem)

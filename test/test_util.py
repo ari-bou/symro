@@ -1,5 +1,5 @@
+import pathlib
 import os
 
-from symro import ROOT_DIR
-
-SCRIPT_DIR_PATH = os.path.join(ROOT_DIR, "test", "scripts")
+TEST_DIR = pathlib.Path(__file__).parent
+SCRIPT_DIR_PATH = os.path.join(TEST_DIR, "scripts")

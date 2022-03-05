@@ -1,7 +1,7 @@
 import warnings
 
 import symro
-from symro.test.test_util import *
+from .test_util import *
 
 
 # Tests
@@ -10,8 +10,7 @@ from symro.test.test_util import *
 
 def test_build_problem_from_file():
     try:
-        symro.read_ampl("diet.run",
-                        working_dir_path=SCRIPT_DIR_PATH)
+        symro.read_ampl("diet.run", working_dir_path=SCRIPT_DIR_PATH)
         assert True
     except Exception as e:
         warnings.warn(str(e))
@@ -25,4 +24,3 @@ def test_build_problem_from_literal():
     except Exception as e:
         warnings.warn(str(e))
         assert False
-

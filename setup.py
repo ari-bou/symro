@@ -8,7 +8,7 @@ ROOT_DIR = pathlib.Path(__file__).parent
 # The text of the README file
 README = (ROOT_DIR / "README.md").read_text()
 
-version_file = open(os.path.join(ROOT_DIR, 'VERSION'))
+version_file = open(os.path.join(ROOT_DIR, "symro", "symro", "VERSION"))
 version = version_file.read().strip()
 __version__ = version
 
@@ -42,7 +42,5 @@ setuptools.setup(
     python_requires=">=3.8",
     include_package_data=True,
     install_requires=requirements,
-    extras_require={
-        "test": test_requirements
-    }
+    extras_require={"test": test_requirements},
 )

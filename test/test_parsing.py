@@ -1,12 +1,11 @@
 import symro
-from symro.src.parsing.amplparser import AMPLParser
-from symro.test.test_util import *
+from symro.parsing.amplparser import AMPLParser
+from .test_util import *
 
 
 def test_ampl_parser_core_logic():
 
-    problem = symro.read_ampl(script_literal="",
-                              working_dir_path=SCRIPT_DIR_PATH)
+    problem = symro.read_ampl(script_literal="", working_dir_path=SCRIPT_DIR_PATH)
     ampl_parser = AMPLParser(problem)
 
     # logical expression
@@ -20,7 +19,10 @@ def test_ampl_parser_core_logic():
     # conditional arithmetic expression without trailing else clause
     literal = "if 1 > 2 then 1 + 2 else if 1 = 2 then 3 + 4 else if 1 < 2 then 5 + 6"
     node = ampl_parser.parse_arithmetic_expression(literal)
-    assert str(node) == "if 1 > 2 then 1 + 2 else if 1 == 2 then 3 + 4 else if 1 < 2 then 5 + 6"
+    assert (
+        str(node)
+        == "if 1 > 2 then 1 + 2 else if 1 == 2 then 3 + 4 else if 1 < 2 then 5 + 6"
+    )
 
     # conditional arithmetic expression with trailing else clause
     literal = "if 1 > 2 then 1 + 2 else if 1 = 2 then 3 + 4 else 5 + 6"

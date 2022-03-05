@@ -1,6 +1,6 @@
 import symro
-import symro.src.handlers.nodebuilder as nb
-from symro.test.test_util import *
+import symro.handlers.nodebuilder as nb
+from .test_util import *
 
 
 # Scripts
@@ -27,10 +27,10 @@ minimize OBJ: 0;
 # Tests
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 def test_node_builder_entity_idx_set_node():
 
-    problem = symro.read_ampl(script_literal=SCRIPT,
-                              working_dir_path=SCRIPT_DIR_PATH)
+    problem = symro.read_ampl(script_literal=SCRIPT, working_dir_path=SCRIPT_DIR_PATH)
 
     var_1 = problem.get_meta_entity("VAR_1")
     idx_set_node = nb.build_entity_idx_set_node(problem, var_1)
@@ -41,7 +41,9 @@ def test_node_builder_entity_idx_set_node():
     idx_set_node = nb.build_entity_idx_set_node(problem, var_2)
     assert str(idx_set_node) == "{i in NUM_SET, (i,j) in NUM_ALPHA_SET}"
 
-    idx_set_node = nb.build_entity_idx_set_node(problem, var_2, custom_dummy_syms={"NUM_SET": 'j'})
+    idx_set_node = nb.build_entity_idx_set_node(
+        problem, var_2, custom_dummy_syms={"NUM_SET": "j"}
+    )
     assert str(idx_set_node) == "{j in NUM_SET, (j,j1) in NUM_ALPHA_SET}"
 
     var_3 = problem.get_meta_entity("VAR_3")

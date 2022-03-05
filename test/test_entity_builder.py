@@ -1,7 +1,7 @@
 import symro
-import symro.src.handlers.metaentitybuilder as eb
-from symro.src.parsing.amplparser import AMPLParser
-from symro.test.test_util import *
+import symro.handlers.metaentitybuilder as eb
+from symro.parsing.amplparser import AMPLParser
+from .test_util import *
 
 
 # Scripts
@@ -35,20 +35,23 @@ display {i in NUM_SET: 1 in union{i1 in NUM_SET}{1..1: i == 5}};
 # Tests
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 def test_fixed_dimension():
 
-    problem = symro.read_ampl(script_literal=FIXED_DIM_SCRIPT,
-                              working_dir_path=SCRIPT_DIR_PATH)
+    problem = symro.read_ampl(
+        script_literal=FIXED_DIM_SCRIPT, working_dir_path=SCRIPT_DIR_PATH
+    )
 
     x = problem.get_meta_entity("x")
     assert x.idx_set_reduced_dim == 2
-    assert x.idx_set_reduced_dummy_element == ['i', 'l']
+    assert x.idx_set_reduced_dummy_element == ["i", "l"]
 
 
 def test_sub_meta_entity_builder():
 
-    problem = symro.read_ampl(script_literal=SUB_SET_SCRIPT,
-                              working_dir_path=SCRIPT_DIR_PATH)
+    problem = symro.read_ampl(
+        script_literal=SUB_SET_SCRIPT, working_dir_path=SCRIPT_DIR_PATH
+    )
 
     ampl_parser = AMPLParser(problem)
 
@@ -61,7 +64,8 @@ def test_sub_meta_entity_builder():
         problem=problem,
         meta_entity=mv_1,
         idx_subset_node=mv_1.idx_set_node,
-        entity_idx_node=idx_node)
+        entity_idx_node=idx_node,
+    )
     assert str(sub_meta_entity) == "var VAR_1{i in NUM_SET}"
 
     # test 2: {i in EVEN_SET} VAR_1[i]
@@ -71,7 +75,8 @@ def test_sub_meta_entity_builder():
         problem=problem,
         meta_entity=mv_1,
         idx_subset_node=idx_subset_node,
-        entity_idx_node=idx_node)
+        entity_idx_node=idx_node,
+    )
     assert str(sub_meta_entity) == "var VAR_1{i in NUM_SET: i in {i2 in EVEN_SET}}"
 
     # test 3: {i in NUM_SET} VAR_1[5]
@@ -80,38 +85,48 @@ def test_sub_meta_entity_builder():
         problem=problem,
         meta_entity=mv_1,
         idx_subset_node=mv_1.idx_set_node,
-        entity_idx_node=idx_node)
+        entity_idx_node=idx_node,
+    )
     assert str(sub_meta_entity) == "var VAR_1{i in NUM_SET: i == 5}"
 
     # test 4: {i in EVEN_SET, j in VOWEL_SET} VAR_2[i,j]
-    idx_subset_node = ampl_parser.parse_indexing_set_definition("{i in EVEN_SET, j in VOWEL_SET}")
+    idx_subset_node = ampl_parser.parse_indexing_set_definition(
+        "{i in EVEN_SET, j in VOWEL_SET}"
+    )
     idx_node = ampl_parser.parse_entity_index("[i,j]")
     sub_meta_entity = eb.build_sub_meta_entity(
         problem=problem,
         meta_entity=mv_2,
         idx_subset_node=idx_subset_node,
-        entity_idx_node=idx_node)
+        entity_idx_node=idx_node,
+    )
     s = "var VAR_2{i in NUM_SET, j in LETTER_SET: (i,j) in {i3 in EVEN_SET, j1 in VOWEL_SET}}"
     assert str(sub_meta_entity) == s
 
     # test 5: {i in NUM_SET, j in INDEXED_SET[i]} VAR_1[j]
-    idx_subset_node = ampl_parser.parse_indexing_set_definition("{i in NUM_SET, j in INDEXED_SET[i]}")
+    idx_subset_node = ampl_parser.parse_indexing_set_definition(
+        "{i in NUM_SET, j in INDEXED_SET[i]}"
+    )
     idx_node = ampl_parser.parse_entity_index("[j]")
     sub_meta_entity = eb.build_sub_meta_entity(
         problem=problem,
         meta_entity=mv_1,
         idx_subset_node=idx_subset_node,
-        entity_idx_node=idx_node)
+        entity_idx_node=idx_node,
+    )
     s = "var VAR_1{i in NUM_SET: i in union{i4 in NUM_SET}{j2 in INDEXED_SET[i]}}"
     assert str(sub_meta_entity) == s
 
     # test 6: {i in NUM_SET, j in INDEXED_SET_2[i]} VAR_2[i,j]
-    idx_subset_node = ampl_parser.parse_indexing_set_definition("{i in NUM_SET, j in INDEXED_SET_2[i]}")
+    idx_subset_node = ampl_parser.parse_indexing_set_definition(
+        "{i in NUM_SET, j in INDEXED_SET_2[i]}"
+    )
     idx_node = ampl_parser.parse_entity_index("[j,k]")
     sub_meta_entity = eb.build_sub_meta_entity(
         problem=problem,
         meta_entity=mv_2,
         idx_subset_node=idx_subset_node,
-        entity_idx_node=idx_node)
+        entity_idx_node=idx_node,
+    )
     s = "var VAR_2{i in NUM_SET, j in LETTER_SET}"
     assert str(sub_meta_entity) == s

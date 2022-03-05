@@ -23,6 +23,7 @@ var y{s in S} := 500, >= 0, <= 1000;
 # beginregion
 minimize OBJ: (sum {s in S} (x1[s] + x2[s] + -10 * p[s] * y[s]));
 minimize OBJ_SUB{s in S}: (x1[s] + x2[s] + -10 * p[s] * y[s]);
+minimize OBJ_SUB_PrimalSubproblem{s in S}: (x1[s] + x2[s] + -10 * p[s] * y[s]);
 # endregion 
 
 

@@ -18,9 +18,9 @@ minimize FBL_OBJ_PrimalSubproblem{s in SCENARIOS}: (sum {p in PRODUCTS, t in TIM
 # CONSTRAINTS
 # --------------------------------------------------------------------------------------------------
 # beginregion
-MIN_PRODUCTION_F{p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: MIN_PROD[p] + -1 * NODE[p,t,s] + -1 * MIN_PRODUCTION_SL[p,t,s] <= 0;
-PROD_DEMAND_F{p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: NODE[p,t,s] + -1 * DEMAND[p] + -1 * PROD_DEMAND_SL[p,t,s] <= 0;
-QUALITY_BLENDING_RULE_MIN_F{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: QUALITY_SPEC_MIN[q,p] * NODE[p,t,s] + -1 * (sum {r in RAW_MATERIALS} (QUALITY_RAW_MAT[q,r] * ARC[r,p,t,s])) + -1 * QUALITY_BLENDING_RULE_MIN_SL[q,p,t,s] <= 0;
-QUALITY_BLENDING_RULE_MAX_F{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: (sum {r in RAW_MATERIALS} (QUALITY_RAW_MAT[q,r] * ARC[r,p,t,s])) + -1 * QUALITY_SPEC_MAX[q,p] * NODE[p,t,s] + -1 * QUALITY_BLENDING_RULE_MAX_SL[q,p,t,s] <= 0;
+MIN_PRODUCTION_F{p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: (MIN_PROD[p]) + (-1 * NODE[p,t,s]) + -1 * MIN_PRODUCTION_SL[p,t,s] <= 0;
+PROD_DEMAND_F{p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: (NODE[p,t,s]) + (-1 * DEMAND[p]) + -1 * PROD_DEMAND_SL[p,t,s] <= 0;
+QUALITY_BLENDING_RULE_MIN_F{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: (QUALITY_SPEC_MIN[q,p] * NODE[p,t,s]) + (sum {r in RAW_MATERIALS} (-1 * QUALITY_RAW_MAT[q,r] * ARC[r,p,t,s])) + -1 * QUALITY_BLENDING_RULE_MIN_SL[q,p,t,s] <= 0;
+QUALITY_BLENDING_RULE_MAX_F{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: (sum {r in RAW_MATERIALS} (QUALITY_RAW_MAT[q,r] * ARC[r,p,t,s])) + (-1 * QUALITY_SPEC_MAX[q,p] * NODE[p,t,s]) + -1 * QUALITY_BLENDING_RULE_MAX_SL[q,p,t,s] <= 0;
 # endregion 
 

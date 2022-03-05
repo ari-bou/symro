@@ -1,1500 +1,1500 @@
-21:46:43: Setting up engine
-21:46:43: Running NGBD
-21:46:43: (it 0) Solving master problem
-21:46:44: (it 0) Lower bound of -100000.0
-21:46:44: (it 0) Storing complicating variables
-21:46:44: (it 0) Fixing complicating variables
-21:46:44: (it 0) Solving primal subproblem
-21:46:44: (it 0) Subproblem objective is 10399.999950031324
-21:46:44: (it 0) Primal objective is 10399.999950031324
-21:46:44: (it 0) Storing dual multipliers
-21:46:44: (it 0) Updated global upper bound
-21:46:44: (it 0) Iter:  0   | LB:     -100000     | UB:      10399      | Fbl: True
-21:46:44: (it 1) Solving master problem
-21:46:44: (it 1) Lower bound of -14600.000049968672
-21:46:44: (it 1) Updated global lower bound
-21:46:44: (it 1) Storing complicating variables
-21:46:44: (it 1) Fixing complicating variables
-21:46:44: (it 1) Solving primal subproblem
-21:46:44: (it 1) Subproblem objective is -3000.0
-21:46:44: (it 1) Primal objective is -3000.0
-21:46:44: (it 1) Storing dual multipliers
-21:46:44: (it 1) Updated global upper bound
-21:46:44: (it 1) Iter:  1   | LB:     -14600      | UB:      -3000      | Fbl: True
-21:46:44: (it 2) Solving master problem
-21:46:44: (it 2) Lower bound of -14455.000049344066
-21:46:44: (it 2) Updated global lower bound
-21:46:44: (it 2) Storing complicating variables
-21:46:44: (it 2) Fixing complicating variables
-21:46:44: (it 2) Solving primal subproblem
-21:46:44: (it 2) Subproblem objective is -14455.000049352817
-21:46:44: (it 2) Primal objective is -14455.000049352817
-21:46:44: (it 2) Storing dual multipliers
-21:46:44: (it 2) Updated global upper bound
-21:46:44: (it 2) Iter:  2   | LB:     -14455      | UB:     -14455      | Fbl: True
-21:46:44: (it 3) lower bound >= upper bound
-21:46:44: (it 3) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 3) Fixing complicating variables
-21:46:44: (it 3) Solving original primal subproblem
-21:46:44: (it 3) Original subproblem objective is -65.25999999999999
-21:46:44: (it 3) Solving master problem
-21:46:44: (it 3) Lower bound of -14454.000049344066
-21:46:44: (it 3) Storing complicating variables
-21:46:44: (it 3) Fixing complicating variables
-21:46:44: (it 3) Solving primal subproblem
-21:46:44: (it 3) Subproblem objective is -14454.000020352778
-21:46:44: (it 3) Primal objective is -14454.000020352778
-21:46:44: (it 3) Storing dual multipliers
-21:46:44: (it 3) Updated global upper bound
-21:46:44: (it 3) Iter:  3   | LB:     -14454      | UB:     -14454      | Fbl: True
-21:46:44: (it 4) GBD epsilon-optimal solution with relative error = 2.00576225912891e-09
-21:46:44: (it 4) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 4) Fixing complicating variables
-21:46:44: (it 4) Solving original primal subproblem
-21:46:44: (it 4) Original subproblem objective is -65.23630161918936
-21:46:44: (it 4) Solving master problem
-21:46:44: (it 4) Lower bound of -14453.000049344066
-21:46:44: (it 4) Storing complicating variables
-21:46:44: (it 4) Fixing complicating variables
-21:46:44: (it 4) Solving primal subproblem
-21:46:44: (it 4) Subproblem objective is -14453.00002035535
-21:46:44: (it 4) Primal objective is -14453.00002035535
-21:46:44: (it 4) Storing dual multipliers
-21:46:44: (it 4) Updated global upper bound
-21:46:44: (it 4) Iter:  4   | LB:     -14453      | UB:     -14453      | Fbl: True
-21:46:44: (it 5) GBD epsilon-optimal solution with relative error = 2.0057230777299828e-09
-21:46:44: (it 5) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 5) Fixing complicating variables
-21:46:44: (it 5) Solving original primal subproblem
-21:46:44: (it 5) Original subproblem objective is -65.21165875677488
-21:46:44: (it 5) Solving master problem
-21:46:44: (it 5) Lower bound of -14452.000049344066
-21:46:44: (it 5) Storing complicating variables
-21:46:44: (it 5) Fixing complicating variables
-21:46:44: (it 5) Solving primal subproblem
-21:46:44: (it 5) Subproblem objective is -14452.0000203579
-21:46:44: (it 5) Primal objective is -14452.0000203579
-21:46:44: (it 5) Storing dual multipliers
-21:46:44: (it 5) Updated global upper bound
-21:46:44: (it 5) Iter:  5   | LB:     -14452      | UB:     -14452      | Fbl: True
-21:46:44: (it 6) GBD epsilon-optimal solution with relative error = 2.0056854012791605e-09
-21:46:44: (it 6) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 6) Fixing complicating variables
-21:46:44: (it 6) Solving original primal subproblem
-21:46:44: (it 6) Original subproblem objective is -65.18796701176086
-21:46:44: (it 6) Solving master problem
-21:46:44: (it 6) Lower bound of -14451.000049344066
-21:46:44: (it 6) Storing complicating variables
-21:46:44: (it 6) Fixing complicating variables
-21:46:44: (it 6) Solving primal subproblem
-21:46:44: (it 6) Subproblem objective is -14451.000049338214
-21:46:44: (it 6) Primal objective is -14451.000049338214
-21:46:44: (it 6) Storing dual multipliers
-21:46:44: (it 6) Updated global upper bound
-21:46:44: (it 6) Iter:  6   | LB:     -14451      | UB:     -14451      | Fbl: True
-21:46:44: (it 7) GBD epsilon-optimal solution with relative error = 4.0493314588797716e-13
-21:46:44: (it 7) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 7) Fixing complicating variables
-21:46:44: (it 7) Solving original primal subproblem
-21:46:44: (it 7) Original subproblem objective is -65.16427851674692
-21:46:44: (it 7) Solving master problem
-21:46:44: (it 7) Lower bound of -14450.000049344066
-21:46:44: (it 7) Storing complicating variables
-21:46:44: (it 7) Fixing complicating variables
-21:46:44: (it 7) Solving primal subproblem
-21:46:44: (it 7) Subproblem objective is -14450.000049340315
-21:46:44: (it 7) Primal objective is -14450.000049340315
-21:46:44: (it 7) Storing dual multipliers
-21:46:44: (it 7) Updated global upper bound
-21:46:44: (it 7) Iter:  7   | LB:     -14450      | UB:     -14450      | Fbl: True
-21:46:44: (it 8) GBD epsilon-optimal solution with relative error = 2.595678987753569e-13
-21:46:44: (it 8) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 8) Fixing complicating variables
-21:46:44: (it 8) Solving original primal subproblem
-21:46:44: (it 8) Original subproblem objective is -65.13964592953243
-21:46:44: (it 8) Solving master problem
-21:46:44: (it 8) Lower bound of -14449.000049344066
-21:46:44: (it 8) Storing complicating variables
-21:46:44: (it 8) Fixing complicating variables
-21:46:44: (it 8) Solving primal subproblem
-21:46:44: (it 8) Subproblem objective is -14449.000049341572
-21:46:44: (it 8) Primal objective is -14449.000049341572
-21:46:44: (it 8) Storing dual multipliers
-21:46:44: (it 8) Updated global upper bound
-21:46:44: (it 8) Iter:  8   | LB:     -14449      | UB:     -14449      | Fbl: True
-21:46:44: (it 9) GBD epsilon-optimal solution with relative error = 1.7259564424839182e-13
-21:46:44: (it 9) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 9) Fixing complicating variables
-21:46:44: (it 9) Solving original primal subproblem
-21:46:44: (it 9) Original subproblem objective is -65.11596406451841
-21:46:44: (it 9) Solving master problem
-21:46:44: (it 9) Lower bound of -14448.000049344066
-21:46:44: (it 9) Storing complicating variables
-21:46:44: (it 9) Fixing complicating variables
-21:46:44: (it 9) Solving primal subproblem
-21:46:44: (it 9) Subproblem objective is -14448.000049342414
-21:46:44: (it 9) Primal objective is -14448.000049342414
-21:46:44: (it 9) Storing dual multipliers
-21:46:44: (it 9) Updated global upper bound
-21:46:44: (it 9) Iter:  9   | LB:     -14448      | UB:     -14448      | Fbl: True
-21:46:44: (it 10) GBD epsilon-optimal solution with relative error = 1.143163325566791e-13
-21:46:44: (it 10) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 10) Fixing complicating variables
-21:46:44: (it 10) Solving original primal subproblem
-21:46:44: (it 10) Original subproblem objective is -65.09228544950443
-21:46:44: (it 10) Solving master problem
-21:46:44: (it 10) Lower bound of -14447.000049344066
-21:46:44: (it 10) Storing complicating variables
-21:46:44: (it 10) Fixing complicating variables
-21:46:44: (it 10) Solving primal subproblem
-21:46:44: (it 10) Subproblem objective is -14447.000049343013
-21:46:44: (it 10) Primal objective is -14447.000049343013
-21:46:44: (it 10) Storing dual multipliers
-21:46:44: (it 10) Updated global upper bound
-21:46:44: (it 10) Iter:  10  | LB:     -14447      | UB:     -14447      | Fbl: True
-21:46:44: (it 11) GBD epsilon-optimal solution with relative error = 7.290059258364212e-14
-21:46:44: (it 11) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 11) Fixing complicating variables
-21:46:44: (it 11) Solving original primal subproblem
-21:46:44: (it 11) Original subproblem objective is -65.06766313748994
-21:46:44: (it 11) Solving master problem
-21:46:44: (it 11) Lower bound of -14446.000049344066
-21:46:44: (it 11) Storing complicating variables
-21:46:44: (it 11) Fixing complicating variables
-21:46:44: (it 11) Solving primal subproblem
-21:46:44: (it 11) Subproblem objective is -14446.000049343458
-21:46:44: (it 11) Primal objective is -14446.000049343458
-21:46:44: (it 11) Storing dual multipliers
-21:46:44: (it 11) Updated global upper bound
-21:46:44: (it 11) Iter:  11  | LB:     -14446      | UB:     -14446      | Fbl: True
-21:46:44: (it 12) GBD epsilon-optimal solution with relative error = 4.2056102638038886e-14
-21:46:44: (it 12) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 12) Fixing complicating variables
-21:46:44: (it 12) Solving original primal subproblem
-21:46:44: (it 12) Original subproblem objective is -65.04399115247597
-21:46:44: (it 12) Solving master problem
-21:46:44: (it 12) Lower bound of -14445.000049344066
-21:46:44: (it 12) Storing complicating variables
-21:46:44: (it 12) Fixing complicating variables
-21:46:44: (it 12) Solving primal subproblem
-21:46:44: (it 12) Subproblem objective is -14445.000049343813
-21:46:44: (it 12) Primal objective is -14445.000049343813
-21:46:44: (it 12) Storing dual multipliers
-21:46:44: (it 12) Updated global upper bound
-21:46:44: (it 12) Iter:  12  | LB:     -14445      | UB:     -14445      | Fbl: True
-21:46:44: (it 13) GBD epsilon-optimal solution with relative error = 1.7503601677340074e-14
-21:46:44: (it 13) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 13) Fixing complicating variables
-21:46:44: (it 13) Solving original primal subproblem
-21:46:44: (it 13) Original subproblem objective is -65.02032241746201
-21:46:44: (it 13) Solving master problem
-21:46:44: (it 13) Lower bound of -14444.000049344066
-21:46:44: (it 13) Storing complicating variables
-21:46:44: (it 13) Fixing complicating variables
-21:46:44: (it 13) Solving primal subproblem
-21:46:44: (it 13) Subproblem objective is -14444.000049344086
-21:46:44: (it 13) Primal objective is -14444.000049344086
-21:46:44: (it 13) Storing dual multipliers
-21:46:44: (it 13) Updated global upper bound
-21:46:44: (it 13) Iter:  13  | LB:     -14444      | UB:     -14444      | Fbl: True
-21:46:44: (it 14) lower bound >= upper bound
-21:46:44: (it 14) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 14) Fixing complicating variables
-21:46:44: (it 14) Solving original primal subproblem
-21:46:44: (it 14) Original subproblem objective is -64.99665693244805
-21:46:44: (it 14) Solving master problem
-21:46:44: (it 14) Lower bound of -14443.000049344066
-21:46:44: (it 14) Storing complicating variables
-21:46:44: (it 14) Fixing complicating variables
-21:46:44: (it 14) Solving primal subproblem
-21:46:44: (it 14) Subproblem objective is -14443.000049344315
-21:46:44: (it 14) Primal objective is -14443.000049344315
-21:46:44: (it 14) Storing dual multipliers
-21:46:44: (it 14) Updated global upper bound
-21:46:44: (it 14) Iter:  14  | LB:     -14443      | UB:     -14443      | Fbl: True
-21:46:44: (it 15) lower bound >= upper bound
-21:46:44: (it 15) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 15) Fixing complicating variables
-21:46:44: (it 15) Solving original primal subproblem
-21:46:44: (it 15) Original subproblem objective is -64.97204827563348
-21:46:44: (it 15) Solving master problem
-21:46:44: (it 15) Lower bound of -14442.000049344066
-21:46:44: (it 15) Storing complicating variables
-21:46:44: (it 15) Fixing complicating variables
-21:46:44: (it 15) Solving primal subproblem
-21:46:44: (it 15) Subproblem objective is -14442.000049344568
-21:46:44: (it 15) Primal objective is -14442.000049344568
-21:46:44: (it 15) Storing dual multipliers
-21:46:44: (it 15) Updated global upper bound
-21:46:44: (it 15) Iter:  15  | LB:     -14442      | UB:     -14442      | Fbl: True
-21:46:44: (it 16) lower bound >= upper bound
-21:46:44: (it 16) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 16) Fixing complicating variables
-21:46:44: (it 16) Solving original primal subproblem
-21:46:44: (it 16) Original subproblem objective is -64.94838942061958
-21:46:44: (it 16) Solving master problem
-21:46:44: (it 16) Lower bound of -14441.000049344066
-21:46:44: (it 16) Storing complicating variables
-21:46:44: (it 16) Fixing complicating variables
-21:46:44: (it 16) Solving primal subproblem
-21:46:44: (it 16) Subproblem objective is -14441.00004934467
-21:46:44: (it 16) Primal objective is -14441.00004934467
-21:46:44: (it 16) Storing dual multipliers
-21:46:44: (it 16) Updated global upper bound
-21:46:44: (it 16) Iter:  16  | LB:     -14441      | UB:     -14441      | Fbl: True
-21:46:44: (it 17) lower bound >= upper bound
-21:46:44: (it 17) Validating solution of convex relaxation by solving the original problem
-21:46:44: (it 17) Fixing complicating variables
-21:46:44: (it 17) Solving original primal subproblem
-21:46:44: (it 17) Original subproblem objective is -64.92473381560558
-21:46:44: (it 17) Solving master problem
-21:46:44: (it 17) Lower bound of -14440.000049344066
-21:46:44: (it 17) Storing complicating variables
-21:46:44: (it 17) Fixing complicating variables
-21:46:44: (it 17) Solving primal subproblem
-21:46:45: (it 17) Subproblem objective is -14440.000049344804
-21:46:45: (it 17) Primal objective is -14440.000049344804
-21:46:45: (it 17) Storing dual multipliers
-21:46:45: (it 17) Updated global upper bound
-21:46:45: (it 17) Iter:  17  | LB:     -14440      | UB:     -14440      | Fbl: True
-21:46:45: (it 18) lower bound >= upper bound
-21:46:45: (it 18) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 18) Fixing complicating variables
-21:46:45: (it 18) Solving original primal subproblem
-21:46:45: (it 18) Original subproblem objective is -64.9001354339911
-21:46:45: (it 18) Solving master problem
-21:46:45: (it 18) Lower bound of -14439.000049344066
-21:46:45: (it 18) Storing complicating variables
-21:46:45: (it 18) Fixing complicating variables
-21:46:45: (it 18) Solving primal subproblem
-21:46:45: (it 18) Subproblem objective is -14439.000049344924
-21:46:45: (it 18) Primal objective is -14439.000049344924
-21:46:45: (it 18) Storing dual multipliers
-21:46:45: (it 18) Updated global upper bound
-21:46:45: (it 18) Iter:  18  | LB:     -14439      | UB:     -14439      | Fbl: True
-21:46:45: (it 19) lower bound >= upper bound
-21:46:45: (it 19) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 19) Fixing complicating variables
-21:46:45: (it 19) Solving original primal subproblem
-21:46:45: (it 19) Original subproblem objective is -64.87648645897707
-21:46:45: (it 19) Solving master problem
-21:46:45: (it 19) Lower bound of -14438.000049344066
-21:46:45: (it 19) Storing complicating variables
-21:46:45: (it 19) Fixing complicating variables
-21:46:45: (it 19) Solving primal subproblem
-21:46:45: (it 19) Subproblem objective is -14438.000049345032
-21:46:45: (it 19) Primal objective is -14438.000049345032
-21:46:45: (it 19) Storing dual multipliers
-21:46:45: (it 19) Updated global upper bound
-21:46:45: (it 19) Iter:  19  | LB:     -14438      | UB:     -14438      | Fbl: True
-21:46:45: (it 20) lower bound >= upper bound
-21:46:45: (it 20) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 20) Fixing complicating variables
-21:46:45: (it 20) Solving original primal subproblem
-21:46:45: (it 20) Original subproblem objective is -64.8528407339632
-21:46:45: (it 20) Solving master problem
-21:46:45: (it 20) Lower bound of -14437.000049344066
-21:46:45: (it 20) Storing complicating variables
-21:46:45: (it 20) Fixing complicating variables
-21:46:45: (it 20) Solving primal subproblem
-21:46:45: (it 20) Subproblem objective is -14437.000049345123
-21:46:45: (it 20) Primal objective is -14437.000049345123
-21:46:45: (it 20) Storing dual multipliers
-21:46:45: (it 20) Updated global upper bound
-21:46:45: (it 20) Iter:  20  | LB:     -14437      | UB:     -14437      | Fbl: True
-21:46:45: (it 21) lower bound >= upper bound
-21:46:45: (it 21) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 21) Fixing complicating variables
-21:46:45: (it 21) Solving original primal subproblem
-21:46:45: (it 21) Original subproblem objective is -64.8282526275487
-21:46:45: (it 21) Solving master problem
-21:46:45: (it 21) Lower bound of -14436.000049344066
-21:46:45: (it 21) Storing complicating variables
-21:46:45: (it 21) Fixing complicating variables
-21:46:45: (it 21) Solving primal subproblem
-21:46:45: (it 21) Subproblem objective is -14436.000049345203
-21:46:45: (it 21) Primal objective is -14436.000049345203
-21:46:45: (it 21) Storing dual multipliers
-21:46:45: (it 21) Updated global upper bound
-21:46:45: (it 21) Iter:  21  | LB:     -14436      | UB:     -14436      | Fbl: True
-21:46:45: (it 22) lower bound >= upper bound
-21:46:45: (it 22) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 22) Fixing complicating variables
-21:46:45: (it 22) Solving original primal subproblem
-21:46:45: (it 22) Original subproblem objective is -64.80461353253469
-21:46:45: (it 22) Solving master problem
-21:46:45: (it 22) Lower bound of -14435.000049344066
-21:46:45: (it 22) Storing complicating variables
-21:46:45: (it 22) Fixing complicating variables
-21:46:45: (it 22) Solving primal subproblem
-21:46:45: (it 22) Subproblem objective is -14435.000049345279
-21:46:45: (it 22) Primal objective is -14435.000049345279
-21:46:45: (it 22) Storing dual multipliers
-21:46:45: (it 22) Updated global upper bound
-21:46:45: (it 22) Iter:  22  | LB:     -14435      | UB:     -14435      | Fbl: True
-21:46:45: (it 23) lower bound >= upper bound
-21:46:45: (it 23) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 23) Fixing complicating variables
-21:46:45: (it 23) Solving original primal subproblem
-21:46:45: (it 23) Original subproblem objective is -64.78097768752079
-21:46:45: (it 23) Solving master problem
-21:46:45: (it 23) Lower bound of -14434.000049344066
-21:46:45: (it 23) Storing complicating variables
-21:46:45: (it 23) Fixing complicating variables
-21:46:45: (it 23) Solving primal subproblem
-21:46:45: (it 23) Subproblem objective is -14434.000049345344
-21:46:45: (it 23) Primal objective is -14434.000049345344
-21:46:45: (it 23) Storing dual multipliers
-21:46:45: (it 23) Updated global upper bound
-21:46:45: (it 23) Iter:  23  | LB:     -14434      | UB:     -14434      | Fbl: True
-21:46:45: (it 24) lower bound >= upper bound
-21:46:45: (it 24) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 24) Fixing complicating variables
-21:46:45: (it 24) Solving original primal subproblem
-21:46:45: (it 24) Original subproblem objective is -64.75639985630633
-21:46:45: (it 24) Solving master problem
-21:46:45: (it 24) Lower bound of -14433.000049344066
-21:46:45: (it 24) Storing complicating variables
-21:46:45: (it 24) Fixing complicating variables
-21:46:45: (it 24) Solving primal subproblem
-21:46:45: (it 24) Subproblem objective is -14433.000049345406
-21:46:45: (it 24) Primal objective is -14433.000049345406
-21:46:45: (it 24) Storing dual multipliers
-21:46:45: (it 24) Updated global upper bound
-21:46:45: (it 24) Iter:  24  | LB:     -14433      | UB:     -14433      | Fbl: True
-21:46:45: (it 25) lower bound >= upper bound
-21:46:45: (it 25) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 25) Fixing complicating variables
-21:46:45: (it 25) Solving original primal subproblem
-21:46:45: (it 25) Original subproblem objective is -64.73277064129232
-21:46:45: (it 25) Solving master problem
-21:46:45: (it 25) Lower bound of -14432.000049344066
-21:46:45: (it 25) Storing complicating variables
-21:46:45: (it 25) Fixing complicating variables
-21:46:45: (it 25) Solving primal subproblem
-21:46:45: (it 25) Subproblem objective is -14432.000049345457
-21:46:45: (it 25) Primal objective is -14432.000049345457
-21:46:45: (it 25) Storing dual multipliers
-21:46:45: (it 25) Updated global upper bound
-21:46:45: (it 25) Iter:  25  | LB:     -14432      | UB:     -14432      | Fbl: True
-21:46:45: (it 26) lower bound >= upper bound
-21:46:45: (it 26) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 26) Fixing complicating variables
-21:46:45: (it 26) Solving original primal subproblem
-21:46:45: (it 26) Original subproblem objective is -64.70914467627844
-21:46:45: (it 26) Solving master problem
-21:46:45: (it 26) Lower bound of -14431.000049344066
-21:46:45: (it 26) Storing complicating variables
-21:46:45: (it 26) Fixing complicating variables
-21:46:45: (it 26) Solving primal subproblem
-21:46:45: (it 26) Subproblem objective is -14431.000049345506
-21:46:45: (it 26) Primal objective is -14431.000049345506
-21:46:45: (it 26) Storing dual multipliers
-21:46:45: (it 26) Updated global upper bound
-21:46:45: (it 26) Iter:  26  | LB:     -14431      | UB:     -14431      | Fbl: True
-21:46:45: (it 27) lower bound >= upper bound
-21:46:45: (it 27) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 27) Fixing complicating variables
-21:46:45: (it 27) Solving original primal subproblem
-21:46:45: (it 27) Original subproblem objective is -64.68457712026392
-21:46:45: (it 27) Solving master problem
-21:46:45: (it 27) Lower bound of -14430.000049344066
-21:46:45: (it 27) Storing complicating variables
-21:46:45: (it 27) Fixing complicating variables
-21:46:45: (it 27) Solving primal subproblem
-21:46:45: (it 27) Subproblem objective is -14430.000049345554
-21:46:45: (it 27) Primal objective is -14430.000049345554
-21:46:45: (it 27) Storing dual multipliers
-21:46:45: (it 27) Updated global upper bound
-21:46:45: (it 27) Iter:  27  | LB:     -14430      | UB:     -14430      | Fbl: True
-21:46:45: (it 28) lower bound >= upper bound
-21:46:45: (it 28) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 28) Fixing complicating variables
-21:46:45: (it 28) Solving original primal subproblem
-21:46:45: (it 28) Original subproblem objective is -64.66095778525002
-21:46:45: (it 28) Solving master problem
-21:46:45: (it 28) Lower bound of -14429.000049344066
-21:46:45: (it 28) Storing complicating variables
-21:46:45: (it 28) Fixing complicating variables
-21:46:45: (it 28) Solving primal subproblem
-21:46:45: (it 28) Subproblem objective is -14429.000049345594
-21:46:45: (it 28) Primal objective is -14429.000049345594
-21:46:45: (it 28) Storing dual multipliers
-21:46:45: (it 28) Updated global upper bound
-21:46:45: (it 28) Iter:  28  | LB:     -14429      | UB:     -14429      | Fbl: True
-21:46:45: (it 29) lower bound >= upper bound
-21:46:45: (it 29) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 29) Fixing complicating variables
-21:46:45: (it 29) Solving original primal subproblem
-21:46:45: (it 29) Original subproblem objective is -64.63734170023605
-21:46:45: (it 29) Solving master problem
-21:46:45: (it 29) Lower bound of -14428.000049344066
-21:46:45: (it 29) Storing complicating variables
-21:46:45: (it 29) Fixing complicating variables
-21:46:45: (it 29) Solving primal subproblem
-21:46:45: (it 29) Subproblem objective is -14428.000049345632
-21:46:45: (it 29) Primal objective is -14428.000049345632
-21:46:45: (it 29) Storing dual multipliers
-21:46:45: (it 29) Updated global upper bound
-21:46:45: (it 29) Iter:  29  | LB:     -14428      | UB:     -14428      | Fbl: True
-21:46:45: (it 30) lower bound >= upper bound
-21:46:45: (it 30) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 30) Fixing complicating variables
-21:46:45: (it 30) Solving original primal subproblem
-21:46:45: (it 30) Original subproblem objective is -64.61278441942159
-21:46:45: (it 30) Solving master problem
-21:46:45: (it 30) Lower bound of -14427.000049344066
-21:46:45: (it 30) Storing complicating variables
-21:46:45: (it 30) Fixing complicating variables
-21:46:45: (it 30) Solving primal subproblem
-21:46:45: (it 30) Subproblem objective is -14427.00004934567
-21:46:45: (it 30) Primal objective is -14427.00004934567
-21:46:45: (it 30) Storing dual multipliers
-21:46:45: (it 30) Updated global upper bound
-21:46:45: (it 30) Iter:  30  | LB:     -14427      | UB:     -14427      | Fbl: True
-21:46:45: (it 31) lower bound >= upper bound
-21:46:45: (it 31) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 31) Fixing complicating variables
-21:46:45: (it 31) Solving original primal subproblem
-21:46:45: (it 31) Original subproblem objective is -64.5891749644077
-21:46:45: (it 31) Solving master problem
-21:46:45: (it 31) Lower bound of -14426.000049344066
-21:46:45: (it 31) Storing complicating variables
-21:46:45: (it 31) Fixing complicating variables
-21:46:45: (it 31) Solving primal subproblem
-21:46:45: (it 31) Subproblem objective is -14426.000049345701
-21:46:45: (it 31) Primal objective is -14426.000049345701
-21:46:45: (it 31) Storing dual multipliers
-21:46:45: (it 31) Updated global upper bound
-21:46:45: (it 31) Iter:  31  | LB:     -14426      | UB:     -14426      | Fbl: True
-21:46:45: (it 32) lower bound >= upper bound
-21:46:45: (it 32) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 32) Fixing complicating variables
-21:46:45: (it 32) Solving original primal subproblem
-21:46:45: (it 32) Original subproblem objective is -64.56556875939373
-21:46:45: (it 32) Solving master problem
-21:46:45: (it 32) Lower bound of -14425.000049344066
-21:46:45: (it 32) Storing complicating variables
-21:46:45: (it 32) Fixing complicating variables
-21:46:45: (it 32) Solving primal subproblem
-21:46:45: (it 32) Subproblem objective is -14425.000049345734
-21:46:45: (it 32) Primal objective is -14425.000049345734
-21:46:45: (it 32) Storing dual multipliers
-21:46:45: (it 32) Updated global upper bound
-21:46:45: (it 32) Iter:  32  | LB:     -14425      | UB:     -14425      | Fbl: True
-21:46:45: (it 33) lower bound >= upper bound
-21:46:45: (it 33) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 33) Fixing complicating variables
-21:46:45: (it 33) Solving original primal subproblem
-21:46:45: (it 33) Original subproblem objective is -64.54196580437986
-21:46:45: (it 33) Solving master problem
-21:46:45: (it 33) Lower bound of -14424.000049344066
-21:46:45: (it 33) Storing complicating variables
-21:46:45: (it 33) Fixing complicating variables
-21:46:45: (it 33) Solving primal subproblem
-21:46:45: (it 33) Subproblem objective is -14424.000049345761
-21:46:45: (it 33) Primal objective is -14424.000049345761
-21:46:45: (it 33) Storing dual multipliers
-21:46:45: (it 33) Updated global upper bound
-21:46:45: (it 33) Iter:  33  | LB:     -14424      | UB:     -14424      | Fbl: True
-21:46:45: (it 34) lower bound >= upper bound
-21:46:45: (it 34) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 34) Fixing complicating variables
-21:46:45: (it 34) Solving original primal subproblem
-21:46:45: (it 34) Original subproblem objective is -64.5174221787654
-21:46:45: (it 34) Solving master problem
-21:46:45: (it 34) Lower bound of -14423.000049344066
-21:46:45: (it 34) Storing complicating variables
-21:46:45: (it 34) Fixing complicating variables
-21:46:45: (it 34) Solving primal subproblem
-21:46:45: (it 34) Subproblem objective is -14423.00004934579
-21:46:45: (it 34) Primal objective is -14423.00004934579
-21:46:45: (it 34) Storing dual multipliers
-21:46:45: (it 34) Updated global upper bound
-21:46:45: (it 34) Iter:  34  | LB:     -14423      | UB:     -14423      | Fbl: True
-21:46:45: (it 35) lower bound >= upper bound
-21:46:45: (it 35) Validating solution of convex relaxation by solving the original problem
-21:46:45: (it 35) Fixing complicating variables
-21:46:45: (it 35) Solving original primal subproblem
-21:46:45: (it 35) Original subproblem objective is -64.49382585375147
-21:46:45: (it 35) Solving master problem
-21:46:46: (it 35) Lower bound of -14422.000049344066
-21:46:46: (it 35) Storing complicating variables
-21:46:46: (it 35) Fixing complicating variables
-21:46:46: (it 35) Solving primal subproblem
-21:46:46: (it 35) Subproblem objective is -14422.000049345814
-21:46:46: (it 35) Primal objective is -14422.000049345814
-21:46:46: (it 35) Storing dual multipliers
-21:46:46: (it 35) Updated global upper bound
-21:46:46: (it 35) Iter:  35  | LB:     -14422      | UB:     -14422      | Fbl: True
-21:46:46: (it 36) lower bound >= upper bound
-21:46:46: (it 36) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 36) Fixing complicating variables
-21:46:46: (it 36) Solving original primal subproblem
-21:46:46: (it 36) Original subproblem objective is -64.47023277873754
-21:46:46: (it 36) Solving master problem
-21:46:46: (it 36) Lower bound of -14421.000049344066
-21:46:46: (it 36) Storing complicating variables
-21:46:46: (it 36) Fixing complicating variables
-21:46:46: (it 36) Solving primal subproblem
-21:46:46: (it 36) Subproblem objective is -14421.000049345837
-21:46:46: (it 36) Primal objective is -14421.000049345837
-21:46:46: (it 36) Storing dual multipliers
-21:46:46: (it 36) Updated global upper bound
-21:46:46: (it 36) Iter:  36  | LB:     -14421      | UB:     -14421      | Fbl: True
-21:46:46: (it 37) lower bound >= upper bound
-21:46:46: (it 37) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 37) Fixing complicating variables
-21:46:46: (it 37) Solving original primal subproblem
-21:46:46: (it 37) Original subproblem objective is -64.44569942832305
-21:46:46: (it 37) Solving master problem
-21:46:46: (it 37) Lower bound of -14420.000049344066
-21:46:46: (it 37) Storing complicating variables
-21:46:46: (it 37) Fixing complicating variables
-21:46:46: (it 37) Solving primal subproblem
-21:46:46: (it 37) Subproblem objective is -14420.000049345861
-21:46:46: (it 37) Primal objective is -14420.000049345861
-21:46:46: (it 37) Storing dual multipliers
-21:46:46: (it 37) Updated global upper bound
-21:46:46: (it 37) Iter:  37  | LB:     -14420      | UB:     -14420      | Fbl: True
-21:46:46: (it 38) lower bound >= upper bound
-21:46:46: (it 38) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 38) Fixing complicating variables
-21:46:46: (it 38) Solving original primal subproblem
-21:46:46: (it 38) Original subproblem objective is -64.42211298330918
-21:46:46: (it 38) Solving master problem
-21:46:46: (it 38) Lower bound of -14419.000049344066
-21:46:46: (it 38) Storing complicating variables
-21:46:46: (it 38) Fixing complicating variables
-21:46:46: (it 38) Solving primal subproblem
-21:46:46: (it 38) Subproblem objective is -14419.000049345883
-21:46:46: (it 38) Primal objective is -14419.000049345883
-21:46:46: (it 38) Storing dual multipliers
-21:46:46: (it 38) Updated global upper bound
-21:46:46: (it 38) Iter:  38  | LB:     -14419      | UB:     -14419      | Fbl: True
-21:46:46: (it 39) lower bound >= upper bound
-21:46:46: (it 39) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 39) Fixing complicating variables
-21:46:46: (it 39) Solving original primal subproblem
-21:46:46: (it 39) Original subproblem objective is -64.39852978829535
-21:46:46: (it 39) Solving master problem
-21:46:46: (it 39) Lower bound of -14418.000049344066
-21:46:46: (it 39) Storing complicating variables
-21:46:46: (it 39) Fixing complicating variables
-21:46:46: (it 39) Solving primal subproblem
-21:46:46: (it 39) Subproblem objective is -14418.000049345901
-21:46:46: (it 39) Primal objective is -14418.000049345901
-21:46:46: (it 39) Storing dual multipliers
-21:46:46: (it 39) Updated global upper bound
-21:46:46: (it 39) Iter:  39  | LB:     -14418      | UB:     -14418      | Fbl: True
-21:46:46: (it 40) lower bound >= upper bound
-21:46:46: (it 40) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 40) Fixing complicating variables
-21:46:46: (it 40) Solving original primal subproblem
-21:46:46: (it 40) Original subproblem objective is -64.37400671308083
-21:46:46: (it 40) Solving master problem
-21:46:46: (it 40) Lower bound of -14417.000049344066
-21:46:46: (it 40) Storing complicating variables
-21:46:46: (it 40) Fixing complicating variables
-21:46:46: (it 40) Solving primal subproblem
-21:46:46: (it 40) Subproblem objective is -14417.000049345917
-21:46:46: (it 40) Primal objective is -14417.000049345917
-21:46:46: (it 40) Storing dual multipliers
-21:46:46: (it 40) Updated global upper bound
-21:46:46: (it 40) Iter:  40  | LB:     -14417      | UB:     -14417      | Fbl: True
-21:46:46: (it 41) lower bound >= upper bound
-21:46:46: (it 41) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 41) Fixing complicating variables
-21:46:46: (it 41) Solving original primal subproblem
-21:46:46: (it 41) Original subproblem objective is -64.35043014806695
-21:46:46: (it 41) Solving master problem
-21:46:46: (it 41) Lower bound of -14416.000049344066
-21:46:46: (it 41) Storing complicating variables
-21:46:46: (it 41) Fixing complicating variables
-21:46:46: (it 41) Solving primal subproblem
-21:46:46: (it 41) Subproblem objective is -14416.000049345936
-21:46:46: (it 41) Primal objective is -14416.000049345936
-21:46:46: (it 41) Storing dual multipliers
-21:46:46: (it 41) Updated global upper bound
-21:46:46: (it 41) Iter:  41  | LB:     -14416      | UB:     -14416      | Fbl: True
-21:46:46: (it 42) lower bound >= upper bound
-21:46:46: (it 42) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 42) Fixing complicating variables
-21:46:46: (it 42) Solving original primal subproblem
-21:46:46: (it 42) Original subproblem objective is -64.326856833053
-21:46:46: (it 42) Solving master problem
-21:46:46: (it 42) Lower bound of -14415.000049344066
-21:46:46: (it 42) Storing complicating variables
-21:46:46: (it 42) Fixing complicating variables
-21:46:46: (it 42) Solving primal subproblem
-21:46:46: (it 42) Subproblem objective is -14415.000049345957
-21:46:46: (it 42) Primal objective is -14415.000049345957
-21:46:46: (it 42) Storing dual multipliers
-21:46:46: (it 42) Updated global upper bound
-21:46:46: (it 42) Iter:  42  | LB:     -14415      | UB:     -14415      | Fbl: True
-21:46:46: (it 43) lower bound >= upper bound
-21:46:46: (it 43) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 43) Fixing complicating variables
-21:46:46: (it 43) Solving original primal subproblem
-21:46:46: (it 43) Original subproblem objective is -64.3023440330386
-21:46:46: (it 43) Solving master problem
-21:46:46: (it 43) Lower bound of -14414.000049344066
-21:46:46: (it 43) Storing complicating variables
-21:46:46: (it 43) Fixing complicating variables
-21:46:46: (it 43) Solving primal subproblem
-21:46:46: (it 43) Subproblem objective is -14414.000049345972
-21:46:46: (it 43) Primal objective is -14414.000049345972
-21:46:46: (it 43) Storing dual multipliers
-21:46:46: (it 43) Updated global upper bound
-21:46:46: (it 43) Iter:  43  | LB:     -14414      | UB:     -14414      | Fbl: True
-21:46:46: (it 44) lower bound >= upper bound
-21:46:46: (it 44) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 44) Fixing complicating variables
-21:46:46: (it 44) Solving original primal subproblem
-21:46:46: (it 44) Original subproblem objective is -64.2787773480247
-21:46:46: (it 44) Solving master problem
-21:46:46: (it 44) Lower bound of -14413.000049344066
-21:46:46: (it 44) Storing complicating variables
-21:46:46: (it 44) Fixing complicating variables
-21:46:46: (it 44) Solving primal subproblem
-21:46:46: (it 44) Subproblem objective is -14413.000049345983
-21:46:46: (it 44) Primal objective is -14413.000049345983
-21:46:46: (it 44) Storing dual multipliers
-21:46:46: (it 44) Updated global upper bound
-21:46:46: (it 44) Iter:  44  | LB:     -14413      | UB:     -14413      | Fbl: True
-21:46:46: (it 45) lower bound >= upper bound
-21:46:46: (it 45) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 45) Fixing complicating variables
-21:46:46: (it 45) Solving original primal subproblem
-21:46:46: (it 45) Original subproblem objective is -64.25521391301078
-21:46:46: (it 45) Solving master problem
-21:46:46: (it 45) Lower bound of -14412.000049344066
-21:46:46: (it 45) Storing complicating variables
-21:46:46: (it 45) Fixing complicating variables
-21:46:46: (it 45) Solving primal subproblem
-21:46:46: (it 45) Subproblem objective is -14412.000049346
-21:46:46: (it 45) Primal objective is -14412.000049346
-21:46:46: (it 45) Storing dual multipliers
-21:46:46: (it 45) Updated global upper bound
-21:46:46: (it 45) Iter:  45  | LB:     -14412      | UB:     -14412      | Fbl: True
-21:46:46: (it 46) lower bound >= upper bound
-21:46:46: (it 46) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 46) Fixing complicating variables
-21:46:46: (it 46) Solving original primal subproblem
-21:46:46: (it 46) Original subproblem objective is -64.23071138819643
-21:46:46: (it 46) Solving master problem
-21:46:46: (it 46) Lower bound of -14411.000049344066
-21:46:46: (it 46) Storing complicating variables
-21:46:46: (it 46) Fixing complicating variables
-21:46:46: (it 46) Solving primal subproblem
-21:46:46: (it 46) Subproblem objective is -14411.000049346017
-21:46:46: (it 46) Primal objective is -14411.000049346017
-21:46:46: (it 46) Storing dual multipliers
-21:46:46: (it 46) Updated global upper bound
-21:46:46: (it 46) Iter:  46  | LB:     -14411      | UB:     -14411      | Fbl: True
-21:46:46: (it 47) lower bound >= upper bound
-21:46:46: (it 47) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 47) Fixing complicating variables
-21:46:46: (it 47) Solving original primal subproblem
-21:46:46: (it 47) Original subproblem objective is -64.20715458318253
-21:46:46: (it 47) Solving master problem
-21:46:46: (it 47) Lower bound of -14410.000049344066
-21:46:46: (it 47) Storing complicating variables
-21:46:46: (it 47) Fixing complicating variables
-21:46:46: (it 47) Solving primal subproblem
-21:46:46: (it 47) Subproblem objective is -14410.000049346027
-21:46:46: (it 47) Primal objective is -14410.000049346027
-21:46:46: (it 47) Storing dual multipliers
-21:46:46: (it 47) Updated global upper bound
-21:46:46: (it 47) Iter:  47  | LB:     -14410      | UB:     -14410      | Fbl: True
-21:46:46: (it 48) lower bound >= upper bound
-21:46:46: (it 48) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 48) Fixing complicating variables
-21:46:46: (it 48) Solving original primal subproblem
-21:46:46: (it 48) Original subproblem objective is -64.18360102816862
-21:46:46: (it 48) Solving master problem
-21:46:46: (it 48) Lower bound of -14409.000049344066
-21:46:46: (it 48) Storing complicating variables
-21:46:46: (it 48) Fixing complicating variables
-21:46:46: (it 48) Solving primal subproblem
-21:46:46: (it 48) Subproblem objective is -14409.000049346041
-21:46:46: (it 48) Primal objective is -14409.000049346041
-21:46:46: (it 48) Storing dual multipliers
-21:46:46: (it 48) Updated global upper bound
-21:46:46: (it 48) Iter:  48  | LB:     -14409      | UB:     -14409      | Fbl: True
-21:46:46: (it 49) lower bound >= upper bound
-21:46:46: (it 49) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 49) Fixing complicating variables
-21:46:46: (it 49) Solving original primal subproblem
-21:46:46: (it 49) Original subproblem objective is -64.15910877855416
-21:46:46: (it 49) Solving master problem
-21:46:46: (it 49) Lower bound of -14408.000049344066
-21:46:46: (it 49) Storing complicating variables
-21:46:46: (it 49) Fixing complicating variables
-21:46:46: (it 49) Solving primal subproblem
-21:46:46: (it 49) Subproblem objective is -14408.000049346054
-21:46:46: (it 49) Primal objective is -14408.000049346054
-21:46:46: (it 49) Storing dual multipliers
-21:46:46: (it 49) Updated global upper bound
-21:46:46: (it 49) Iter:  49  | LB:     -14408      | UB:     -14408      | Fbl: True
-21:46:46: (it 50) lower bound >= upper bound
-21:46:46: (it 50) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 50) Fixing complicating variables
-21:46:46: (it 50) Solving original primal subproblem
-21:46:46: (it 50) Original subproblem objective is -64.13556185354031
-21:46:46: (it 50) Solving master problem
-21:46:46: (it 50) Lower bound of -14407.000049344066
-21:46:46: (it 50) Storing complicating variables
-21:46:46: (it 50) Fixing complicating variables
-21:46:46: (it 50) Solving primal subproblem
-21:46:46: (it 50) Subproblem objective is -14407.000049346063
-21:46:46: (it 50) Primal objective is -14407.000049346063
-21:46:46: (it 50) Storing dual multipliers
-21:46:46: (it 50) Updated global upper bound
-21:46:46: (it 50) Iter:  50  | LB:     -14407      | UB:     -14407      | Fbl: True
-21:46:46: (it 51) lower bound >= upper bound
-21:46:46: (it 51) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 51) Fixing complicating variables
-21:46:46: (it 51) Solving original primal subproblem
-21:46:46: (it 51) Original subproblem objective is -64.11201817852645
-21:46:46: (it 51) Solving master problem
-21:46:46: (it 51) Lower bound of -14406.000049344066
-21:46:46: (it 51) Storing complicating variables
-21:46:46: (it 51) Fixing complicating variables
-21:46:46: (it 51) Solving primal subproblem
-21:46:46: (it 51) Subproblem objective is -14406.000049346076
-21:46:46: (it 51) Primal objective is -14406.000049346076
-21:46:46: (it 51) Storing dual multipliers
-21:46:46: (it 51) Updated global upper bound
-21:46:46: (it 51) Iter:  51  | LB:     -14406      | UB:     -14406      | Fbl: True
-21:46:46: (it 52) lower bound >= upper bound
-21:46:46: (it 52) Validating solution of convex relaxation by solving the original problem
-21:46:46: (it 52) Fixing complicating variables
-21:46:46: (it 52) Solving original primal subproblem
-21:46:46: (it 52) Original subproblem objective is -64.08753620411201
-21:46:46: (it 52) Solving master problem
-21:46:46: (it 52) Lower bound of -14405.000049344066
-21:46:46: (it 52) Storing complicating variables
-21:46:46: (it 52) Fixing complicating variables
-21:46:46: (it 52) Solving primal subproblem
-21:46:47: (it 52) Subproblem objective is -14405.000049346085
-21:46:47: (it 52) Primal objective is -14405.000049346085
-21:46:47: (it 52) Storing dual multipliers
-21:46:47: (it 52) Updated global upper bound
-21:46:47: (it 52) Iter:  52  | LB:     -14405      | UB:     -14405      | Fbl: True
-21:46:47: (it 53) lower bound >= upper bound
-21:46:47: (it 53) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 53) Fixing complicating variables
-21:46:47: (it 53) Solving original primal subproblem
-21:46:47: (it 53) Original subproblem objective is -64.06399915909816
-21:46:47: (it 53) Solving master problem
-21:46:47: (it 53) Lower bound of -14404.000049344066
-21:46:47: (it 53) Storing complicating variables
-21:46:47: (it 53) Fixing complicating variables
-21:46:47: (it 53) Solving primal subproblem
-21:46:47: (it 53) Subproblem objective is -14404.000049346096
-21:46:47: (it 53) Primal objective is -14404.000049346096
-21:46:47: (it 53) Storing dual multipliers
-21:46:47: (it 53) Updated global upper bound
-21:46:47: (it 53) Iter:  53  | LB:     -14404      | UB:     -14404      | Fbl: True
-21:46:47: (it 54) lower bound >= upper bound
-21:46:47: (it 54) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 54) Fixing complicating variables
-21:46:47: (it 54) Solving original primal subproblem
-21:46:47: (it 54) Original subproblem objective is -64.04046536408435
-21:46:47: (it 54) Solving master problem
-21:46:47: (it 54) Lower bound of -14403.000049344066
-21:46:47: (it 54) Storing complicating variables
-21:46:47: (it 54) Fixing complicating variables
-21:46:47: (it 54) Solving primal subproblem
-21:46:47: (it 54) Subproblem objective is -14403.000049346105
-21:46:47: (it 54) Primal objective is -14403.000049346105
-21:46:47: (it 54) Storing dual multipliers
-21:46:47: (it 54) Updated global upper bound
-21:46:47: (it 54) Iter:  54  | LB:     -14403      | UB:     -14403      | Fbl: True
-21:46:47: (it 55) lower bound >= upper bound
-21:46:47: (it 55) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 55) Fixing complicating variables
-21:46:47: (it 55) Solving original primal subproblem
-21:46:47: (it 55) Original subproblem objective is -64.0169348190704
-21:46:47: (it 55) Solving master problem
-21:46:47: (it 55) Lower bound of -14402.000049344066
-21:46:47: (it 55) Storing complicating variables
-21:46:47: (it 55) Fixing complicating variables
-21:46:47: (it 55) Solving primal subproblem
-21:46:47: (it 55) Subproblem objective is -14402.000049346118
-21:46:47: (it 55) Primal objective is -14402.000049346118
-21:46:47: (it 55) Storing dual multipliers
-21:46:47: (it 55) Updated global upper bound
-21:46:47: (it 55) Iter:  55  | LB:     -14402      | UB:     -14402      | Fbl: True
-21:46:47: (it 56) lower bound >= upper bound
-21:46:47: (it 56) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 56) Fixing complicating variables
-21:46:47: (it 56) Solving original primal subproblem
-21:46:47: (it 56) Original subproblem objective is -63.99246649985602
-21:46:47: (it 56) Solving master problem
-21:46:47: (it 56) Lower bound of -14401.000049344066
-21:46:47: (it 56) Storing complicating variables
-21:46:47: (it 56) Fixing complicating variables
-21:46:47: (it 56) Solving primal subproblem
-21:46:47: (it 56) Subproblem objective is -14401.000049346125
-21:46:47: (it 56) Primal objective is -14401.000049346125
-21:46:47: (it 56) Storing dual multipliers
-21:46:47: (it 56) Updated global upper bound
-21:46:47: (it 56) Iter:  56  | LB:     -14401      | UB:     -14401      | Fbl: True
-21:46:47: (it 57) lower bound >= upper bound
-21:46:47: (it 57) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 57) Fixing complicating variables
-21:46:47: (it 57) Solving original primal subproblem
-21:46:47: (it 57) Original subproblem objective is -63.96894258484221
-21:46:47: (it 57) Solving master problem
-21:46:47: (it 57) Lower bound of -14400.000049344066
-21:46:47: (it 57) Storing complicating variables
-21:46:47: (it 57) Fixing complicating variables
-21:46:47: (it 57) Solving primal subproblem
-21:46:47: (it 57) Subproblem objective is -14400.000049346132
-21:46:47: (it 57) Primal objective is -14400.000049346132
-21:46:47: (it 57) Storing dual multipliers
-21:46:47: (it 57) Updated global upper bound
-21:46:47: (it 57) Iter:  57  | LB:     -14400      | UB:     -14400      | Fbl: True
-21:46:47: (it 58) lower bound >= upper bound
-21:46:47: (it 58) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 58) Fixing complicating variables
-21:46:47: (it 58) Solving original primal subproblem
-21:46:47: (it 58) Original subproblem objective is -63.945421919828334
-21:46:47: (it 58) Solving master problem
-21:46:47: (it 58) Lower bound of -14399.000049344066
-21:46:47: (it 58) Storing complicating variables
-21:46:47: (it 58) Fixing complicating variables
-21:46:47: (it 58) Solving primal subproblem
-21:46:47: (it 58) Subproblem objective is -14399.000049346145
-21:46:47: (it 58) Primal objective is -14399.000049346145
-21:46:47: (it 58) Storing dual multipliers
-21:46:47: (it 58) Updated global upper bound
-21:46:47: (it 58) Iter:  58  | LB:     -14399      | UB:     -14399      | Fbl: True
-21:46:47: (it 59) lower bound >= upper bound
-21:46:47: (it 59) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 59) Fixing complicating variables
-21:46:47: (it 59) Solving original primal subproblem
-21:46:47: (it 59) Original subproblem objective is -63.92096387581387
-21:46:47: (it 59) Solving master problem
-21:46:47: (it 59) Lower bound of -14398.000049344066
-21:46:47: (it 59) Storing complicating variables
-21:46:47: (it 59) Fixing complicating variables
-21:46:47: (it 59) Solving primal subproblem
-21:46:47: (it 59) Subproblem objective is -14398.000049346148
-21:46:47: (it 59) Primal objective is -14398.000049346148
-21:46:47: (it 59) Storing dual multipliers
-21:46:47: (it 59) Updated global upper bound
-21:46:47: (it 59) Iter:  59  | LB:     -14398      | UB:     -14398      | Fbl: True
-21:46:47: (it 60) lower bound >= upper bound
-21:46:47: (it 60) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 60) Fixing complicating variables
-21:46:47: (it 60) Solving original primal subproblem
-21:46:47: (it 60) Original subproblem objective is -63.89744984080005
-21:46:47: (it 60) Solving master problem
-21:46:47: (it 60) Lower bound of -14397.000049344066
-21:46:47: (it 60) Storing complicating variables
-21:46:47: (it 60) Fixing complicating variables
-21:46:47: (it 60) Solving primal subproblem
-21:46:47: (it 60) Subproblem objective is -14397.000049346156
-21:46:47: (it 60) Primal objective is -14397.000049346156
-21:46:47: (it 60) Storing dual multipliers
-21:46:47: (it 60) Updated global upper bound
-21:46:47: (it 60) Iter:  60  | LB:     -14397      | UB:     -14397      | Fbl: True
-21:46:47: (it 61) lower bound >= upper bound
-21:46:47: (it 61) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 61) Fixing complicating variables
-21:46:47: (it 61) Solving original primal subproblem
-21:46:47: (it 61) Original subproblem objective is -63.873939055786224
-21:46:47: (it 61) Solving master problem
-21:46:47: (it 61) Lower bound of -14396.000049344066
-21:46:47: (it 61) Storing complicating variables
-21:46:47: (it 61) Fixing complicating variables
-21:46:47: (it 61) Solving primal subproblem
-21:46:47: (it 61) Subproblem objective is -14396.000049346168
-21:46:47: (it 61) Primal objective is -14396.000049346168
-21:46:47: (it 61) Storing dual multipliers
-21:46:47: (it 61) Updated global upper bound
-21:46:47: (it 61) Iter:  61  | LB:     -14396      | UB:     -14396      | Fbl: True
-21:46:47: (it 62) lower bound >= upper bound
-21:46:47: (it 62) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 62) Fixing complicating variables
-21:46:47: (it 62) Solving original primal subproblem
-21:46:47: (it 62) Original subproblem objective is -63.849491286971784
-21:46:47: (it 62) Solving master problem
-21:46:47: (it 62) Lower bound of -14395.000049344066
-21:46:47: (it 62) Storing complicating variables
-21:46:47: (it 62) Fixing complicating variables
-21:46:47: (it 62) Solving primal subproblem
-21:46:47: (it 62) Subproblem objective is -14395.000049346172
-21:46:47: (it 62) Primal objective is -14395.000049346172
-21:46:47: (it 62) Storing dual multipliers
-21:46:47: (it 62) Updated global upper bound
-21:46:47: (it 62) Iter:  62  | LB:     -14395      | UB:     -14395      | Fbl: True
-21:46:47: (it 63) lower bound >= upper bound
-21:46:47: (it 63) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 63) Fixing complicating variables
-21:46:47: (it 63) Solving original primal subproblem
-21:46:47: (it 63) Original subproblem objective is -63.82598713195799
-21:46:47: (it 63) Solving master problem
-21:46:47: (it 63) Lower bound of -14394.000049344066
-21:46:47: (it 63) Storing complicating variables
-21:46:47: (it 63) Fixing complicating variables
-21:46:47: (it 63) Solving primal subproblem
-21:46:47: (it 63) Subproblem objective is -14394.000049346181
-21:46:47: (it 63) Primal objective is -14394.000049346181
-21:46:47: (it 63) Storing dual multipliers
-21:46:47: (it 63) Updated global upper bound
-21:46:47: (it 63) Iter:  63  | LB:     -14394      | UB:     -14394      | Fbl: True
-21:46:47: (it 64) lower bound >= upper bound
-21:46:47: (it 64) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 64) Fixing complicating variables
-21:46:47: (it 64) Solving original primal subproblem
-21:46:47: (it 64) Original subproblem objective is -63.802486226944154
-21:46:47: (it 64) Solving master problem
-21:46:47: (it 64) Lower bound of -14393.000049344066
-21:46:47: (it 64) Storing complicating variables
-21:46:47: (it 64) Fixing complicating variables
-21:46:47: (it 64) Solving primal subproblem
-21:46:47: (it 64) Subproblem objective is -14393.000049346187
-21:46:47: (it 64) Primal objective is -14393.000049346187
-21:46:47: (it 64) Storing dual multipliers
-21:46:47: (it 64) Updated global upper bound
-21:46:47: (it 64) Iter:  64  | LB:     -14393      | UB:     -14393      | Fbl: True
-21:46:47: (it 65) lower bound >= upper bound
-21:46:47: (it 65) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 65) Fixing complicating variables
-21:46:47: (it 65) Solving original primal subproblem
-21:46:47: (it 65) Original subproblem objective is -63.77804873332974
-21:46:47: (it 65) Solving master problem
-21:46:47: (it 65) Lower bound of -14392.000049344066
-21:46:47: (it 65) Storing complicating variables
-21:46:47: (it 65) Fixing complicating variables
-21:46:47: (it 65) Solving primal subproblem
-21:46:47: (it 65) Subproblem objective is -14392.000049346194
-21:46:47: (it 65) Primal objective is -14392.000049346194
-21:46:47: (it 65) Storing dual multipliers
-21:46:47: (it 65) Updated global upper bound
-21:46:47: (it 65) Iter:  65  | LB:     -14392      | UB:     -14392      | Fbl: True
-21:46:47: (it 66) lower bound >= upper bound
-21:46:47: (it 66) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 66) Fixing complicating variables
-21:46:47: (it 66) Solving original primal subproblem
-21:46:47: (it 66) Original subproblem objective is -63.75455445831591
-21:46:47: (it 66) Solving master problem
-21:46:47: (it 66) Lower bound of -14391.000049344066
-21:46:47: (it 66) Storing complicating variables
-21:46:47: (it 66) Fixing complicating variables
-21:46:47: (it 66) Solving primal subproblem
-21:46:47: (it 66) Subproblem objective is -14391.000049346201
-21:46:47: (it 66) Primal objective is -14391.000049346201
-21:46:47: (it 66) Storing dual multipliers
-21:46:47: (it 66) Updated global upper bound
-21:46:47: (it 66) Iter:  66  | LB:     -14391      | UB:     -14391      | Fbl: True
-21:46:47: (it 67) lower bound >= upper bound
-21:46:47: (it 67) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 67) Fixing complicating variables
-21:46:47: (it 67) Solving original primal subproblem
-21:46:47: (it 67) Original subproblem objective is -63.7310634333021
-21:46:47: (it 67) Solving master problem
-21:46:47: (it 67) Lower bound of -14390.000049344066
-21:46:47: (it 67) Storing complicating variables
-21:46:47: (it 67) Fixing complicating variables
-21:46:47: (it 67) Solving primal subproblem
-21:46:47: (it 67) Subproblem objective is -14390.000049346203
-21:46:47: (it 67) Primal objective is -14390.000049346203
-21:46:47: (it 67) Storing dual multipliers
-21:46:47: (it 67) Updated global upper bound
-21:46:47: (it 67) Iter:  67  | LB:     -14390      | UB:     -14390      | Fbl: True
-21:46:47: (it 68) lower bound >= upper bound
-21:46:47: (it 68) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 68) Fixing complicating variables
-21:46:47: (it 68) Solving original primal subproblem
-21:46:47: (it 68) Original subproblem objective is -63.70663621488771
-21:46:47: (it 68) Solving master problem
-21:46:47: (it 68) Lower bound of -14389.000049344066
-21:46:47: (it 68) Storing complicating variables
-21:46:47: (it 68) Fixing complicating variables
-21:46:47: (it 68) Solving primal subproblem
-21:46:47: (it 68) Subproblem objective is -14389.00004934621
-21:46:47: (it 68) Primal objective is -14389.00004934621
-21:46:47: (it 68) Storing dual multipliers
-21:46:47: (it 68) Updated global upper bound
-21:46:47: (it 68) Iter:  68  | LB:     -14389      | UB:     -14389      | Fbl: True
-21:46:47: (it 69) lower bound >= upper bound
-21:46:47: (it 69) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 69) Fixing complicating variables
-21:46:47: (it 69) Solving original primal subproblem
-21:46:47: (it 69) Original subproblem objective is -63.68315181987393
-21:46:47: (it 69) Solving master problem
-21:46:47: (it 69) Lower bound of -14388.000049344066
-21:46:47: (it 69) Storing complicating variables
-21:46:47: (it 69) Fixing complicating variables
-21:46:47: (it 69) Solving primal subproblem
-21:46:47: (it 69) Subproblem objective is -14388.00004934622
-21:46:47: (it 69) Primal objective is -14388.00004934622
-21:46:47: (it 69) Storing dual multipliers
-21:46:47: (it 69) Updated global upper bound
-21:46:47: (it 69) Iter:  69  | LB:     -14388      | UB:     -14388      | Fbl: True
-21:46:47: (it 70) lower bound >= upper bound
-21:46:47: (it 70) Validating solution of convex relaxation by solving the original problem
-21:46:47: (it 70) Fixing complicating variables
-21:46:47: (it 70) Solving original primal subproblem
-21:46:47: (it 70) Original subproblem objective is -63.65967067486005
-21:46:47: (it 70) Solving master problem
-21:46:48: (it 70) Lower bound of -14387.000049344066
-21:46:48: (it 70) Storing complicating variables
-21:46:48: (it 70) Fixing complicating variables
-21:46:48: (it 70) Solving primal subproblem
-21:46:48: (it 70) Subproblem objective is -14387.000049346223
-21:46:48: (it 70) Primal objective is -14387.000049346223
-21:46:48: (it 70) Storing dual multipliers
-21:46:48: (it 70) Updated global upper bound
-21:46:48: (it 70) Iter:  70  | LB:     -14387      | UB:     -14387      | Fbl: True
-21:46:48: (it 71) lower bound >= upper bound
-21:46:48: (it 71) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 71) Fixing complicating variables
-21:46:48: (it 71) Solving original primal subproblem
-21:46:48: (it 71) Original subproblem objective is -63.63525373164572
-21:46:48: (it 71) Solving master problem
-21:46:48: (it 71) Lower bound of -14386.000049344066
-21:46:48: (it 71) Storing complicating variables
-21:46:48: (it 71) Fixing complicating variables
-21:46:48: (it 71) Solving primal subproblem
-21:46:48: (it 71) Subproblem objective is -14386.00004934623
-21:46:48: (it 71) Primal objective is -14386.00004934623
-21:46:48: (it 71) Storing dual multipliers
-21:46:48: (it 71) Updated global upper bound
-21:46:48: (it 71) Iter:  71  | LB:     -14386      | UB:     -14386      | Fbl: True
-21:46:48: (it 72) lower bound >= upper bound
-21:46:48: (it 72) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 72) Fixing complicating variables
-21:46:48: (it 72) Solving original primal subproblem
-21:46:48: (it 72) Original subproblem objective is -63.611779216631874
-21:46:48: (it 72) Solving master problem
-21:46:48: (it 72) Lower bound of -14385.000049344066
-21:46:48: (it 72) Storing complicating variables
-21:46:48: (it 72) Fixing complicating variables
-21:46:48: (it 72) Solving primal subproblem
-21:46:48: (it 72) Subproblem objective is -14385.000049346234
-21:46:48: (it 72) Primal objective is -14385.000049346234
-21:46:48: (it 72) Storing dual multipliers
-21:46:48: (it 72) Updated global upper bound
-21:46:48: (it 72) Iter:  72  | LB:     -14385      | UB:     -14385      | Fbl: True
-21:46:48: (it 73) lower bound >= upper bound
-21:46:48: (it 73) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 73) Fixing complicating variables
-21:46:48: (it 73) Solving original primal subproblem
-21:46:48: (it 73) Original subproblem objective is -63.58830795161808
-21:46:48: (it 73) Solving master problem
-21:46:48: (it 73) Lower bound of -14384.000049344066
-21:46:48: (it 73) Storing complicating variables
-21:46:48: (it 73) Fixing complicating variables
-21:46:48: (it 73) Solving primal subproblem
-21:46:48: (it 73) Subproblem objective is -14384.000049346241
-21:46:48: (it 73) Primal objective is -14384.000049346241
-21:46:48: (it 73) Storing dual multipliers
-21:46:48: (it 73) Updated global upper bound
-21:46:48: (it 73) Iter:  73  | LB:     -14384      | UB:     -14384      | Fbl: True
-21:46:48: (it 74) lower bound >= upper bound
-21:46:48: (it 74) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 74) Fixing complicating variables
-21:46:48: (it 74) Solving original primal subproblem
-21:46:48: (it 74) Original subproblem objective is -63.564839936604244
-21:46:48: (it 74) Solving master problem
-21:46:48: (it 74) Lower bound of -14383.000049344066
-21:46:48: (it 74) Storing complicating variables
-21:46:48: (it 74) Fixing complicating variables
-21:46:48: (it 74) Solving primal subproblem
-21:46:48: (it 74) Subproblem objective is -14383.000049346243
-21:46:48: (it 74) Primal objective is -14383.000049346243
-21:46:48: (it 74) Storing dual multipliers
-21:46:48: (it 74) Updated global upper bound
-21:46:48: (it 74) Iter:  74  | LB:     -14383      | UB:     -14383      | Fbl: True
-21:46:48: (it 75) lower bound >= upper bound
-21:46:48: (it 75) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 75) Fixing complicating variables
-21:46:48: (it 75) Solving original primal subproblem
-21:46:48: (it 75) Original subproblem objective is -63.54043664858986
-21:46:48: (it 75) Solving master problem
-21:46:48: (it 75) Lower bound of -14382.000049344066
-21:46:48: (it 75) Storing complicating variables
-21:46:48: (it 75) Fixing complicating variables
-21:46:48: (it 75) Solving primal subproblem
-21:46:48: (it 75) Subproblem objective is -14382.000049346248
-21:46:48: (it 75) Primal objective is -14382.000049346248
-21:46:48: (it 75) Storing dual multipliers
-21:46:48: (it 75) Updated global upper bound
-21:46:48: (it 75) Iter:  75  | LB:     -14382      | UB:     -14382      | Fbl: True
-21:46:48: (it 76) lower bound >= upper bound
-21:46:48: (it 76) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 76) Fixing complicating variables
-21:46:48: (it 76) Solving original primal subproblem
-21:46:48: (it 76) Original subproblem objective is -63.516975263576086
-21:46:48: (it 76) Solving master problem
-21:46:48: (it 76) Lower bound of -14381.000049344066
-21:46:48: (it 76) Storing complicating variables
-21:46:48: (it 76) Fixing complicating variables
-21:46:48: (it 76) Solving primal subproblem
-21:46:48: (it 76) Subproblem objective is -14381.000049346254
-21:46:48: (it 76) Primal objective is -14381.000049346254
-21:46:48: (it 76) Storing dual multipliers
-21:46:48: (it 76) Updated global upper bound
-21:46:48: (it 76) Iter:  76  | LB:     -14381      | UB:     -14381      | Fbl: True
-21:46:48: (it 77) lower bound >= upper bound
-21:46:48: (it 77) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 77) Fixing complicating variables
-21:46:48: (it 77) Solving original primal subproblem
-21:46:48: (it 77) Original subproblem objective is -63.4935171285623
-21:46:48: (it 77) Solving master problem
-21:46:48: (it 77) Lower bound of -14380.000049344066
-21:46:48: (it 77) Storing complicating variables
-21:46:48: (it 77) Fixing complicating variables
-21:46:48: (it 77) Solving primal subproblem
-21:46:48: (it 77) Subproblem objective is -14380.000049346258
-21:46:48: (it 77) Primal objective is -14380.000049346258
-21:46:48: (it 77) Storing dual multipliers
-21:46:48: (it 77) Updated global upper bound
-21:46:48: (it 77) Iter:  77  | LB:     -14380      | UB:     -14380      | Fbl: True
-21:46:48: (it 78) lower bound >= upper bound
-21:46:48: (it 78) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 78) Fixing complicating variables
-21:46:48: (it 78) Solving original primal subproblem
-21:46:48: (it 78) Original subproblem objective is -63.46912411574792
-21:46:48: (it 78) Solving master problem
-21:46:48: (it 78) Lower bound of -14379.000049344066
-21:46:48: (it 78) Storing complicating variables
-21:46:48: (it 78) Fixing complicating variables
-21:46:48: (it 78) Solving primal subproblem
-21:46:48: (it 78) Subproblem objective is -14379.00004934626
-21:46:48: (it 78) Primal objective is -14379.00004934626
-21:46:48: (it 78) Storing dual multipliers
-21:46:48: (it 78) Updated global upper bound
-21:46:48: (it 78) Iter:  78  | LB:     -14379      | UB:     -14379      | Fbl: True
-21:46:48: (it 79) lower bound >= upper bound
-21:46:48: (it 79) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 79) Fixing complicating variables
-21:46:48: (it 79) Solving original primal subproblem
-21:46:48: (it 79) Original subproblem objective is -63.445672610734135
-21:46:48: (it 79) Solving master problem
-21:46:48: (it 79) Lower bound of -14378.000049344066
-21:46:48: (it 79) Storing complicating variables
-21:46:48: (it 79) Fixing complicating variables
-21:46:48: (it 79) Solving primal subproblem
-21:46:48: (it 79) Subproblem objective is -14378.000049346268
-21:46:48: (it 79) Primal objective is -14378.000049346268
-21:46:48: (it 79) Storing dual multipliers
-21:46:48: (it 79) Updated global upper bound
-21:46:48: (it 79) Iter:  79  | LB:     -14378      | UB:     -14378      | Fbl: True
-21:46:48: (it 80) lower bound >= upper bound
-21:46:48: (it 80) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 80) Fixing complicating variables
-21:46:48: (it 80) Solving original primal subproblem
-21:46:48: (it 80) Original subproblem objective is -63.422224355720346
-21:46:48: (it 80) Solving master problem
-21:46:48: (it 80) Lower bound of -14377.000049344066
-21:46:48: (it 80) Storing complicating variables
-21:46:48: (it 80) Fixing complicating variables
-21:46:48: (it 80) Solving primal subproblem
-21:46:48: (it 80) Subproblem objective is -14377.000049346272
-21:46:48: (it 80) Primal objective is -14377.000049346272
-21:46:48: (it 80) Storing dual multipliers
-21:46:48: (it 80) Updated global upper bound
-21:46:48: (it 80) Iter:  80  | LB:     -14377      | UB:     -14377      | Fbl: True
-21:46:48: (it 81) lower bound >= upper bound
-21:46:48: (it 81) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 81) Fixing complicating variables
-21:46:48: (it 81) Solving original primal subproblem
-21:46:48: (it 81) Original subproblem objective is -63.397841618105986
-21:46:48: (it 81) Solving master problem
-21:46:48: (it 81) Lower bound of -14376.000049344066
-21:46:48: (it 81) Storing complicating variables
-21:46:48: (it 81) Fixing complicating variables
-21:46:48: (it 81) Solving primal subproblem
-21:46:48: (it 81) Subproblem objective is -14376.000049346276
-21:46:48: (it 81) Primal objective is -14376.000049346276
-21:46:48: (it 81) Storing dual multipliers
-21:46:48: (it 81) Updated global upper bound
-21:46:48: (it 81) Iter:  81  | LB:     -14376      | UB:     -14376      | Fbl: True
-21:46:48: (it 82) lower bound >= upper bound
-21:46:48: (it 82) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 82) Fixing complicating variables
-21:46:48: (it 82) Solving original primal subproblem
-21:46:48: (it 82) Original subproblem objective is -63.37439999309214
-21:46:48: (it 82) Solving master problem
-21:46:48: (it 82) Lower bound of -14375.000049344066
-21:46:48: (it 82) Storing complicating variables
-21:46:48: (it 82) Fixing complicating variables
-21:46:48: (it 82) Solving primal subproblem
-21:46:48: (it 82) Subproblem objective is -14375.00004934628
-21:46:48: (it 82) Primal objective is -14375.00004934628
-21:46:48: (it 82) Storing dual multipliers
-21:46:48: (it 82) Updated global upper bound
-21:46:48: (it 82) Iter:  82  | LB:     -14375      | UB:     -14375      | Fbl: True
-21:46:48: (it 83) lower bound >= upper bound
-21:46:48: (it 83) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 83) Fixing complicating variables
-21:46:48: (it 83) Solving original primal subproblem
-21:46:48: (it 83) Original subproblem objective is -63.35096161807837
-21:46:48: (it 83) Solving master problem
-21:46:48: (it 83) Lower bound of -14374.000049344066
-21:46:48: (it 83) Storing complicating variables
-21:46:48: (it 83) Fixing complicating variables
-21:46:48: (it 83) Solving primal subproblem
-21:46:48: (it 83) Subproblem objective is -14374.000049346283
-21:46:48: (it 83) Primal objective is -14374.000049346283
-21:46:48: (it 83) Storing dual multipliers
-21:46:48: (it 83) Updated global upper bound
-21:46:48: (it 83) Iter:  83  | LB:     -14374      | UB:     -14374      | Fbl: True
-21:46:48: (it 84) lower bound >= upper bound
-21:46:48: (it 84) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 84) Fixing complicating variables
-21:46:48: (it 84) Solving original primal subproblem
-21:46:48: (it 84) Original subproblem objective is -63.32658915566407
-21:46:48: (it 84) Solving master problem
-21:46:48: (it 84) Lower bound of -14373.000049344066
-21:46:48: (it 84) Storing complicating variables
-21:46:48: (it 84) Fixing complicating variables
-21:46:48: (it 84) Solving primal subproblem
-21:46:48: (it 84) Subproblem objective is -14373.000049346289
-21:46:48: (it 84) Primal objective is -14373.000049346289
-21:46:48: (it 84) Storing dual multipliers
-21:46:48: (it 84) Updated global upper bound
-21:46:48: (it 84) Iter:  84  | LB:     -14373      | UB:     -14373      | Fbl: True
-21:46:48: (it 85) lower bound >= upper bound
-21:46:48: (it 85) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 85) Fixing complicating variables
-21:46:48: (it 85) Solving original primal subproblem
-21:46:48: (it 85) Original subproblem objective is -63.30315741065024
-21:46:48: (it 85) Solving master problem
-21:46:48: (it 85) Lower bound of -14372.000049344066
-21:46:48: (it 85) Storing complicating variables
-21:46:48: (it 85) Fixing complicating variables
-21:46:48: (it 85) Solving primal subproblem
-21:46:48: (it 85) Subproblem objective is -14372.00004934629
-21:46:48: (it 85) Primal objective is -14372.00004934629
-21:46:48: (it 85) Storing dual multipliers
-21:46:48: (it 85) Updated global upper bound
-21:46:48: (it 85) Iter:  85  | LB:     -14372      | UB:     -14372      | Fbl: True
-21:46:48: (it 86) lower bound >= upper bound
-21:46:48: (it 86) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 86) Fixing complicating variables
-21:46:48: (it 86) Solving original primal subproblem
-21:46:48: (it 86) Original subproblem objective is -63.2797289156365
-21:46:48: (it 86) Solving master problem
-21:46:48: (it 86) Lower bound of -14371.000049344066
-21:46:48: (it 86) Storing complicating variables
-21:46:48: (it 86) Fixing complicating variables
-21:46:48: (it 86) Solving primal subproblem
-21:46:48: (it 86) Subproblem objective is -14371.000049346298
-21:46:48: (it 86) Primal objective is -14371.000049346298
-21:46:48: (it 86) Storing dual multipliers
-21:46:48: (it 86) Updated global upper bound
-21:46:48: (it 86) Iter:  86  | LB:     -14371      | UB:     -14371      | Fbl: True
-21:46:48: (it 87) lower bound >= upper bound
-21:46:48: (it 87) Validating solution of convex relaxation by solving the original problem
-21:46:48: (it 87) Fixing complicating variables
-21:46:48: (it 87) Solving original primal subproblem
-21:46:49: (it 87) Original subproblem objective is -63.25536672842219
-21:46:49: (it 87) Solving master problem
-21:46:49: (it 87) Lower bound of -14370.000049344066
-21:46:49: (it 87) Storing complicating variables
-21:46:49: (it 87) Fixing complicating variables
-21:46:49: (it 87) Solving primal subproblem
-21:46:49: (it 87) Subproblem objective is -14370.0000493463
-21:46:49: (it 87) Primal objective is -14370.0000493463
-21:46:49: (it 87) Storing dual multipliers
-21:46:49: (it 87) Updated global upper bound
-21:46:49: (it 87) Iter:  87  | LB:     -14370      | UB:     -14370      | Fbl: True
-21:46:49: (it 88) lower bound >= upper bound
-21:46:49: (it 88) Validating solution of convex relaxation by solving the original problem
-21:46:49: (it 88) Fixing complicating variables
-21:46:49: (it 88) Solving original primal subproblem
-21:46:49: (it 88) Original subproblem objective is -63.23194486340839
-21:46:49: (it 88) Solving master problem
-21:46:49: (it 88) Lower bound of -14369.000049344066
-21:46:49: (it 88) Storing complicating variables
-21:46:49: (it 88) Fixing complicating variables
-21:46:49: (it 88) Solving primal subproblem
-21:46:49: (it 88) Subproblem objective is -14369.000049346301
-21:46:49: (it 88) Primal objective is -14369.000049346301
-21:46:49: (it 88) Storing dual multipliers
-21:46:49: (it 88) Updated global upper bound
-21:46:49: (it 88) Iter:  88  | LB:     -14369      | UB:     -14369      | Fbl: True
-21:46:49: (it 89) lower bound >= upper bound
-21:46:49: (it 89) Validating solution of convex relaxation by solving the original problem
-21:46:49: (it 89) Fixing complicating variables
-21:46:49: (it 89) Solving original primal subproblem
-21:46:49: (it 89) Original subproblem objective is -63.208526248394605
-21:46:49: (it 89) Solving master problem
-21:46:49: (it 89) Lower bound of -14368.000049344066
-21:46:49: (it 89) Storing complicating variables
-21:46:49: (it 89) Fixing complicating variables
-21:46:49: (it 89) Solving primal subproblem
-21:46:49: (it 89) Subproblem objective is -14368.000049346309
-21:46:49: (it 89) Primal objective is -14368.000049346309
-21:46:49: (it 89) Storing dual multipliers
-21:46:49: (it 89) Updated global upper bound
-21:46:49: (it 89) Iter:  89  | LB:     -14368      | UB:     -14368      | Fbl: True
-21:46:49: (it 90) lower bound >= upper bound
-21:46:49: (it 90) Validating solution of convex relaxation by solving the original problem
-21:46:49: (it 90) Fixing complicating variables
-21:46:49: (it 90) Solving original primal subproblem
-21:46:49: (it 90) Original subproblem objective is -63.184174336380266
-21:46:49: (it 90) Solving master problem
-21:46:49: (it 90) Lower bound of -14367.000049344066
-21:46:49: (it 90) Storing complicating variables
-21:46:49: (it 90) Fixing complicating variables
-21:46:49: (it 90) Solving primal subproblem
-21:46:49: (it 90) Subproblem objective is -14367.000049346309
-21:46:49: (it 90) Primal objective is -14367.000049346309
-21:46:49: (it 90) Storing dual multipliers
-21:46:49: (it 90) Updated global upper bound
-21:46:49: (it 90) Iter:  90  | LB:     -14367      | UB:     -14367      | Fbl: True
-21:46:49: (it 91) lower bound >= upper bound
-21:46:49: (it 91) Validating solution of convex relaxation by solving the original problem
-21:46:49: (it 91) Fixing complicating variables
-21:46:49: (it 91) Solving original primal subproblem
-21:46:49: (it 91) Original subproblem objective is -63.160762351366515
-21:46:49: (it 91) Solving master problem
-21:46:49: (it 91) Lower bound of -14366.000049344066
-21:46:49: (it 91) Storing complicating variables
-21:46:49: (it 91) Fixing complicating variables
-21:46:49: (it 91) Solving primal subproblem
-21:46:49: (it 91) Subproblem objective is -14366.000049346312
-21:46:49: (it 91) Primal objective is -14366.000049346312
-21:46:49: (it 91) Storing dual multipliers
-21:46:49: (it 91) Updated global upper bound
-21:46:49: (it 91) Iter:  91  | LB:     -14366      | UB:     -14366      | Fbl: True
-21:46:49: (it 92) lower bound >= upper bound
-21:46:49: (it 92) Validating solution of convex relaxation by solving the original problem
-21:46:49: (it 92) Fixing complicating variables
-21:46:49: (it 92) Solving original primal subproblem
-21:46:49: (it 92) Original subproblem objective is -63.13735361635278
-21:46:49: (it 92) Solving master problem
-21:46:49: (it 92) Lower bound of -14365.000049344066
-21:46:49: (it 92) Storing complicating variables
-21:46:49: (it 92) Fixing complicating variables
-21:46:49: (it 92) Solving primal subproblem
-21:46:49: (it 92) Subproblem objective is -14365.000049346314
-21:46:49: (it 92) Primal objective is -14365.000049346314
-21:46:49: (it 92) Storing dual multipliers
-21:46:49: (it 92) Updated global upper bound
-21:46:49: (it 92) Iter:  92  | LB:     -14365      | UB:     -14365      | Fbl: True
-21:46:49: (it 93) lower bound >= upper bound
-21:46:49: (it 93) Validating solution of convex relaxation by solving the original problem
-21:46:49: (it 93) Fixing complicating variables
-21:46:49: (it 93) Solving original primal subproblem
-21:46:49: (it 93) Original subproblem objective is -63.11394813133899
-21:46:49: (it 93) Solving master problem
-21:46:49: (it 93) Lower bound of -14364.000049344066
-21:46:49: (it 93) Storing complicating variables
-21:46:49: (it 93) Fixing complicating variables
-21:46:49: (it 93) Solving primal subproblem
-21:46:49: (it 93) Subproblem objective is -14364.00004934632
-21:46:49: (it 93) Primal objective is -14364.00004934632
-21:46:49: (it 93) Storing dual multipliers
-21:46:49: (it 93) Updated global upper bound
-21:46:49: (it 93) Iter:  93  | LB:     -14364      | UB:     -14364      | Fbl: True
-21:46:49: (it 94) lower bound >= upper bound
-21:46:49: (it 94) Validating solution of convex relaxation by solving the original problem
-21:46:49: (it 94) Fixing complicating variables
-21:46:49: (it 94) Solving original primal subproblem
-21:46:49: (it 94) Original subproblem objective is -63.08960987452468
-21:46:49: (it 94) Solving master problem
-21:46:49: (it 94) Lower bound of -14363.000049344066
-21:46:49: (it 94) Storing complicating variables
-21:46:49: (it 94) Fixing complicating variables
-21:46:49: (it 94) Solving primal subproblem
-21:46:49: (it 94) Subproblem objective is -14363.000049346321
-21:46:49: (it 94) Primal objective is -14363.000049346321
-21:46:49: (it 94) Storing dual multipliers
-21:46:49: (it 94) Updated global upper bound
-21:46:49: (it 94) Iter:  94  | LB:     -14363      | UB:     -14363      | Fbl: True
-21:46:49: (it 95) lower bound >= upper bound
-21:46:49: (it 95) Validating solution of convex relaxation by solving the original problem
-21:46:49: (it 95) Fixing complicating variables
-21:46:49: (it 95) Solving original primal subproblem
-21:46:49: (it 95) Original subproblem objective is -63.06621101951089
-21:46:49: (it 95) Solving master problem
-21:46:49: (it 95) Lower bound of -14362.000049344066
-21:46:49: (it 95) Storing complicating variables
-21:46:49: (it 95) Fixing complicating variables
-21:46:49: (it 95) Solving primal subproblem
-21:46:49: (it 95) Subproblem objective is -14362.000049346327
-21:46:49: (it 95) Primal objective is -14362.000049346327
-21:46:49: (it 95) Storing dual multipliers
-21:46:49: (it 95) Updated global upper bound
-21:46:49: (it 95) Iter:  95  | LB:     -14362      | UB:     -14362      | Fbl: True
-21:46:49: (it 96) lower bound >= upper bound
-21:46:49: (it 96) Validating solution of convex relaxation by solving the original problem
-21:46:49: (it 96) Fixing complicating variables
-21:46:49: (it 96) Solving original primal subproblem
-21:46:49: (it 96) Original subproblem objective is -63.04281541449714
-21:46:49: (it 96) Solving master problem
-21:46:49: (it 96) Lower bound of -14361.000049344066
-21:46:49: (it 96) Storing complicating variables
-21:46:49: (it 96) Fixing complicating variables
-21:46:49: (it 96) Solving primal subproblem
-21:46:49: (it 96) Subproblem objective is -14361.000049346327
-21:46:49: (it 96) Primal objective is -14361.000049346327
-21:46:49: (it 96) Storing dual multipliers
-21:46:49: (it 96) Updated global upper bound
-21:46:49: (it 96) Iter:  96  | LB:     -14361      | UB:     -14361      | Fbl: True
-21:46:49: (it 97) lower bound >= upper bound
-21:46:49: (it 97) Validating solution of convex relaxation by solving the original problem
-21:46:49: (it 97) Fixing complicating variables
-21:46:49: (it 97) Solving original primal subproblem
-21:46:49: (it 97) Original subproblem objective is -63.018487432882864
-21:46:49: (it 97) Solving master problem
-21:46:49: (it 97) Lower bound of -14360.000049344066
-21:46:49: (it 97) Storing complicating variables
-21:46:49: (it 97) Fixing complicating variables
-21:46:49: (it 97) Solving primal subproblem
-21:46:49: (it 97) Subproblem objective is -14360.00004934633
-21:46:49: (it 97) Primal objective is -14360.00004934633
-21:46:49: (it 97) Storing dual multipliers
-21:46:49: (it 97) Updated global upper bound
-21:46:49: (it 97) Iter:  97  | LB:     -14360      | UB:     -14360      | Fbl: True
-21:46:49: (it 98) lower bound >= upper bound
-21:46:49: (it 98) Validating solution of convex relaxation by solving the original problem
-21:46:49: (it 98) Fixing complicating variables
-21:46:49: (it 98) Solving original primal subproblem
-21:46:49: (it 98) Original subproblem objective is -62.99509845786906
-21:46:49: (it 98) Solving master problem
-21:46:49: (it 98) Lower bound of -14359.000049344066
-21:46:49: (it 98) Storing complicating variables
-21:46:49: (it 98) Fixing complicating variables
-21:46:49: (it 98) Solving primal subproblem
-21:46:49: (it 98) Subproblem objective is -14359.00004934633
-21:46:49: (it 98) Primal objective is -14359.00004934633
-21:46:49: (it 98) Storing dual multipliers
-21:46:49: (it 98) Updated global upper bound
-21:46:49: (it 98) Iter:  98  | LB:     -14359      | UB:     -14359      | Fbl: True
-21:46:49: (it 99) lower bound >= upper bound
-21:46:49: (it 99) Validating solution of convex relaxation by solving the original problem
-21:46:49: (it 99) Fixing complicating variables
-21:46:49: (it 99) Solving original primal subproblem
-21:46:49: (it 99) Original subproblem objective is -62.971712732855394
-21:46:49: (it 99) Solving master problem
-21:46:49: (it 99) Lower bound of -14358.000049344066
-21:46:49: (it 99) Storing complicating variables
-21:46:49: (it 99) Fixing complicating variables
-21:46:49: (it 99) Solving primal subproblem
-21:46:49: (it 99) Subproblem objective is -14358.000049346338
-21:46:49: (it 99) Primal objective is -14358.000049346338
-21:46:49: (it 99) Storing dual multipliers
-21:46:49: (it 99) Updated global upper bound
-21:46:49: (it 99) Iter:  99  | LB:     -14358      | UB:     -14358      | Fbl: True
-21:46:49: (it 100) iteration limit
-21:46:49: (it 100) Validating solution of convex relaxation by solving the original problem
-21:46:49: (it 100) Fixing complicating variables
-21:46:49: (it 100) Solving original primal subproblem
-21:46:49: (it 100) Original subproblem objective is -62.947395026441114
-21:46:49: (it 100) iteration limit
-21:46:49: 
+01:54:53: Setting up engine
+01:54:53: Running NGBD
+01:54:53: (it 0) Solving master problem
+01:54:53: (it 0) Lower bound of -100000.0
+01:54:53: (it 0) Storing complicating variables
+01:54:53: (it 0) Fixing complicating variables
+01:54:53: (it 0) Solving primal subproblem
+01:54:53: (it 0) Subproblem objective is 10399.999950031324
+01:54:53: (it 0) Primal objective is 10399.999950031324
+01:54:53: (it 0) Storing dual multipliers
+01:54:53: (it 0) Updated global upper bound
+01:54:53: (it 0) Iter:  0   | LB:     -100000     | UB:      10399      | Fbl: True
+01:54:53: (it 1) Solving master problem
+01:54:53: (it 1) Lower bound of -14600.000049968672
+01:54:53: (it 1) Updated global lower bound
+01:54:53: (it 1) Storing complicating variables
+01:54:53: (it 1) Fixing complicating variables
+01:54:53: (it 1) Solving primal subproblem
+01:54:53: (it 1) Subproblem objective is -3000.0
+01:54:53: (it 1) Primal objective is -3000.0
+01:54:53: (it 1) Storing dual multipliers
+01:54:53: (it 1) Updated global upper bound
+01:54:53: (it 1) Iter:  1   | LB:     -14600      | UB:      -3000      | Fbl: True
+01:54:53: (it 2) Solving master problem
+01:54:53: (it 2) Lower bound of -14455.000049344066
+01:54:53: (it 2) Updated global lower bound
+01:54:53: (it 2) Storing complicating variables
+01:54:53: (it 2) Fixing complicating variables
+01:54:53: (it 2) Solving primal subproblem
+01:54:53: (it 2) Subproblem objective is -14455.000049352817
+01:54:53: (it 2) Primal objective is -14455.000049352817
+01:54:53: (it 2) Storing dual multipliers
+01:54:53: (it 2) Updated global upper bound
+01:54:53: (it 2) Iter:  2   | LB:     -14455      | UB:     -14455      | Fbl: True
+01:54:53: (it 3) lower bound >= upper bound
+01:54:53: (it 3) Validating solution of convex relaxation by solving the original problem
+01:54:53: (it 3) Fixing complicating variables
+01:54:53: (it 3) Solving original primal subproblem
+01:54:53: (it 3) Original subproblem objective is -65.25999999999999
+01:54:53: (it 3) Solving master problem
+01:54:53: (it 3) Lower bound of -14454.000049344066
+01:54:53: (it 3) Storing complicating variables
+01:54:53: (it 3) Fixing complicating variables
+01:54:53: (it 3) Solving primal subproblem
+01:54:53: (it 3) Subproblem objective is -14454.000020352778
+01:54:53: (it 3) Primal objective is -14454.000020352778
+01:54:53: (it 3) Storing dual multipliers
+01:54:53: (it 3) Updated global upper bound
+01:54:53: (it 3) Iter:  3   | LB:     -14454      | UB:     -14454      | Fbl: True
+01:54:53: (it 4) GBD epsilon-optimal solution with relative error = 2.00576225912891e-09
+01:54:53: (it 4) Validating solution of convex relaxation by solving the original problem
+01:54:53: (it 4) Fixing complicating variables
+01:54:53: (it 4) Solving original primal subproblem
+01:54:53: (it 4) Original subproblem objective is -65.23630161918936
+01:54:53: (it 4) Solving master problem
+01:54:53: (it 4) Lower bound of -14453.000049344066
+01:54:53: (it 4) Storing complicating variables
+01:54:53: (it 4) Fixing complicating variables
+01:54:53: (it 4) Solving primal subproblem
+01:54:53: (it 4) Subproblem objective is -14453.00002035535
+01:54:53: (it 4) Primal objective is -14453.00002035535
+01:54:53: (it 4) Storing dual multipliers
+01:54:53: (it 4) Updated global upper bound
+01:54:53: (it 4) Iter:  4   | LB:     -14453      | UB:     -14453      | Fbl: True
+01:54:53: (it 5) GBD epsilon-optimal solution with relative error = 2.0057230777299828e-09
+01:54:53: (it 5) Validating solution of convex relaxation by solving the original problem
+01:54:53: (it 5) Fixing complicating variables
+01:54:53: (it 5) Solving original primal subproblem
+01:54:53: (it 5) Original subproblem objective is -65.21165875677488
+01:54:53: (it 5) Solving master problem
+01:54:53: (it 5) Lower bound of -14452.000049344066
+01:54:53: (it 5) Storing complicating variables
+01:54:53: (it 5) Fixing complicating variables
+01:54:53: (it 5) Solving primal subproblem
+01:54:53: (it 5) Subproblem objective is -14452.0000203579
+01:54:53: (it 5) Primal objective is -14452.0000203579
+01:54:53: (it 5) Storing dual multipliers
+01:54:53: (it 5) Updated global upper bound
+01:54:53: (it 5) Iter:  5   | LB:     -14452      | UB:     -14452      | Fbl: True
+01:54:53: (it 6) GBD epsilon-optimal solution with relative error = 2.0056854012791605e-09
+01:54:53: (it 6) Validating solution of convex relaxation by solving the original problem
+01:54:53: (it 6) Fixing complicating variables
+01:54:53: (it 6) Solving original primal subproblem
+01:54:53: (it 6) Original subproblem objective is -65.18796701176086
+01:54:53: (it 6) Solving master problem
+01:54:53: (it 6) Lower bound of -14451.000049344066
+01:54:53: (it 6) Storing complicating variables
+01:54:53: (it 6) Fixing complicating variables
+01:54:53: (it 6) Solving primal subproblem
+01:54:53: (it 6) Subproblem objective is -14451.000049338214
+01:54:53: (it 6) Primal objective is -14451.000049338214
+01:54:53: (it 6) Storing dual multipliers
+01:54:53: (it 6) Updated global upper bound
+01:54:53: (it 6) Iter:  6   | LB:     -14451      | UB:     -14451      | Fbl: True
+01:54:53: (it 7) GBD epsilon-optimal solution with relative error = 4.0493314588797716e-13
+01:54:53: (it 7) Validating solution of convex relaxation by solving the original problem
+01:54:53: (it 7) Fixing complicating variables
+01:54:53: (it 7) Solving original primal subproblem
+01:54:53: (it 7) Original subproblem objective is -65.16427851674692
+01:54:53: (it 7) Solving master problem
+01:54:53: (it 7) Lower bound of -14450.000049344066
+01:54:53: (it 7) Storing complicating variables
+01:54:53: (it 7) Fixing complicating variables
+01:54:53: (it 7) Solving primal subproblem
+01:54:53: (it 7) Subproblem objective is -14450.000049340315
+01:54:53: (it 7) Primal objective is -14450.000049340315
+01:54:53: (it 7) Storing dual multipliers
+01:54:53: (it 7) Updated global upper bound
+01:54:53: (it 7) Iter:  7   | LB:     -14450      | UB:     -14450      | Fbl: True
+01:54:53: (it 8) GBD epsilon-optimal solution with relative error = 2.595678987753569e-13
+01:54:53: (it 8) Validating solution of convex relaxation by solving the original problem
+01:54:53: (it 8) Fixing complicating variables
+01:54:53: (it 8) Solving original primal subproblem
+01:54:54: (it 8) Original subproblem objective is -65.13964592953243
+01:54:54: (it 8) Solving master problem
+01:54:54: (it 8) Lower bound of -14449.000049344066
+01:54:54: (it 8) Storing complicating variables
+01:54:54: (it 8) Fixing complicating variables
+01:54:54: (it 8) Solving primal subproblem
+01:54:54: (it 8) Subproblem objective is -14449.000049341572
+01:54:54: (it 8) Primal objective is -14449.000049341572
+01:54:54: (it 8) Storing dual multipliers
+01:54:54: (it 8) Updated global upper bound
+01:54:54: (it 8) Iter:  8   | LB:     -14449      | UB:     -14449      | Fbl: True
+01:54:54: (it 9) GBD epsilon-optimal solution with relative error = 1.7259564424839182e-13
+01:54:54: (it 9) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 9) Fixing complicating variables
+01:54:54: (it 9) Solving original primal subproblem
+01:54:54: (it 9) Original subproblem objective is -65.11596406451841
+01:54:54: (it 9) Solving master problem
+01:54:54: (it 9) Lower bound of -14448.000049344066
+01:54:54: (it 9) Storing complicating variables
+01:54:54: (it 9) Fixing complicating variables
+01:54:54: (it 9) Solving primal subproblem
+01:54:54: (it 9) Subproblem objective is -14448.000049342414
+01:54:54: (it 9) Primal objective is -14448.000049342414
+01:54:54: (it 9) Storing dual multipliers
+01:54:54: (it 9) Updated global upper bound
+01:54:54: (it 9) Iter:  9   | LB:     -14448      | UB:     -14448      | Fbl: True
+01:54:54: (it 10) GBD epsilon-optimal solution with relative error = 1.143163325566791e-13
+01:54:54: (it 10) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 10) Fixing complicating variables
+01:54:54: (it 10) Solving original primal subproblem
+01:54:54: (it 10) Original subproblem objective is -65.09228544950443
+01:54:54: (it 10) Solving master problem
+01:54:54: (it 10) Lower bound of -14447.000049344066
+01:54:54: (it 10) Storing complicating variables
+01:54:54: (it 10) Fixing complicating variables
+01:54:54: (it 10) Solving primal subproblem
+01:54:54: (it 10) Subproblem objective is -14447.000049343013
+01:54:54: (it 10) Primal objective is -14447.000049343013
+01:54:54: (it 10) Storing dual multipliers
+01:54:54: (it 10) Updated global upper bound
+01:54:54: (it 10) Iter:  10  | LB:     -14447      | UB:     -14447      | Fbl: True
+01:54:54: (it 11) GBD epsilon-optimal solution with relative error = 7.290059258364212e-14
+01:54:54: (it 11) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 11) Fixing complicating variables
+01:54:54: (it 11) Solving original primal subproblem
+01:54:54: (it 11) Original subproblem objective is -65.06766313748994
+01:54:54: (it 11) Solving master problem
+01:54:54: (it 11) Lower bound of -14446.000049344066
+01:54:54: (it 11) Storing complicating variables
+01:54:54: (it 11) Fixing complicating variables
+01:54:54: (it 11) Solving primal subproblem
+01:54:54: (it 11) Subproblem objective is -14446.000049343458
+01:54:54: (it 11) Primal objective is -14446.000049343458
+01:54:54: (it 11) Storing dual multipliers
+01:54:54: (it 11) Updated global upper bound
+01:54:54: (it 11) Iter:  11  | LB:     -14446      | UB:     -14446      | Fbl: True
+01:54:54: (it 12) GBD epsilon-optimal solution with relative error = 4.2056102638038886e-14
+01:54:54: (it 12) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 12) Fixing complicating variables
+01:54:54: (it 12) Solving original primal subproblem
+01:54:54: (it 12) Original subproblem objective is -65.04399115247597
+01:54:54: (it 12) Solving master problem
+01:54:54: (it 12) Lower bound of -14445.000049344066
+01:54:54: (it 12) Storing complicating variables
+01:54:54: (it 12) Fixing complicating variables
+01:54:54: (it 12) Solving primal subproblem
+01:54:54: (it 12) Subproblem objective is -14445.000049343813
+01:54:54: (it 12) Primal objective is -14445.000049343813
+01:54:54: (it 12) Storing dual multipliers
+01:54:54: (it 12) Updated global upper bound
+01:54:54: (it 12) Iter:  12  | LB:     -14445      | UB:     -14445      | Fbl: True
+01:54:54: (it 13) GBD epsilon-optimal solution with relative error = 1.7503601677340074e-14
+01:54:54: (it 13) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 13) Fixing complicating variables
+01:54:54: (it 13) Solving original primal subproblem
+01:54:54: (it 13) Original subproblem objective is -65.02032241746201
+01:54:54: (it 13) Solving master problem
+01:54:54: (it 13) Lower bound of -14444.000049344066
+01:54:54: (it 13) Storing complicating variables
+01:54:54: (it 13) Fixing complicating variables
+01:54:54: (it 13) Solving primal subproblem
+01:54:54: (it 13) Subproblem objective is -14444.000049344086
+01:54:54: (it 13) Primal objective is -14444.000049344086
+01:54:54: (it 13) Storing dual multipliers
+01:54:54: (it 13) Updated global upper bound
+01:54:54: (it 13) Iter:  13  | LB:     -14444      | UB:     -14444      | Fbl: True
+01:54:54: (it 14) lower bound >= upper bound
+01:54:54: (it 14) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 14) Fixing complicating variables
+01:54:54: (it 14) Solving original primal subproblem
+01:54:54: (it 14) Original subproblem objective is -64.99665693244805
+01:54:54: (it 14) Solving master problem
+01:54:54: (it 14) Lower bound of -14443.000049344066
+01:54:54: (it 14) Storing complicating variables
+01:54:54: (it 14) Fixing complicating variables
+01:54:54: (it 14) Solving primal subproblem
+01:54:54: (it 14) Subproblem objective is -14443.000049344315
+01:54:54: (it 14) Primal objective is -14443.000049344315
+01:54:54: (it 14) Storing dual multipliers
+01:54:54: (it 14) Updated global upper bound
+01:54:54: (it 14) Iter:  14  | LB:     -14443      | UB:     -14443      | Fbl: True
+01:54:54: (it 15) lower bound >= upper bound
+01:54:54: (it 15) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 15) Fixing complicating variables
+01:54:54: (it 15) Solving original primal subproblem
+01:54:54: (it 15) Original subproblem objective is -64.97204827563348
+01:54:54: (it 15) Solving master problem
+01:54:54: (it 15) Lower bound of -14442.000049344066
+01:54:54: (it 15) Storing complicating variables
+01:54:54: (it 15) Fixing complicating variables
+01:54:54: (it 15) Solving primal subproblem
+01:54:54: (it 15) Subproblem objective is -14442.000049344568
+01:54:54: (it 15) Primal objective is -14442.000049344568
+01:54:54: (it 15) Storing dual multipliers
+01:54:54: (it 15) Updated global upper bound
+01:54:54: (it 15) Iter:  15  | LB:     -14442      | UB:     -14442      | Fbl: True
+01:54:54: (it 16) lower bound >= upper bound
+01:54:54: (it 16) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 16) Fixing complicating variables
+01:54:54: (it 16) Solving original primal subproblem
+01:54:54: (it 16) Original subproblem objective is -64.94838942061958
+01:54:54: (it 16) Solving master problem
+01:54:54: (it 16) Lower bound of -14441.000049344066
+01:54:54: (it 16) Storing complicating variables
+01:54:54: (it 16) Fixing complicating variables
+01:54:54: (it 16) Solving primal subproblem
+01:54:54: (it 16) Subproblem objective is -14441.00004934467
+01:54:54: (it 16) Primal objective is -14441.00004934467
+01:54:54: (it 16) Storing dual multipliers
+01:54:54: (it 16) Updated global upper bound
+01:54:54: (it 16) Iter:  16  | LB:     -14441      | UB:     -14441      | Fbl: True
+01:54:54: (it 17) lower bound >= upper bound
+01:54:54: (it 17) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 17) Fixing complicating variables
+01:54:54: (it 17) Solving original primal subproblem
+01:54:54: (it 17) Original subproblem objective is -64.92473381560558
+01:54:54: (it 17) Solving master problem
+01:54:54: (it 17) Lower bound of -14440.000049344066
+01:54:54: (it 17) Storing complicating variables
+01:54:54: (it 17) Fixing complicating variables
+01:54:54: (it 17) Solving primal subproblem
+01:54:54: (it 17) Subproblem objective is -14440.000049344804
+01:54:54: (it 17) Primal objective is -14440.000049344804
+01:54:54: (it 17) Storing dual multipliers
+01:54:54: (it 17) Updated global upper bound
+01:54:54: (it 17) Iter:  17  | LB:     -14440      | UB:     -14440      | Fbl: True
+01:54:54: (it 18) lower bound >= upper bound
+01:54:54: (it 18) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 18) Fixing complicating variables
+01:54:54: (it 18) Solving original primal subproblem
+01:54:54: (it 18) Original subproblem objective is -64.9001354339911
+01:54:54: (it 18) Solving master problem
+01:54:54: (it 18) Lower bound of -14439.000049344066
+01:54:54: (it 18) Storing complicating variables
+01:54:54: (it 18) Fixing complicating variables
+01:54:54: (it 18) Solving primal subproblem
+01:54:54: (it 18) Subproblem objective is -14439.000049344924
+01:54:54: (it 18) Primal objective is -14439.000049344924
+01:54:54: (it 18) Storing dual multipliers
+01:54:54: (it 18) Updated global upper bound
+01:54:54: (it 18) Iter:  18  | LB:     -14439      | UB:     -14439      | Fbl: True
+01:54:54: (it 19) lower bound >= upper bound
+01:54:54: (it 19) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 19) Fixing complicating variables
+01:54:54: (it 19) Solving original primal subproblem
+01:54:54: (it 19) Original subproblem objective is -64.87648645897707
+01:54:54: (it 19) Solving master problem
+01:54:54: (it 19) Lower bound of -14438.000049344066
+01:54:54: (it 19) Storing complicating variables
+01:54:54: (it 19) Fixing complicating variables
+01:54:54: (it 19) Solving primal subproblem
+01:54:54: (it 19) Subproblem objective is -14438.000049345032
+01:54:54: (it 19) Primal objective is -14438.000049345032
+01:54:54: (it 19) Storing dual multipliers
+01:54:54: (it 19) Updated global upper bound
+01:54:54: (it 19) Iter:  19  | LB:     -14438      | UB:     -14438      | Fbl: True
+01:54:54: (it 20) lower bound >= upper bound
+01:54:54: (it 20) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 20) Fixing complicating variables
+01:54:54: (it 20) Solving original primal subproblem
+01:54:54: (it 20) Original subproblem objective is -64.8528407339632
+01:54:54: (it 20) Solving master problem
+01:54:54: (it 20) Lower bound of -14437.000049344066
+01:54:54: (it 20) Storing complicating variables
+01:54:54: (it 20) Fixing complicating variables
+01:54:54: (it 20) Solving primal subproblem
+01:54:54: (it 20) Subproblem objective is -14437.000049345123
+01:54:54: (it 20) Primal objective is -14437.000049345123
+01:54:54: (it 20) Storing dual multipliers
+01:54:54: (it 20) Updated global upper bound
+01:54:54: (it 20) Iter:  20  | LB:     -14437      | UB:     -14437      | Fbl: True
+01:54:54: (it 21) lower bound >= upper bound
+01:54:54: (it 21) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 21) Fixing complicating variables
+01:54:54: (it 21) Solving original primal subproblem
+01:54:54: (it 21) Original subproblem objective is -64.8282526275487
+01:54:54: (it 21) Solving master problem
+01:54:54: (it 21) Lower bound of -14436.000049344066
+01:54:54: (it 21) Storing complicating variables
+01:54:54: (it 21) Fixing complicating variables
+01:54:54: (it 21) Solving primal subproblem
+01:54:54: (it 21) Subproblem objective is -14436.000049345203
+01:54:54: (it 21) Primal objective is -14436.000049345203
+01:54:54: (it 21) Storing dual multipliers
+01:54:54: (it 21) Updated global upper bound
+01:54:54: (it 21) Iter:  21  | LB:     -14436      | UB:     -14436      | Fbl: True
+01:54:54: (it 22) lower bound >= upper bound
+01:54:54: (it 22) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 22) Fixing complicating variables
+01:54:54: (it 22) Solving original primal subproblem
+01:54:54: (it 22) Original subproblem objective is -64.80461353253469
+01:54:54: (it 22) Solving master problem
+01:54:54: (it 22) Lower bound of -14435.000049344066
+01:54:54: (it 22) Storing complicating variables
+01:54:54: (it 22) Fixing complicating variables
+01:54:54: (it 22) Solving primal subproblem
+01:54:54: (it 22) Subproblem objective is -14435.000049345279
+01:54:54: (it 22) Primal objective is -14435.000049345279
+01:54:54: (it 22) Storing dual multipliers
+01:54:54: (it 22) Updated global upper bound
+01:54:54: (it 22) Iter:  22  | LB:     -14435      | UB:     -14435      | Fbl: True
+01:54:54: (it 23) lower bound >= upper bound
+01:54:54: (it 23) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 23) Fixing complicating variables
+01:54:54: (it 23) Solving original primal subproblem
+01:54:54: (it 23) Original subproblem objective is -64.78097768752079
+01:54:54: (it 23) Solving master problem
+01:54:54: (it 23) Lower bound of -14434.000049344066
+01:54:54: (it 23) Storing complicating variables
+01:54:54: (it 23) Fixing complicating variables
+01:54:54: (it 23) Solving primal subproblem
+01:54:54: (it 23) Subproblem objective is -14434.000049345344
+01:54:54: (it 23) Primal objective is -14434.000049345344
+01:54:54: (it 23) Storing dual multipliers
+01:54:54: (it 23) Updated global upper bound
+01:54:54: (it 23) Iter:  23  | LB:     -14434      | UB:     -14434      | Fbl: True
+01:54:54: (it 24) lower bound >= upper bound
+01:54:54: (it 24) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 24) Fixing complicating variables
+01:54:54: (it 24) Solving original primal subproblem
+01:54:54: (it 24) Original subproblem objective is -64.75639985630633
+01:54:54: (it 24) Solving master problem
+01:54:54: (it 24) Lower bound of -14433.000049344066
+01:54:54: (it 24) Storing complicating variables
+01:54:54: (it 24) Fixing complicating variables
+01:54:54: (it 24) Solving primal subproblem
+01:54:54: (it 24) Subproblem objective is -14433.000049345406
+01:54:54: (it 24) Primal objective is -14433.000049345406
+01:54:54: (it 24) Storing dual multipliers
+01:54:54: (it 24) Updated global upper bound
+01:54:54: (it 24) Iter:  24  | LB:     -14433      | UB:     -14433      | Fbl: True
+01:54:54: (it 25) lower bound >= upper bound
+01:54:54: (it 25) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 25) Fixing complicating variables
+01:54:54: (it 25) Solving original primal subproblem
+01:54:54: (it 25) Original subproblem objective is -64.73277064129232
+01:54:54: (it 25) Solving master problem
+01:54:54: (it 25) Lower bound of -14432.000049344066
+01:54:54: (it 25) Storing complicating variables
+01:54:54: (it 25) Fixing complicating variables
+01:54:54: (it 25) Solving primal subproblem
+01:54:54: (it 25) Subproblem objective is -14432.000049345457
+01:54:54: (it 25) Primal objective is -14432.000049345457
+01:54:54: (it 25) Storing dual multipliers
+01:54:54: (it 25) Updated global upper bound
+01:54:54: (it 25) Iter:  25  | LB:     -14432      | UB:     -14432      | Fbl: True
+01:54:54: (it 26) lower bound >= upper bound
+01:54:54: (it 26) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 26) Fixing complicating variables
+01:54:54: (it 26) Solving original primal subproblem
+01:54:54: (it 26) Original subproblem objective is -64.70914467627844
+01:54:54: (it 26) Solving master problem
+01:54:54: (it 26) Lower bound of -14431.000049344066
+01:54:54: (it 26) Storing complicating variables
+01:54:54: (it 26) Fixing complicating variables
+01:54:54: (it 26) Solving primal subproblem
+01:54:54: (it 26) Subproblem objective is -14431.000049345506
+01:54:54: (it 26) Primal objective is -14431.000049345506
+01:54:54: (it 26) Storing dual multipliers
+01:54:54: (it 26) Updated global upper bound
+01:54:54: (it 26) Iter:  26  | LB:     -14431      | UB:     -14431      | Fbl: True
+01:54:54: (it 27) lower bound >= upper bound
+01:54:54: (it 27) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 27) Fixing complicating variables
+01:54:54: (it 27) Solving original primal subproblem
+01:54:54: (it 27) Original subproblem objective is -64.68457712026392
+01:54:54: (it 27) Solving master problem
+01:54:54: (it 27) Lower bound of -14430.000049344066
+01:54:54: (it 27) Storing complicating variables
+01:54:54: (it 27) Fixing complicating variables
+01:54:54: (it 27) Solving primal subproblem
+01:54:54: (it 27) Subproblem objective is -14430.000049345554
+01:54:54: (it 27) Primal objective is -14430.000049345554
+01:54:54: (it 27) Storing dual multipliers
+01:54:54: (it 27) Updated global upper bound
+01:54:54: (it 27) Iter:  27  | LB:     -14430      | UB:     -14430      | Fbl: True
+01:54:54: (it 28) lower bound >= upper bound
+01:54:54: (it 28) Validating solution of convex relaxation by solving the original problem
+01:54:54: (it 28) Fixing complicating variables
+01:54:54: (it 28) Solving original primal subproblem
+01:54:55: (it 28) Original subproblem objective is -64.66095778525002
+01:54:55: (it 28) Solving master problem
+01:54:55: (it 28) Lower bound of -14429.000049344066
+01:54:55: (it 28) Storing complicating variables
+01:54:55: (it 28) Fixing complicating variables
+01:54:55: (it 28) Solving primal subproblem
+01:54:55: (it 28) Subproblem objective is -14429.000049345594
+01:54:55: (it 28) Primal objective is -14429.000049345594
+01:54:55: (it 28) Storing dual multipliers
+01:54:55: (it 28) Updated global upper bound
+01:54:55: (it 28) Iter:  28  | LB:     -14429      | UB:     -14429      | Fbl: True
+01:54:55: (it 29) lower bound >= upper bound
+01:54:55: (it 29) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 29) Fixing complicating variables
+01:54:55: (it 29) Solving original primal subproblem
+01:54:55: (it 29) Original subproblem objective is -64.63734170023605
+01:54:55: (it 29) Solving master problem
+01:54:55: (it 29) Lower bound of -14428.000049344066
+01:54:55: (it 29) Storing complicating variables
+01:54:55: (it 29) Fixing complicating variables
+01:54:55: (it 29) Solving primal subproblem
+01:54:55: (it 29) Subproblem objective is -14428.000049345632
+01:54:55: (it 29) Primal objective is -14428.000049345632
+01:54:55: (it 29) Storing dual multipliers
+01:54:55: (it 29) Updated global upper bound
+01:54:55: (it 29) Iter:  29  | LB:     -14428      | UB:     -14428      | Fbl: True
+01:54:55: (it 30) lower bound >= upper bound
+01:54:55: (it 30) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 30) Fixing complicating variables
+01:54:55: (it 30) Solving original primal subproblem
+01:54:55: (it 30) Original subproblem objective is -64.61278441942159
+01:54:55: (it 30) Solving master problem
+01:54:55: (it 30) Lower bound of -14427.000049344066
+01:54:55: (it 30) Storing complicating variables
+01:54:55: (it 30) Fixing complicating variables
+01:54:55: (it 30) Solving primal subproblem
+01:54:55: (it 30) Subproblem objective is -14427.00004934567
+01:54:55: (it 30) Primal objective is -14427.00004934567
+01:54:55: (it 30) Storing dual multipliers
+01:54:55: (it 30) Updated global upper bound
+01:54:55: (it 30) Iter:  30  | LB:     -14427      | UB:     -14427      | Fbl: True
+01:54:55: (it 31) lower bound >= upper bound
+01:54:55: (it 31) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 31) Fixing complicating variables
+01:54:55: (it 31) Solving original primal subproblem
+01:54:55: (it 31) Original subproblem objective is -64.5891749644077
+01:54:55: (it 31) Solving master problem
+01:54:55: (it 31) Lower bound of -14426.000049344066
+01:54:55: (it 31) Storing complicating variables
+01:54:55: (it 31) Fixing complicating variables
+01:54:55: (it 31) Solving primal subproblem
+01:54:55: (it 31) Subproblem objective is -14426.000049345701
+01:54:55: (it 31) Primal objective is -14426.000049345701
+01:54:55: (it 31) Storing dual multipliers
+01:54:55: (it 31) Updated global upper bound
+01:54:55: (it 31) Iter:  31  | LB:     -14426      | UB:     -14426      | Fbl: True
+01:54:55: (it 32) lower bound >= upper bound
+01:54:55: (it 32) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 32) Fixing complicating variables
+01:54:55: (it 32) Solving original primal subproblem
+01:54:55: (it 32) Original subproblem objective is -64.56556875939373
+01:54:55: (it 32) Solving master problem
+01:54:55: (it 32) Lower bound of -14425.000049344066
+01:54:55: (it 32) Storing complicating variables
+01:54:55: (it 32) Fixing complicating variables
+01:54:55: (it 32) Solving primal subproblem
+01:54:55: (it 32) Subproblem objective is -14425.000049345734
+01:54:55: (it 32) Primal objective is -14425.000049345734
+01:54:55: (it 32) Storing dual multipliers
+01:54:55: (it 32) Updated global upper bound
+01:54:55: (it 32) Iter:  32  | LB:     -14425      | UB:     -14425      | Fbl: True
+01:54:55: (it 33) lower bound >= upper bound
+01:54:55: (it 33) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 33) Fixing complicating variables
+01:54:55: (it 33) Solving original primal subproblem
+01:54:55: (it 33) Original subproblem objective is -64.54196580437986
+01:54:55: (it 33) Solving master problem
+01:54:55: (it 33) Lower bound of -14424.000049344066
+01:54:55: (it 33) Storing complicating variables
+01:54:55: (it 33) Fixing complicating variables
+01:54:55: (it 33) Solving primal subproblem
+01:54:55: (it 33) Subproblem objective is -14424.000049345761
+01:54:55: (it 33) Primal objective is -14424.000049345761
+01:54:55: (it 33) Storing dual multipliers
+01:54:55: (it 33) Updated global upper bound
+01:54:55: (it 33) Iter:  33  | LB:     -14424      | UB:     -14424      | Fbl: True
+01:54:55: (it 34) lower bound >= upper bound
+01:54:55: (it 34) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 34) Fixing complicating variables
+01:54:55: (it 34) Solving original primal subproblem
+01:54:55: (it 34) Original subproblem objective is -64.5174221787654
+01:54:55: (it 34) Solving master problem
+01:54:55: (it 34) Lower bound of -14423.000049344066
+01:54:55: (it 34) Storing complicating variables
+01:54:55: (it 34) Fixing complicating variables
+01:54:55: (it 34) Solving primal subproblem
+01:54:55: (it 34) Subproblem objective is -14423.00004934579
+01:54:55: (it 34) Primal objective is -14423.00004934579
+01:54:55: (it 34) Storing dual multipliers
+01:54:55: (it 34) Updated global upper bound
+01:54:55: (it 34) Iter:  34  | LB:     -14423      | UB:     -14423      | Fbl: True
+01:54:55: (it 35) lower bound >= upper bound
+01:54:55: (it 35) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 35) Fixing complicating variables
+01:54:55: (it 35) Solving original primal subproblem
+01:54:55: (it 35) Original subproblem objective is -64.49382585375147
+01:54:55: (it 35) Solving master problem
+01:54:55: (it 35) Lower bound of -14422.000049344066
+01:54:55: (it 35) Storing complicating variables
+01:54:55: (it 35) Fixing complicating variables
+01:54:55: (it 35) Solving primal subproblem
+01:54:55: (it 35) Subproblem objective is -14422.000049345814
+01:54:55: (it 35) Primal objective is -14422.000049345814
+01:54:55: (it 35) Storing dual multipliers
+01:54:55: (it 35) Updated global upper bound
+01:54:55: (it 35) Iter:  35  | LB:     -14422      | UB:     -14422      | Fbl: True
+01:54:55: (it 36) lower bound >= upper bound
+01:54:55: (it 36) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 36) Fixing complicating variables
+01:54:55: (it 36) Solving original primal subproblem
+01:54:55: (it 36) Original subproblem objective is -64.47023277873754
+01:54:55: (it 36) Solving master problem
+01:54:55: (it 36) Lower bound of -14421.000049344066
+01:54:55: (it 36) Storing complicating variables
+01:54:55: (it 36) Fixing complicating variables
+01:54:55: (it 36) Solving primal subproblem
+01:54:55: (it 36) Subproblem objective is -14421.000049345837
+01:54:55: (it 36) Primal objective is -14421.000049345837
+01:54:55: (it 36) Storing dual multipliers
+01:54:55: (it 36) Updated global upper bound
+01:54:55: (it 36) Iter:  36  | LB:     -14421      | UB:     -14421      | Fbl: True
+01:54:55: (it 37) lower bound >= upper bound
+01:54:55: (it 37) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 37) Fixing complicating variables
+01:54:55: (it 37) Solving original primal subproblem
+01:54:55: (it 37) Original subproblem objective is -64.44569942832305
+01:54:55: (it 37) Solving master problem
+01:54:55: (it 37) Lower bound of -14420.000049344066
+01:54:55: (it 37) Storing complicating variables
+01:54:55: (it 37) Fixing complicating variables
+01:54:55: (it 37) Solving primal subproblem
+01:54:55: (it 37) Subproblem objective is -14420.000049345861
+01:54:55: (it 37) Primal objective is -14420.000049345861
+01:54:55: (it 37) Storing dual multipliers
+01:54:55: (it 37) Updated global upper bound
+01:54:55: (it 37) Iter:  37  | LB:     -14420      | UB:     -14420      | Fbl: True
+01:54:55: (it 38) lower bound >= upper bound
+01:54:55: (it 38) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 38) Fixing complicating variables
+01:54:55: (it 38) Solving original primal subproblem
+01:54:55: (it 38) Original subproblem objective is -64.42211298330918
+01:54:55: (it 38) Solving master problem
+01:54:55: (it 38) Lower bound of -14419.000049344066
+01:54:55: (it 38) Storing complicating variables
+01:54:55: (it 38) Fixing complicating variables
+01:54:55: (it 38) Solving primal subproblem
+01:54:55: (it 38) Subproblem objective is -14419.000049345883
+01:54:55: (it 38) Primal objective is -14419.000049345883
+01:54:55: (it 38) Storing dual multipliers
+01:54:55: (it 38) Updated global upper bound
+01:54:55: (it 38) Iter:  38  | LB:     -14419      | UB:     -14419      | Fbl: True
+01:54:55: (it 39) lower bound >= upper bound
+01:54:55: (it 39) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 39) Fixing complicating variables
+01:54:55: (it 39) Solving original primal subproblem
+01:54:55: (it 39) Original subproblem objective is -64.39852978829535
+01:54:55: (it 39) Solving master problem
+01:54:55: (it 39) Lower bound of -14418.000049344066
+01:54:55: (it 39) Storing complicating variables
+01:54:55: (it 39) Fixing complicating variables
+01:54:55: (it 39) Solving primal subproblem
+01:54:55: (it 39) Subproblem objective is -14418.000049345901
+01:54:55: (it 39) Primal objective is -14418.000049345901
+01:54:55: (it 39) Storing dual multipliers
+01:54:55: (it 39) Updated global upper bound
+01:54:55: (it 39) Iter:  39  | LB:     -14418      | UB:     -14418      | Fbl: True
+01:54:55: (it 40) lower bound >= upper bound
+01:54:55: (it 40) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 40) Fixing complicating variables
+01:54:55: (it 40) Solving original primal subproblem
+01:54:55: (it 40) Original subproblem objective is -64.37400671308083
+01:54:55: (it 40) Solving master problem
+01:54:55: (it 40) Lower bound of -14417.000049344066
+01:54:55: (it 40) Storing complicating variables
+01:54:55: (it 40) Fixing complicating variables
+01:54:55: (it 40) Solving primal subproblem
+01:54:55: (it 40) Subproblem objective is -14417.000049345917
+01:54:55: (it 40) Primal objective is -14417.000049345917
+01:54:55: (it 40) Storing dual multipliers
+01:54:55: (it 40) Updated global upper bound
+01:54:55: (it 40) Iter:  40  | LB:     -14417      | UB:     -14417      | Fbl: True
+01:54:55: (it 41) lower bound >= upper bound
+01:54:55: (it 41) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 41) Fixing complicating variables
+01:54:55: (it 41) Solving original primal subproblem
+01:54:55: (it 41) Original subproblem objective is -64.35043014806695
+01:54:55: (it 41) Solving master problem
+01:54:55: (it 41) Lower bound of -14416.000049344066
+01:54:55: (it 41) Storing complicating variables
+01:54:55: (it 41) Fixing complicating variables
+01:54:55: (it 41) Solving primal subproblem
+01:54:55: (it 41) Subproblem objective is -14416.000049345936
+01:54:55: (it 41) Primal objective is -14416.000049345936
+01:54:55: (it 41) Storing dual multipliers
+01:54:55: (it 41) Updated global upper bound
+01:54:55: (it 41) Iter:  41  | LB:     -14416      | UB:     -14416      | Fbl: True
+01:54:55: (it 42) lower bound >= upper bound
+01:54:55: (it 42) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 42) Fixing complicating variables
+01:54:55: (it 42) Solving original primal subproblem
+01:54:55: (it 42) Original subproblem objective is -64.326856833053
+01:54:55: (it 42) Solving master problem
+01:54:55: (it 42) Lower bound of -14415.000049344066
+01:54:55: (it 42) Storing complicating variables
+01:54:55: (it 42) Fixing complicating variables
+01:54:55: (it 42) Solving primal subproblem
+01:54:55: (it 42) Subproblem objective is -14415.000049345957
+01:54:55: (it 42) Primal objective is -14415.000049345957
+01:54:55: (it 42) Storing dual multipliers
+01:54:55: (it 42) Updated global upper bound
+01:54:55: (it 42) Iter:  42  | LB:     -14415      | UB:     -14415      | Fbl: True
+01:54:55: (it 43) lower bound >= upper bound
+01:54:55: (it 43) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 43) Fixing complicating variables
+01:54:55: (it 43) Solving original primal subproblem
+01:54:55: (it 43) Original subproblem objective is -64.3023440330386
+01:54:55: (it 43) Solving master problem
+01:54:55: (it 43) Lower bound of -14414.000049344066
+01:54:55: (it 43) Storing complicating variables
+01:54:55: (it 43) Fixing complicating variables
+01:54:55: (it 43) Solving primal subproblem
+01:54:55: (it 43) Subproblem objective is -14414.000049345972
+01:54:55: (it 43) Primal objective is -14414.000049345972
+01:54:55: (it 43) Storing dual multipliers
+01:54:55: (it 43) Updated global upper bound
+01:54:55: (it 43) Iter:  43  | LB:     -14414      | UB:     -14414      | Fbl: True
+01:54:55: (it 44) lower bound >= upper bound
+01:54:55: (it 44) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 44) Fixing complicating variables
+01:54:55: (it 44) Solving original primal subproblem
+01:54:55: (it 44) Original subproblem objective is -64.2787773480247
+01:54:55: (it 44) Solving master problem
+01:54:55: (it 44) Lower bound of -14413.000049344066
+01:54:55: (it 44) Storing complicating variables
+01:54:55: (it 44) Fixing complicating variables
+01:54:55: (it 44) Solving primal subproblem
+01:54:55: (it 44) Subproblem objective is -14413.000049345983
+01:54:55: (it 44) Primal objective is -14413.000049345983
+01:54:55: (it 44) Storing dual multipliers
+01:54:55: (it 44) Updated global upper bound
+01:54:55: (it 44) Iter:  44  | LB:     -14413      | UB:     -14413      | Fbl: True
+01:54:55: (it 45) lower bound >= upper bound
+01:54:55: (it 45) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 45) Fixing complicating variables
+01:54:55: (it 45) Solving original primal subproblem
+01:54:55: (it 45) Original subproblem objective is -64.25521391301078
+01:54:55: (it 45) Solving master problem
+01:54:55: (it 45) Lower bound of -14412.000049344066
+01:54:55: (it 45) Storing complicating variables
+01:54:55: (it 45) Fixing complicating variables
+01:54:55: (it 45) Solving primal subproblem
+01:54:55: (it 45) Subproblem objective is -14412.000049346
+01:54:55: (it 45) Primal objective is -14412.000049346
+01:54:55: (it 45) Storing dual multipliers
+01:54:55: (it 45) Updated global upper bound
+01:54:55: (it 45) Iter:  45  | LB:     -14412      | UB:     -14412      | Fbl: True
+01:54:55: (it 46) lower bound >= upper bound
+01:54:55: (it 46) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 46) Fixing complicating variables
+01:54:55: (it 46) Solving original primal subproblem
+01:54:55: (it 46) Original subproblem objective is -64.23071138819643
+01:54:55: (it 46) Solving master problem
+01:54:55: (it 46) Lower bound of -14411.000049344066
+01:54:55: (it 46) Storing complicating variables
+01:54:55: (it 46) Fixing complicating variables
+01:54:55: (it 46) Solving primal subproblem
+01:54:55: (it 46) Subproblem objective is -14411.000049346017
+01:54:55: (it 46) Primal objective is -14411.000049346017
+01:54:55: (it 46) Storing dual multipliers
+01:54:55: (it 46) Updated global upper bound
+01:54:55: (it 46) Iter:  46  | LB:     -14411      | UB:     -14411      | Fbl: True
+01:54:55: (it 47) lower bound >= upper bound
+01:54:55: (it 47) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 47) Fixing complicating variables
+01:54:55: (it 47) Solving original primal subproblem
+01:54:55: (it 47) Original subproblem objective is -64.20715458318253
+01:54:55: (it 47) Solving master problem
+01:54:55: (it 47) Lower bound of -14410.000049344066
+01:54:55: (it 47) Storing complicating variables
+01:54:55: (it 47) Fixing complicating variables
+01:54:55: (it 47) Solving primal subproblem
+01:54:55: (it 47) Subproblem objective is -14410.000049346027
+01:54:55: (it 47) Primal objective is -14410.000049346027
+01:54:55: (it 47) Storing dual multipliers
+01:54:55: (it 47) Updated global upper bound
+01:54:55: (it 47) Iter:  47  | LB:     -14410      | UB:     -14410      | Fbl: True
+01:54:55: (it 48) lower bound >= upper bound
+01:54:55: (it 48) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 48) Fixing complicating variables
+01:54:55: (it 48) Solving original primal subproblem
+01:54:55: (it 48) Original subproblem objective is -64.18360102816862
+01:54:55: (it 48) Solving master problem
+01:54:55: (it 48) Lower bound of -14409.000049344066
+01:54:55: (it 48) Storing complicating variables
+01:54:55: (it 48) Fixing complicating variables
+01:54:55: (it 48) Solving primal subproblem
+01:54:55: (it 48) Subproblem objective is -14409.000049346041
+01:54:55: (it 48) Primal objective is -14409.000049346041
+01:54:55: (it 48) Storing dual multipliers
+01:54:55: (it 48) Updated global upper bound
+01:54:55: (it 48) Iter:  48  | LB:     -14409      | UB:     -14409      | Fbl: True
+01:54:55: (it 49) lower bound >= upper bound
+01:54:55: (it 49) Validating solution of convex relaxation by solving the original problem
+01:54:55: (it 49) Fixing complicating variables
+01:54:55: (it 49) Solving original primal subproblem
+01:54:56: (it 49) Original subproblem objective is -64.15910877855416
+01:54:56: (it 49) Solving master problem
+01:54:56: (it 49) Lower bound of -14408.000049344066
+01:54:56: (it 49) Storing complicating variables
+01:54:56: (it 49) Fixing complicating variables
+01:54:56: (it 49) Solving primal subproblem
+01:54:56: (it 49) Subproblem objective is -14408.000049346054
+01:54:56: (it 49) Primal objective is -14408.000049346054
+01:54:56: (it 49) Storing dual multipliers
+01:54:56: (it 49) Updated global upper bound
+01:54:56: (it 49) Iter:  49  | LB:     -14408      | UB:     -14408      | Fbl: True
+01:54:56: (it 50) lower bound >= upper bound
+01:54:56: (it 50) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 50) Fixing complicating variables
+01:54:56: (it 50) Solving original primal subproblem
+01:54:56: (it 50) Original subproblem objective is -64.13556185354031
+01:54:56: (it 50) Solving master problem
+01:54:56: (it 50) Lower bound of -14407.000049344066
+01:54:56: (it 50) Storing complicating variables
+01:54:56: (it 50) Fixing complicating variables
+01:54:56: (it 50) Solving primal subproblem
+01:54:56: (it 50) Subproblem objective is -14407.000049346063
+01:54:56: (it 50) Primal objective is -14407.000049346063
+01:54:56: (it 50) Storing dual multipliers
+01:54:56: (it 50) Updated global upper bound
+01:54:56: (it 50) Iter:  50  | LB:     -14407      | UB:     -14407      | Fbl: True
+01:54:56: (it 51) lower bound >= upper bound
+01:54:56: (it 51) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 51) Fixing complicating variables
+01:54:56: (it 51) Solving original primal subproblem
+01:54:56: (it 51) Original subproblem objective is -64.11201817852645
+01:54:56: (it 51) Solving master problem
+01:54:56: (it 51) Lower bound of -14406.000049344066
+01:54:56: (it 51) Storing complicating variables
+01:54:56: (it 51) Fixing complicating variables
+01:54:56: (it 51) Solving primal subproblem
+01:54:56: (it 51) Subproblem objective is -14406.000049346076
+01:54:56: (it 51) Primal objective is -14406.000049346076
+01:54:56: (it 51) Storing dual multipliers
+01:54:56: (it 51) Updated global upper bound
+01:54:56: (it 51) Iter:  51  | LB:     -14406      | UB:     -14406      | Fbl: True
+01:54:56: (it 52) lower bound >= upper bound
+01:54:56: (it 52) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 52) Fixing complicating variables
+01:54:56: (it 52) Solving original primal subproblem
+01:54:56: (it 52) Original subproblem objective is -64.08753620411201
+01:54:56: (it 52) Solving master problem
+01:54:56: (it 52) Lower bound of -14405.000049344066
+01:54:56: (it 52) Storing complicating variables
+01:54:56: (it 52) Fixing complicating variables
+01:54:56: (it 52) Solving primal subproblem
+01:54:56: (it 52) Subproblem objective is -14405.000049346085
+01:54:56: (it 52) Primal objective is -14405.000049346085
+01:54:56: (it 52) Storing dual multipliers
+01:54:56: (it 52) Updated global upper bound
+01:54:56: (it 52) Iter:  52  | LB:     -14405      | UB:     -14405      | Fbl: True
+01:54:56: (it 53) lower bound >= upper bound
+01:54:56: (it 53) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 53) Fixing complicating variables
+01:54:56: (it 53) Solving original primal subproblem
+01:54:56: (it 53) Original subproblem objective is -64.06399915909816
+01:54:56: (it 53) Solving master problem
+01:54:56: (it 53) Lower bound of -14404.000049344066
+01:54:56: (it 53) Storing complicating variables
+01:54:56: (it 53) Fixing complicating variables
+01:54:56: (it 53) Solving primal subproblem
+01:54:56: (it 53) Subproblem objective is -14404.000049346096
+01:54:56: (it 53) Primal objective is -14404.000049346096
+01:54:56: (it 53) Storing dual multipliers
+01:54:56: (it 53) Updated global upper bound
+01:54:56: (it 53) Iter:  53  | LB:     -14404      | UB:     -14404      | Fbl: True
+01:54:56: (it 54) lower bound >= upper bound
+01:54:56: (it 54) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 54) Fixing complicating variables
+01:54:56: (it 54) Solving original primal subproblem
+01:54:56: (it 54) Original subproblem objective is -64.04046536408435
+01:54:56: (it 54) Solving master problem
+01:54:56: (it 54) Lower bound of -14403.000049344066
+01:54:56: (it 54) Storing complicating variables
+01:54:56: (it 54) Fixing complicating variables
+01:54:56: (it 54) Solving primal subproblem
+01:54:56: (it 54) Subproblem objective is -14403.000049346105
+01:54:56: (it 54) Primal objective is -14403.000049346105
+01:54:56: (it 54) Storing dual multipliers
+01:54:56: (it 54) Updated global upper bound
+01:54:56: (it 54) Iter:  54  | LB:     -14403      | UB:     -14403      | Fbl: True
+01:54:56: (it 55) lower bound >= upper bound
+01:54:56: (it 55) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 55) Fixing complicating variables
+01:54:56: (it 55) Solving original primal subproblem
+01:54:56: (it 55) Original subproblem objective is -64.0169348190704
+01:54:56: (it 55) Solving master problem
+01:54:56: (it 55) Lower bound of -14402.000049344066
+01:54:56: (it 55) Storing complicating variables
+01:54:56: (it 55) Fixing complicating variables
+01:54:56: (it 55) Solving primal subproblem
+01:54:56: (it 55) Subproblem objective is -14402.000049346118
+01:54:56: (it 55) Primal objective is -14402.000049346118
+01:54:56: (it 55) Storing dual multipliers
+01:54:56: (it 55) Updated global upper bound
+01:54:56: (it 55) Iter:  55  | LB:     -14402      | UB:     -14402      | Fbl: True
+01:54:56: (it 56) lower bound >= upper bound
+01:54:56: (it 56) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 56) Fixing complicating variables
+01:54:56: (it 56) Solving original primal subproblem
+01:54:56: (it 56) Original subproblem objective is -63.99246649985602
+01:54:56: (it 56) Solving master problem
+01:54:56: (it 56) Lower bound of -14401.000049344066
+01:54:56: (it 56) Storing complicating variables
+01:54:56: (it 56) Fixing complicating variables
+01:54:56: (it 56) Solving primal subproblem
+01:54:56: (it 56) Subproblem objective is -14401.000049346125
+01:54:56: (it 56) Primal objective is -14401.000049346125
+01:54:56: (it 56) Storing dual multipliers
+01:54:56: (it 56) Updated global upper bound
+01:54:56: (it 56) Iter:  56  | LB:     -14401      | UB:     -14401      | Fbl: True
+01:54:56: (it 57) lower bound >= upper bound
+01:54:56: (it 57) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 57) Fixing complicating variables
+01:54:56: (it 57) Solving original primal subproblem
+01:54:56: (it 57) Original subproblem objective is -63.96894258484221
+01:54:56: (it 57) Solving master problem
+01:54:56: (it 57) Lower bound of -14400.000049344066
+01:54:56: (it 57) Storing complicating variables
+01:54:56: (it 57) Fixing complicating variables
+01:54:56: (it 57) Solving primal subproblem
+01:54:56: (it 57) Subproblem objective is -14400.000049346132
+01:54:56: (it 57) Primal objective is -14400.000049346132
+01:54:56: (it 57) Storing dual multipliers
+01:54:56: (it 57) Updated global upper bound
+01:54:56: (it 57) Iter:  57  | LB:     -14400      | UB:     -14400      | Fbl: True
+01:54:56: (it 58) lower bound >= upper bound
+01:54:56: (it 58) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 58) Fixing complicating variables
+01:54:56: (it 58) Solving original primal subproblem
+01:54:56: (it 58) Original subproblem objective is -63.945421919828334
+01:54:56: (it 58) Solving master problem
+01:54:56: (it 58) Lower bound of -14399.000049344066
+01:54:56: (it 58) Storing complicating variables
+01:54:56: (it 58) Fixing complicating variables
+01:54:56: (it 58) Solving primal subproblem
+01:54:56: (it 58) Subproblem objective is -14399.000049346145
+01:54:56: (it 58) Primal objective is -14399.000049346145
+01:54:56: (it 58) Storing dual multipliers
+01:54:56: (it 58) Updated global upper bound
+01:54:56: (it 58) Iter:  58  | LB:     -14399      | UB:     -14399      | Fbl: True
+01:54:56: (it 59) lower bound >= upper bound
+01:54:56: (it 59) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 59) Fixing complicating variables
+01:54:56: (it 59) Solving original primal subproblem
+01:54:56: (it 59) Original subproblem objective is -63.92096387581387
+01:54:56: (it 59) Solving master problem
+01:54:56: (it 59) Lower bound of -14398.000049344066
+01:54:56: (it 59) Storing complicating variables
+01:54:56: (it 59) Fixing complicating variables
+01:54:56: (it 59) Solving primal subproblem
+01:54:56: (it 59) Subproblem objective is -14398.000049346148
+01:54:56: (it 59) Primal objective is -14398.000049346148
+01:54:56: (it 59) Storing dual multipliers
+01:54:56: (it 59) Updated global upper bound
+01:54:56: (it 59) Iter:  59  | LB:     -14398      | UB:     -14398      | Fbl: True
+01:54:56: (it 60) lower bound >= upper bound
+01:54:56: (it 60) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 60) Fixing complicating variables
+01:54:56: (it 60) Solving original primal subproblem
+01:54:56: (it 60) Original subproblem objective is -63.89744984080005
+01:54:56: (it 60) Solving master problem
+01:54:56: (it 60) Lower bound of -14397.000049344066
+01:54:56: (it 60) Storing complicating variables
+01:54:56: (it 60) Fixing complicating variables
+01:54:56: (it 60) Solving primal subproblem
+01:54:56: (it 60) Subproblem objective is -14397.000049346156
+01:54:56: (it 60) Primal objective is -14397.000049346156
+01:54:56: (it 60) Storing dual multipliers
+01:54:56: (it 60) Updated global upper bound
+01:54:56: (it 60) Iter:  60  | LB:     -14397      | UB:     -14397      | Fbl: True
+01:54:56: (it 61) lower bound >= upper bound
+01:54:56: (it 61) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 61) Fixing complicating variables
+01:54:56: (it 61) Solving original primal subproblem
+01:54:56: (it 61) Original subproblem objective is -63.873939055786224
+01:54:56: (it 61) Solving master problem
+01:54:56: (it 61) Lower bound of -14396.000049344066
+01:54:56: (it 61) Storing complicating variables
+01:54:56: (it 61) Fixing complicating variables
+01:54:56: (it 61) Solving primal subproblem
+01:54:56: (it 61) Subproblem objective is -14396.000049346168
+01:54:56: (it 61) Primal objective is -14396.000049346168
+01:54:56: (it 61) Storing dual multipliers
+01:54:56: (it 61) Updated global upper bound
+01:54:56: (it 61) Iter:  61  | LB:     -14396      | UB:     -14396      | Fbl: True
+01:54:56: (it 62) lower bound >= upper bound
+01:54:56: (it 62) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 62) Fixing complicating variables
+01:54:56: (it 62) Solving original primal subproblem
+01:54:56: (it 62) Original subproblem objective is -63.849491286971784
+01:54:56: (it 62) Solving master problem
+01:54:56: (it 62) Lower bound of -14395.000049344066
+01:54:56: (it 62) Storing complicating variables
+01:54:56: (it 62) Fixing complicating variables
+01:54:56: (it 62) Solving primal subproblem
+01:54:56: (it 62) Subproblem objective is -14395.000049346172
+01:54:56: (it 62) Primal objective is -14395.000049346172
+01:54:56: (it 62) Storing dual multipliers
+01:54:56: (it 62) Updated global upper bound
+01:54:56: (it 62) Iter:  62  | LB:     -14395      | UB:     -14395      | Fbl: True
+01:54:56: (it 63) lower bound >= upper bound
+01:54:56: (it 63) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 63) Fixing complicating variables
+01:54:56: (it 63) Solving original primal subproblem
+01:54:56: (it 63) Original subproblem objective is -63.82598713195799
+01:54:56: (it 63) Solving master problem
+01:54:56: (it 63) Lower bound of -14394.000049344066
+01:54:56: (it 63) Storing complicating variables
+01:54:56: (it 63) Fixing complicating variables
+01:54:56: (it 63) Solving primal subproblem
+01:54:56: (it 63) Subproblem objective is -14394.000049346181
+01:54:56: (it 63) Primal objective is -14394.000049346181
+01:54:56: (it 63) Storing dual multipliers
+01:54:56: (it 63) Updated global upper bound
+01:54:56: (it 63) Iter:  63  | LB:     -14394      | UB:     -14394      | Fbl: True
+01:54:56: (it 64) lower bound >= upper bound
+01:54:56: (it 64) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 64) Fixing complicating variables
+01:54:56: (it 64) Solving original primal subproblem
+01:54:56: (it 64) Original subproblem objective is -63.802486226944154
+01:54:56: (it 64) Solving master problem
+01:54:56: (it 64) Lower bound of -14393.000049344066
+01:54:56: (it 64) Storing complicating variables
+01:54:56: (it 64) Fixing complicating variables
+01:54:56: (it 64) Solving primal subproblem
+01:54:56: (it 64) Subproblem objective is -14393.000049346187
+01:54:56: (it 64) Primal objective is -14393.000049346187
+01:54:56: (it 64) Storing dual multipliers
+01:54:56: (it 64) Updated global upper bound
+01:54:56: (it 64) Iter:  64  | LB:     -14393      | UB:     -14393      | Fbl: True
+01:54:56: (it 65) lower bound >= upper bound
+01:54:56: (it 65) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 65) Fixing complicating variables
+01:54:56: (it 65) Solving original primal subproblem
+01:54:56: (it 65) Original subproblem objective is -63.77804873332974
+01:54:56: (it 65) Solving master problem
+01:54:56: (it 65) Lower bound of -14392.000049344066
+01:54:56: (it 65) Storing complicating variables
+01:54:56: (it 65) Fixing complicating variables
+01:54:56: (it 65) Solving primal subproblem
+01:54:56: (it 65) Subproblem objective is -14392.000049346194
+01:54:56: (it 65) Primal objective is -14392.000049346194
+01:54:56: (it 65) Storing dual multipliers
+01:54:56: (it 65) Updated global upper bound
+01:54:56: (it 65) Iter:  65  | LB:     -14392      | UB:     -14392      | Fbl: True
+01:54:56: (it 66) lower bound >= upper bound
+01:54:56: (it 66) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 66) Fixing complicating variables
+01:54:56: (it 66) Solving original primal subproblem
+01:54:56: (it 66) Original subproblem objective is -63.75455445831591
+01:54:56: (it 66) Solving master problem
+01:54:56: (it 66) Lower bound of -14391.000049344066
+01:54:56: (it 66) Storing complicating variables
+01:54:56: (it 66) Fixing complicating variables
+01:54:56: (it 66) Solving primal subproblem
+01:54:56: (it 66) Subproblem objective is -14391.000049346201
+01:54:56: (it 66) Primal objective is -14391.000049346201
+01:54:56: (it 66) Storing dual multipliers
+01:54:56: (it 66) Updated global upper bound
+01:54:56: (it 66) Iter:  66  | LB:     -14391      | UB:     -14391      | Fbl: True
+01:54:56: (it 67) lower bound >= upper bound
+01:54:56: (it 67) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 67) Fixing complicating variables
+01:54:56: (it 67) Solving original primal subproblem
+01:54:56: (it 67) Original subproblem objective is -63.7310634333021
+01:54:56: (it 67) Solving master problem
+01:54:56: (it 67) Lower bound of -14390.000049344066
+01:54:56: (it 67) Storing complicating variables
+01:54:56: (it 67) Fixing complicating variables
+01:54:56: (it 67) Solving primal subproblem
+01:54:56: (it 67) Subproblem objective is -14390.000049346203
+01:54:56: (it 67) Primal objective is -14390.000049346203
+01:54:56: (it 67) Storing dual multipliers
+01:54:56: (it 67) Updated global upper bound
+01:54:56: (it 67) Iter:  67  | LB:     -14390      | UB:     -14390      | Fbl: True
+01:54:56: (it 68) lower bound >= upper bound
+01:54:56: (it 68) Validating solution of convex relaxation by solving the original problem
+01:54:56: (it 68) Fixing complicating variables
+01:54:56: (it 68) Solving original primal subproblem
+01:54:56: (it 68) Original subproblem objective is -63.70663621488771
+01:54:56: (it 68) Solving master problem
+01:54:56: (it 68) Lower bound of -14389.000049344066
+01:54:56: (it 68) Storing complicating variables
+01:54:56: (it 68) Fixing complicating variables
+01:54:56: (it 68) Solving primal subproblem
+01:54:57: (it 68) Subproblem objective is -14389.00004934621
+01:54:57: (it 68) Primal objective is -14389.00004934621
+01:54:57: (it 68) Storing dual multipliers
+01:54:57: (it 68) Updated global upper bound
+01:54:57: (it 68) Iter:  68  | LB:     -14389      | UB:     -14389      | Fbl: True
+01:54:57: (it 69) lower bound >= upper bound
+01:54:57: (it 69) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 69) Fixing complicating variables
+01:54:57: (it 69) Solving original primal subproblem
+01:54:57: (it 69) Original subproblem objective is -63.68315181987393
+01:54:57: (it 69) Solving master problem
+01:54:57: (it 69) Lower bound of -14388.000049344066
+01:54:57: (it 69) Storing complicating variables
+01:54:57: (it 69) Fixing complicating variables
+01:54:57: (it 69) Solving primal subproblem
+01:54:57: (it 69) Subproblem objective is -14388.00004934622
+01:54:57: (it 69) Primal objective is -14388.00004934622
+01:54:57: (it 69) Storing dual multipliers
+01:54:57: (it 69) Updated global upper bound
+01:54:57: (it 69) Iter:  69  | LB:     -14388      | UB:     -14388      | Fbl: True
+01:54:57: (it 70) lower bound >= upper bound
+01:54:57: (it 70) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 70) Fixing complicating variables
+01:54:57: (it 70) Solving original primal subproblem
+01:54:57: (it 70) Original subproblem objective is -63.65967067486005
+01:54:57: (it 70) Solving master problem
+01:54:57: (it 70) Lower bound of -14387.000049344066
+01:54:57: (it 70) Storing complicating variables
+01:54:57: (it 70) Fixing complicating variables
+01:54:57: (it 70) Solving primal subproblem
+01:54:57: (it 70) Subproblem objective is -14387.000049346223
+01:54:57: (it 70) Primal objective is -14387.000049346223
+01:54:57: (it 70) Storing dual multipliers
+01:54:57: (it 70) Updated global upper bound
+01:54:57: (it 70) Iter:  70  | LB:     -14387      | UB:     -14387      | Fbl: True
+01:54:57: (it 71) lower bound >= upper bound
+01:54:57: (it 71) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 71) Fixing complicating variables
+01:54:57: (it 71) Solving original primal subproblem
+01:54:57: (it 71) Original subproblem objective is -63.63525373164572
+01:54:57: (it 71) Solving master problem
+01:54:57: (it 71) Lower bound of -14386.000049344066
+01:54:57: (it 71) Storing complicating variables
+01:54:57: (it 71) Fixing complicating variables
+01:54:57: (it 71) Solving primal subproblem
+01:54:57: (it 71) Subproblem objective is -14386.00004934623
+01:54:57: (it 71) Primal objective is -14386.00004934623
+01:54:57: (it 71) Storing dual multipliers
+01:54:57: (it 71) Updated global upper bound
+01:54:57: (it 71) Iter:  71  | LB:     -14386      | UB:     -14386      | Fbl: True
+01:54:57: (it 72) lower bound >= upper bound
+01:54:57: (it 72) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 72) Fixing complicating variables
+01:54:57: (it 72) Solving original primal subproblem
+01:54:57: (it 72) Original subproblem objective is -63.611779216631874
+01:54:57: (it 72) Solving master problem
+01:54:57: (it 72) Lower bound of -14385.000049344066
+01:54:57: (it 72) Storing complicating variables
+01:54:57: (it 72) Fixing complicating variables
+01:54:57: (it 72) Solving primal subproblem
+01:54:57: (it 72) Subproblem objective is -14385.000049346234
+01:54:57: (it 72) Primal objective is -14385.000049346234
+01:54:57: (it 72) Storing dual multipliers
+01:54:57: (it 72) Updated global upper bound
+01:54:57: (it 72) Iter:  72  | LB:     -14385      | UB:     -14385      | Fbl: True
+01:54:57: (it 73) lower bound >= upper bound
+01:54:57: (it 73) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 73) Fixing complicating variables
+01:54:57: (it 73) Solving original primal subproblem
+01:54:57: (it 73) Original subproblem objective is -63.58830795161808
+01:54:57: (it 73) Solving master problem
+01:54:57: (it 73) Lower bound of -14384.000049344066
+01:54:57: (it 73) Storing complicating variables
+01:54:57: (it 73) Fixing complicating variables
+01:54:57: (it 73) Solving primal subproblem
+01:54:57: (it 73) Subproblem objective is -14384.000049346241
+01:54:57: (it 73) Primal objective is -14384.000049346241
+01:54:57: (it 73) Storing dual multipliers
+01:54:57: (it 73) Updated global upper bound
+01:54:57: (it 73) Iter:  73  | LB:     -14384      | UB:     -14384      | Fbl: True
+01:54:57: (it 74) lower bound >= upper bound
+01:54:57: (it 74) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 74) Fixing complicating variables
+01:54:57: (it 74) Solving original primal subproblem
+01:54:57: (it 74) Original subproblem objective is -63.564839936604244
+01:54:57: (it 74) Solving master problem
+01:54:57: (it 74) Lower bound of -14383.000049344066
+01:54:57: (it 74) Storing complicating variables
+01:54:57: (it 74) Fixing complicating variables
+01:54:57: (it 74) Solving primal subproblem
+01:54:57: (it 74) Subproblem objective is -14383.000049346243
+01:54:57: (it 74) Primal objective is -14383.000049346243
+01:54:57: (it 74) Storing dual multipliers
+01:54:57: (it 74) Updated global upper bound
+01:54:57: (it 74) Iter:  74  | LB:     -14383      | UB:     -14383      | Fbl: True
+01:54:57: (it 75) lower bound >= upper bound
+01:54:57: (it 75) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 75) Fixing complicating variables
+01:54:57: (it 75) Solving original primal subproblem
+01:54:57: (it 75) Original subproblem objective is -63.54043664858986
+01:54:57: (it 75) Solving master problem
+01:54:57: (it 75) Lower bound of -14382.000049344066
+01:54:57: (it 75) Storing complicating variables
+01:54:57: (it 75) Fixing complicating variables
+01:54:57: (it 75) Solving primal subproblem
+01:54:57: (it 75) Subproblem objective is -14382.000049346248
+01:54:57: (it 75) Primal objective is -14382.000049346248
+01:54:57: (it 75) Storing dual multipliers
+01:54:57: (it 75) Updated global upper bound
+01:54:57: (it 75) Iter:  75  | LB:     -14382      | UB:     -14382      | Fbl: True
+01:54:57: (it 76) lower bound >= upper bound
+01:54:57: (it 76) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 76) Fixing complicating variables
+01:54:57: (it 76) Solving original primal subproblem
+01:54:57: (it 76) Original subproblem objective is -63.516975263576086
+01:54:57: (it 76) Solving master problem
+01:54:57: (it 76) Lower bound of -14381.000049344066
+01:54:57: (it 76) Storing complicating variables
+01:54:57: (it 76) Fixing complicating variables
+01:54:57: (it 76) Solving primal subproblem
+01:54:57: (it 76) Subproblem objective is -14381.000049346254
+01:54:57: (it 76) Primal objective is -14381.000049346254
+01:54:57: (it 76) Storing dual multipliers
+01:54:57: (it 76) Updated global upper bound
+01:54:57: (it 76) Iter:  76  | LB:     -14381      | UB:     -14381      | Fbl: True
+01:54:57: (it 77) lower bound >= upper bound
+01:54:57: (it 77) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 77) Fixing complicating variables
+01:54:57: (it 77) Solving original primal subproblem
+01:54:57: (it 77) Original subproblem objective is -63.4935171285623
+01:54:57: (it 77) Solving master problem
+01:54:57: (it 77) Lower bound of -14380.000049344066
+01:54:57: (it 77) Storing complicating variables
+01:54:57: (it 77) Fixing complicating variables
+01:54:57: (it 77) Solving primal subproblem
+01:54:57: (it 77) Subproblem objective is -14380.000049346258
+01:54:57: (it 77) Primal objective is -14380.000049346258
+01:54:57: (it 77) Storing dual multipliers
+01:54:57: (it 77) Updated global upper bound
+01:54:57: (it 77) Iter:  77  | LB:     -14380      | UB:     -14380      | Fbl: True
+01:54:57: (it 78) lower bound >= upper bound
+01:54:57: (it 78) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 78) Fixing complicating variables
+01:54:57: (it 78) Solving original primal subproblem
+01:54:57: (it 78) Original subproblem objective is -63.46912411574792
+01:54:57: (it 78) Solving master problem
+01:54:57: (it 78) Lower bound of -14379.000049344066
+01:54:57: (it 78) Storing complicating variables
+01:54:57: (it 78) Fixing complicating variables
+01:54:57: (it 78) Solving primal subproblem
+01:54:57: (it 78) Subproblem objective is -14379.00004934626
+01:54:57: (it 78) Primal objective is -14379.00004934626
+01:54:57: (it 78) Storing dual multipliers
+01:54:57: (it 78) Updated global upper bound
+01:54:57: (it 78) Iter:  78  | LB:     -14379      | UB:     -14379      | Fbl: True
+01:54:57: (it 79) lower bound >= upper bound
+01:54:57: (it 79) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 79) Fixing complicating variables
+01:54:57: (it 79) Solving original primal subproblem
+01:54:57: (it 79) Original subproblem objective is -63.445672610734135
+01:54:57: (it 79) Solving master problem
+01:54:57: (it 79) Lower bound of -14378.000049344066
+01:54:57: (it 79) Storing complicating variables
+01:54:57: (it 79) Fixing complicating variables
+01:54:57: (it 79) Solving primal subproblem
+01:54:57: (it 79) Subproblem objective is -14378.000049346268
+01:54:57: (it 79) Primal objective is -14378.000049346268
+01:54:57: (it 79) Storing dual multipliers
+01:54:57: (it 79) Updated global upper bound
+01:54:57: (it 79) Iter:  79  | LB:     -14378      | UB:     -14378      | Fbl: True
+01:54:57: (it 80) lower bound >= upper bound
+01:54:57: (it 80) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 80) Fixing complicating variables
+01:54:57: (it 80) Solving original primal subproblem
+01:54:57: (it 80) Original subproblem objective is -63.422224355720346
+01:54:57: (it 80) Solving master problem
+01:54:57: (it 80) Lower bound of -14377.000049344066
+01:54:57: (it 80) Storing complicating variables
+01:54:57: (it 80) Fixing complicating variables
+01:54:57: (it 80) Solving primal subproblem
+01:54:57: (it 80) Subproblem objective is -14377.000049346272
+01:54:57: (it 80) Primal objective is -14377.000049346272
+01:54:57: (it 80) Storing dual multipliers
+01:54:57: (it 80) Updated global upper bound
+01:54:57: (it 80) Iter:  80  | LB:     -14377      | UB:     -14377      | Fbl: True
+01:54:57: (it 81) lower bound >= upper bound
+01:54:57: (it 81) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 81) Fixing complicating variables
+01:54:57: (it 81) Solving original primal subproblem
+01:54:57: (it 81) Original subproblem objective is -63.397841618105986
+01:54:57: (it 81) Solving master problem
+01:54:57: (it 81) Lower bound of -14376.000049344066
+01:54:57: (it 81) Storing complicating variables
+01:54:57: (it 81) Fixing complicating variables
+01:54:57: (it 81) Solving primal subproblem
+01:54:57: (it 81) Subproblem objective is -14376.000049346276
+01:54:57: (it 81) Primal objective is -14376.000049346276
+01:54:57: (it 81) Storing dual multipliers
+01:54:57: (it 81) Updated global upper bound
+01:54:57: (it 81) Iter:  81  | LB:     -14376      | UB:     -14376      | Fbl: True
+01:54:57: (it 82) lower bound >= upper bound
+01:54:57: (it 82) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 82) Fixing complicating variables
+01:54:57: (it 82) Solving original primal subproblem
+01:54:57: (it 82) Original subproblem objective is -63.37439999309214
+01:54:57: (it 82) Solving master problem
+01:54:57: (it 82) Lower bound of -14375.000049344066
+01:54:57: (it 82) Storing complicating variables
+01:54:57: (it 82) Fixing complicating variables
+01:54:57: (it 82) Solving primal subproblem
+01:54:57: (it 82) Subproblem objective is -14375.00004934628
+01:54:57: (it 82) Primal objective is -14375.00004934628
+01:54:57: (it 82) Storing dual multipliers
+01:54:57: (it 82) Updated global upper bound
+01:54:57: (it 82) Iter:  82  | LB:     -14375      | UB:     -14375      | Fbl: True
+01:54:57: (it 83) lower bound >= upper bound
+01:54:57: (it 83) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 83) Fixing complicating variables
+01:54:57: (it 83) Solving original primal subproblem
+01:54:57: (it 83) Original subproblem objective is -63.35096161807837
+01:54:57: (it 83) Solving master problem
+01:54:57: (it 83) Lower bound of -14374.000049344066
+01:54:57: (it 83) Storing complicating variables
+01:54:57: (it 83) Fixing complicating variables
+01:54:57: (it 83) Solving primal subproblem
+01:54:57: (it 83) Subproblem objective is -14374.000049346283
+01:54:57: (it 83) Primal objective is -14374.000049346283
+01:54:57: (it 83) Storing dual multipliers
+01:54:57: (it 83) Updated global upper bound
+01:54:57: (it 83) Iter:  83  | LB:     -14374      | UB:     -14374      | Fbl: True
+01:54:57: (it 84) lower bound >= upper bound
+01:54:57: (it 84) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 84) Fixing complicating variables
+01:54:57: (it 84) Solving original primal subproblem
+01:54:57: (it 84) Original subproblem objective is -63.32658915566407
+01:54:57: (it 84) Solving master problem
+01:54:57: (it 84) Lower bound of -14373.000049344066
+01:54:57: (it 84) Storing complicating variables
+01:54:57: (it 84) Fixing complicating variables
+01:54:57: (it 84) Solving primal subproblem
+01:54:57: (it 84) Subproblem objective is -14373.000049346289
+01:54:57: (it 84) Primal objective is -14373.000049346289
+01:54:57: (it 84) Storing dual multipliers
+01:54:57: (it 84) Updated global upper bound
+01:54:57: (it 84) Iter:  84  | LB:     -14373      | UB:     -14373      | Fbl: True
+01:54:57: (it 85) lower bound >= upper bound
+01:54:57: (it 85) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 85) Fixing complicating variables
+01:54:57: (it 85) Solving original primal subproblem
+01:54:57: (it 85) Original subproblem objective is -63.30315741065024
+01:54:57: (it 85) Solving master problem
+01:54:57: (it 85) Lower bound of -14372.000049344066
+01:54:57: (it 85) Storing complicating variables
+01:54:57: (it 85) Fixing complicating variables
+01:54:57: (it 85) Solving primal subproblem
+01:54:57: (it 85) Subproblem objective is -14372.00004934629
+01:54:57: (it 85) Primal objective is -14372.00004934629
+01:54:57: (it 85) Storing dual multipliers
+01:54:57: (it 85) Updated global upper bound
+01:54:57: (it 85) Iter:  85  | LB:     -14372      | UB:     -14372      | Fbl: True
+01:54:57: (it 86) lower bound >= upper bound
+01:54:57: (it 86) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 86) Fixing complicating variables
+01:54:57: (it 86) Solving original primal subproblem
+01:54:57: (it 86) Original subproblem objective is -63.2797289156365
+01:54:57: (it 86) Solving master problem
+01:54:57: (it 86) Lower bound of -14371.000049344066
+01:54:57: (it 86) Storing complicating variables
+01:54:57: (it 86) Fixing complicating variables
+01:54:57: (it 86) Solving primal subproblem
+01:54:57: (it 86) Subproblem objective is -14371.000049346298
+01:54:57: (it 86) Primal objective is -14371.000049346298
+01:54:57: (it 86) Storing dual multipliers
+01:54:57: (it 86) Updated global upper bound
+01:54:57: (it 86) Iter:  86  | LB:     -14371      | UB:     -14371      | Fbl: True
+01:54:57: (it 87) lower bound >= upper bound
+01:54:57: (it 87) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 87) Fixing complicating variables
+01:54:57: (it 87) Solving original primal subproblem
+01:54:57: (it 87) Original subproblem objective is -63.25536672842219
+01:54:57: (it 87) Solving master problem
+01:54:57: (it 87) Lower bound of -14370.000049344066
+01:54:57: (it 87) Storing complicating variables
+01:54:57: (it 87) Fixing complicating variables
+01:54:57: (it 87) Solving primal subproblem
+01:54:57: (it 87) Subproblem objective is -14370.0000493463
+01:54:57: (it 87) Primal objective is -14370.0000493463
+01:54:57: (it 87) Storing dual multipliers
+01:54:57: (it 87) Updated global upper bound
+01:54:57: (it 87) Iter:  87  | LB:     -14370      | UB:     -14370      | Fbl: True
+01:54:57: (it 88) lower bound >= upper bound
+01:54:57: (it 88) Validating solution of convex relaxation by solving the original problem
+01:54:57: (it 88) Fixing complicating variables
+01:54:57: (it 88) Solving original primal subproblem
+01:54:58: (it 88) Original subproblem objective is -63.23194486340839
+01:54:58: (it 88) Solving master problem
+01:54:58: (it 88) Lower bound of -14369.000049344066
+01:54:58: (it 88) Storing complicating variables
+01:54:58: (it 88) Fixing complicating variables
+01:54:58: (it 88) Solving primal subproblem
+01:54:58: (it 88) Subproblem objective is -14369.000049346301
+01:54:58: (it 88) Primal objective is -14369.000049346301
+01:54:58: (it 88) Storing dual multipliers
+01:54:58: (it 88) Updated global upper bound
+01:54:58: (it 88) Iter:  88  | LB:     -14369      | UB:     -14369      | Fbl: True
+01:54:58: (it 89) lower bound >= upper bound
+01:54:58: (it 89) Validating solution of convex relaxation by solving the original problem
+01:54:58: (it 89) Fixing complicating variables
+01:54:58: (it 89) Solving original primal subproblem
+01:54:58: (it 89) Original subproblem objective is -63.208526248394605
+01:54:58: (it 89) Solving master problem
+01:54:58: (it 89) Lower bound of -14368.000049344066
+01:54:58: (it 89) Storing complicating variables
+01:54:58: (it 89) Fixing complicating variables
+01:54:58: (it 89) Solving primal subproblem
+01:54:58: (it 89) Subproblem objective is -14368.000049346309
+01:54:58: (it 89) Primal objective is -14368.000049346309
+01:54:58: (it 89) Storing dual multipliers
+01:54:58: (it 89) Updated global upper bound
+01:54:58: (it 89) Iter:  89  | LB:     -14368      | UB:     -14368      | Fbl: True
+01:54:58: (it 90) lower bound >= upper bound
+01:54:58: (it 90) Validating solution of convex relaxation by solving the original problem
+01:54:58: (it 90) Fixing complicating variables
+01:54:58: (it 90) Solving original primal subproblem
+01:54:58: (it 90) Original subproblem objective is -63.184174336380266
+01:54:58: (it 90) Solving master problem
+01:54:58: (it 90) Lower bound of -14367.000049344066
+01:54:58: (it 90) Storing complicating variables
+01:54:58: (it 90) Fixing complicating variables
+01:54:58: (it 90) Solving primal subproblem
+01:54:58: (it 90) Subproblem objective is -14367.000049346309
+01:54:58: (it 90) Primal objective is -14367.000049346309
+01:54:58: (it 90) Storing dual multipliers
+01:54:58: (it 90) Updated global upper bound
+01:54:58: (it 90) Iter:  90  | LB:     -14367      | UB:     -14367      | Fbl: True
+01:54:58: (it 91) lower bound >= upper bound
+01:54:58: (it 91) Validating solution of convex relaxation by solving the original problem
+01:54:58: (it 91) Fixing complicating variables
+01:54:58: (it 91) Solving original primal subproblem
+01:54:58: (it 91) Original subproblem objective is -63.160762351366515
+01:54:58: (it 91) Solving master problem
+01:54:58: (it 91) Lower bound of -14366.000049344066
+01:54:58: (it 91) Storing complicating variables
+01:54:58: (it 91) Fixing complicating variables
+01:54:58: (it 91) Solving primal subproblem
+01:54:58: (it 91) Subproblem objective is -14366.000049346312
+01:54:58: (it 91) Primal objective is -14366.000049346312
+01:54:58: (it 91) Storing dual multipliers
+01:54:58: (it 91) Updated global upper bound
+01:54:58: (it 91) Iter:  91  | LB:     -14366      | UB:     -14366      | Fbl: True
+01:54:58: (it 92) lower bound >= upper bound
+01:54:58: (it 92) Validating solution of convex relaxation by solving the original problem
+01:54:58: (it 92) Fixing complicating variables
+01:54:58: (it 92) Solving original primal subproblem
+01:54:58: (it 92) Original subproblem objective is -63.13735361635278
+01:54:58: (it 92) Solving master problem
+01:54:58: (it 92) Lower bound of -14365.000049344066
+01:54:58: (it 92) Storing complicating variables
+01:54:58: (it 92) Fixing complicating variables
+01:54:58: (it 92) Solving primal subproblem
+01:54:58: (it 92) Subproblem objective is -14365.000049346314
+01:54:58: (it 92) Primal objective is -14365.000049346314
+01:54:58: (it 92) Storing dual multipliers
+01:54:58: (it 92) Updated global upper bound
+01:54:58: (it 92) Iter:  92  | LB:     -14365      | UB:     -14365      | Fbl: True
+01:54:58: (it 93) lower bound >= upper bound
+01:54:58: (it 93) Validating solution of convex relaxation by solving the original problem
+01:54:58: (it 93) Fixing complicating variables
+01:54:58: (it 93) Solving original primal subproblem
+01:54:58: (it 93) Original subproblem objective is -63.11394813133899
+01:54:58: (it 93) Solving master problem
+01:54:58: (it 93) Lower bound of -14364.000049344066
+01:54:58: (it 93) Storing complicating variables
+01:54:58: (it 93) Fixing complicating variables
+01:54:58: (it 93) Solving primal subproblem
+01:54:58: (it 93) Subproblem objective is -14364.00004934632
+01:54:58: (it 93) Primal objective is -14364.00004934632
+01:54:58: (it 93) Storing dual multipliers
+01:54:58: (it 93) Updated global upper bound
+01:54:58: (it 93) Iter:  93  | LB:     -14364      | UB:     -14364      | Fbl: True
+01:54:58: (it 94) lower bound >= upper bound
+01:54:58: (it 94) Validating solution of convex relaxation by solving the original problem
+01:54:58: (it 94) Fixing complicating variables
+01:54:58: (it 94) Solving original primal subproblem
+01:54:58: (it 94) Original subproblem objective is -63.08960987452468
+01:54:58: (it 94) Solving master problem
+01:54:58: (it 94) Lower bound of -14363.000049344066
+01:54:58: (it 94) Storing complicating variables
+01:54:58: (it 94) Fixing complicating variables
+01:54:58: (it 94) Solving primal subproblem
+01:54:58: (it 94) Subproblem objective is -14363.000049346321
+01:54:58: (it 94) Primal objective is -14363.000049346321
+01:54:58: (it 94) Storing dual multipliers
+01:54:58: (it 94) Updated global upper bound
+01:54:58: (it 94) Iter:  94  | LB:     -14363      | UB:     -14363      | Fbl: True
+01:54:58: (it 95) lower bound >= upper bound
+01:54:58: (it 95) Validating solution of convex relaxation by solving the original problem
+01:54:58: (it 95) Fixing complicating variables
+01:54:58: (it 95) Solving original primal subproblem
+01:54:58: (it 95) Original subproblem objective is -63.06621101951089
+01:54:58: (it 95) Solving master problem
+01:54:58: (it 95) Lower bound of -14362.000049344066
+01:54:58: (it 95) Storing complicating variables
+01:54:58: (it 95) Fixing complicating variables
+01:54:58: (it 95) Solving primal subproblem
+01:54:58: (it 95) Subproblem objective is -14362.000049346327
+01:54:58: (it 95) Primal objective is -14362.000049346327
+01:54:58: (it 95) Storing dual multipliers
+01:54:58: (it 95) Updated global upper bound
+01:54:58: (it 95) Iter:  95  | LB:     -14362      | UB:     -14362      | Fbl: True
+01:54:58: (it 96) lower bound >= upper bound
+01:54:58: (it 96) Validating solution of convex relaxation by solving the original problem
+01:54:58: (it 96) Fixing complicating variables
+01:54:58: (it 96) Solving original primal subproblem
+01:54:58: (it 96) Original subproblem objective is -63.04281541449714
+01:54:58: (it 96) Solving master problem
+01:54:58: (it 96) Lower bound of -14361.000049344066
+01:54:58: (it 96) Storing complicating variables
+01:54:58: (it 96) Fixing complicating variables
+01:54:58: (it 96) Solving primal subproblem
+01:54:58: (it 96) Subproblem objective is -14361.000049346327
+01:54:58: (it 96) Primal objective is -14361.000049346327
+01:54:58: (it 96) Storing dual multipliers
+01:54:58: (it 96) Updated global upper bound
+01:54:58: (it 96) Iter:  96  | LB:     -14361      | UB:     -14361      | Fbl: True
+01:54:58: (it 97) lower bound >= upper bound
+01:54:58: (it 97) Validating solution of convex relaxation by solving the original problem
+01:54:58: (it 97) Fixing complicating variables
+01:54:58: (it 97) Solving original primal subproblem
+01:54:58: (it 97) Original subproblem objective is -63.018487432882864
+01:54:58: (it 97) Solving master problem
+01:54:58: (it 97) Lower bound of -14360.000049344066
+01:54:58: (it 97) Storing complicating variables
+01:54:58: (it 97) Fixing complicating variables
+01:54:58: (it 97) Solving primal subproblem
+01:54:58: (it 97) Subproblem objective is -14360.00004934633
+01:54:58: (it 97) Primal objective is -14360.00004934633
+01:54:58: (it 97) Storing dual multipliers
+01:54:58: (it 97) Updated global upper bound
+01:54:58: (it 97) Iter:  97  | LB:     -14360      | UB:     -14360      | Fbl: True
+01:54:58: (it 98) lower bound >= upper bound
+01:54:58: (it 98) Validating solution of convex relaxation by solving the original problem
+01:54:58: (it 98) Fixing complicating variables
+01:54:58: (it 98) Solving original primal subproblem
+01:54:58: (it 98) Original subproblem objective is -62.99509845786906
+01:54:58: (it 98) Solving master problem
+01:54:58: (it 98) Lower bound of -14359.000049344066
+01:54:58: (it 98) Storing complicating variables
+01:54:58: (it 98) Fixing complicating variables
+01:54:58: (it 98) Solving primal subproblem
+01:54:58: (it 98) Subproblem objective is -14359.00004934633
+01:54:58: (it 98) Primal objective is -14359.00004934633
+01:54:58: (it 98) Storing dual multipliers
+01:54:58: (it 98) Updated global upper bound
+01:54:58: (it 98) Iter:  98  | LB:     -14359      | UB:     -14359      | Fbl: True
+01:54:58: (it 99) lower bound >= upper bound
+01:54:58: (it 99) Validating solution of convex relaxation by solving the original problem
+01:54:58: (it 99) Fixing complicating variables
+01:54:58: (it 99) Solving original primal subproblem
+01:54:58: (it 99) Original subproblem objective is -62.971712732855394
+01:54:58: (it 99) Solving master problem
+01:54:58: (it 99) Lower bound of -14358.000049344066
+01:54:58: (it 99) Storing complicating variables
+01:54:58: (it 99) Fixing complicating variables
+01:54:58: (it 99) Solving primal subproblem
+01:54:58: (it 99) Subproblem objective is -14358.000049346338
+01:54:58: (it 99) Primal objective is -14358.000049346338
+01:54:58: (it 99) Storing dual multipliers
+01:54:58: (it 99) Updated global upper bound
+01:54:58: (it 99) Iter:  99  | LB:     -14358      | UB:     -14358      | Fbl: True
+01:54:58: (it 100) iteration limit
+01:54:58: (it 100) Validating solution of convex relaxation by solving the original problem
+01:54:58: (it 100) Fixing complicating variables
+01:54:58: (it 100) Solving original primal subproblem
+01:54:58: (it 100) Original subproblem objective is -62.947395026441114
+01:54:58: (it 100) iteration limit
+01:54:58: 
 v = -65.25999999999999 
 y = {'y': 2.875443057745444}
-runtime = 6 s (0.0 h)
-21:46:49: NGBD algorithm terminated with feasible solution
+runtime = 5 s (0.0 h)
+01:54:58: NGBD algorithm terminated with feasible solution

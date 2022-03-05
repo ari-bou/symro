@@ -1,10 +1,10 @@
 import symro
-import symro.src.mat as mat
-from symro.src.prob.problem import Problem
-from symro.src.parsing.amplparser import AMPLParser
-import symro.src.handlers.nodebuilder as nb
-import symro.src.handlers.formulator as frm
-from symro.test.test_util import *
+import symro.mat as mat
+from symro.prob.problem import Problem
+from symro.parsing.amplparser import AMPLParser
+import symro.handlers.nodebuilder as nb
+import symro.handlers.formulator as frm
+from .test_util import *
 
 
 # Scripts
@@ -25,10 +25,10 @@ minimize OBJ: 0;
 # Tests
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 def test_expansion():
 
-    problem = symro.read_ampl(script_literal=SCRIPT,
-                              working_dir_path=SCRIPT_DIR_PATH)
+    problem = symro.read_ampl(script_literal=SCRIPT, working_dir_path=SCRIPT_DIR_PATH)
 
     ampl_parser = AMPLParser(problem)
 
@@ -91,15 +91,12 @@ def test_expansion():
     literal = "2 ^ (1/0.8)"
     node = ampl_parser.parse_arithmetic_expression(literal)
     node = __standardize_expression(problem, node)
-    assert str(node) == (
-        "((2 ^ (1 * (1 / 0.8))))"
-    )
+    assert str(node) == ("((2 ^ (1 * (1 / 0.8))))")
 
 
 def test_simplification():
 
-    problem = symro.read_ampl(script_literal=SCRIPT,
-                              working_dir_path=SCRIPT_DIR_PATH)
+    problem = symro.read_ampl(script_literal=SCRIPT, working_dir_path=SCRIPT_DIR_PATH)
 
     ampl_parser = AMPLParser(problem)
 
@@ -125,13 +122,17 @@ def test_simplification():
 # Utility
 # ----------------------------------------------------------------------------------------------------------------------
 
+
 def __standardize_expression(problem: Problem, node: mat.ArithmeticExpressionNode):
     node = frm.reformulate_arithmetic_conditional_expressions(node)
     node = frm.reformulate_subtraction_and_unary_negation(node)
     terms = frm.expand_multiplication(problem, node)
     ref_terms = []
     for term in terms:
-        if isinstance(term, mat.ArithmeticOperationNode) and term.operator == mat.MULTIPLICATION_OPERATOR:
+        if (
+            isinstance(term, mat.ArithmeticOperationNode)
+            and term.operator == mat.MULTIPLICATION_OPERATOR
+        ):
             term = frm.combine_arithmetic_reduction_nodes(problem, term)
             ref_terms.append(term)
         else:

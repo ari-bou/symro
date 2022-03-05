@@ -1,14 +1,19 @@
 from abc import ABC, abstractmethod
-
-import numpy as np
-from ordered_set import OrderedSet
 from typing import Callable, List, Optional, Set, Tuple, Union
 
-from symro.src.mat.util import Element, IndexingSet, cartesian_product, remove_set_dimensions
-from symro.src.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode, ArithmeticExpressionNode, \
-    StringExpressionNode
+import numpy as np
+
+from symro.src.mat.orderedset import OrderedSet
+from symro.src.mat.types import Element, IndexingSet
+from symro.src.mat.util import (cartesian_product, remove_set_dimensions,)
+from symro.src.mat.exprn import (
+    ExpressionNode,
+    LogicalExpressionNode,
+    SetExpressionNode,
+    ArithmeticExpressionNode,
+    StringExpressionNode,)
 from symro.src.mat.opern import SetOperationNode
-from symro.src.mat.dummyn import BaseDummyNode, DummyNode, CompoundDummyNode
+from symro.src.mat.dummyn import (BaseDummyNode, DummyNode, CompoundDummyNode,)
 from symro.src.mat.state import State
 
 
@@ -167,7 +172,7 @@ class OrderedSetNode(BaseSetNode):
         return literal
 
 
-class EnumeratedSet(BaseSetNode):
+class EnumeratedSetNode(BaseSetNode):
 
     def __init__(self,
                  element_nodes: List[Union[ArithmeticExpressionNode,
@@ -497,12 +502,26 @@ class CompoundSetNode(BaseSetNode):
     def get_dummy_component_nodes(self, state: State) -> List[Union[DummyNode,
                                                                     ArithmeticExpressionNode,
                                                                     StringExpressionNode]]:
+        """
+        Retrieves the dummy component nodes of the compound set node in a flattened, ordered list. Includes both
+        unbound dummy symbols and arithmetic/string expressions. The order corresponds to the order in
+        which the components appear in the compound set node.
+
+        :param state: mutable state of the problem
+        :return: flattened ordered list of dummy component nodes belonging to the compound set node
+        """
         dummy_nodes = []
         for set_node in self.set_nodes:
             dummy_nodes.extend(set_node.get_dummy_component_nodes(state))
         return dummy_nodes
 
     def get_dummy_element(self, state: State) -> Element:
+        """
+        Retrieves dummy element of the compound set node.
+
+        :param state: mutable state of the problem
+        :return: element
+        """
         dummy_syms = []
         for set_node in self.set_nodes:
             dummy_syms.extend(set_node.get_dummy_element(state))
@@ -510,7 +529,7 @@ class CompoundSetNode(BaseSetNode):
 
     def get_defined_unbound_symbols(self, outer_unb_syms: Set[str] = None) -> OrderedSet[str]:
         """
-        Retrieve ordered set of unbound symbols defined by the compound set node. The order corresponds to the order in
+        Retrieves ordered set of unbound symbols defined by the compound set node. The order corresponds to the order in
         which the unbound symbols are defined.
 
         :param outer_unb_syms: set of unbound symbols defined in the outer scope (exclusive filter)

@@ -1,7 +1,9 @@
-from typing import Optional, Callable
+from typing import Callable, List, Optional, Tuple, Union
 
 import numpy as np
-from symro.src.mat.util import *
+
+from symro.src.mat.constants import *
+from symro.src.mat.types import Element, IndexingSet
 from symro.src.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode
 from symro.src.mat.opern import SetOperationNode
 from symro.src.mat.setn import CompoundSetNode

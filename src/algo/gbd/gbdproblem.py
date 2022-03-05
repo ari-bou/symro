@@ -12,11 +12,11 @@ DEFAULT_FBL_SP_SYMBOL = "Feasibility"
 CUT_COUNT_PARAM_SYMBOL = "CUT_COUNT"
 CUTS_SET_SYMBOL = "CUTS"
 
-IS_FEASIBLE_PARAM_SYMBOL = "is_feasible"
+IS_FEASIBLE_PARAM_SYMBOL = "IS_FEASIBLE"
 
-STORED_OBJ_PARAM_SYMBOL = "obj_stored"
+STORED_OBJ_PARAM_SYMBOL = "OBJ_STORED"
 
-ETA_VAR_SYMBOL = "eta"
+ETA_VAR_SYMBOL = "ETA"
 
 MASTER_OBJ_SYMBOL = "MASTER_OBJ"
 PRIMAL_OBJ_SYMBOL = "PRIMAL_OBJ"
@@ -25,6 +25,7 @@ FBL_OBJ_SYMBOL = "FBL_OBJ"
 OPT_CUT_CON_SYMBOL = "GBD_OPT_CUT"
 FBL_CUT_CON_SYMBOL = "GBD_FBL_CUT"
 CAN_INT_CUT_CON_SYMBOL = "GBD_CANON_INT_CUT"
+ETA_BOUND_CON_SYMBOL = "ETA_BOUNDS"
 
 
 class GBDSubproblemContainer:
@@ -87,8 +88,6 @@ class GBDProblem(Problem):
         self.is_feasible_sym = self.generate_unique_symbol(IS_FEASIBLE_PARAM_SYMBOL)
         self.stored_obj_sym = self.generate_unique_symbol(STORED_OBJ_PARAM_SYMBOL)
 
-        self.eta_sym = self.generate_unique_symbol(ETA_VAR_SYMBOL)
-
         self.mp_obj_sym: str = self.generate_unique_symbol(MASTER_OBJ_SYMBOL)
         self.primal_sp_obj_sym: str = primal_sp_obj_sym
         self.default_fbl_sp_obj_sym: str = self.generate_unique_symbol(FBL_OBJ_SYMBOL)
@@ -96,6 +95,7 @@ class GBDProblem(Problem):
         self.opt_cut_con_sym = self.generate_unique_symbol(OPT_CUT_CON_SYMBOL)
         self.fbl_cut_con_sym = self.generate_unique_symbol(FBL_CUT_CON_SYMBOL)
         self.can_int_cut_con_sym = self.generate_unique_symbol(CAN_INT_CUT_CON_SYMBOL)
+        self.eta_bound_con_sym = self.generate_unique_symbol(ETA_BOUND_CON_SYMBOL)
 
         # --- Algorithm Meta-Entities ---
 
@@ -106,6 +106,8 @@ class GBDProblem(Problem):
         # Meta-Parameters
         self.cut_count: Optional[mat.MetaParameter] = None
         self.is_feasible: Optional[mat.MetaParameter] = None
+        self.eta_lb: Optional[mat.MetaParameter] = None
+        self.eta_ub: Optional[mat.MetaParameter] = None
         self.stored_obj: Optional[mat.MetaParameter] = None
         self.stored_comp_decisions: Dict[str, mat.MetaParameter] = {}
         self.duality_multipliers: Dict[int, mat.MetaParameter] = {}
@@ -132,7 +134,6 @@ class GBDProblem(Problem):
         self.mixed_comp_cons: Dict[str, mat.MetaConstraint] = {}
         self.non_comp_cons: Dict[str, mat.MetaConstraint] = {}
 
-        self.origin_to_std_con_map: Optional[Dict[str, List[mat.MetaConstraint]]] = None
         self.std_to_sl_map: Dict[str, Tuple[List[mat.MetaVariable], mat.MetaConstraint]] = {}
 
         self.sl_fbl_cons: Dict[str, mat.MetaConstraint] = {}
@@ -150,7 +151,12 @@ class GBDProblem(Problem):
 
         self.mp: Optional[BaseProblem] = None
 
-    def build_mp_constructs(self, init_lb: float):
+        # Flags
+        self.is_y_binary: bool = False
+
+    def build_mp_constructs(self,
+                            init_lb: float,
+                            init_ub: float):
 
         self.cut_count = eb.build_meta_param(
             problem=self,
@@ -178,6 +184,20 @@ class GBDProblem(Problem):
             default_value=0)
         self.add_meta_parameter(self.is_feasible, is_auxiliary=True)
 
+        self.eta_lb = eb.build_meta_param(
+            problem=self,
+            symbol=self.generate_unique_symbol(ETA_VAR_SYMBOL + "_LB"),
+            default_value=init_lb
+        )
+        self.add_meta_parameter(self.eta_lb, is_auxiliary=True)
+
+        self.eta_ub = eb.build_meta_param(
+            problem=self,
+            symbol=self.generate_unique_symbol(ETA_VAR_SYMBOL + "_UB"),
+            default_value=init_ub
+        )
+        self.add_meta_parameter(self.eta_ub, is_auxiliary=True)
+
         self.stored_obj = eb.build_meta_param(
             problem=self,
             symbol=self.stored_obj_sym,
@@ -189,8 +209,8 @@ class GBDProblem(Problem):
 
         self.eta = eb.build_meta_var(
             problem=self,
-            symbol=self.eta_sym,
-            lower_bound=init_lb)
+            symbol=self.generate_unique_symbol(ETA_VAR_SYMBOL),
+        )
         self.add_meta_variable(self.eta, is_auxiliary=True)
 
     def get_idx_meta_sets(self) -> List[mat.MetaSet]:

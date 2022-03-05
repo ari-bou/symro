@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Callable, Dict, List, Optional, Union
 
 import symro.src.util.util as util
@@ -64,14 +65,22 @@ class StatementCollection(BaseStatement):
 # Scripts
 # ----------------------------------------------------------------------------------------------------------------------
 
+class ScriptType(Enum):
+    MODEL = 1
+    DATA = 2
+    COMMANDS = 3
+
+
 class Script:
 
     def __init__(self,
                  name: str = "main",
+                 script_type: ScriptType = ScriptType.COMMANDS,
                  raw_literal: str = None,
                  tokens: List[str] = None,
                  statements: List[BaseStatement] = None):
         self.name: str = name
+        self.script_type: ScriptType = script_type
         self.raw_literal: str = raw_literal
         self.tokens: List[str] = tokens
         self.token_index: int = 0
@@ -85,6 +94,7 @@ class Script:
 
     def copy(self, source: "Script"):
         self.name = source.name
+        self.script_type = source.script_type
         self.raw_literal = source.raw_literal
         self.tokens = list(source.tokens)
         self.token_index = source.token_index

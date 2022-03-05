@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
-import numpy as np
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
-from symro.src.mat.util import Element, IndexingSet
+import numpy as np
+
+from symro.src.mat.types import Element, IndexingSet
 from symro.src.mat.entity import Parameter, Variable
 from symro.src.mat.state import State
 

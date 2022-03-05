@@ -16,6 +16,11 @@ from symro.src.algo.gbd import GBDProblem, GBDSubproblemContainer, GBDProblemBui
 import symro.src.util.util as util
 
 
+EntityValue = float
+IndexedEntityValue = Dict[mat.Element, EntityValue]
+EntityValueCollection = Dict[str, Union[EntityValue, IndexedEntityValue]]
+
+
 class GBDAlgorithm:
 
     # Construction
@@ -35,17 +40,26 @@ class GBDAlgorithm:
                  working_dir_path: str = None):
 
         # --- Problem ---
-        self.problem = problem
         self.gbd_problem: Optional[GBDProblem] = None
 
         # --- Handlers ---
-        self.__gbd_problem_builder: GBDProblemBuilder = GBDProblemBuilder(problem)
-        self.__engine: Optional[Engine] = None
+        self._gbd_problem_builder: GBDProblemBuilder = self._build_gbd_problem_builder()
+        self._engine: Optional[Engine] = None
 
-        # --- Options ---
+        # --- Algorithmic Constructs ---
+
+        self.algorithm_name: str = "GBD"
+
+        self.it: int = 0
 
         self.init_lb: float = init_lb
         self.init_ub: float = init_ub
+        self.lb: float = init_lb
+        self.ub: float = init_ub
+
+        self.log: str = ""
+
+        # --- Options ---
 
         self.mp_solve_options: Optional[Dict[str, Union[int, float, str]]] = None
         self.sp_solve_options: Optional[Dict[str, Union[int, float, str]]] = None
@@ -62,37 +76,38 @@ class GBDAlgorithm:
         self.before_mp_solve: Callable[[GBDProblem, int], None] = before_mp_solve
         self.before_sp_solve: Callable[[GBDProblem, int, str, mat.Element], None] = before_sp_solve
 
-        # --- Algorithmic Constructs ---
+        # --- Problem Construction ---
+        self.gbd_problem = self._gbd_problem_builder.build_and_initialize_gbd_problem(
+            problem=problem,
+            comp_var_defs=complicating_vars,
+            mp_symbol=mp_symbol,
+            primal_sp_symbol=primal_sp_symbol,
+            fbl_sp_symbol=fbl_sp_symbol,
+            primal_sp_obj_symbol=primal_sp_obj_symbol,
+            init_lb=init_lb,
+            init_ub=init_ub,
+            working_dir_path=working_dir_path
+        )
 
-        self.log: str = ""
-
-        self.gbd_problem = self.__gbd_problem_builder.build_gbd_problem(problem=self.problem,
-                                                                        comp_var_defs=complicating_vars,
-                                                                        mp_symbol=mp_symbol,
-                                                                        primal_sp_symbol=primal_sp_symbol,
-                                                                        fbl_sp_symbol=fbl_sp_symbol,
-                                                                        primal_sp_obj_symbol=primal_sp_obj_symbol,
-                                                                        init_lb=init_lb,
-                                                                        working_dir_path=working_dir_path)
+    def _build_gbd_problem_builder(self):
+        return GBDProblemBuilder()
 
     # Setup
     # ------------------------------------------------------------------------------------------------------------------
 
     def add_decomposition_subproblem(self,
                                      sp_symbol: str,
-                                     vars: List[str] = None,
-                                     obj: str = None,
-                                     cons: List[str] = None):
-        self.__gbd_problem_builder.build_defined_primal_sp(sp_sym=sp_symbol,
-                                                           var_defs=vars,
-                                                           obj_def=obj,
-                                                           con_defs=cons)
+                                     entity_defs: List[str] = None,
+                                     linked_entity_defs: List[str] = None):
+        self._gbd_problem_builder.build_or_retrieve_defined_primal_sp(sp_sym=sp_symbol,
+                                                                      entity_defs=entity_defs,
+                                                                      linked_entity_defs=linked_entity_defs)
 
     def add_decomposition_axes(self, idx_set_defs: List[str]):
-        self.__gbd_problem_builder.add_decomposition_axes(idx_set_defs)
+        self._gbd_problem_builder.add_decomposition_axes(idx_set_defs)
 
     def setup(self):
-        self.__gbd_problem_builder.build_gbd_constructs()
+        self._gbd_problem_builder.build_gbd_constructs()
 
     # Run
     # ------------------------------------------------------------------------------------------------------------------
@@ -108,7 +123,12 @@ class GBDAlgorithm:
             can_catch_exceptions: bool = False,
             can_write_log: bool = True):
 
-        # --- Parameter Storage ---
+        # --- Algorithm Setup --
+        self.it = 0
+        self.lb = self.init_lb
+        self.ub = self.init_ub
+
+        # --- Options ---
 
         self.mp_solve_options: Dict[str, Union[int, float, str]] = mp_solve_options
         self.sp_solve_options: Dict[str, Union[int, float, str]] = sp_solve_options
@@ -124,12 +144,12 @@ class GBDAlgorithm:
 
         # --- Execution ---
 
-        self.__setup_engine()
+        self._setup_engine()
 
-        self.__log_message("Running GBD")
+        self.__log_message(f"Running {self.algorithm_name}")
 
         try:
-            v_ub, y = self.__run_algorithm()
+            v_ub, y = self._run_algorithm()
         except Exception as e:
             v_ub = None
             y = None
@@ -143,285 +163,283 @@ class GBDAlgorithm:
 
         return v_ub, y
 
-    def __setup_engine(self):
+    def _setup_engine(self):
         self.__log_message("Setting up engine")
-        self.__engine = AMPLEngine(self.gbd_problem)
-        self.__engine.can_store_soln = False
+        self._engine = AMPLEngine(self.gbd_problem)
+        self._engine.can_store_soln = False
 
-    def __run_algorithm(self):
+    def _run_algorithm(self) -> Tuple[float, EntityValueCollection]:
 
         start_time = datetime.now()
-        is_feasible, v_ub, y = self.__run_loop()
+        self._reset_cut_count()
+        is_feasible, v_ub, y = self._run_loop()
         sol_time = datetime.now() - start_time
 
         self.__print_solution(is_feasible, v_ub, y, sol_time.total_seconds())
 
         if is_feasible:
-            self.__log_message("GBD algorithm terminated with feasible solution")
+            self.__log_message(f"{self.algorithm_name} algorithm terminated with feasible solution")
         else:
-            self.__log_message("GBD algorithm terminated with infeasible solution")
+            self.__log_message(f"{self.algorithm_name} algorithm terminated with infeasible solution")
 
         return v_ub, y
 
     # Algorithm
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __run_loop(self) -> Tuple[bool,
-                                  float,
-                                  Dict[str, Union[float, Dict[tuple, float]]]]:
+    def _run_loop(self) -> Tuple[bool,
+                                 float,
+                                 Dict[str, Union[float, Dict[tuple, float]]]]:
 
         is_feasible = False
-        ub = 0
-        global_lb = self.init_lb
-        global_ub = self.init_ub
+        ub_i = 0
         y_ub = {}
         dual_soln = {}
-
-        iter = 0
         can_iterate = True
-
-        self.__reset_cut_count()
 
         while can_iterate:
 
             is_it_feasible = False
 
             # set master problem as active problem
-            self.__set_problem(self.gbd_problem.mp.symbol)
+            self._engine.set_active_problem(self.gbd_problem.mp.symbol)
 
             # solve master problem
-            can_iterate, lb = self.__solve_mp(iter)
+            can_iterate, lb = self.__solve_mp(self.it)
 
             if can_iterate:
 
                 # update lower bound
-                if lb > global_lb:
-                    global_lb = lb
-                    self.__log_indexed_message("Updated global lower bound", iter)
+                if lb > self.lb:
+                    self.lb = lb
+                    self._log_indexed_message("Updated global lower bound", self.it)
 
                 # increment cut count
                 self.__increment_cut_count()
 
                 # store complicating variables
-                self.__log_indexed_message("Storing complicating variables", iter)
+                self._log_indexed_message("Storing complicating variables", self.it)
                 y_i = self.__store_complicating_variables()
 
                 self.__set_is_feasible_flag(True)  # set default value of feasibility flag
                 self.__set_stored_obj_value(0)  # set default value of the objective
 
                 # solve primal subproblems
-                is_it_feasible, ub = self.__solve_primal_problem(iter=iter, dual_soln=dual_soln)
-                self.__log_indexed_message("Objective is {0}".format(ub), iter)
+                is_it_feasible, ub_i = self.__solve_primal_problem(dual_soln=dual_soln)
+                self._log_indexed_message("Primal objective is {0}".format(ub_i), self.it)
 
-                self.__set_stored_obj_value(ub)  # store upper bound of current iteration
+                self.__set_stored_obj_value(ub_i)  # store upper bound of current iteration
 
-                self.__log_indexed_message("Storing dual multipliers", iter)
+                self._log_indexed_message("Storing dual multipliers", self.it)
                 self.__set_duality_multipliers(dual_soln)  # set duality multipliers
 
                 # update global upper bound
-                if ub < global_ub and is_it_feasible:
-                    global_ub = ub
+                if ub_i < self.ub and is_it_feasible:
+                    self.ub = ub_i
                     y_ub = y_i
                     is_feasible = True
-                    self.__log_indexed_message("Updated global upper bound", iter)
+                    self._log_indexed_message("Updated global upper bound", self.it)
 
             # output
-            self.__print_iteration_output(iter,
-                                          global_lb,
-                                          global_ub,
+            self.__print_iteration_output(self.it,
+                                          self.lb,
+                                          self.ub,
                                           is_it_feasible)
 
-            iter += 1  # increment iteration counter
+            self.it += 1  # increment iteration counter
 
             # termination criteria
-
-            if iter >= self.max_iter_count:  # iteration limit reached
-                self.__log_indexed_message("Termination: iteration limit", iter)
-                can_iterate = False
-
-            elif global_lb >= global_ub:  # lower bound surpassed upper bound
-                self.__log_indexed_message("Termination: lower bound >= upper bound", iter)
-                can_iterate = False
-
-            else:
-
-                epsilon_rel = abs(2 * (global_ub - global_lb) / (abs(global_ub) + abs(global_lb)))
-                if epsilon_rel <= self.rel_opt_tol:  # relative error within tolerance
-                    message = "Termination: epsilon-optimal solution with relative error = {0}".format(epsilon_rel)
-                    self.__log_indexed_message(message, iter)
-                    can_iterate = False
-
-                elif self.abs_opt_tol is not None:
-                    epsilon_abs = global_ub - global_lb
-                    if epsilon_abs <= self.abs_opt_tol:  # absolute error within tolerance
-                        message = "Termination: epsilon-optimal solution with absolute error = {0}".format(epsilon_abs)
-                        self.__log_indexed_message(message, iter)
-                        can_iterate = False
+            can_iterate = self._check_termination_criteria()
 
         if not is_feasible:  # no feasible solution was found
-            global_ub = ub
+            self.ub = ub_i
 
-        return is_feasible, global_ub, y_ub
+        return is_feasible, self.ub, y_ub
+
+    def _check_termination_criteria(self) -> bool:
+
+        if self.it >= self.max_iter_count:  # iteration limit reached
+            self._log_indexed_message("iteration limit", self.it)
+            return False
+
+        if self.lb >= self.ub:  # lower bound surpassed upper bound
+            self._log_indexed_message("lower bound >= upper bound", self.it)
+            return False
+
+        epsilon_rel = self._calculate_relative_error(lb=self.lb, ub=self.ub)
+        if epsilon_rel <= self.rel_opt_tol:  # relative error within tolerance
+            message = f"GBD epsilon-optimal solution with relative error = {epsilon_rel}"
+            self._log_indexed_message(message, self.it)
+            return False
+
+        if self.abs_opt_tol is not None:
+            epsilon_abs = self._calculate_absolute_error(lb=self.lb, ub=self.ub)
+            if epsilon_abs <= self.abs_opt_tol:  # absolute error within tolerance
+                message = f"GBD epsilon-optimal solution with absolute error = {epsilon_abs}"
+                self._log_indexed_message(message, self.it)
+                return False
+
+        return True
+
+    @staticmethod
+    def _calculate_absolute_error(lb: float, ub: float):
+        return ub - lb
+
+    @staticmethod
+    def _calculate_relative_error(lb: float, ub: float):
+        return abs(2 * (ub - lb) / (abs(ub) + abs(lb)))
 
     def __solve_primal_problem(self,
-                               iter: int,
                                dual_soln: Dict[str, Union[float,
                                                           Dict[Tuple[Union[int, float, str, None], ...], float]]]):
 
-        is_feasible = True
-        ub = 0
+        is_feasible_i = True
+        ub_i = 0
 
         for sp_container in self.gbd_problem.sp_containers:
 
-            if is_feasible:
+            if is_feasible_i:
 
-                is_primal_sp_fbl, v_sp = self.__solve_primal_sp(iter=iter,
-                                                                sp_container=sp_container,
+                is_primal_sp_fbl, v_sp = self.__solve_primal_sp(sp_container=sp_container,
                                                                 dual_soln=dual_soln)
 
                 if is_primal_sp_fbl:
-                    ub += v_sp  # update current upper bound
+                    ub_i += v_sp  # update current upper bound
                 else:
-                    self.__log_indexed_message("Primal subproblem is infeasible",
-                                               iter=iter,
-                                               sp_sym=sp_container.primal_sp.symbol,
-                                               sp_index=sp_container.sp_index)
-                    is_feasible = False
-                    ub = 0  # reset current upper bound
+                    self._log_indexed_message("Primal subproblem is infeasible",
+                                              iter=self.it,
+                                              sp_sym=sp_container.primal_sp.symbol,
+                                              sp_idx=sp_container.sp_index)
+                    is_feasible_i = False
+                    ub_i = 0  # reset current upper bound
                     self.__reset_dual_solution(dual_soln)
 
-            if not is_feasible:
-                _, v_fbl_sp = self.__solve_fbl_sp(iter=iter,
-                                                  sp_container=sp_container,
+            if not is_feasible_i:
+                _, v_fbl_sp = self.__solve_fbl_sp(sp_container=sp_container,
                                                   dual_soln=dual_soln)
-                ub += v_fbl_sp  # update current upper bound
+                ub_i += v_fbl_sp  # update current upper bound
 
-        return is_feasible, ub
+        return is_feasible_i, ub_i
 
     def __solve_mp(self, iter: int) -> Tuple[bool, float]:
         before_mp_solve = self.before_mp_solve
         if before_mp_solve is not None:
             before_mp_solve(self.gbd_problem, iter)
 
-        self.__log_indexed_message("Solving master problem", iter)
+        self._log_indexed_message("Solving master problem", iter)
 
-        self.__engine.solve(solve_options=self.mp_solve_options)
-        solver_output = self.__engine.get_solver_output()
-        self.__print_solver_output(solver_output)
+        self._engine.solve(solve_options=self.mp_solve_options)
+        solver_output = self._engine.get_solver_output()
+        self._print_solver_output(solver_output)
 
-        status = self.__engine.get_status()
+        status = self._engine.get_status()
 
         if status in ["infeasible", "failure"]:
-            self.__log_indexed_message("Master problem is infeasible", iter)
+            self._log_indexed_message("Master problem is infeasible", iter)
             return False, 0
         else:
-            lb = self.__engine.get_obj_value(self.gbd_problem.mp_obj_sym)
-            self.__log_indexed_message("Lower bound of {0}".format(lb), iter)
+            lb = self._engine.get_obj_value(self.gbd_problem.mp_obj_sym)
+            self._log_indexed_message("Lower bound of {0}".format(lb), iter)
             return True, lb
 
     def __solve_primal_sp(self,
-                          iter: int,
                           sp_container: GBDSubproblemContainer,
                           dual_soln: Dict[str, Union[float, Dict[Tuple[Union[int, float, str, None], ...], float]]]
                           ) -> Tuple[bool, float]:
 
-        self.__set_problem(problem_sym=sp_container.primal_sp.symbol,
-                           problem_idx=sp_container.sp_index)
+        self._engine.set_active_problem(problem_symbol=sp_container.primal_sp.symbol,
+                                        problem_idx=sp_container.sp_index)
 
-        self.__log_indexed_message("Fixing complicating variables",
-                                   iter=iter,
-                                   sp_sym=sp_container.primal_sp.symbol,
-                                   sp_index=sp_container.sp_index)
-        self.__fix_complicating_variables(sp_container=sp_container)
+        self._log_indexed_message("Fixing complicating variables",
+                                  iter=self.it,
+                                  sp_sym=sp_container.primal_sp.symbol,
+                                  sp_idx=sp_container.sp_index)
+        self._fix_complicating_variables(engine=self._engine, sp_container=sp_container)
 
         if self.before_sp_solve is not None:
             self.before_sp_solve(self.gbd_problem,
-                                 iter,
+                                 self.it,
                                  sp_container.primal_sp.symbol,
                                  sp_container.sp_index)
 
-        self.__log_indexed_message("Solving primal subproblem",
-                                   iter=iter,
-                                   sp_sym=sp_container.primal_sp.symbol,
-                                   sp_index=sp_container.sp_index)
+        self._log_indexed_message("Solving primal subproblem",
+                                  iter=self.it,
+                                  sp_sym=sp_container.primal_sp.symbol,
+                                  sp_idx=sp_container.sp_index)
 
-        self.__engine.solve(solve_options=self.sp_solve_options)
-        solver_output = self.__engine.get_solver_output()
-        self.__print_solver_output(solver_output)
+        self._engine.solve(solve_options=self.sp_solve_options)
+        solver_output = self._engine.get_solver_output()
+        self._print_solver_output(solver_output)
 
-        if not self.__interpret_solver_result(solver_output,
-                                              iter=iter,
-                                              sp_sym=sp_container.primal_sp.symbol,
-                                              sp_index=sp_container.sp_index):
+        if not self._interpret_solver_result(solver_output,
+                                             sp_sym=sp_container.primal_sp.symbol,
+                                             sp_index=sp_container.sp_index):
             return False, 0
 
         v_sp = self.__store_sp_result(is_feasible=True,
                                       sp_container=sp_container,
                                       dual_soln=dual_soln)
-        self.__log_indexed_message("Subproblem objective is {0}".format(v_sp),
-                                   iter=iter,
-                                   sp_sym=sp_container.primal_sp.symbol,
-                                   sp_index=sp_container.sp_index)
+        self._log_indexed_message("Subproblem objective is {0}".format(v_sp),
+                                  iter=self.it,
+                                  sp_sym=sp_container.primal_sp.symbol,
+                                  sp_idx=sp_container.sp_index)
         return True, v_sp
 
     def __solve_fbl_sp(self,
-                       iter: int,
                        sp_container: GBDSubproblemContainer,
                        dual_soln: Dict[str, Union[float, Dict[Tuple[Union[int, float, str, None], ...], float]]]
                        ) -> Tuple[bool, float]:
 
-        self.__set_problem(problem_sym=sp_container.fbl_sp.symbol,
-                           problem_idx=sp_container.sp_index)
+        self._engine.set_active_problem(problem_symbol=sp_container.fbl_sp.symbol,
+                                        problem_idx=sp_container.sp_index)
 
-        self.__log_indexed_message("Fixing complicating variables",
-                                   iter=iter,
-                                   sp_sym=sp_container.fbl_sp.symbol,
-                                   sp_index=sp_container.sp_index)
-        self.__fix_complicating_variables(sp_container=sp_container)
+        self._log_indexed_message("Fixing complicating variables",
+                                  iter=self.it,
+                                  sp_sym=sp_container.fbl_sp.symbol,
+                                  sp_idx=sp_container.sp_index)
+        self._fix_complicating_variables(engine=self._engine, sp_container=sp_container)
 
         if self.before_sp_solve is not None:
             self.before_sp_solve(self.gbd_problem,
-                                 iter,
+                                 self.it,
                                  sp_container.fbl_sp.symbol,
                                  sp_container.sp_index)
 
-        self.__log_indexed_message("Solving feasibility subproblem",
-                                   iter=iter,
-                                   sp_sym=sp_container.fbl_sp.symbol,
-                                   sp_index=sp_container.sp_index)
+        self._log_indexed_message("Solving feasibility subproblem",
+                                  iter=self.it,
+                                  sp_sym=sp_container.fbl_sp.symbol,
+                                  sp_idx=sp_container.sp_index)
 
-        self.__engine.solve(solve_options=self.sp_solve_options)
-        solver_output = self.__engine.get_solver_output()
-        self.__print_solver_output(solver_output)
+        self._engine.solve(solve_options=self.sp_solve_options)
+        solver_output = self._engine.get_solver_output()
+        self._print_solver_output(solver_output)
 
-        if not self.__interpret_solver_result(solver_output,
-                                              iter=iter,
-                                              sp_sym=sp_container.fbl_sp.symbol,
-                                              sp_index=sp_container.sp_index):
-            self.__log_indexed_message("Feasibility subproblem is infeasible",
-                                       iter=iter,
-                                       sp_sym=sp_container.fbl_sp.symbol,
-                                       sp_index=sp_container.sp_index)
+        if not self._interpret_solver_result(solver_output,
+                                             sp_sym=sp_container.fbl_sp.symbol,
+                                             sp_index=sp_container.sp_index):
+            self._log_indexed_message("Feasibility subproblem is infeasible",
+                                      iter=self.it,
+                                      sp_sym=sp_container.fbl_sp.symbol,
+                                      sp_idx=sp_container.sp_index)
 
         v_sp = self.__store_sp_result(is_feasible=False,
                                       sp_container=sp_container,
                                       dual_soln=dual_soln)
-        self.__log_indexed_message("Subproblem objective is {0}".format(v_sp),
-                                   iter=iter,
-                                   sp_sym=sp_container.fbl_sp.symbol,
-                                   sp_index=sp_container.sp_index)
+        self._log_indexed_message("Subproblem objective is {0}".format(v_sp),
+                                  iter=self.it,
+                                  sp_sym=sp_container.fbl_sp.symbol,
+                                  sp_idx=sp_container.sp_index)
 
         return True, v_sp
 
-    def __interpret_solver_result(self,
-                                  solver_output: str,
-                                  iter: int,
-                                  sp_sym: str,
-                                  sp_index: mat.Element) -> bool:
+    def _interpret_solver_result(self,
+                                 solver_output: str,
+                                 sp_sym: str,
+                                 sp_index: mat.Element) -> bool:
 
         is_feasible = True
 
-        status = self.__engine.get_status()
+        status = self._engine.get_status()
         if status in ["infeasible", "failure"]:
             is_feasible = False
 
@@ -446,16 +464,16 @@ class GBDAlgorithm:
                 # Problem is feasible
                 else:
 
-                    self.__log_indexed_message("Resolving feasible problem declared infeasible (CONOPT)",
-                                               iter=iter,
-                                               sp_sym=sp_sym,
-                                               sp_index=sp_index)
+                    self._log_indexed_message("Resolving feasible problem declared infeasible (CONOPT)",
+                                              iter=self.it,
+                                              sp_sym=sp_sym,
+                                              sp_idx=sp_index)
 
                     conopt_options = dict(self.sp_solve_options)
                     conopt_options["maxiter"] = solver_iter
 
-                    self.__engine.solve(solve_options=conopt_options)
-                    solver_output = self.__engine.get_solver_output()
+                    self._engine.solve(solve_options=conopt_options)
+                    solver_output = self._engine.get_solver_output()
 
                     (is_feasible,
                      _,
@@ -464,25 +482,15 @@ class GBDAlgorithm:
                     if not is_feasible:
                         raise ValueError("Failed to recover last feasible solution of a feasible subproblem.")
 
-                    self.__log_indexed_message("Recovered feasible solution (CONOPT)",
-                                               iter=iter,
-                                               sp_sym=sp_sym,
-                                               sp_index=sp_index)
+                    self._log_indexed_message("Recovered feasible solution (CONOPT)",
+                                              iter=self.it,
+                                              sp_sym=sp_sym,
+                                              sp_idx=sp_index)
                     return True
 
         # Other solver
         else:
             return is_feasible
-
-    # Problem Manipulation
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def __set_problem(self,
-                      problem_sym: str,
-                      problem_idx: Union[List[Union[int, float, str]],
-                                         Tuple[Union[int, float, str], ...]] = None):
-        self.__engine.set_active_problem(problem_symbol=problem_sym,
-                                         problem_idx=problem_idx)
 
     # Storage and Retrieval
     # ------------------------------------------------------------------------------------------------------------------
@@ -500,9 +508,17 @@ class GBDAlgorithm:
                                          dual_soln=dual_soln)
 
         if is_feasible:
-            v_sp = self.__get_sp_obj_value(sp_container.get_primal_meta_obj(), sp_index=sp_container.sp_index)
+            v_sp = self._get_sp_obj_value(
+                engine=self._engine,
+                obj=sp_container.get_primal_meta_obj(),
+                sp_index=sp_container.sp_index
+            )
         else:
-            v_sp = self.__get_sp_obj_value(sp_container.get_fbl_meta_obj(), sp_index=sp_container.sp_index)
+            v_sp = self._get_sp_obj_value(
+                engine=self._engine,
+                obj=sp_container.get_fbl_meta_obj(),
+                sp_index=sp_container.sp_index
+            )
 
         return v_sp
 
@@ -530,15 +546,15 @@ class GBDAlgorithm:
 
             # Scalar variable
             if comp_meta_var.idx_set_dim == 0:
-                value = self.__engine.get_var_value(var_sym)
+                value = self._engine.get_var_value(var_sym)
                 value = modify_value(value, comp_meta_var)
-                self.__engine.set_param_value(storage_sym, (cut_count,), value)
+                self._engine.set_param_value(storage_sym, (cut_count,), value)
                 y[var_sym] = value
 
             # Indexed variable
             else:
 
-                var_idx_set = comp_meta_var.idx_set_node.evaluate(self.problem.state)[0]
+                var_idx_set = comp_meta_var.idx_set_node.evaluate(self.gbd_problem.state)[0]
 
                 if var_sym in y:
                     y_var = y[var_sym]
@@ -547,14 +563,16 @@ class GBDAlgorithm:
                     y[var_sym] = y_var
 
                 for var_idx in var_idx_set:
-                    value = self.__engine.get_var_value(var_sym, var_idx)
+                    value = self._engine.get_var_value(var_sym, var_idx)
                     value = modify_value(value, comp_meta_var)
-                    self.__engine.set_param_value(storage_sym, var_idx + (cut_count,), value)
+                    self._engine.set_param_value(storage_sym, var_idx + (cut_count,), value)
                     y_var[var_idx] = value
 
         return y
 
-    def __fix_complicating_variables(self, sp_container: GBDSubproblemContainer):
+    def _fix_complicating_variables(self,
+                                    engine: Engine,
+                                    sp_container: GBDSubproblemContainer):
 
         cut_count = self.__get_cut_count()
 
@@ -564,14 +582,14 @@ class GBDAlgorithm:
 
             # scalar variable
             if self.gbd_problem.meta_vars[var_sym].idx_set_dim == 0:
-                value = self.__engine.get_param_value(storage_sym, (cut_count,))
-                self.__engine.fix_var(symbol=var_sym, value=value)
+                value = engine.get_param_value(storage_sym, (cut_count,))
+                engine.fix_var(symbol=var_sym, value=value)
 
             # indexed variable
             else:
                 for var_index in idx_set:
-                    value = self.__engine.get_param_value(storage_sym, var_index + (cut_count,))
-                    self.__engine.fix_var(symbol=var_sym, idx=var_index, value=value)
+                    value = engine.get_param_value(storage_sym, var_index + (cut_count,))
+                    engine.fix_var(symbol=var_sym, idx=var_index, value=value)
 
     # Dual Solution
     # ------------------------------------------------------------------------------------------------------------------
@@ -584,7 +602,7 @@ class GBDAlgorithm:
                                     ):
 
         def retrieve_dual_value(sym: str, con_idx: Union[tuple, list, None] = None):
-            d = self.__engine.get_con_dual(sym, con_idx)
+            d = self._engine.get_con_dual(sym, con_idx)
             return -d
 
         for con_sym, idx_set in sp_container.mixed_comp_con_idx_set.items():
@@ -615,16 +633,16 @@ class GBDAlgorithm:
 
             # scalar constraint
             if not isinstance(dual_mult_values[dual_mult.symbol], dict):
-                self.__engine.set_param_value(symbol=dual_mult.symbol,
-                                              idx=(cut_count,),
-                                              value=dual_mult_values[dual_mult.symbol])
+                self._engine.set_param_value(symbol=dual_mult.symbol,
+                                             idx=(cut_count,),
+                                             value=dual_mult_values[dual_mult.symbol])
 
             # indexed constraint
             else:
                 for dual_index, value in dual_mult_values[dual_mult.symbol].items():
-                    self.__engine.set_param_value(symbol=dual_mult.symbol,
-                                                  idx=dual_index + (cut_count,),
-                                                  value=value)
+                    self._engine.set_param_value(symbol=dual_mult.symbol,
+                                                 idx=dual_index + (cut_count,),
+                                                 value=value)
 
     @staticmethod
     def __reset_dual_solution(dual_soln: Dict[str, Union[float,
@@ -651,10 +669,10 @@ class GBDAlgorithm:
         if self.verbosity == 1:
             print(message)
 
-        self.__log_indexed_message(message=message,
-                                   iter=iter)
+        self._log_indexed_message(message=message,
+                                  iter=iter)
 
-    def __print_solver_output(self, solver_output: str):
+    def _print_solver_output(self, solver_output: str):
         if self.verbosity >= 3:
             print(solver_output)
 
@@ -677,14 +695,14 @@ class GBDAlgorithm:
 
         self.__log_message(message)
 
-    def __log_indexed_message(self,
-                              message: str,
-                              iter: int,
-                              sp_sym: str = None,
-                              sp_index: mat.Element = None):
+    def _log_indexed_message(self,
+                             message: str,
+                             iter: int,
+                             sp_sym: str = None,
+                             sp_idx: mat.Element = None):
 
-        if sp_sym is not None and sp_index is not None:
-            sp_str = "|sp {0}[{1}]".format(sp_sym, '-'.join([str(sp_i) for sp_i in sp_index]))
+        if sp_sym is not None and sp_idx is not None:
+            sp_str = "|sp {0}[{1}]".format(sp_sym, '-'.join([str(sp_i) for sp_i in sp_idx]))
         else:
             sp_str = ""
 
@@ -731,32 +749,33 @@ class GBDAlgorithm:
         return entity_index
 
     def __get_cut_count(self) -> int:
-        cut_count = self.__engine.get_param_value(self.gbd_problem.cut_count_sym, None)
+        cut_count = self._engine.get_param_value(self.gbd_problem.cut_count_sym, None)
         return int(cut_count)
 
     def __increment_cut_count(self):
-        cut_count = self.__engine.get_param_value(self.gbd_problem.cut_count_sym, None)
-        self.__engine.set_param_value(self.gbd_problem.cut_count_sym, None, int(cut_count + 1))
+        cut_count = self._engine.get_param_value(self.gbd_problem.cut_count_sym, None)
+        self._engine.set_param_value(self.gbd_problem.cut_count_sym, None, int(cut_count + 1))
 
-    def __reset_cut_count(self):
-        self.__engine.set_param_value(self.gbd_problem.cut_count_sym, None, 0)
+    def _reset_cut_count(self):
+        self._engine.set_param_value(self.gbd_problem.cut_count_sym, None, 0)
 
     def __set_is_feasible_flag(self, flag: bool):
         num_flag = 1 if flag else 0
         cut_count = self.__get_cut_count()
-        self.__engine.set_param_value(self.gbd_problem.is_feasible_sym, (cut_count,), num_flag)
+        self._engine.set_param_value(self.gbd_problem.is_feasible_sym, (cut_count,), num_flag)
 
     def __set_stored_obj_value(self, value: float):
         cut_count = self.__get_cut_count()
-        self.__engine.set_param_value(self.gbd_problem.stored_obj_sym, (cut_count,), value)
+        self._engine.set_param_value(self.gbd_problem.stored_obj_sym, (cut_count,), value)
 
     def __update_stored_obj_value(self, added_value: float):
         cut_count = self.__get_cut_count()
-        value = self.__engine.get_param_value(self.gbd_problem.stored_obj_sym, (cut_count,))
-        self.__engine.set_param_value(self.gbd_problem.stored_obj_sym, (cut_count,), value + added_value)
+        value = self._engine.get_param_value(self.gbd_problem.stored_obj_sym, (cut_count,))
+        self._engine.set_param_value(self.gbd_problem.stored_obj_sym, (cut_count,), value + added_value)
 
-    def __get_sp_obj_value(self,
-                           obj: mat.MetaObjective,
-                           sp_index: mat.Element) -> float:
-        obj_idx = self.__gbd_problem_builder.generate_entity_sp_index(sp_index=sp_index, meta_entity=obj)
-        return self.__engine.get_obj_value(obj.symbol, obj_idx)
+    def _get_sp_obj_value(self,
+                          engine: Engine,
+                          obj: mat.MetaObjective,
+                          sp_index: mat.Element) -> float:
+        obj_idx = self._gbd_problem_builder.generate_entity_sp_index(sp_index=sp_index, meta_entity=obj)
+        return engine.get_obj_value(obj.symbol, obj_idx)

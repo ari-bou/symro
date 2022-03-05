@@ -1,5 +1,8 @@
-set SCENARIOS := {1,2,3};
-set TIMEPERIODS := {1};
+param S;
+param T;
+
+set SCENARIOS := 1..S;
+set TIMEPERIODS := 1..T;
 set RAW_MATERIALS;
 set PRODUCTS;
 set MATERIALS := RAW_MATERIALS union PRODUCTS;
@@ -38,3 +41,4 @@ QUALITY_BLENDING_RULE_MAX{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS, s in 
 PROFIT_CALC{t in TIMEPERIODS, s in SCENARIOS}: PROFIT[t,s] = sum {p in PRODUCTS} COST[p,s] * NODE[p,t,s] - sum {r in RAW_MATERIALS} COST[r,s] * NODE[r,t,s];
 
 NON_ANT{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS}: INLET[r,t,s] = INLET[r,t,1];
+NON_ANT2{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS}: NODE[r,t,s] == NODE[r,t,1];

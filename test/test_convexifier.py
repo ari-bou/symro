@@ -45,12 +45,7 @@ CON9: log(x) = 0;
 # Tests
 # ----------------------------------------------------------------------------------------------------------------------
 
-def run_convexifier_test_group():
-    tests = [("Convexify problem", convexifier_test)]
-    return run_tests(tests)
-
-
-def convexifier_test():
+def test_convexifier():
 
     problem = symro.read_ampl(script_literal=SCRIPT,
                               working_dir_path=SCRIPT_DIR_PATH)
@@ -59,5 +54,3 @@ def convexifier_test():
     convex_relax = convexifier.convexify_problem(problem)
 
     symro.model_to_ampl(convex_relax, file_name="convex_relaxation_test.mod")
-
-    return []

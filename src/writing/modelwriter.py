@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Union
+from typing import Iterable, List, Union
 
 import symro.src.mat as mat
 from symro.src.prob.problem import BaseProblem, Problem
@@ -44,13 +44,12 @@ class ModelWriter:
                        working_dir_path: str = None,
                        model_file_name: str = None,
                        model_file_extension: str = ".mod",
-                       meta_sets: Union[List[mat.MetaSet], Dict[str, mat.MetaSet]] = None,
-                       meta_params: Union[List[mat.MetaParameter], Dict[str, mat.MetaParameter]] = None,
-                       meta_sets_params: Union[List[Union[mat.MetaSet, mat.MetaParameter]],
-                                               Dict[str, Union[mat.MetaSet, mat.MetaParameter]]] = None,
-                       meta_vars: Union[List[mat.MetaVariable], Dict[str, mat.MetaVariable]] = None,
-                       meta_objs: Union[List[mat.MetaObjective], Dict[str, mat.MetaObjective]] = None,
-                       meta_cons: Union[List[mat.MetaConstraint], Dict[str, mat.MetaConstraint]] = None,
+                       meta_sets: Iterable[mat.MetaSet] = None,
+                       meta_params: Iterable[mat.MetaParameter] = None,
+                       meta_sets_params: Iterable[Union[mat.MetaSet, mat.MetaParameter]] = None,
+                       meta_vars: Iterable[mat.MetaVariable] = None,
+                       meta_objs: Iterable[mat.MetaObjective] = None,
+                       meta_cons: Iterable[mat.MetaConstraint] = None,
                        include_sets: bool = True,
                        include_params: bool = True,
                        include_variables: bool = True,
@@ -60,8 +59,6 @@ class ModelWriter:
         def transform_entity_collection(entity_collection):
             if entity_collection is None:
                 entity_collection = []
-            if isinstance(entity_collection, dict):
-                entity_collection = list(entity_collection.values())
             return entity_collection
 
         meta_sets = transform_entity_collection(meta_sets)

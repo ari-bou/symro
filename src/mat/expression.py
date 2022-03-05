@@ -1,7 +1,9 @@
 from queue import Queue
-from typing import Optional
+from typing import List, Optional
 
-from symro.src.mat.util import *
+from symro.src.mat.constants import *
+from symro.src.mat.orderedset import OrderedSet
+from symro.src.mat.types import Element, IndexingSet
 from symro.src.mat.exprn import ExpressionNode, ArithmeticExpressionNode, LogicalExpressionNode
 from symro.src.mat.setn import CompoundSetNode
 from symro.src.mat.aexprn import DeclaredEntityNode, ArithmeticOperationNode, ArithmeticTransformationNode

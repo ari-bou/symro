@@ -27,32 +27,23 @@ minimize OBJ: 0;
 # Tests
 # ----------------------------------------------------------------------------------------------------------------------
 
-def run_node_builder_test_group():
-    tests = [("Build indexing set nodes for meta-entities", node_builder_entity_idx_set_node_test)]
-    return run_tests(tests)
-
-
-def node_builder_entity_idx_set_node_test():
+def test_node_builder_entity_idx_set_node():
 
     problem = symro.read_ampl(script_literal=SCRIPT,
                               working_dir_path=SCRIPT_DIR_PATH)
 
-    results = []
-
     var_1 = problem.get_meta_entity("VAR_1")
     idx_set_node = nb.build_entity_idx_set_node(problem, var_1)
-    results.append(check_str_result(idx_set_node, "{n in NUM_SET}"))
+    assert str(idx_set_node) == "{n in NUM_SET}"
 
     var_2 = problem.get_meta_entity("VAR_2")
 
     idx_set_node = nb.build_entity_idx_set_node(problem, var_2)
-    results.append(check_str_result(idx_set_node, "{i in NUM_SET, (i,j) in NUM_ALPHA_SET}"))
+    assert str(idx_set_node) == "{i in NUM_SET, (i,j) in NUM_ALPHA_SET}"
 
     idx_set_node = nb.build_entity_idx_set_node(problem, var_2, custom_dummy_syms={"NUM_SET": 'j'})
-    results.append(check_str_result(idx_set_node, "{j in NUM_SET, (j,j1) in NUM_ALPHA_SET}"))
+    assert str(idx_set_node) == "{j in NUM_SET, (j,j1) in NUM_ALPHA_SET}"
 
     var_3 = problem.get_meta_entity("VAR_3")
     idx_set_node = nb.build_entity_idx_set_node(problem, var_3)
-    results.append(check_str_result(idx_set_node, "{i in INDEXED_SET[1]}"))
-
-    return results
+    assert str(idx_set_node) == "{i in INDEXED_SET[1]}"

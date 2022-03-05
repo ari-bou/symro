@@ -3,7 +3,7 @@ import numpy as np
 
 import symro.src.mat as mat
 from symro.src.prob.problem import Problem
-import symro.src.scripting.script as stm
+import symro.src.scripting.script as scr
 
 
 class AMPLParser:
@@ -157,8 +157,8 @@ class AMPLParser:
 
         self.expressions: Dict[str, mat.Expression] = {}
 
-        self._active_script: Optional[stm.Script] = None
-        self.compound_script: Optional[stm.CompoundScript] = None
+        self._active_script: Optional[scr.Script] = None
+        self.compound_script: Optional[scr.CompoundScript] = None
 
         self.__free_node_id: int = -1
 
@@ -178,19 +178,43 @@ class AMPLParser:
     def tokenize(self, literal: str):
         return self._lexer.tokenize(literal)
 
-    def _tokenize(self, literal: str, script_id: str = None) -> stm.Script:
+    def _tokenize(self, literal: str) -> scr.Script:
+
         self._setup()
+
         tokens = self._lexer.tokenize(literal)
-        if script_id is None:
-            main_script = stm.Script(name="main",
-                                     raw_literal=literal,
-                                     tokens=tokens)
-            self.compound_script = stm.CompoundScript(main_script=main_script)
-            return main_script
-        else:
-            script = stm.Script(name=script_id, raw_literal=literal, tokens=tokens)
-            self.compound_script.included_scripts[script_id] = script
-            return script
+
+        main_script = scr.Script(
+            name="main",
+            script_type=scr.ScriptType.COMMANDS,
+            raw_literal=literal,
+            tokens=tokens
+        )
+
+        self.compound_script = scr.CompoundScript(main_script=main_script)
+
+        return main_script
+
+    def _tokenize_included_file(
+            self,
+            literal: str,
+            script_id: str,
+            script_type: scr.ScriptType
+    ) -> scr.Script:
+
+        self._setup()
+
+        tokens = self._lexer.tokenize(literal)
+
+        script = scr.Script(
+            name=script_id,
+            script_type=script_type,
+            raw_literal=literal,
+            tokens=tokens
+        )
+        self.compound_script.included_scripts[script_id] = script
+
+        return script
 
     # Expression Parsing
     # ------------------------------------------------------------------------------------------------------------------
@@ -535,17 +559,17 @@ class AMPLParser:
         self._active_script = script
         return self._parse_indexing_set_definition()
 
-    def _parse_indexing_set_definition(self) -> Union[mat.CompoundSetNode, mat.EnumeratedSet]:
+    def _parse_indexing_set_definition(self) -> Union[mat.CompoundSetNode, mat.EnumeratedSetNode]:
 
         # Start at opening brace '{'
         self._next_token()  # skip opening brace '{'
 
         if self.get_token() == '}':  # empty set
-            set_node = mat.EnumeratedSet()
+            set_node = mat.EnumeratedSetNode()
 
         else:
             set_node = self.__parse_set_definition_body()
-            if not isinstance(set_node, mat.CompoundSetNode) and not isinstance(set_node, mat.EnumeratedSet):
+            if not isinstance(set_node, mat.CompoundSetNode) and not isinstance(set_node, mat.EnumeratedSetNode):
                 raise ValueError("AMPL parser expected either compound set or an enumerate set" +
                                  " while parsing indexing set expression")
 
@@ -590,7 +614,7 @@ class AMPLParser:
             return mat.CompoundSetNode(set_nodes=nodes,
                                        constraint_node=con_node)
         else:
-            return mat.EnumeratedSet(element_nodes=nodes)
+            return mat.EnumeratedSetNode(element_nodes=nodes)
 
     def __parse_indexing_set(self, dummy_node: mat.BaseDummyNode) -> mat.IndexingSetNode:
 
@@ -807,6 +831,7 @@ class AMPLParser:
         # generic case
         else:
             coeff_node = mat.NumericNode(value=-1)
+            node.is_prioritized = True
             mult_node = mat.MultiplicationNode(operands=[coeff_node, node])
             return mult_node
 

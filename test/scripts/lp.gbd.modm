@@ -3,8 +3,10 @@
 # beginregion
 param CUT_COUNT default 0;
 set CUTS = 1..CUT_COUNT;
-param obj_stored{ct in CUTS} default 0;
-param is_feasible{ct in CUTS} default 0;
+param ETA_LB default -100000;
+param ETA_UB default 100000;
+param OBJ_STORED{ct in CUTS} default 0;
+param IS_FEASIBLE{ct in CUTS} default 0;
 param y_stored{ct in CUTS} default 0;
 param lambda_CON1{ct in CUTS} default 0;
 # endregion 
@@ -13,8 +15,8 @@ param lambda_CON1{ct in CUTS} default 0;
 # VARIABLES
 # --------------------------------------------------------------------------------------------------
 # beginregion
-var eta >= -100000;
-var GBD_F{ct in CUTS} = ((10 * p * y) - (10 * p * y_stored[ct]));
+var ETA;
+var GBD_F{ct in CUTS} = (((10 * p * y) - (10 * p * y_stored[ct])));
 var GBD_G_0{ct in CUTS} = ((-1 * p * y) - (-1 * p * y_stored[ct]));
 # endregion 
 
@@ -22,14 +24,15 @@ var GBD_G_0{ct in CUTS} = ((-1 * p * y) - (-1 * p * y_stored[ct]));
 # OBJECTIVES
 # --------------------------------------------------------------------------------------------------
 # beginregion
-minimize MASTER_OBJ: eta;
+minimize MASTER_OBJ: ETA;
 # endregion 
 
 
 # CONSTRAINTS
 # --------------------------------------------------------------------------------------------------
 # beginregion
-GBD_OPT_CUT{ct in CUTS: is_feasible[ct] == 1}: eta >= obj_stored[ct] + GBD_F[ct] + lambda_CON1[ct] * GBD_G_0[ct];
-GBD_FBL_CUT{ct in CUTS: is_feasible[ct] == 0}: 0 >= obj_stored[ct] + lambda_CON1[ct] * GBD_G_0[ct];
+GBD_OPT_CUT{ct in CUTS: IS_FEASIBLE[ct] == 1}: ETA >= OBJ_STORED[ct] + (((10 * p * y) - (10 * p * y_stored[ct]))) + lambda_CON1[ct] * ((-1 * p * y) - (-1 * p * y_stored[ct]));
+GBD_FBL_CUT{ct in CUTS: IS_FEASIBLE[ct] == 0}: 0 >= OBJ_STORED[ct] + lambda_CON1[ct] * ((-1 * p * y) - (-1 * p * y_stored[ct]));
+ETA_BOUNDS: ETA_LB <= ETA <= ETA_UB;
 # endregion 
 

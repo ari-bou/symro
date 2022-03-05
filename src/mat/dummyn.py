@@ -3,7 +3,7 @@ from functools import partial
 import numpy as np
 from typing import Callable, List, Union
 
-from symro.src.mat.util import IndexingSet, Element
+from symro.src.mat.types import IndexingSet, Element
 from symro.src.mat.state import State
 from symro.src.mat.exprn import ArithmeticExpressionNode, StringExpressionNode
 from symro.src.mat.opern import RelationalOperationNode, ArithmeticOperationNode, StringOperationNode

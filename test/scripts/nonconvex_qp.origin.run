@@ -1,0 +1,13 @@
+model "nonconvex_qp.origin.modr";
+let p := 5;
+option solver cplex;
+objective OBJ;
+problem PrimalSubproblem:
+	x1,
+	x2,
+	y,
+	OBJ,
+	CON1,
+	CON2,
+	CON3
+;

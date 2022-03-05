@@ -28,11 +28,12 @@ problem PrimalSubproblem_FBL {s in S}:
 ;
 problem Master:
 	{s in S} y[s],
-	eta,
+	ETA,
 	{s in S, ct in CUTS} GBD_F[s,ct],
 	{s in S, ct in CUTS} GBD_G_0[s,ct],
 	MASTER_OBJ,
 	{s in S} NON_ANT[s],
-	{ct in CUTS: is_feasible[ct] == 1} GBD_OPT_CUT[ct],
-	{ct in CUTS: is_feasible[ct] == 0} GBD_FBL_CUT[ct]
+	{ct in CUTS: IS_FEASIBLE[ct] == 1} GBD_OPT_CUT[ct],
+	{ct in CUTS: IS_FEASIBLE[ct] == 0} GBD_FBL_CUT[ct],
+	ETA_BOUNDS
 ;

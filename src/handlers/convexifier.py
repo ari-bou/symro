@@ -1,7 +1,6 @@
 from copy import deepcopy
 from numbers import Number
-from ordered_set import OrderedSet
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 import warnings
 
 import symro.src.mat as mat
@@ -57,6 +56,7 @@ class Convexifier:
         self.ue_meta_vars: Dict[str, mat.MetaVariable] = {}
         self.ue_env_meta_cons: Dict[str, mat.MetaConstraint] = {}
         self.var_to_env_map: Dict[str, List[str]] = {}
+        self.sym_to_aux_map: Dict[str, List[Union[mat.MetaVariable, mat.MetaConstraint]]] = {}
 
         self.__auxiliary: bool = False
 
@@ -113,7 +113,7 @@ class Convexifier:
         self.__problem = problem
         self.__auxiliary = auxiliary
 
-        convex_root_node = self.__convexify_expression(
+        convex_root_node, ue_meta_vars, ue_env_meta_cons = self.__convexify_expression(
             root_node=deepcopy(root_node),
             idx_set_node=idx_set_node
         )
@@ -131,6 +131,8 @@ class Convexifier:
 
     def __convexify_objectives(self):
 
+        sp_meta_obj_syms = {sp_sym: sp.objective_symbols for sp_sym, sp in self.__problem.subproblems.items()}
+
         for mo in self.__problem.model_meta_objs:
 
             expr = mo.expression
@@ -140,9 +142,22 @@ class Convexifier:
                 raise ValueError("Convexifier encountered unexpected expression node"
                                  + " while convexifying objective function '{0}'".format(mo))
 
-            expr.root_node = self.__convexify_meta_entity(mo, expr_node)
+            # convexify the objective function
+            convex_node, ue_meta_vars, ue_env_meta_cons = self.__convexify_meta_entity(mo, expr_node)
+
+            expr.root_node = convex_node  # swap original expression node with convexified node
+
+            # add auxiliary meta-entities to the appropriate subproblems
+            self.__add_auxiliary_meta_entities_to_subproblems(
+                meta_entity=mo,
+                sp_meta_entity_syms=sp_meta_obj_syms,
+                ue_meta_vars=ue_meta_vars,
+                ue_env_meta_cons=ue_env_meta_cons
+            )
 
     def __convexify_constraints(self):
+
+        sp_meta_con_syms = {sp_sym: sp.constraint_symbols for sp_sym, sp in self.__problem.subproblems.items()}
 
         for mc in self.__problem.model_meta_cons:
 
@@ -155,23 +170,44 @@ class Convexifier:
                     raise ValueError("Convexifier encountered unexpected expression node"
                                      + " while convexifying constraint '{0}'".format(mc))
 
-                root_node.lhs_operand = self.__convexify_meta_entity(mc, root_node.lhs_operand)
+                # convexify the LHS expression of the constraint
+                convex_node, ue_meta_vars, ue_env_meta_cons = self.__convexify_meta_entity(mc, root_node.lhs_operand)
+
+                root_node.lhs_operand = convex_node  # swap original expression node with convexified node
+
+                # add auxiliary meta-entities to the appropriate subproblems
+                self.__add_auxiliary_meta_entities_to_subproblems(
+                    meta_entity=mc,
+                    sp_meta_entity_syms=sp_meta_con_syms,
+                    ue_meta_vars=ue_meta_vars,
+                    ue_env_meta_cons=ue_env_meta_cons
+                )
 
     def __convexify_meta_entity(self,
                                 me: mat.MetaEntity,
                                 root_node: mat.ArithmeticExpressionNode):
 
         try:
-            return self.__convexify_expression(
+
+            convex_node, ue_meta_vars, ue_env_meta_cons = self.__convexify_expression(
                 root_node=root_node,
                 idx_set_node=me.idx_set_node
             )
+
+            aux_meta_entities: List[Union[mat.MetaVariable, mat.MetaConstraint]] = []
+            aux_meta_entities.extend(ue_meta_vars)
+            aux_meta_entities.extend(ue_env_meta_cons)
+
+            if len(aux_meta_entities) > 0:
+                self.sym_to_aux_map[me.symbol] = aux_meta_entities
+
+            return convex_node, ue_meta_vars, ue_env_meta_cons
 
         except Exception as e:
             warnings.warn("Convexifier was unable to convexify the expression"
                           + " of the meta-entity '{0}':".format(me.symbol)
                           + " {0}".format(e))
-            return root_node
+            return root_node, [], []
 
     # Expression Standardization
     # ------------------------------------------------------------------------------------------------------------------
@@ -212,9 +248,11 @@ class Convexifier:
     # Expression Convexification
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __convexify_expression(self,
-                               root_node: mat.ArithmeticExpressionNode,
-                               idx_set_node: mat.CompoundSetNode) -> mat.ArithmeticExpressionNode:
+    def __convexify_expression(
+            self,
+            root_node: mat.ArithmeticExpressionNode,
+            idx_set_node: mat.CompoundSetNode
+    ) -> Tuple[mat.ArithmeticExpressionNode, List[mat.MetaVariable], List[mat.MetaConstraint]]:
 
         cmpt_set_nodes = []
         cmpt_con_nodes = []
@@ -239,31 +277,40 @@ class Convexifier:
                                               dummy_element=dummy_element)
 
         convex_terms = []  # list of convexified terms
+        ue_meta_vars = []
+        ue_env_meta_cons = []
 
         # convexify each term of the expression
         for term in terms:
-            convex_terms.append(self.__convexify_node(
+            convex_term, term_ue_meta_vars, term_ue_env_meta_cons = self.__convexify_node(
                 node=term,
                 cmpt_set_nodes=cmpt_set_nodes,
                 cmpt_con_nodes=cmpt_con_nodes,
                 idx_set=idx_set,
                 dummy_element=dummy_element
-            ))
+            )
+
+            convex_terms.append(convex_term)
+            ue_meta_vars.extend(term_ue_meta_vars)
+            ue_env_meta_cons.extend(term_ue_env_meta_cons)
 
         convex_root_node = nb.build_addition_node(convex_terms)
+
         spl_root_node = fmr.simplify(
             problem=self.__problem,
             node=convex_root_node
         )
 
-        return spl_root_node
+        return spl_root_node, ue_meta_vars, ue_env_meta_cons
 
-    def __convexify_node(self,
-                         node: mat.ArithmeticExpressionNode,
-                         cmpt_set_nodes: List[mat.SetExpressionNode],
-                         cmpt_con_nodes: List[mat.LogicalExpressionNode],
-                         idx_set: Optional[mat.IndexingSet],
-                         dummy_element: Optional[mat.Element]) -> mat.ArithmeticExpressionNode:
+    def __convexify_node(
+            self,
+            node: mat.ArithmeticExpressionNode,
+            cmpt_set_nodes: List[mat.SetExpressionNode],
+            cmpt_con_nodes: List[mat.LogicalExpressionNode],
+            idx_set: Optional[mat.IndexingSet],
+            dummy_element: Optional[mat.Element]
+    ) -> Tuple[mat.ArithmeticExpressionNode, List[mat.MetaVariable], List[mat.MetaConstraint]]:
 
         if isinstance(node, mat.ArithmeticTransformationNode) and node.fcn == mat.SUMMATION_FUNCTION:
 
@@ -279,11 +326,11 @@ class Convexifier:
                 dummy_element=dummy_element,
                 can_reduce=False
             )
-            idx_set = OrderedSet().union(*idx_sets)
+            idx_set = mat.OrderedSet().union(*idx_sets)
             dummy_element = node.idx_set_node.combined_dummy_element
 
             # convexify operand of summation
-            convexified_node = self.__convexify_node(
+            convexified_node, ue_meta_vars, ue_env_meta_cons = self.__convexify_node(
                 node=node.operands[0],
                 cmpt_set_nodes=cmpt_set_nodes,
                 cmpt_con_nodes=cmpt_con_nodes,
@@ -293,12 +340,12 @@ class Convexifier:
 
             node.operands[0] = convexified_node  # replace original operand with convexified node
 
-            return node
+            return node, ue_meta_vars, ue_env_meta_cons
 
         elif isinstance(node, mat.ArithmeticConditionalNode) and len(node.operands) == 1:
 
             # convexify operand of summation
-            convexified_node = self.__convexify_node(
+            convexified_node, ue_meta_vars, ue_env_meta_cons = self.__convexify_node(
                 node=node.operands[0],
                 cmpt_set_nodes=cmpt_set_nodes,
                 cmpt_con_nodes=cmpt_con_nodes + [node.conditions[0]],
@@ -308,7 +355,7 @@ class Convexifier:
 
             node.operands[0] = convexified_node  # replace original operand with convexified node
 
-            return node
+            return node, ue_meta_vars, ue_env_meta_cons
 
         elif isinstance(node, mat.ArithmeticOperationNode) and node.operator == mat.MULTIPLICATION_OPERATOR:
 
@@ -324,26 +371,28 @@ class Convexifier:
 
             # constant
             if var_factor_count == 0:
-                return node
+                return node, [], []
 
             # general nonconvexity
             elif mat.GENERAL_NONCONVEX in var_factor_types:
                 warnings.warn("Convexifier was unable to convexify general nonconvex term '{0}'".format(node))
-                return node
+                return node, [], []
 
             # general univariate nonlinear
             elif var_factor_count == 1 and var_factor_types[0] == mat.UNIVARIATE_NONLINEAR:
-                return self.__build_sign_conditional_convex_underestimator(ue_type=mat.UNIVARIATE_NONLINEAR,
-                                                                           coefficient_nodes=const_factors,
-                                                                           factors=var_factors,
-                                                                           cmpt_set_nodes=cmpt_set_nodes,
-                                                                           cmpt_con_nodes=cmpt_con_nodes,
-                                                                           idx_set=idx_set,
-                                                                           dummy_element=dummy_element)
+                return self.__build_sign_conditional_convex_underestimator(
+                    ue_type=mat.UNIVARIATE_NONLINEAR,
+                    coefficient_nodes=const_factors,
+                    factors=var_factors,
+                    cmpt_set_nodes=cmpt_set_nodes,
+                    cmpt_con_nodes=cmpt_con_nodes,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element
+                )
 
             # linear (x)
             elif var_factor_count == 1 and var_factor_types.count(mat.LINEAR) == 1:
-                return node
+                return node, [], []
 
             # bilinear (xy)
             elif var_factor_count == 2 and var_factor_types.count(mat.LINEAR) == 2:
@@ -356,79 +405,93 @@ class Convexifier:
                     idx_set=idx_set,
                     dummy_element=dummy_element
                 ):
-                    quadratic_node = mat.ExponentiationNode(lhs_operand=var_factors[0],
-                                                            rhs_operand=mat.NumericNode(2),
-                                                            is_prioritized=True)
-                    return self.__build_sign_conditional_convex_underestimator(ue_type=mat.BILINEAR,
-                                                                               coefficient_nodes=const_factors,
-                                                                               factors=[quadratic_node],
-                                                                               cmpt_set_nodes=cmpt_set_nodes,
-                                                                               cmpt_con_nodes=cmpt_con_nodes,
-                                                                               idx_set=idx_set,
-                                                                               dummy_element=dummy_element)
+                    quadratic_node = mat.ExponentiationNode(
+                        lhs_operand=var_factors[0],
+                        rhs_operand=mat.NumericNode(2),
+                        is_prioritized=True
+                    )
+                    return self.__build_sign_conditional_convex_underestimator(
+                        ue_type=mat.BILINEAR,
+                        coefficient_nodes=const_factors,
+                        factors=[quadratic_node],
+                        cmpt_set_nodes=cmpt_set_nodes,
+                        cmpt_con_nodes=cmpt_con_nodes,
+                        idx_set=idx_set,
+                        dummy_element=dummy_element
+                    )
 
                 else:
-                    return self.__build_sign_conditional_convex_underestimator(ue_type=mat.BILINEAR,
-                                                                               coefficient_nodes=const_factors,
-                                                                               factors=var_factors,
-                                                                               cmpt_set_nodes=cmpt_set_nodes,
-                                                                               cmpt_con_nodes=cmpt_con_nodes,
-                                                                               idx_set=idx_set,
-                                                                               dummy_element=dummy_element)
+                    return self.__build_sign_conditional_convex_underestimator(
+                        ue_type=mat.BILINEAR,
+                        coefficient_nodes=const_factors,
+                        factors=var_factors,
+                        cmpt_set_nodes=cmpt_set_nodes,
+                        cmpt_con_nodes=cmpt_con_nodes,
+                        idx_set=idx_set,
+                        dummy_element=dummy_element
+                    )
 
             # trilinear (xyz)
             elif var_factor_count == 3 and var_factor_types.count(mat.LINEAR) == 3:
-                return self.__build_sign_conditional_convex_underestimator(ue_type=mat.TRILINEAR,
-                                                                           coefficient_nodes=const_factors,
-                                                                           factors=var_factors,
-                                                                           cmpt_set_nodes=cmpt_set_nodes,
-                                                                           cmpt_con_nodes=cmpt_con_nodes,
-                                                                           idx_set=idx_set,
-                                                                           dummy_element=dummy_element)
+                return self.__build_sign_conditional_convex_underestimator(
+                    ue_type=mat.TRILINEAR,
+                    coefficient_nodes=const_factors,
+                    factors=var_factors,
+                    cmpt_set_nodes=cmpt_set_nodes,
+                    cmpt_con_nodes=cmpt_con_nodes,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element
+                )
 
             # fraction with nonlinear denominator (1/xy)
             elif var_factor_types.count(mat.FRACTIONAL) > 1:
                 warnings.warn("Convexifier was unable to convexify term '{0}'".format(node)
                               + " with more than 1 fractional factor ")
-                return node
+                return node, [], []
 
             # fractional (1/x)
             elif var_factor_count == 1 and var_factor_types.count(mat.FRACTIONAL) == 1:
-                return self.__build_sign_conditional_convex_underestimator(ue_type=mat.FRACTIONAL,
-                                                                           coefficient_nodes=const_factors,
-                                                                           factors=var_factors,
-                                                                           cmpt_set_nodes=cmpt_set_nodes,
-                                                                           cmpt_con_nodes=cmpt_con_nodes,
-                                                                           idx_set=idx_set,
-                                                                           dummy_element=dummy_element)
+                return self.__build_sign_conditional_convex_underestimator(
+                    ue_type=mat.FRACTIONAL,
+                    coefficient_nodes=const_factors,
+                    factors=var_factors,
+                    cmpt_set_nodes=cmpt_set_nodes,
+                    cmpt_con_nodes=cmpt_con_nodes,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element
+                )
 
             # bilinear fractional (x/y)
             elif var_factor_count == 2 and var_factor_types.count(mat.LINEAR) == 1 \
                     and var_factor_types.count(mat.FRACTIONAL) == 1:
-                return self.__build_sign_conditional_convex_underestimator(ue_type=mat.FRACTIONAL_BILINEAR,
-                                                                           coefficient_nodes=const_factors,
-                                                                           factors=var_factors,
-                                                                           cmpt_set_nodes=cmpt_set_nodes,
-                                                                           cmpt_con_nodes=cmpt_con_nodes,
-                                                                           idx_set=idx_set,
-                                                                           dummy_element=dummy_element)
+                return self.__build_sign_conditional_convex_underestimator(
+                    ue_type=mat.FRACTIONAL_BILINEAR,
+                    coefficient_nodes=const_factors,
+                    factors=var_factors,
+                    cmpt_set_nodes=cmpt_set_nodes,
+                    cmpt_con_nodes=cmpt_con_nodes,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element
+                )
 
             # trilinear fractional (xy/z)
             elif var_factor_count == 3 and var_factor_types.count(mat.LINEAR) == 2 \
                     and var_factor_types.count(mat.FRACTIONAL) == 1:
-                return self.__build_sign_conditional_convex_underestimator(ue_type=mat.FRACTIONAL_TRILINEAR,
-                                                                           coefficient_nodes=const_factors,
-                                                                           factors=var_factors,
-                                                                           cmpt_set_nodes=cmpt_set_nodes,
-                                                                           cmpt_con_nodes=cmpt_con_nodes,
-                                                                           idx_set=idx_set,
-                                                                           dummy_element=dummy_element)
+                return self.__build_sign_conditional_convex_underestimator(
+                    ue_type=mat.FRACTIONAL_TRILINEAR,
+                    coefficient_nodes=const_factors,
+                    factors=var_factors,
+                    cmpt_set_nodes=cmpt_set_nodes,
+                    cmpt_con_nodes=cmpt_con_nodes,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element
+                )
 
         else:
 
             # linear
             if mat.is_linear(node):
-                return node
+                return node, [], []
 
             type = self.__identify_node(node,
                                         idx_set=idx_set,
@@ -436,18 +499,20 @@ class Convexifier:
 
             # univariate nonlinear
             if type == mat.UNIVARIATE_NONLINEAR:
-                return self.__build_sign_conditional_convex_underestimator(ue_type=mat.UNIVARIATE_NONLINEAR,
-                                                                           coefficient_nodes=[],
-                                                                           factors=[node],
-                                                                           cmpt_set_nodes=cmpt_set_nodes,
-                                                                           cmpt_con_nodes=cmpt_con_nodes,
-                                                                           idx_set=idx_set,
-                                                                           dummy_element=dummy_element)
+                return self.__build_sign_conditional_convex_underestimator(
+                    ue_type=mat.UNIVARIATE_NONLINEAR,
+                    coefficient_nodes=[],
+                    factors=[node],
+                    cmpt_set_nodes=cmpt_set_nodes,
+                    cmpt_con_nodes=cmpt_con_nodes,
+                    idx_set=idx_set,
+                    dummy_element=dummy_element
+                )
 
             # general nonconvexity
             else:
                 warnings.warn("Convexifier was unable to convexify term '{0}'".format(node))
-                return node
+                return node, [], []
 
     # Function Identification
     # ------------------------------------------------------------------------------------------------------------------
@@ -558,7 +623,7 @@ class Convexifier:
                     dummy_element=dummy_element,
                     can_reduce=False
                 )
-                idx_set = OrderedSet().union(*idx_sets)
+                idx_set = mat.OrderedSet().union(*idx_sets)
                 dummy_element = node.idx_set_node.combined_dummy_element
 
                 # summation
@@ -623,8 +688,200 @@ class Convexifier:
         else:
             return False
 
-    # Factor Processing
+    # Underestimator Construction
     # ------------------------------------------------------------------------------------------------------------------
+
+    def __build_sign_conditional_convex_underestimator(
+            self,
+            ue_type: int,
+            coefficient_nodes: List[mat.ArithmeticExpressionNode],
+            factors: List[mat.ArithmeticExpressionNode],
+            cmpt_set_nodes: List[mat.SetExpressionNode],
+            cmpt_con_nodes: List[mat.LogicalExpressionNode],
+            idx_set: mat.IndexingSet,
+            dummy_element: mat.Element
+    ) -> Tuple[mat.ArithmeticExpressionNode, List[mat.MetaVariable], List[mat.MetaConstraint]]:
+
+        # coefficient defaults to 1
+        if len(coefficient_nodes) == 0:
+
+            ue_node, ue_meta_var, ue_meta_cons = self.__build_and_retrieve_convex_underestimator(
+                ue_type=ue_type,
+                factors=factors,
+                is_negative=False,
+                cmpt_set_nodes=cmpt_set_nodes,
+                cmpt_con_nodes=cmpt_con_nodes
+            )
+
+            if ue_meta_var is not None:
+                ue_meta_vars = [ue_meta_var]
+            else:
+                ue_meta_vars = []
+
+            return ue_node, ue_meta_vars, ue_meta_cons
+
+        # coefficient may not be 1
+        else:
+
+            coefficient_node = nb.build_multiplication_node(coefficient_nodes, is_prioritized=True)
+
+            values = coefficient_node.evaluate(
+                state=self.__problem.state,
+                idx_set=idx_set,
+                dummy_element=dummy_element)
+
+            is_scalar = True
+            if len(values) > 1:
+                for i in range(1, len(values)):
+                    if values[0] != values[i]:
+                        is_scalar = False
+
+            if is_scalar and values[0] == 0:
+                return mat.NumericNode(0), [], []
+
+            all_pos = all(values > 0)
+            all_neg = all(values < 0)
+            mixed_sign = not (all_pos or all_neg)
+
+            pos_ue_node = None
+            neg_ue_node = None
+
+            ue_meta_vars = []
+            ue_env_meta_cons = []
+
+            # build convex underestimator for the positive-signed function
+            if all_pos or mixed_sign:
+
+                pos_ue_node, pos_ue_meta_var, pos_ue_env_meta_cons = self.__build_and_retrieve_convex_underestimator(
+                    ue_type=ue_type,
+                    factors=factors,
+                    is_negative=False,
+                    cmpt_set_nodes=cmpt_set_nodes,
+                    cmpt_con_nodes=cmpt_con_nodes
+                )
+
+                if pos_ue_meta_var is not None:
+                    ue_meta_vars.append(pos_ue_meta_var)
+
+                ue_env_meta_cons.extend(pos_ue_env_meta_cons)
+
+            # build convex underestimator for the negative-signed function
+            if all_neg or mixed_sign:
+
+                neg_ue_node, neg_ue_meta_var, neg_ue_env_meta_cons = self.__build_and_retrieve_convex_underestimator(
+                    ue_type=ue_type,
+                    factors=factors,
+                    is_negative=True,
+                    cmpt_set_nodes=cmpt_set_nodes,
+                    cmpt_con_nodes=cmpt_con_nodes
+                )
+
+                if neg_ue_meta_var is not None:
+                    ue_meta_vars.append(neg_ue_meta_var)
+
+                ue_env_meta_cons.extend(neg_ue_env_meta_cons)
+
+            if all_pos:
+                ue_node = nb.build_multiplication_node([coefficient_node, pos_ue_node])
+
+            elif all_neg:
+                ue_node = nb.build_multiplication_node([mat.NumericNode(-1), coefficient_node, neg_ue_node])
+
+            else:
+                ue_node = nb.build_multiplication_node(
+                    [
+                        coefficient_node,
+                        mat.ArithmeticConditionalNode(
+                            operands=[
+                                pos_ue_node,
+                                nb.append_negative_unity_coefficient(neg_ue_node)
+                            ],
+                            conditions=[
+                                mat.RelationalOperationNode(operator=mat.GREATER_EQUAL_INEQUALITY_OPERATOR,
+                                                            lhs_operand=deepcopy(coefficient_node),
+                                                            rhs_operand=mat.NumericNode(0))
+                            ],
+                            is_prioritized=True
+                        )
+                    ]
+                )
+
+            return ue_node, ue_meta_vars, ue_env_meta_cons
+
+    def __build_and_retrieve_convex_underestimator(
+            self,
+            ue_type: int,
+            factors: List[mat.ArithmeticExpressionNode],
+            is_negative: bool,
+            cmpt_set_nodes: List[mat.SetExpressionNode],
+            cmpt_con_nodes: List[mat.LogicalExpressionNode],
+    ) -> Tuple[mat.ArithmeticExpressionNode, Optional[mat.MetaVariable], List[mat.MetaConstraint]]:
+
+        factor_count = len(factors)  # count number of supplied operands
+
+        # no operands
+        if factor_count == 0:
+            raise ValueError("Convexifier expected at least one arithmetic expression node"
+                             + " while building and retrieving a convex underestimator")
+
+        # single operand
+        elif factor_count == 1:
+            return self.__build_univariate_convex_envelope(operand=factors[0], is_negative=is_negative), None, []
+
+        # multiple operands
+        else:
+
+            # deterministically sort the factors and retrieve any identifying information
+            (
+                factors,  # sorted list of factor nodes
+                syms,  # sorted list of characteristic symbols for each factor
+                types  # sorted list of function types for each factor
+            ) = self.__process_factors(factors)
+
+            # deterministically generate a corresponding underestimator id for the supplied operands
+            ue_id = self.__generate_constrained_underestimator_id(ue_type=ue_type,
+                                                                  is_negative=is_negative,
+                                                                  syms=syms,
+                                                                  types=types)
+
+            # build constraint node
+            con_node = None
+            if len(cmpt_con_nodes) > 0:
+                con_node = nb.build_conjunction_node(cmpt_con_nodes)
+
+            if len(cmpt_set_nodes) > 0:
+                # build indexing set node
+                idx_set_node = mat.CompoundSetNode(
+                    set_nodes=deepcopy(cmpt_set_nodes),
+                    constraint_node=con_node
+                )
+
+            elif con_node is not None:
+                # build placeholder indexing set node with constraint
+                idx_set_node = mat.CompoundSetNode(
+                    set_nodes=[mat.OrderedSetNode(start_node=mat.NumericNode(1), end_node=mat.NumericNode(1))],
+                    constraint_node=con_node
+                )
+
+            else:
+                idx_set_node = None
+
+            # build underestimator meta-variable
+            ue_meta_var = self.__build_constrained_underestimator_meta_variable(ue_id=ue_id,
+                                                                                idx_set_node=idx_set_node)
+
+            # build envelope meta-constraints
+            ue_env_meta_cons = self.__build_convex_envelope_constraints(
+                ue_id=ue_id,
+                ue_meta_var=ue_meta_var,
+                factors=factors,
+                is_negative=is_negative
+            )
+
+            # build declared entity node for the underestimator
+            ue_node = self.__build_declared_entity_node(meta_entity=ue_meta_var)
+
+            return ue_node, ue_meta_var, ue_env_meta_cons
 
     def __process_factors(self, factors: Iterable[mat.ArithmeticExpressionNode]):
 
@@ -682,195 +939,6 @@ class Convexifier:
 
         return factors, syms, types
 
-    # General Entity Construction
-    # ------------------------------------------------------------------------------------------------------------------
-
-    @staticmethod
-    def __build_declared_entity_node(meta_entity: mat.MetaEntity):
-
-        dummy_nodes = []
-
-        # build dummy nodes for each unbound symbol in the reduced dummy element
-        for unb_sym in meta_entity.idx_set_reduced_dummy_element:
-            dummy_nodes.append(mat.DummyNode(unb_sym))
-
-        # scalar
-        if len(dummy_nodes) == 0:
-            idx_node = None
-
-        # indexed
-        else:
-            # build an index node
-            idx_node = mat.CompoundDummyNode(component_nodes=dummy_nodes)
-
-        # build a declared entity node for the underestimating variable
-        return mat.DeclaredEntityNode(symbol=meta_entity.symbol,
-                                      idx_node=idx_node,
-                                      type=meta_entity.type)
-
-    # Underestimator Construction
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def __build_sign_conditional_convex_underestimator(self,
-                                                       ue_type: int,
-                                                       coefficient_nodes: List[mat.ArithmeticExpressionNode],
-                                                       factors: List[mat.ArithmeticExpressionNode],
-                                                       cmpt_set_nodes: List[mat.SetExpressionNode],
-                                                       cmpt_con_nodes: List[mat.LogicalExpressionNode],
-                                                       idx_set: mat.IndexingSet,
-                                                       dummy_element: mat.Element):
-
-        if len(coefficient_nodes) == 0:
-            return self.__build_and_retrieve_convex_underestimator(
-                ue_type=ue_type,
-                factors=factors,
-                is_negative=False,
-                cmpt_set_nodes=cmpt_set_nodes,
-                cmpt_con_nodes=cmpt_con_nodes
-            )
-
-        else:
-
-            coefficient_node = nb.build_multiplication_node(coefficient_nodes, is_prioritized=True)
-
-            values = coefficient_node.evaluate(
-                state=self.__problem.state,
-                idx_set=idx_set,
-                dummy_element=dummy_element)
-
-            is_scalar = True
-            if len(values) > 1:
-                for i in range(1, len(values)):
-                    if values[0] != values[i]:
-                        is_scalar = False
-
-            if is_scalar and values[0] == 0:
-                return mat.NumericNode(0)
-
-            all_pos = all(values > 0)
-            all_neg = all(values < 0)
-            mixed_sign = not (all_pos or all_neg)
-
-            pos_ue_node = None
-            neg_ue_node = None
-
-            if all_pos or mixed_sign:
-                pos_ue_node = self.__build_and_retrieve_convex_underestimator(
-                    ue_type=ue_type,
-                    factors=factors,
-                    is_negative=False,
-                    cmpt_set_nodes=cmpt_set_nodes,
-                    cmpt_con_nodes=cmpt_con_nodes
-                )
-
-            if all_neg or mixed_sign:
-                neg_ue_node = self.__build_and_retrieve_convex_underestimator(
-                    ue_type=ue_type,
-                    factors=factors,
-                    is_negative=True,
-                    cmpt_set_nodes=cmpt_set_nodes,
-                    cmpt_con_nodes=cmpt_con_nodes
-                )
-
-            if all_pos:
-                ue_node = nb.build_multiplication_node([coefficient_node, pos_ue_node])
-
-            elif all_neg:
-                ue_node = nb.build_multiplication_node([mat.NumericNode(-1), coefficient_node, neg_ue_node])
-
-            else:
-                ue_node = nb.build_multiplication_node(
-                    [
-                        coefficient_node,
-                        mat.ArithmeticConditionalNode(
-                            operands=[
-                                pos_ue_node,
-                                nb.append_negative_unity_coefficient(neg_ue_node)
-                            ],
-                            conditions=[
-                                mat.RelationalOperationNode(operator=mat.GREATER_EQUAL_INEQUALITY_OPERATOR,
-                                                            lhs_operand=deepcopy(coefficient_node),
-                                                            rhs_operand=mat.NumericNode(0))
-                            ],
-                            is_prioritized=True
-                        )
-                    ]
-                )
-
-            return ue_node
-
-    def __build_and_retrieve_convex_underestimator(self,
-                                                   ue_type: int,
-                                                   factors: List[mat.ArithmeticExpressionNode],
-                                                   is_negative: bool,
-                                                   cmpt_set_nodes: List[mat.SetExpressionNode],
-                                                   cmpt_con_nodes: List[mat.LogicalExpressionNode],
-                                                   ):
-
-        factor_count = len(factors)  # count number of supplied operands
-
-        # no operands
-        if factor_count == 0:
-            raise ValueError("Convexifier expected at least one arithmetic expression node"
-                             + " while building and retrieving a convex underestimator")
-
-        # single operand
-        elif factor_count == 1:
-            return self.__build_univariate_convex_envelope(operand=factors[0], is_negative=is_negative)
-
-        # multiple operands
-        else:
-
-            # deterministically sort the factors and retrieve any identifying information
-            (
-                factors,  # sorted list of factor nodes
-                syms,  # sorted list of characteristic symbols for each factor
-                types  # sorted list of function types for each factor
-            ) = self.__process_factors(factors)
-
-            # deterministically generate a corresponding underestimator id for the supplied operands
-            ue_id = self.__generate_constrained_underestimator_id(ue_type=ue_type,
-                                                                  is_negative=is_negative,
-                                                                  syms=syms,
-                                                                  types=types)
-
-            # build constraint node
-            con_node = None
-            if len(cmpt_con_nodes) > 0:
-                con_node = nb.build_conjunction_node(cmpt_con_nodes)
-
-            if len(cmpt_set_nodes) > 0:
-                # build indexing set node
-                idx_set_node = mat.CompoundSetNode(
-                    set_nodes=deepcopy(cmpt_set_nodes),
-                    constraint_node=con_node
-                )
-
-            elif con_node is not None:
-                # build placeholder indexing set node with constraint
-                idx_set_node = mat.CompoundSetNode(
-                    set_nodes=[mat.OrderedSetNode(start_node=mat.NumericNode(1), end_node=mat.NumericNode(1))],
-                    constraint_node=con_node
-                )
-
-            else:
-                idx_set_node = None
-
-            # build underestimator meta-variable
-            ue_meta_var = self.__build_constrained_underestimator_meta_variable(ue_id=ue_id,
-                                                                                idx_set_node=idx_set_node)
-
-            # build envelope meta-constraints
-            self.__build_convex_envelope_constraints(ue_id=ue_id,
-                                                     ue_meta_var=ue_meta_var,
-                                                     factors=factors,
-                                                     is_negative=is_negative)
-
-            # build declared entity node for the underestimator
-            ue_node = self.__build_declared_entity_node(meta_entity=ue_meta_var)
-
-            return ue_node
-
     @staticmethod
     def __generate_constrained_underestimator_id(ue_type: int,
                                                  is_negative: bool,
@@ -906,6 +974,8 @@ class Convexifier:
                                             factors: List[mat.ArithmeticExpressionNode],
                                             is_negative: bool):
 
+        ue_env_meta_cons = []
+
         base_ue_env_sym = "UE_ENV_{0}_{1}_{2}".format(ue_id[0],  # underestimator type
                                                       ue_id[1],  # sign
                                                       ''.join([str(s)[0].upper() for s in ue_id[2:]]))
@@ -933,8 +1003,55 @@ class Convexifier:
 
             self.__problem.add_meta_constraint(meta_con)
 
+            ue_env_meta_cons.append(meta_con)
             self.ue_env_meta_cons[ue_env_sym] = meta_con
             self.var_to_env_map.setdefault(ue_meta_var.symbol, []).append(ue_env_sym)
+
+        return ue_env_meta_cons
+
+    def __add_auxiliary_meta_entities_to_subproblems(
+            self,
+            meta_entity: mat.MetaEntity,
+            sp_meta_entity_syms: Dict[str, Set[str]],
+            ue_meta_vars: List[mat.MetaVariable],
+            ue_env_meta_cons: List[mat.MetaConstraint]
+    ):
+        for sp_sym, sp in self.__problem.subproblems.items():
+
+            in_model = meta_entity.symbol in sp_meta_entity_syms[sp_sym]
+            if in_model:
+
+                for ue_meta_var in ue_meta_vars:
+                    sp.add_meta_entity(ue_meta_var, is_auxiliary=False)
+
+                for ue_env_meta_con in ue_env_meta_cons:
+                    sp.add_meta_entity(ue_env_meta_con, is_auxiliary=False)
+
+    @staticmethod
+    def __build_declared_entity_node(meta_entity: mat.MetaEntity):
+
+        dummy_nodes = []
+
+        # build dummy nodes for each unbound symbol in the reduced dummy element
+        for unb_sym in meta_entity.idx_set_reduced_dummy_element:
+            dummy_nodes.append(mat.DummyNode(unb_sym))
+
+        # scalar
+        if len(dummy_nodes) == 0:
+            idx_node = None
+
+        # indexed
+        else:
+            # build an index node
+            idx_node = mat.CompoundDummyNode(component_nodes=dummy_nodes)
+
+        # build a declared entity node for the underestimating variable
+        return mat.DeclaredEntityNode(symbol=meta_entity.symbol,
+                                      idx_node=idx_node,
+                                      type=meta_entity.type)
+
+    # Convex Envelope Construction
+    # ------------------------------------------------------------------------------------------------------------------
 
     def __build_multivariate_convex_envelope(self,
                                              factors: List[mat.ArithmeticExpressionNode],
@@ -1315,9 +1432,33 @@ class Convexifier:
 
                 meta_params.append(meta_param)
                 self.__problem.add_meta_parameter(meta_param)
+                self.__build_state_parameter(meta_param)
 
             self.lb_params[var_sym] = meta_params[0]
             self.ub_params[var_sym] = meta_params[1]
+
+    def __build_state_parameter(self, meta_param: mat.MetaParameter):
+
+        if meta_param.idx_set_node is None:
+            value = meta_param.default_value_node.evaluate(state=self.__problem.state)[0]
+            self.__problem.state.add_parameter(
+                symbol=meta_param.symbol,
+                value=value
+            )
+
+        else:
+            idx_set: mat.IndexingSet = meta_param.idx_set_node.evaluate(state=self.__problem.state)[0]
+            values = meta_param.default_value_node.evaluate(
+                state=self.__problem.state,
+                idx_set=idx_set,
+                dummy_element=tuple(meta_param.idx_set_dummy_element)
+            )
+            for idx, value in zip(idx_set, values):
+                self.__problem.state.add_parameter(
+                    symbol=meta_param.symbol,
+                    idx=idx,
+                    value=value
+                )
 
     # Bound Node Construction
     # ------------------------------------------------------------------------------------------------------------------

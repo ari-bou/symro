@@ -1,4 +1,4 @@
-from typing import Dict, Iterable, List, Optional, Set, Union
+from typing import Iterable, List, Optional, Set, Union
 
 import symro.src.mat as mat
 from symro.src.prob.problem import BaseProblem, Problem
@@ -46,13 +46,12 @@ class ScriptBuilder:
     def generate_model_script(self,
                               model_file_name: str = None,
                               model_file_extension: Optional[str] = ".mod",
-                              meta_sets: Union[List[mat.MetaSet], Dict[str, mat.MetaSet]] = None,
-                              meta_params: Union[List[mat.MetaParameter], Dict[str, mat.MetaParameter]] = None,
-                              meta_sets_params: Union[List[Union[mat.MetaSet, mat.MetaParameter]],
-                                                      Dict[str, Union[mat.MetaSet, mat.MetaParameter]]] = None,
-                              meta_vars: Union[List[mat.MetaVariable], Dict[str, mat.MetaVariable]] = None,
-                              meta_objs: Union[List[mat.MetaObjective], Dict[str, mat.MetaObjective]] = None,
-                              meta_cons: Union[List[mat.MetaConstraint], Dict[str, mat.MetaConstraint]] = None,
+                              meta_sets: Iterable[mat.MetaSet] = None,
+                              meta_params: Iterable[mat.MetaParameter] = None,
+                              meta_sets_params: Iterable[Union[mat.MetaSet, mat.MetaParameter]] = None,
+                              meta_vars: Iterable[mat.MetaVariable] = None,
+                              meta_objs: Iterable[mat.MetaObjective] = None,
+                              meta_cons: Iterable[mat.MetaConstraint] = None,
                               include_sets: bool = True,
                               include_params: bool = True,
                               include_variables: bool = True,
@@ -62,8 +61,6 @@ class ScriptBuilder:
         def transform_entity_collection(entity_collection):
             if entity_collection is None:
                 entity_collection = []
-            if isinstance(entity_collection, dict):
-                entity_collection = list(entity_collection.values())
             return entity_collection
 
         meta_sets = transform_entity_collection(meta_sets)
@@ -74,7 +71,8 @@ class ScriptBuilder:
         meta_cons = transform_entity_collection(meta_cons)
 
         if len(meta_sets_params) == 0:
-            meta_sets_params = meta_sets + meta_params
+            meta_sets_params.extend(meta_sets)
+            meta_params.extend(meta_params)
 
         if model_file_name is None:
             model_file_name = "model"
@@ -83,7 +81,7 @@ class ScriptBuilder:
                 model_file_name = model_file_name[:-4]
             model_file_name += model_file_extension
 
-        self._script = scr.Script(name=model_file_name)
+        self._script = scr.Script(name=model_file_name, script_type=scr.ScriptType.MODEL)
         self._defined_syms = set()
 
         if (include_sets or include_params) and len(meta_sets_params) > 0:

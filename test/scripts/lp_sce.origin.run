@@ -1,0 +1,16 @@
+model "lp_sce.origin.modr";
+let p[1] := 5;
+let p[2] := 15;
+let p[3] := 30;
+option solver cplex;
+objective OBJ;
+problem PrimalSubproblem {s in S}:
+	x1[s],
+	x2[s],
+	y[s],
+	OBJ_SUB[s],
+	CON1[s],
+	CON2[s],
+	CON3[s],
+	NON_ANT[s]
+;

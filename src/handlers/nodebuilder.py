@@ -472,6 +472,13 @@ def build_idx_set_node(problem: Problem,
 
 
 def combine_idx_set_nodes(idx_set_nodes: Iterable[Optional[mat.CompoundSetNode]]):
+    """
+    Combines the component set nodes of each supplied compound set node into a single compound set node while preserving
+    the argument order. Any supplied compound set nodes that are None are ignored.
+
+    :param idx_set_nodes: iterable collection of compound set nodes
+    :return: combined compound set node
+    """
 
     component_set_nodes = []
     con_operands = []

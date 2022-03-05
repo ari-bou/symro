@@ -1,5 +1,4 @@
 from copy import deepcopy
-from ordered_set import OrderedSet
 from queue import Queue
 from typing import Dict, Iterable, List, Optional, Set, Union
 
@@ -223,7 +222,7 @@ def _build_idx_meta_sets_of_problem(problem: Problem, subproblem: BaseProblem = 
             me.idx_meta_sets = _build_idx_meta_sets_of_meta_entity(
                 problem=problem,
                 idx_set_node=me.idx_set_node,
-                expr_nodes=me.get_expression_nodes()
+                expr_nodes=me.expression_nodes
             )
 
 
@@ -395,9 +394,19 @@ def build_idx_meta_sets(problem: Problem,
 # ------------------------------------------------------------------------------------------------------------------
 
 def build_sub_meta_entity(problem: Problem,
-                          idx_subset_node: mat.CompoundSetNode,
                           meta_entity: mat.MetaEntity,
-                          entity_idx_node: mat.CompoundDummyNode):
+                          idx_subset_node: mat.CompoundSetNode,
+                          entity_idx_node: mat.CompoundDummyNode) -> mat.MetaEntity:
+    """
+    Builds a sub-meta-entity object. A sub-meta-entity is defined over a subset of the indexing set over which the
+    parent meta-entity is defined.
+
+    :param problem: current problem
+    :param meta_entity: parent meta-entity
+    :param idx_subset_node: compound set node over which the sub-meta-entity is defined
+    :param entity_idx_node: index node describing how the idx_subset_node controls the sub-meta-entity
+    :return: sub-meta-entity
+    """
 
     # return the parent meta-entity if it is scalar
     # return the parent meta-entity if no indexing subset is provided
@@ -423,8 +432,8 @@ def __build_sub_meta_entity_idx_set_node(problem: Problem,
     # check if the dimension of the entity index node matches that of the parent meta-entity's indexing set
     if entity_idx_node.get_dim() != meta_entity.idx_set_reduced_dim:
         sub_entity_decl = "{0} {1}{2}".format(idx_subset_node, meta_entity.symbol, entity_idx_node)
-        raise ValueError("Entity builder encountered an incorrect entity declaration"
-                         + " '{0}' while building a sub-meta-entity:".format(sub_entity_decl)
+        raise ValueError("Meta-entity builder encountered an incorrect entity declaration"
+                         + " {0} while building a sub-meta-entity:".format(sub_entity_decl)
                          + " the dimension of the entity index does not match that of the parent entity")
 
     # deep copy the indexing set node of the parent meta-entity
@@ -440,18 +449,23 @@ def __build_sub_meta_entity_idx_set_node(problem: Problem,
     # retrieve standard dummy symbols of the indexing set
     outer_unb_syms = meta_entity.idx_set_reduced_dummy_element
 
-    # process the index node of the sub-meta-entity
-    (is_sub_membership_op_required,
-     inner_to_outer_map,
-     eq_idx_set_con_ops) = __compare_super_and_sub_idx_sets(
+    # compare the indexing superset and the indexing subset
+    are_super_and_subset_equal = __compare_super_and_sub_idx_sets(
         problem=problem,
         idx_set_node=meta_entity.idx_set_node,
+        idx_subset_node=idx_subset_node)
+
+    # process the index node of the sub-meta-entity
+    (inner_to_outer_map,
+     eq_idx_set_con_ops,
+     has_dependent_cmpt) = __map_inner_to_outer_scope(
+        problem=problem,
         idx_subset_node=idx_subset_node,
         outer_unb_syms=outer_unb_syms,
         entity_idx_node=entity_idx_node)
 
     # check whether a subset membership operation is necessary
-    if is_sub_membership_op_required:
+    if not are_super_and_subset_equal or has_dependent_cmpt:
 
         # build the subset membership node
         subset_membership_node = __build_subset_membership_node(
@@ -479,58 +493,80 @@ def __build_sub_meta_entity_idx_set_node(problem: Problem,
 
 def __compare_super_and_sub_idx_sets(problem: Problem,
                                      idx_set_node: mat.CompoundSetNode,
-                                     idx_subset_node: mat.CompoundSetNode,
-                                     outer_unb_syms: List[str],
-                                     entity_idx_node: mat.CompoundDummyNode):
+                                     idx_subset_node: mat.CompoundSetNode):
     """
-    Verify whether a subset membership operation node is necessary.
+    Compares the indexing superset of the parent meta-entity to the indexing subset of the sub-meta-entity.
 
+    :param problem: current problem
     :param idx_set_node: indexing set of the parent meta-entity
     :param idx_subset_node: indexing set of the sub-meta-entity
-    :param entity_idx_node: index node of the sub-meta-entity
-    :return: True if a subset membership operation is necessary, False otherwise
+    :return: True if a the superset and the subset are identical, False otherwise
     """
 
-    # initialize return values
-    is_sub_membership_op_required = False
-    dummy_sym_mapping = {}  # dummy symbol replacement mapping; key: old symbol; value: new symbol
-    eq_nodes = []  # list of equality nodes to be included in the inner indexing set constraint node
-
-    # step 1: compare the indexing superset and subset
-
+    # retrieve the indexing superset and subset
     idx_superset = idx_set_node.evaluate(state=problem.state)[0]
     idx_subset = idx_subset_node.evaluate(state=problem.state)[0]
 
     # compute the symmetric difference of both sets
     if len(idx_superset.symmetric_difference(idx_subset)) > 0:  # symmetric difference is not the empty set
-        is_sub_membership_op_required = True  # indexing superset and subset are different
+        return False  # indexing superset and subset are different
+    else:
+        return True  # indexing superset and subset are identical
 
-    # step 2: process the entity index node
-    # - check if there are any component nodes in the entity index that are not uniquely controlled
-    #   by a dummy
-    # - build a map of inner to outer scope unbound symbols
-    # - build equality nodes to be included an indexing set constraint node
 
-    unbound_syms = set()
+def __map_inner_to_outer_scope(problem: Problem,
+                               idx_subset_node: mat.CompoundSetNode,
+                               outer_unb_syms: List[str],
+                               entity_idx_node: mat.CompoundDummyNode):
+    """
+    Maps each component of the index of the sub-meta-entity to a component of the indexing set node of the parent
+    meta-entity.
 
+    Returns a tuple of length 3.
+        1. dictionary mapping the unbound symbols of the inner scope their corresponding unbound symbols in the outer scope
+        2. list of equality nodes to be included in the constraint node of the final indexing set node
+        3. True if the inner scope has one or more dependent index component nodes, False otherwise
+
+    :param problem: current problem
+    :param idx_subset_node: indexing set of the parent meta-entity
+    :param outer_unb_syms: ordered list of unbound symbols defined in the indexing set node of the parent meta-entity
+    :param entity_idx_node: index node of the sub-meta-entity
+    :return: 3-tuple containing results
+    """
+
+    # initialize return values
+    has_dependent_cmpt = False
+    dummy_sym_mapping = {}  # dummy symbol replacement mapping; key: old symbol; value: new symbol
+    eq_nodes = []  # list of equality nodes to be included in the inner indexing set constraint node
+
+    inner_unb_syms = set()  # set of all unbound symbols appearing in the index node of the sub-meta-entity
+
+    # set of all unbound symbols appearing in the indexing set node of the sub-meta-entity
     inner_middle_unb_syms = set()
+
+    # iterate over all component dummy nodes of the indexing set node of the sub-meta-entity
     for cmpt_node in idx_subset_node.get_dummy_component_nodes(state=problem.state):
         if isinstance(cmpt_node, mat.DummyNode):
             inner_middle_unb_syms.add(cmpt_node.symbol)
 
-    for outer_scope_unbound_sym, cmpt_node in zip(outer_unb_syms,
-                                                  entity_idx_node.component_nodes):
+    # - check if there are any component nodes in the entity index that are not uniquely controlled
+    #   by a dummy
+    # - build a map of inner to outer scope unbound symbols
+    # - build equality nodes to be included in indexing set constraint node
+
+    # iterate over each pair of index sub-elements in the outer and inner scopes
+    for outer_scope_unb_sym, cmpt_node in zip(outer_unb_syms, entity_idx_node.component_nodes):
 
         # dummy
         if isinstance(cmpt_node, mat.DummyNode):
 
-            if cmpt_node.symbol in unbound_syms:  # dummy controls another component node
-                is_sub_membership_op_required = True  # component node is dependent
+            if cmpt_node.symbol in inner_unb_syms:  # dummy controls another component node
+                has_dependent_cmpt = True  # component node is dependent
 
-            unbound_syms.add(cmpt_node.symbol)
+            inner_unb_syms.add(cmpt_node.symbol)
 
-            if cmpt_node.symbol != outer_scope_unbound_sym:
-                dummy_sym_mapping[cmpt_node.symbol] = outer_scope_unbound_sym
+            if cmpt_node.symbol != outer_scope_unb_sym:
+                dummy_sym_mapping[cmpt_node.symbol] = outer_scope_unb_sym
 
         # arithmetic/string expression
         else:
@@ -539,16 +575,16 @@ def __compare_super_and_sub_idx_sets(problem: Problem,
             ctrl_unb_syms = nb.retrieve_unbound_symbols(root_node=cmpt_node, in_filter=inner_middle_unb_syms)
             if len(ctrl_unb_syms):
                 # if the set of controlling unbound symbols is not empty, then the component is controlled
-                is_sub_membership_op_required = True
+                has_dependent_cmpt = True
 
             # build equality node to be included as an indexing set constraint
-            outer_dummy_node = mat.DummyNode(symbol=outer_scope_unbound_sym)
+            outer_dummy_node = mat.DummyNode(symbol=outer_scope_unb_sym)
             eq_node = mat.RelationalOperationNode(operator=mat.EQUALITY_OPERATOR,
                                                   lhs_operand=outer_dummy_node,
                                                   rhs_operand=deepcopy(cmpt_node))
             eq_nodes.append(eq_node)
 
-    return is_sub_membership_op_required, dummy_sym_mapping, eq_nodes
+    return dummy_sym_mapping, eq_nodes, has_dependent_cmpt
 
 
 def __build_subset_membership_node(problem: Problem,
@@ -621,8 +657,8 @@ def __assign_component_set_nodes_to_inner_and_middle_scopes(idx_subset_node: mat
     set_node_id_to_defined_unbound_syms_map: Dict[int, Set[str]] = {}
     def_unb_sym_to_sn_id_map: Dict[str, int] = {}
 
-    middle_unb_syms = OrderedSet()
-    inner_unb_syms = OrderedSet()
+    middle_unb_syms = mat.OrderedSet()
+    inner_unb_syms = mat.OrderedSet()
     entity_idx_unbound_syms = set()  # instantiate set of unbound symbols that control the entity index
 
     middle_set_node_ids = set()
@@ -697,8 +733,8 @@ def __build_middle_scope_idx_set_node(problem: Problem,
                                       def_unb_sym_to_sn_id_map: Dict[str, int],
                                       middle_set_node_ids: Set[int],
                                       outer_unb_syms: List[str],
-                                      middle_unb_syms: OrderedSet[str],
-                                      inner_unb_syms: OrderedSet[str]):
+                                      middle_unb_syms: mat.OrderedSet[str],
+                                      inner_unb_syms: mat.OrderedSet[str]):
 
     if len(middle_set_node_ids) > 0:
 
@@ -728,11 +764,11 @@ def __build_middle_scope_idx_set_node(problem: Problem,
             root_node=middle_idx_set_node,
             blacklisted_unb_syms=outer_unb_syms)
 
-        tfm_middle_scope_unbound_syms = OrderedSet()
+        tfm_middle_scope_unbound_syms = mat.OrderedSet()
         for unbound_sym in middle_unb_syms:
             tfm_middle_scope_unbound_syms.add(middle_rep_map.get(unbound_sym, unbound_sym))
 
-        tfm_inner_scope_unbound_syms = OrderedSet()
+        tfm_inner_scope_unbound_syms = mat.OrderedSet()
         for unbound_sym in inner_unb_syms:
             tfm_inner_scope_unbound_syms.add(middle_rep_map.get(unbound_sym, unbound_sym))
 
@@ -757,9 +793,9 @@ def __build_inner_scope_idx_set_node(problem: Problem,
                                      inner_set_node_ids: Set[int],
                                      middle_rep_map: Dict[str, str],
                                      outer_unb_syms: List[str],
-                                     middle_unb_syms: OrderedSet[str],
-                                     tfm_middle_unb_syms: OrderedSet[str],
-                                     tfm_inner_unb_syms: OrderedSet[str]):
+                                     middle_unb_syms: mat.OrderedSet[str],
+                                     tfm_middle_unb_syms: mat.OrderedSet[str],
+                                     tfm_inner_unb_syms: mat.OrderedSet[str]):
 
     if len(inner_set_node_ids) == 0:
         one_node = mat.NumericNode(1)
@@ -830,7 +866,7 @@ def __build_set_node(middle_idx_set_node: mat.CompoundSetNode,
 
 
 def __build_set_member_node(inner_to_outer_mapping: Dict[str, str],
-                            inner_unb_syms: OrderedSet[str]):
+                            inner_unb_syms: mat.OrderedSet[str]):
 
     set_member_unbound_syms = [inner_to_outer_mapping.get(sym, sym) for sym in inner_unb_syms]
 

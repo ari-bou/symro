@@ -1,8 +1,8 @@
 from abc import ABC
-from ordered_set import OrderedSet
 from typing import List, Optional, Union
 
-from symro.src.mat.util import IndexingSet, Element
+from symro.src.mat.types import IndexingSet, Element
+from symro.src.mat.orderedset import OrderedSet
 
 
 class Entity(ABC):

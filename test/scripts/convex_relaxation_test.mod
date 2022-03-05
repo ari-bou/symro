@@ -34,7 +34,7 @@ minimize OBJ: (x);
 # CONSTRAINTS
 # --------------------------------------------------------------------------------------------------
 # beginregion
-CON9_E2: -1 * log(x) <= 0;
+CON9_E2: -1 * (log(x)) <= 0;
 CON9_E1: (if x_L == x_U then x else ((log(x_L)) + (((log(x_U)) - (log(x_L))) / (x_U - x_L)) * (x - (x_L)))) <= 0;
 # endregion 
 

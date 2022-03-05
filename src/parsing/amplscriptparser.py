@@ -49,10 +49,18 @@ class AMPLScriptParser(AMPLParser):
             if not can_continue:
                 break
 
-    def __parse_included_script(self, file_name: str):
+    def __parse_included_script(
+            self,
+            file_name: str,
+            script_type: scr.ScriptType
+    ):
 
         literal = util.read_file(self.working_dir_path, file_name)
-        included_script = self._tokenize(literal, script_id=file_name)
+        included_script = self._tokenize_included_file(
+            literal,
+            script_id=file_name,
+            script_type=script_type
+        )
 
         prev_script = self._active_script
         self._active_script = included_script
@@ -863,15 +871,25 @@ class AMPLScriptParser(AMPLParser):
         file_name_node = self.__parse_argument()
 
         # TODO: parsing logic for included data files
+
+        script_type = None
+        if command == "include":
+            script_type = scr.ScriptType.COMMANDS
         if command == "commands":
             print("AMPL Parser ignored script '{0}'".format(file_name_node)
                   + " referenced in a 'commands' statement")
+        if command == "model":
+            script_type = scr.ScriptType.MODEL
         elif command == "data":
             print("AMPL Parser ignored script '{0}'".format(file_name_node)
                   + " referenced in a 'data' statement")
-        else:
+
+        if script_type is not None:
             file_name = file_name_node.evaluate(self.problem.state)[0]
-            self.__parse_included_script(file_name)
+            self.__parse_included_script(
+                file_name=file_name,
+                script_type=script_type
+            )
 
         return ampl_stm.FileStatement(
             command=command,

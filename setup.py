@@ -12,6 +12,12 @@ version_file = open(os.path.join(ROOT_DIR, 'VERSION'))
 version = version_file.read().strip()
 __version__ = version
 
+with open(os.path.join(ROOT_DIR, "requirements.txt")) as f:
+    requirements = [line.strip() for line in f]
+
+with open(os.path.join(ROOT_DIR, "test", "test-requirements.txt")) as f:
+    test_requirements = [line.strip() for line in f]
+
 # This call to setup() does all the work
 setuptools.setup(
     name="symro",
@@ -35,5 +41,8 @@ setuptools.setup(
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.8",
     include_package_data=True,
-    install_requires=["amplpy>=0.7.1", "numpy>=1.21.2", "ordered-set>=4.0.2"]
+    install_requires=requirements,
+    extras_require={
+        "test": test_requirements
+    }
 )

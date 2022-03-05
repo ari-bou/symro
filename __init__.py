@@ -1,7 +1,7 @@
 import os
 import pathlib
 
-from symro.src import *
+from symro.src import *  # allow access to imported members of the src directory
 
 
 # The directory containing this file

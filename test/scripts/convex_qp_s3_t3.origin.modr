@@ -1,0 +1,57 @@
+# SETS AND PARAMETERS
+# --------------------------------------------------------------------------------------------------
+# beginregion
+param S;
+param T;
+set SCENARIOS = 1..S;
+set TIMEPERIODS = 1..T;
+set RAW_MATERIALS;
+set PRODUCTS;
+set MATERIALS = RAW_MATERIALS union PRODUCTS;
+set LINKAGES within {i in MATERIALS, j in MATERIALS: i != j};
+set QUALITIES;
+param YIELD{p in PRODUCTS, r in RAW_MATERIALS};
+param MIN_PROD{p in PRODUCTS};
+param DEMAND{p in PRODUCTS};
+param QUALITY_RAW_MAT{q in QUALITIES, r in RAW_MATERIALS};
+param QUALITY_SPEC_MIN{q in QUALITIES, p in PRODUCTS};
+param QUALITY_SPEC_MAX{q in QUALITIES, p in PRODUCTS};
+param COST{m in MATERIALS, s in SCENARIOS};
+param PROBABILITY{s in SCENARIOS};
+# endregion 
+
+
+# VARIABLES
+# --------------------------------------------------------------------------------------------------
+# beginregion
+var INLET{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS} := 30, >= 0, <= 1000;
+var NODE{m in MATERIALS, t in TIMEPERIODS, s in SCENARIOS} >= 0, <= 1000;
+var ARC{(l0,l1) in LINKAGES, t in TIMEPERIODS, s in SCENARIOS} >= 0, <= 1000;
+var PROFIT{t in TIMEPERIODS, s in SCENARIOS};
+# endregion 
+
+
+# OBJECTIVES
+# --------------------------------------------------------------------------------------------------
+# beginregion
+minimize OBJ: -1 * (sum {t in TIMEPERIODS, s in SCENARIOS} (PROBABILITY[s] * ((sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s])) + -1 * (sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s] + 0.01 * COST[r,s] * NODE[r,t,s] ^ 2)))));
+minimize OBJ_SUB{t in TIMEPERIODS, s in SCENARIOS}: (-1 * PROBABILITY[s] * ((sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s])) + -1 * (sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s] + 0.01 * COST[r,s] * NODE[r,t,s] ^ 2))));
+minimize OBJ_SUB_PrimalSubproblem{t in TIMEPERIODS, s in SCENARIOS}: (-1 * PROBABILITY[s] * ((sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s])) + -1 * (sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s] + 0.01 * COST[r,s] * NODE[r,t,s] ^ 2))));
+# endregion 
+
+
+# CONSTRAINTS
+# --------------------------------------------------------------------------------------------------
+# beginregion
+INLET_FLOW_RATE{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS}: INLET[r,t,s] + -1 * NODE[r,t,s] == 0;
+RAW_MAT_FLOW_RATE{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS}: (sum {p in PRODUCTS} ARC[r,p,t,s]) + -1 * NODE[r,t,s] == 0;
+PROD_FLOW_RATE{p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: NODE[p,t,s] + -1 * (sum {r in RAW_MATERIALS} ARC[r,p,t,s]) == 0;
+MIN_PRODUCTION{p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: MIN_PROD[p] + -1 * NODE[p,t,s] <= 0;
+PROD_DEMAND{p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: NODE[p,t,s] + -1 * DEMAND[p] <= 0;
+QUALITY_BLENDING_RULE_MIN{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: QUALITY_SPEC_MIN[q,p] * NODE[p,t,s] + -1 * (sum {r in RAW_MATERIALS} (QUALITY_RAW_MAT[q,r] * ARC[r,p,t,s])) <= 0;
+QUALITY_BLENDING_RULE_MAX{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS, s in SCENARIOS}: (sum {r in RAW_MATERIALS} (QUALITY_RAW_MAT[q,r] * ARC[r,p,t,s])) + -1 * QUALITY_SPEC_MAX[q,p] * NODE[p,t,s] <= 0;
+PROFIT_CALC{t in TIMEPERIODS, s in SCENARIOS}: PROFIT[t,s] + -1 * ((sum {p in PRODUCTS} (COST[p,s] * NODE[p,t,s])) + -1 * (sum {r in RAW_MATERIALS} (COST[r,s] * NODE[r,t,s]))) == 0;
+NON_ANT{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS}: INLET[r,t,s] + -1 * INLET[r,t,1] == 0;
+NON_ANT2{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS}: NODE[r,t,s] + -1 * NODE[r,t,1] == 0;
+# endregion 
+

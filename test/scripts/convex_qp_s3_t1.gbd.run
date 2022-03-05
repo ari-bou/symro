@@ -1,6 +1,6 @@
-model "convex_qp.gbd.modr";
-model "convex_qp.gbd.modm";
-model "convex_qp.gbd.modrsl";
+model "convex_qp_s3_t1.gbd.modr";
+model "convex_qp_s3_t1.gbd.modm";
+model "convex_qp_s3_t1.gbd.modrsl";
 data convex_qp.dat;
 option show_stats 3;
 option presolve 16;
@@ -14,6 +14,8 @@ option conopt_options "outlev=3 timing=3 errlim=10000 Rtnwmi=1e-5 Rtnwma=1e-3";
 option ipopt_options "halt_on_ampl_error yes";
 option snopt_options "outlev=3";
 option knitro_options "outlev=3 ms_enable=0";
+let S := 3;
+let T := 1;
 objective OBJ;
 option solver cplex;
 problem PrimalSubproblem {s in SCENARIOS}:
@@ -22,14 +24,15 @@ problem PrimalSubproblem {s in SCENARIOS}:
 	{(l0,l1) in LINKAGES, t in TIMEPERIODS} ARC[l0,l1,t,s],
 	{t in TIMEPERIODS} PROFIT[t,s],
 	OBJ_SUB_PrimalSubproblem[s],
-	{r in RAW_MATERIALS, t in TIMEPERIODS} RAW_MAT_FLOW_RATE[r,t,s],
 	{p in PRODUCTS, t in TIMEPERIODS} PROD_FLOW_RATE[p,t,s],
 	{p in PRODUCTS, t in TIMEPERIODS} MIN_PRODUCTION[p,t,s],
 	{p in PRODUCTS, t in TIMEPERIODS} PROD_DEMAND[p,t,s],
 	{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS} QUALITY_BLENDING_RULE_MIN[q,p,t,s],
 	{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS} QUALITY_BLENDING_RULE_MAX[q,p,t,s],
-	{t in TIMEPERIODS} PROFIT_CALC[t,s],
-	{r in RAW_MATERIALS, t in TIMEPERIODS} INLET_FLOW_RATE[r,t,s]
+	{r in RAW_MATERIALS, t in TIMEPERIODS} NON_ANT[r,t,s],
+	{r in RAW_MATERIALS, t in TIMEPERIODS} INLET_FLOW_RATE[r,t,s],
+	{r in RAW_MATERIALS, t in TIMEPERIODS} RAW_MAT_FLOW_RATE[r,t,s],
+	{t in TIMEPERIODS} PROFIT_CALC[t,s]
 ;
 problem PrimalSubproblem_FBL {s in SCENARIOS}:
 	{r in RAW_MATERIALS, t in TIMEPERIODS} INLET[r,t,s],
@@ -41,22 +44,26 @@ problem PrimalSubproblem_FBL {s in SCENARIOS}:
 	{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS} QUALITY_BLENDING_RULE_MIN_SL[q,p,t,s],
 	{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS} QUALITY_BLENDING_RULE_MAX_SL[q,p,t,s],
 	FBL_OBJ_PrimalSubproblem[s],
-	{r in RAW_MATERIALS, t in TIMEPERIODS} RAW_MAT_FLOW_RATE[r,t,s],
 	{p in PRODUCTS, t in TIMEPERIODS} PROD_FLOW_RATE[p,t,s],
 	{p in PRODUCTS, t in TIMEPERIODS} MIN_PRODUCTION_F[p,t,s],
 	{p in PRODUCTS, t in TIMEPERIODS} PROD_DEMAND_F[p,t,s],
 	{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS} QUALITY_BLENDING_RULE_MIN_F[q,p,t,s],
 	{q in QUALITIES, p in PRODUCTS, t in TIMEPERIODS} QUALITY_BLENDING_RULE_MAX_F[q,p,t,s],
-	{t in TIMEPERIODS} PROFIT_CALC[t,s],
-	{r in RAW_MATERIALS, t in TIMEPERIODS} INLET_FLOW_RATE[r,t,s]
+	{r in RAW_MATERIALS, t in TIMEPERIODS} NON_ANT[r,t,s],
+	{r in RAW_MATERIALS, t in TIMEPERIODS} INLET_FLOW_RATE[r,t,s],
+	{r in RAW_MATERIALS, t in TIMEPERIODS} RAW_MAT_FLOW_RATE[r,t,s],
+	{t in TIMEPERIODS} PROFIT_CALC[t,s]
 ;
 problem Master:
-	{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS} INLET[r,t,s],
-	eta,
+	{m in MATERIALS, t in TIMEPERIODS, s in SCENARIOS: (m,t,s) in {r1 in RAW_MATERIALS, t1 in TIMEPERIODS, s1 in SCENARIOS}} NODE[m,t,s],
+	ETA,
 	{s in SCENARIOS, ct in CUTS} GBD_F[s,ct],
 	{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS, ct in CUTS} GBD_G_0[r,t,s,ct],
+	{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS, ct in CUTS} GBD_G_1[r,t,s,ct],
+	{t in TIMEPERIODS, s in SCENARIOS, ct in CUTS} GBD_G_2[t,s,ct],
 	MASTER_OBJ,
-	{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS} NON_ANT[r,t,s],
-	{ct in CUTS: is_feasible[ct] == 1} GBD_OPT_CUT[ct],
-	{ct in CUTS: is_feasible[ct] == 0} GBD_FBL_CUT[ct]
+	{r in RAW_MATERIALS, t in TIMEPERIODS, s in SCENARIOS} NON_ANT2[r,t,s],
+	{ct in CUTS: IS_FEASIBLE[ct] == 1} GBD_OPT_CUT[ct],
+	{ct in CUTS: IS_FEASIBLE[ct] == 0} GBD_FBL_CUT[ct],
+	ETA_BOUNDS
 ;

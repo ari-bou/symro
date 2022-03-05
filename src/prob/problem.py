@@ -1,5 +1,4 @@
 from copy import copy, deepcopy
-from ordered_set import OrderedSet
 import os
 import pickle
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Union
@@ -24,10 +23,10 @@ class BaseProblem:
 
         self.idx_set_node: mat.CompoundSetNode = idx_set_node
 
-        self.model_meta_sets_params: List[Union[mat.MetaSet, mat.MetaParameter]] = []
-        self.model_meta_vars: List[mat.MetaVariable] = []
-        self.model_meta_objs: List[mat.MetaObjective] = []
-        self.model_meta_cons: List[mat.MetaConstraint] = []
+        self._model_meta_sets_params: mat.OrderedSet[Union[mat.MetaSet, mat.MetaParameter]] = mat.OrderedSet([])
+        self._model_meta_vars: mat.OrderedSet[mat.MetaVariable] = mat.OrderedSet([])
+        self._model_meta_objs: mat.OrderedSet[mat.MetaObjective] = mat.OrderedSet([])
+        self._model_meta_cons: mat.OrderedSet[mat.MetaConstraint] = mat.OrderedSet([])
 
         if model_meta_entities is not None:
             for me in model_meta_entities:
@@ -53,10 +52,10 @@ class BaseProblem:
         clone.description = source.description
         clone.idx_set_node = source.idx_set_node
 
-        clone.model_meta_sets_params = list(source.model_meta_sets_params)
-        clone.model_meta_vars = list(source.model_meta_vars)
-        clone.model_meta_objs = list(source.model_meta_objs)
-        clone.model_meta_cons = list(source.model_meta_cons)
+        clone.model_meta_sets_params = source.model_meta_sets_params
+        clone.model_meta_vars = source.model_meta_vars
+        clone.model_meta_objs = source.model_meta_objs
+        clone.model_meta_cons = source.model_meta_cons
 
     @staticmethod
     def deepcopy(source: "BaseProblem", clone: "BaseProblem"):
@@ -70,8 +69,40 @@ class BaseProblem:
         clone.model_meta_objs = deepcopy(source.model_meta_objs)
         clone.model_meta_cons = deepcopy(source.model_meta_cons)
 
-    # Accessors
+    # Properties
     # ------------------------------------------------------------------------------------------------------------------
+
+    @property
+    def model_meta_sets_params(self):
+        return self._model_meta_sets_params
+
+    @model_meta_sets_params.setter
+    def model_meta_sets_params(self, iterable: Iterable):
+        self._model_meta_sets_params = mat.OrderedSet(iterable)
+
+    @property
+    def model_meta_vars(self):
+        return self._model_meta_vars
+
+    @model_meta_vars.setter
+    def model_meta_vars(self, iterable: Iterable):
+        self._model_meta_vars = mat.OrderedSet(iterable)
+
+    @property
+    def model_meta_objs(self):
+        return self._model_meta_objs
+
+    @model_meta_objs.setter
+    def model_meta_objs(self, iterable: Iterable):
+        self._model_meta_objs = mat.OrderedSet(iterable)
+
+    @property
+    def model_meta_cons(self):
+        return self._model_meta_cons
+
+    @model_meta_cons.setter
+    def model_meta_cons(self, iterable: Iterable):
+        self._model_meta_cons = mat.OrderedSet(iterable)
 
     @property
     def symbol(self) -> str:
@@ -81,20 +112,45 @@ class BaseProblem:
     def symbol(self, symbol):
         self._symbol = symbol
 
+    @property
+    def entity_symbols(self) -> Set[str]:
+        return self.set_param_symbols | self.variable_symbols | self.objective_symbols | self.constraint_symbols
+
+    @property
+    def set_param_symbols(self) -> Set[str]:
+        return set([mv.symbol for mv in self.model_meta_sets_params])
+
+    @property
+    def variable_symbols(self) -> Set[str]:
+        return set([mv.symbol for mv in self.model_meta_vars])
+
+    @property
+    def objective_symbols(self) -> Set[str]:
+        return set([mo.symbol for mo in self.model_meta_objs])
+
+    @property
+    def constraint_symbols(self) -> Set[str]:
+        return set([mc.symbol for mc in self.model_meta_cons])
+
     # Addition
     # ------------------------------------------------------------------------------------------------------------------
 
     def add_meta_entity(self,
                         meta_entity: mat.MetaEntity,
                         is_auxiliary: bool = False):
+
         if isinstance(meta_entity, mat.MetaSet):
             self.model_meta_sets_params.append(meta_entity)
+
         elif isinstance(meta_entity, mat.MetaParameter):
             self.model_meta_sets_params.append(meta_entity)
+
         elif isinstance(meta_entity, mat.MetaVariable):
             self.model_meta_vars.append(meta_entity)
+
         elif isinstance(meta_entity, mat.MetaObjective):
             self.model_meta_objs.append(meta_entity)
+
         elif isinstance(meta_entity, mat.MetaConstraint):
             self.model_meta_cons.append(meta_entity)
 
@@ -111,7 +167,7 @@ class BaseProblem:
     def _replace_model_meta_entity(self,
                                    old_symbol: str,
                                    new_meta_entities: List[mat.MetaEntity],
-                                   model_meta_entities: List[mat.MetaEntity]):
+                                   model_meta_entities: mat.OrderedSet[mat.MetaEntity]):
 
         if len(new_meta_entities) == 1 and old_symbol == new_meta_entities[0].symbol:
             return
@@ -162,12 +218,16 @@ class Problem(BaseProblem):
         self.unbound_symbols: Set[str] = set()
 
         # --- Meta-Entities ---
+
         self.meta_sets: Dict[str, Optional[mat.MetaSet]] = {}
         self.meta_params: Dict[str, Optional[mat.MetaParameter]] = {}
         self.meta_vars: Dict[str, Optional[mat.MetaVariable]] = {}
         self.meta_objs: Dict[str, Optional[mat.MetaObjective]] = {}
         self.meta_cons: Dict[str, Optional[mat.MetaConstraint]] = {}
         self.meta_tables: Dict[str, Any] = {}
+
+        self.origin_to_std_con_map: Optional[Dict[str, List[mat.MetaConstraint]]] = {}
+
         self.subproblems: Dict[str, BaseProblem] = {}
 
         # --- State ---
@@ -218,7 +278,7 @@ class Problem(BaseProblem):
 
         if sym in self.meta_sets:
             entity = self.state.get_set(sym, idx)
-            entity.elements = OrderedSet(value)
+            entity.elements = mat.OrderedSet(value)
 
         elif sym in self.meta_params:
             entity = self.state.get_parameter(sym, idx)
@@ -339,19 +399,6 @@ class Problem(BaseProblem):
 
     # Checkers
     # ------------------------------------------------------------------------------------------------------------------
-
-    def is_meta_entity_in_model(self, meta_entity: mat.MetaEntity) -> bool:
-        if isinstance(meta_entity, mat.MetaSet):
-            return meta_entity.symbol in self.model_meta_sets_params
-        elif isinstance(meta_entity, mat.MetaParameter):
-            return meta_entity.symbol in self.model_meta_sets_params
-        elif isinstance(meta_entity, mat.MetaVariable):
-            return meta_entity.symbol in self.model_meta_vars
-        elif isinstance(meta_entity, mat.MetaObjective):
-            return meta_entity.symbol in self.model_meta_objs
-        elif isinstance(meta_entity, mat.MetaConstraint):
-            return meta_entity.symbol in self.model_meta_cons
-        return False
 
     def contains_script_command(self, symbol: str) -> bool:
         if self.script_commands is not None:
@@ -620,7 +667,11 @@ class Problem(BaseProblem):
 
         # TODO: filter variables by subproblem
 
-        dat_script = scr.Script(file_name)  # generate data script
+        # generate data script
+        dat_script = scr.Script(
+            name=file_name,
+            script_type=scr.ScriptType.DATA
+        )
 
         for mv in self.model_meta_vars:
 
@@ -655,7 +706,11 @@ class Problem(BaseProblem):
 
         # TODO: filter variables by subproblem
 
-        dat_script = scr.Script(file_name)  # generate data script
+        # generate data script
+        dat_script = scr.Script(
+            name=file_name,
+            script_type=scr.ScriptType.DATA
+        )
 
         for mc in self.model_meta_cons:
 

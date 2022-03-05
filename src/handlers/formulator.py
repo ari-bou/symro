@@ -1,12 +1,11 @@
 from copy import deepcopy
 from numbers import Number
-from ordered_set import OrderedSet
 from queue import Queue
 from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import numpy as np
 import symro.src.mat as mat
-from symro.src.prob.problem import Problem
+from symro.src.prob.problem import Problem, BaseProblem
 import symro.src.handlers.nodebuilder as nb
 import symro.src.handlers.metaentitybuilder as eb
 
@@ -22,7 +21,6 @@ def standardize_model(problem: Problem) -> Dict[str, List[mat.MetaConstraint]]:
 
     # standardize constraints
 
-    original_to_standard_con_map = {}  # map of original to standard meta-constraints
     std_meta_cons = []  # list of standardized meta-constraints
 
     for meta_con in problem.model_meta_cons:
@@ -30,7 +28,7 @@ def standardize_model(problem: Problem) -> Dict[str, List[mat.MetaConstraint]]:
         problem.meta_cons.pop(meta_con.symbol)  # remove original meta-constraint
 
         std_meta_con_list = __standardize_constraint(problem, meta_con)
-        original_to_standard_con_map[meta_con.symbol] = std_meta_con_list
+        problem.origin_to_std_con_map[meta_con.symbol] = std_meta_con_list
 
         std_meta_cons.extend(std_meta_con_list)
 
@@ -47,7 +45,7 @@ def standardize_model(problem: Problem) -> Dict[str, List[mat.MetaConstraint]]:
         for meta_con in sp.model_meta_cons:  # iterate over all meta-constraints in the subproblem
 
             # retrieve the standardized parent meta-constraint
-            std_meta_cons_c = original_to_standard_con_map[meta_con.symbol]
+            std_meta_cons_c = problem.origin_to_std_con_map[meta_con.symbol]
 
             if not meta_con.is_sub:  # original meta-constraint
                 # add the standardized parent meta-constraints to the list
@@ -66,7 +64,7 @@ def standardize_model(problem: Problem) -> Dict[str, List[mat.MetaConstraint]]:
 
         sp.model_meta_cons = std_sp_meta_cons  # assign list of standardized meta-constraints to the subproblem
 
-    return original_to_standard_con_map
+    return problem.origin_to_std_con_map
 
 
 def __standardize_objective(meta_obj: mat.MetaObjective):
@@ -193,6 +191,7 @@ def __standardize_double_inequality_constraint(problem: Problem,
 
         new_sym = problem.generate_unique_symbol("{0}_I{1}".format(meta_con.symbol, i + 1))
         mc_clone.symbol = new_sym
+        mc_clone.non_std_symbol = meta_con.symbol
 
         expr_clone = mc_clone.expression
         expr_clone.root_node = ref_ineq_op_node
@@ -201,6 +200,8 @@ def __standardize_double_inequality_constraint(problem: Problem,
         mc_clone.elicit_constraint_type()
 
         ref_meta_cons.append(mc_clone)
+
+    problem.origin_to_std_con_map[meta_con.symbol] = ref_meta_cons
 
     return ref_meta_cons
 
@@ -300,12 +301,13 @@ def convert_equality_to_inequality_constraints(problem: Problem, meta_con: mat.M
 
         new_sym = problem.generate_unique_symbol("{0}_E{1}".format(old_sym, i + 1))
         ref_meta_con.symbol = new_sym
+        ref_meta_con.non_std_symbol = old_sym
 
         eq_op_node = ref_meta_con.expression.root_node
         if not isinstance(eq_op_node, mat.RelationalOperationNode):
-            raise ValueError("Formulator encountered unexpected expression node"
-                             + " while converting equality constraint '{0}'".format(meta_con)
-                             + " into inequality constraints")
+            raise ValueError("Formulator encountered an unexpected expression node"
+                             + " while converting equality constraint {0}".format(old_sym)
+                             + " into two inequality constraints")
 
         eq_op_node.operator = mat.LESS_EQUAL_INEQUALITY_OPERATOR
 
@@ -514,7 +516,7 @@ def substitute(root_node: mat.ExpressionNode,
     return root_node
 
 
-def substitute_defined_variables(problem: Problem):
+def substitute_defined_variables(problem: BaseProblem):
 
     # identify all defined variables
 
@@ -984,7 +986,7 @@ def __simplify_set_expression(problem: Problem,
         # check number of component indexing sets
         if len(node.idx_set_node.set_nodes) == 0:
             # return empty set if the indexing set is empty
-            return mat.EnumeratedSet()
+            return mat.EnumeratedSetNode()
 
         return node
 
@@ -1229,7 +1231,7 @@ def __expand_multiplication(problem: Problem,
                     dummy_element=dummy_element,
                     can_reduce=False
                 )
-                idx_set = OrderedSet().union(*idx_sets)
+                idx_set = mat.OrderedSet().union(*idx_sets)
                 dummy_element = node.idx_set_node.combined_dummy_element
 
                 terms = __expand_multiplication(problem, node.operands[0], idx_set, dummy_element)

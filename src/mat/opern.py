@@ -1,11 +1,18 @@
 from functools import partial
-import numpy as np
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
-from symro.src.mat.util import *
+import numpy as np
+
+from symro.src.mat.constants import *
+from symro.src.mat.types import Element, IndexingSet
 from symro.src.mat.entity import Parameter, Variable
-from symro.src.mat.exprn import ExpressionNode, LogicalExpressionNode, SetExpressionNode, ArithmeticExpressionNode, \
-    StringExpressionNode
+from symro.src.mat.exprn import (
+    ExpressionNode,
+    LogicalExpressionNode,
+    SetExpressionNode,
+    ArithmeticExpressionNode,
+    StringExpressionNode,
+)
 from symro.src.mat.state import State
 
 
@@ -182,15 +189,19 @@ class RelationalOperationNode(LogicalExpressionNode):
     def __init__(self,
                  operator: int,
                  lhs_operand: Union[ArithmeticExpressionNode,
-                                    StringExpressionNode] = None,
+                                    StringExpressionNode,
+                                    "RelationalOperationNode"] = None,
                  rhs_operand: Union[ArithmeticExpressionNode,
-                                    StringExpressionNode] = None):
+                                    StringExpressionNode,
+                                    "RelationalOperationNode"] = None):
         super().__init__()
         self.operator: int = operator
         self.lhs_operand: Optional[Union[ArithmeticExpressionNode,
-                                         StringExpressionNode]] = lhs_operand
+                                         StringExpressionNode,
+                                         RelationalOperationNode]] = lhs_operand
         self.rhs_operand: Optional[Union[ArithmeticExpressionNode,
-                                         StringExpressionNode]] = rhs_operand
+                                         StringExpressionNode,
+                                         RelationalOperationNode]] = rhs_operand
 
     def __invert__(self):
         return LogicalOperationNode.invert(self)

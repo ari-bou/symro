@@ -1,24 +1,23 @@
-from typing import Dict, Sequence
+from typing import Dict, Iterable, Sequence
 
-from symro.src.mat.util import *
+from symro.src.mat.constants import *
 from symro.src.mat.entity import *
 
 
 class State:
     """
-    class State
-
-    A container object that manages the data of a problem instance, including:
+    The state class is a container that manages the mutable data of a problem instance, including:
         - the elements of all defined sets,
         - the dimensions of all defined sets,
         - the values of all defined parameters,
         - the values and bounds of all defined variables,
         - the values of all defined objectives,
         - the bodies, bounds, and dual values of all defined constraints.
+
     The data associated with a particular problem entity is stored in a corresponding Entity object.
     Attempting to manipulate a set or a parameter for which no data has been supplied raises a value error. Otherwise,
-    attempting to manipulate a variable, an objective, or a constraint will result in the automatic construction of the
-    appropriate Entity object with all properties defaulting to 0.
+    attempting to manipulate a variable, an objective, or a constraint that does not exist will result in the automatic
+    construction of the appropriate Entity object with all properties defaulting to 0.
     """
 
     def __init__(self):
@@ -212,8 +211,6 @@ class State:
             value=value
         )
         self.parameters[param.entity_id] = param
-        if param.entity_id == ("Vin_L", "LGO", "DHC", 1, 1):
-            x = 2
         return param
 
     def add_variable(self,

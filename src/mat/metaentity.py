@@ -1,14 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Union
 
-from symro.src.mat.util import *
+from symro.src.mat.constants import *
+from symro.src.mat.types import Element, IndexingSet
+from symro.src.mat.util import remove_set_dimensions
 from symro.src.mat.entity import Entity
 from symro.src.mat.state import State
 from symro.src.mat.setn import BaseSetNode, CompoundSetNode
 from symro.src.mat.opern import RelationalOperationNode
 from symro.src.mat.exprn import ExpressionNode
-from symro.src.mat.expression import Expression
-from symro.src.mat.util import Element, IndexingSet, remove_set_dimensions
+from symro.src.mat.expression import Expression, get_var_nodes, get_param_nodes
 
 
 class MetaEntity(ABC):
@@ -26,6 +27,8 @@ class MetaEntity(ABC):
             idx_meta_sets = [ms for ms in idx_meta_sets.values()]
 
         self._symbol: str = symbol
+        self._non_std_symbol = None
+
         self._alias: str = alias
 
         self._idx_meta_sets: List["MetaSet"] = idx_meta_sets
@@ -33,11 +36,11 @@ class MetaEntity(ABC):
 
         self._parent: "MetaEntity" = parent
 
+    def __hash__(self):
+        return id(self)
+
     def __str__(self):
         return self.generate_declaration()
-
-    def __eq__(self, other):
-        return str(self) == str(other)
 
     # Type
     # ------------------------------------------------------------------------------------------------------------------
@@ -65,6 +68,20 @@ class MetaEntity(ABC):
             self._parent.symbol = symbol
 
     @property
+    def non_std_symbol(self) -> str:
+        if self._parent is None:
+            return self._non_std_symbol
+        else:
+            return self._parent.non_std_symbol
+
+    @non_std_symbol.setter
+    def non_std_symbol(self, symbol: str):
+        if self._parent is None:
+            self._non_std_symbol = symbol
+        else:
+            self._parent.non_std_symbol = symbol
+
+    @property
     def alias(self) -> str:
         if self._parent is None:
             return self._alias
@@ -85,8 +102,9 @@ class MetaEntity(ABC):
         else:
             return None
 
+    @property
     @abstractmethod
-    def get_expression_nodes(self) -> List[ExpressionNode]:
+    def expression_nodes(self) -> List[ExpressionNode]:
         pass
 
     # Indexing
@@ -210,7 +228,7 @@ class MetaEntity(ABC):
         """
 
         # Check whether symbols are identical
-        if self._symbol != entity.symbol:
+        if self.symbol != entity.symbol:
             return False
 
         # Check whether the entity index is a member of the meta-entity indexing set
@@ -428,7 +446,8 @@ class MetaSet(MetaEntity):
         else:
             return self._parent.default_value_node
 
-    def get_expression_nodes(self) -> List[ExpressionNode]:
+    @property
+    def expression_nodes(self) -> List[ExpressionNode]:
 
         expr_nodes = []
 
@@ -588,7 +607,8 @@ class MetaParameter(MetaEntity):
         else:
             return self._parent.relational_constraints
 
-    def get_expression_nodes(self) -> List[ExpressionNode]:
+    @property
+    def expression_nodes(self) -> List[ExpressionNode]:
 
         expr_nodes = []
 
@@ -771,7 +791,8 @@ class MetaVariable(MetaEntity):
         else:
             return self._parent.upper_bound_node
 
-    def get_expression_nodes(self) -> List[ExpressionNode]:
+    @property
+    def expression_nodes(self) -> List[ExpressionNode]:
 
         expr_nodes = []
 
@@ -910,11 +931,22 @@ class MetaObjective(MetaEntity):
         else:
             self._parent.expression = expr
 
-    def get_expression_nodes(self) -> List[ExpressionNode]:
+    @property
+    def expression_nodes(self) -> List[ExpressionNode]:
         expr_nodes = [self.expression.root_node]
         if self.idx_set_node is not None:
             expr_nodes.append(self.idx_set_node)
         return expr_nodes
+
+    @property
+    def variable_symbols(self):
+        nodes = get_var_nodes(self.expression.root_node)
+        return [n.symbol for n in nodes]
+
+    @property
+    def parameter_symbols(self):
+        nodes = get_param_nodes(self.expression.root_node)
+        return [n.symbol for n in nodes]
 
     # Sub-Entity
     # ------------------------------------------------------------------------------------------------------------------
@@ -1023,11 +1055,22 @@ class MetaConstraint(MetaEntity):
         else:
             self._parent.expression = expr
 
-    def get_expression_nodes(self) -> List[ExpressionNode]:
+    @property
+    def expression_nodes(self) -> List[ExpressionNode]:
         expr_nodes = [self.expression.root_node]
         if self.idx_set_node is not None:
             expr_nodes.append(self.idx_set_node)
         return expr_nodes
+
+    @property
+    def variable_symbols(self):
+        nodes = get_var_nodes(self.expression.root_node)
+        return [n.symbol for n in nodes]
+
+    @property
+    def parameter_symbols(self):
+        nodes = get_param_nodes(self.expression.root_node)
+        return [n.symbol for n in nodes]
 
     # Sub-Entity
     # ------------------------------------------------------------------------------------------------------------------

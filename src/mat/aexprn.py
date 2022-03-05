@@ -1,16 +1,18 @@
 from functools import partial
 from numbers import Number
 import numpy as np
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, List, Optional, Union
 
+from symro.src.mat.constants import *
+from symro.src.mat.types import Element, IndexingSet
+from symro.src.mat.orderedset import OrderedSet
 from symro.src.mat.entity import Parameter, Variable
+from symro.src.mat.state import State
 from symro.src.mat.exprn import LogicalExpressionNode, ArithmeticExpressionNode
 from symro.src.mat.opern import RelationalOperationNode, ArithmeticOperationNode
 from symro.src.mat.lexprn import BooleanNode
 from symro.src.mat.dummyn import CompoundDummyNode
 from symro.src.mat.setn import CompoundSetNode
-from symro.src.mat.util import *
-from symro.src.mat.state import State
 
 
 class ArithmeticTransformationNode(ArithmeticExpressionNode):

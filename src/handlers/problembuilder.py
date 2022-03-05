@@ -1,6 +1,5 @@
 import amplpy
 from copy import deepcopy
-from ordered_set import OrderedSet
 import os
 from typing import List, Iterable, Optional, Tuple, Union
 import warnings
@@ -30,7 +29,23 @@ def __complete_meta_entity_construction(problem: Problem):
 def build_subproblem(problem: Problem,
                      subproblem_symbol: str,
                      idx_set_def: str = None,
-                     entity_defs: Iterable[str] = None):
+                     entity_defs: Iterable[str] = None) -> BaseProblem:
+    """
+    Build a subproblem of the supplied problem. The resulting subproblem object is added to the subproblem collection of
+    the supplied problem.
+
+    The idx_set_def argument defines the indexing set of the subproblem, e.g. {i in I}.
+
+    Each string literal in the entity_defs argument defines an entity to be included in the subproblem, e.g. {j in J} x[j].
+
+    Any indexing sets defined in idx_set_def must be omitted from entity_defs.
+
+    :param problem: current problem
+    :param subproblem_symbol: unique symbol of the subproblem
+    :param idx_set_def: string literal defining the indexing set of the subproblem
+    :param entity_defs: string literals defining the entities to be included in the subproblems
+    :return: subproblem
+    """
 
     ampl_parser = AMPLScriptParser(problem)
 
@@ -94,7 +109,7 @@ def __build_subproblem_meta_entities_from_nodes(problem: Problem,
                                                 entity_nodes: List[Tuple[Optional[mat.CompoundSetNode],
                                                                          mat.DeclaredEntityNode]]):
 
-    meta_entities = []
+    meta_entities = []  # list of meta-entities to be included in a subproblem
 
     for me_idx_set_node, e_node in entity_nodes:
 
@@ -104,12 +119,18 @@ def __build_subproblem_meta_entities_from_nodes(problem: Problem,
             meta_entities.append(meta_entity)
 
         else:
+
+            # combine the indexing set node of the subproblem with that of the meta-entity
             idx_subset_node = nb.combine_idx_set_nodes([sp_idx_set_node, me_idx_set_node])
+
+            # build a sub-meta-entity
             sub_meta_entity = eb.build_sub_meta_entity(
                 problem=problem,
-                idx_subset_node=deepcopy(idx_subset_node),
                 meta_entity=meta_entity,
+                idx_subset_node=deepcopy(idx_subset_node),
                 entity_idx_node=deepcopy(e_node.idx_node))
+
+            # add the sub-meta-entity to the meta-entity collection
             meta_entities.append(sub_meta_entity)
 
     return meta_entities
@@ -275,7 +296,7 @@ def __standardize_indices_from_ampl_engine(raw_indices: Union[int, float, str,
 
 
 def __process_set_elements(raw_elements: List[Union[int, float, str, tuple]]):
-    elements = OrderedSet()
+    elements = mat.OrderedSet()
     for e_raw in raw_elements:
         if not isinstance(e_raw, tuple):
             e_raw = [e_raw]

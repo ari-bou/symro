@@ -1,13 +1,14 @@
 from copy import deepcopy
 import numpy as np
-from ordered_set import OrderedSet
 from queue import Queue
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import symro.src.mat as mat
 
-from symro.src.prob.problem import Problem, BaseProblem
+from symro.src.scripting.script import Script, CompoundScript, ScriptType
 import symro.src.scripting.amplstatement as ampl_stm
+
+from symro.src.prob.problem import Problem, BaseProblem
 
 import symro.src.handlers.formulator as fmr
 import symro.src.handlers.nodebuilder as nb
@@ -31,10 +32,9 @@ class GBDProblemBuilder:
     # Construction
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __init__(self, problem: Problem):
+    def __init__(self):
 
         # Problems
-        self.problem: Problem = problem
         self.gbd_problem: Optional[GBDProblem] = None
 
         # Expression Nodes
@@ -53,35 +53,54 @@ class GBDProblemBuilder:
     # Core
     # ------------------------------------------------------------------------------------------------------------------
 
-    def build_gbd_problem(self,
-                          problem: Problem,
-                          comp_var_defs: List[str],
-                          mp_symbol: str = None,
-                          primal_sp_symbol: str = None,
-                          fbl_sp_symbol: str = None,
-                          primal_sp_obj_symbol: str = None,
-                          init_lb: float = -np.inf,
-                          working_dir_path: str = None) -> GBDProblem:
+    def build_and_initialize_gbd_problem(self,
+                                         problem: Problem,
+                                         comp_var_defs: List[str],
+                                         mp_symbol: str = None,
+                                         primal_sp_symbol: str = None,
+                                         fbl_sp_symbol: str = None,
+                                         primal_sp_obj_symbol: str = None,
+                                         init_lb: float = -np.inf,
+                                         init_ub: float = np.inf,
+                                         working_dir_path: str = None) -> GBDProblem:
 
         # build GBD problem
-        self.gbd_problem = GBDProblem(problem=problem,
-                                      mp_symbol=mp_symbol,
-                                      default_primal_sp_symbol=primal_sp_symbol,
-                                      default_fbl_sp_symbol=fbl_sp_symbol,
-                                      primal_sp_obj_sym=primal_sp_obj_symbol,
-                                      working_dir_path=working_dir_path)
+        self._build_gbd_problem(
+            problem=problem,
+            mp_symbol=mp_symbol,
+            primal_sp_symbol=primal_sp_symbol,
+            fbl_sp_symbol=fbl_sp_symbol,
+            primal_sp_obj_symbol=primal_sp_obj_symbol,
+            working_dir_path=working_dir_path
+        )
 
         # standardize model
         fmr.substitute_defined_variables(self.gbd_problem)
-        self.gbd_problem.origin_to_std_con_map = fmr.standardize_model(self.gbd_problem)
+        fmr.standardize_model(self.gbd_problem)
 
         # retrieve or construct complicating meta-variables
         self.__collect_complicating_meta_variables(comp_var_defs)
 
         # build master problem constructs
-        self.gbd_problem.build_mp_constructs(init_lb)
+        self.gbd_problem.build_mp_constructs(init_lb=init_lb, init_ub=init_ub)
 
         return self.gbd_problem
+
+    def _build_gbd_problem(self,
+                           problem: Problem,
+                           mp_symbol: str = None,
+                           primal_sp_symbol: str = None,
+                           fbl_sp_symbol: str = None,
+                           primal_sp_obj_symbol: str = None,
+                           working_dir_path: str = None):
+        self.gbd_problem = GBDProblem(
+            problem=problem,
+            mp_symbol=mp_symbol,
+            default_primal_sp_symbol=primal_sp_symbol,
+            default_fbl_sp_symbol=fbl_sp_symbol,
+            primal_sp_obj_sym=primal_sp_obj_symbol,
+            working_dir_path=working_dir_path
+        )
 
     def add_decomposition_axes(self, idx_set_defs: List[str]):
 
@@ -117,8 +136,12 @@ class GBDProblemBuilder:
         # --- Primal Problem ---
         self.__categorize_constraints()
         if len(self.gbd_problem.primal_sps) == 0:
-            self.__build_default_primal_sp()
-        self.__modify_primal_sp_objs()
+            self._build_default_primal_sp()
+        self._modify_primal_sp_objs(
+            problem=self.gbd_problem,
+            subproblems=self.gbd_problem.primal_sps,
+            sp_idx_meta_sets=self.gbd_problem.idx_meta_sets,
+        )
         self.__categorize_primal_objective()
 
         # --- Feasibility Problem ---
@@ -132,6 +155,7 @@ class GBDProblemBuilder:
         self.__build_complicating_storage_params()
         self.__build_master_objective()
         self.__build_auxiliary_constructs()
+        self.__elicit_complicating_domain()
         self.__build_cuts()
         self.__build_mp()
 
@@ -146,27 +170,38 @@ class GBDProblemBuilder:
     def __collect_complicating_meta_variables(self, comp_var_defs: List[str]):
         for i, comp_var_def in enumerate(comp_var_defs, start=1):
             comp_var_id = "y_{0}".format(i)
-            meta_vars = self.__retrieve_meta_entity_from_definition(comp_var_def)
+            meta_vars = self.__retrieve_meta_entity_from_definition(
+                problem=self.gbd_problem,
+                entity_def=comp_var_def
+            )
             self.gbd_problem.comp_meta_vars[comp_var_id] = meta_vars[0]
 
     # Primal Objective Function
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __modify_primal_sp_objs(self):
+    @staticmethod
+    def _modify_primal_sp_objs(
+            problem: Problem,
+            subproblems: List[BaseProblem],
+            sp_idx_meta_sets: Dict[str, mat.MetaSet]
+    ):
 
-        for primal_sp in self.gbd_problem.primal_sps:
+        for primal_sp in subproblems:
 
             primal_sp_obj = primal_sp.model_meta_objs[0]
 
             idx_meta_sets = primal_sp_obj.idx_meta_sets
-            if len(idx_meta_sets) > 0:  # modify the meta-objective if it is indexed
+
+            # modify the meta-objective if it is indexed
+            if len(idx_meta_sets) > 0:
 
                 # generate a symbol for the new meta-objective
-                primal_sp_obj_sym = self.gbd_problem.generate_unique_symbol("{0}_{1}".format(primal_sp_obj.symbol,
-                                                                                             primal_sp.symbol))
+                primal_sp_obj_sym = problem.generate_unique_symbol(
+                    "{0}_{1}".format(primal_sp_obj.symbol, primal_sp.symbol)
+                )
 
                 # retrieve the symbols of the subproblem indexing meta-sets
-                sp_idx_meta_set_syms = [s for s in self.gbd_problem.idx_meta_sets.keys()]
+                sp_idx_meta_set_syms = [s for s in sp_idx_meta_sets.keys()]
 
                 # identify and collect indexing meta-sets of the primal subproblem objective function
                 # that are not decomposed
@@ -182,8 +217,10 @@ class GBDProblemBuilder:
                 if len(sum_idx_meta_sets) > 0:
 
                     # build the indexing set node of a reductive summation operation
-                    sum_idx_set_node = nb.build_idx_set_node(problem=self.gbd_problem,
-                                                             idx_meta_sets=sum_idx_meta_sets)
+                    sum_idx_set_node = nb.build_idx_set_node(
+                        problem=problem,
+                        idx_meta_sets=sum_idx_meta_sets
+                    )
 
                     # retrieve the root expression node of the original objective function
                     obj_exp_node = primal_sp_obj.expression.root_node
@@ -191,10 +228,15 @@ class GBDProblemBuilder:
                         raise ValueError("GBD problem builder expected an arithmetic expression node"
                                          + " while generating a new primal subproblem meta-objective")
 
+                    # prevent parsing errors by enclosing the node with parentheses
+                    obj_exp_node.is_prioritized = True
+
                     # embed the original function in a reductive summation operation
-                    sum_node = mat.ArithmeticTransformationNode(fcn=mat.SUMMATION_FUNCTION,
-                                                                idx_set_node=sum_idx_set_node,
-                                                                operands=obj_exp_node)
+                    sum_node = mat.ArithmeticTransformationNode(
+                        fcn=mat.SUMMATION_FUNCTION,
+                        idx_set_node=sum_idx_set_node,
+                        operands=obj_exp_node,
+                    )
 
                     expr_node = sum_node
 
@@ -203,14 +245,16 @@ class GBDProblemBuilder:
 
                 # retrieve default dummy symbols of the subproblem indexing sets
                 default_dummy_syms = {sym: ms.dummy_element
-                                      for sym, ms in self.gbd_problem.idx_meta_sets.items()}
+                                      for sym, ms in sp_idx_meta_sets.items()}
 
                 # build an indexing set node for the new meta-objective
                 unb_sym_mapping = {}
-                obj_idx_set_node = nb.build_idx_set_node(problem=self.gbd_problem,
-                                                         idx_meta_sets=obj_idx_meta_sets,
-                                                         custom_unb_syms=default_dummy_syms,
-                                                         unb_sym_mapping=unb_sym_mapping)
+                obj_idx_set_node = nb.build_idx_set_node(
+                    problem=problem,
+                    idx_meta_sets=obj_idx_meta_sets,
+                    custom_unb_syms=default_dummy_syms,
+                    unb_sym_mapping=unb_sym_mapping
+                )
 
                 # replace dummy symbols in expression with default dummy symbols
                 nb.replace_unbound_symbols(expr_node, mapping=unb_sym_mapping)
@@ -219,15 +263,17 @@ class GBDProblemBuilder:
                 expression = mat.Expression(expr_node)
 
                 # build a new meta-objective
-                primal_sp_obj = mat.MetaObjective(symbol=primal_sp_obj_sym,
-                                                  alias=primal_sp_obj.alias,
-                                                  idx_meta_sets=obj_idx_meta_sets,
-                                                  idx_set_node=obj_idx_set_node,
-                                                  direction=primal_sp_obj.direction,
-                                                  expression=expression)
+                primal_sp_obj = mat.MetaObjective(
+                    symbol=primal_sp_obj_sym,
+                    alias=primal_sp_obj.alias,
+                    idx_meta_sets=obj_idx_meta_sets,
+                    idx_set_node=obj_idx_set_node,
+                    direction=primal_sp_obj.direction,
+                    expression=expression
+                )
 
                 # add the new meta-objective to the problem
-                self.gbd_problem.add_meta_objective(primal_sp_obj, is_auxiliary=False)
+                problem.add_meta_objective(primal_sp_obj, is_auxiliary=False)
                 primal_sp.model_meta_objs.clear()
                 primal_sp.model_meta_objs.append(primal_sp_obj)
 
@@ -324,14 +370,13 @@ class GBDProblemBuilder:
     # Primal Subproblems
     # ------------------------------------------------------------------------------------------------------------------
 
-    def build_defined_primal_sp(self,
-                                sp_sym: str,
-                                var_defs: List[str] = None,
-                                obj_def: str = None,
-                                con_defs: List[str] = None):
+    def build_or_retrieve_defined_primal_sp(self,
+                                            sp_sym: str,
+                                            entity_defs: List[str] = None,
+                                            linked_entity_defs: Dict[str, Iterable[str]] = None):
 
         # retrieve existing subproblem
-        if obj_def is None and var_defs is None:
+        if entity_defs is None:
             if sp_sym in self.gbd_problem.subproblems:
                 self.gbd_problem.primal_sps.append(self.gbd_problem.subproblems[sp_sym])
             else:
@@ -340,28 +385,56 @@ class GBDProblemBuilder:
         # build new subproblem
         else:
 
-            meta_sets_params = list(self.gbd_problem.model_meta_sets_params)
-
-            meta_vars = []
-            for var_def in var_defs:
-                meta_vars.extend(self.__retrieve_meta_entity_from_definition(var_def))
-
-            meta_obj = self.__retrieve_meta_entity_from_definition(obj_def)[0]
-
-            meta_cons = []
-            for con_def in con_defs:
-                meta_cons.extend(self.__retrieve_meta_entity_from_definition(con_def))
-
             sp = BaseProblem(symbol=sp_sym,
                              description="Primal subproblem")
-            sp.model_meta_sets_params = meta_sets_params
-            sp.model_meta_vars = meta_vars
-            sp.model_meta_objs.append(meta_obj)
-            sp.model_meta_cons = meta_cons
+
+            for entity_def in entity_defs:
+                self.__add_defined_meta_entity_to_subproblem(
+                    problem=self.gbd_problem,
+                    subproblem=sp,
+                    entity_def=entity_def
+                )
+
+            self._add_linked_meta_entities_to_subproblem(
+                problem=self.gbd_problem,
+                subproblem=sp,
+                linked_entity_defs=linked_entity_defs
+            )
 
             self.gbd_problem.add_subproblem(sp)
+            self.gbd_problem.primal_sps.append(sp)
 
-    def __build_default_primal_sp(self):
+    def __add_defined_meta_entity_to_subproblem(self, problem: Problem, subproblem: BaseProblem, entity_def: str):
+
+        # retrieve defined meta-entity or meta-entities
+        def_meta_entities = self.__retrieve_meta_entity_from_definition(
+            problem=problem,
+            entity_def=entity_def
+        )
+
+        # add defined meta-entities to the subproblem
+        for dme in def_meta_entities:
+            subproblem.add_meta_entity(dme, is_auxiliary=False)
+
+    def _add_linked_meta_entities_to_subproblem(self,
+                                                problem: Problem,
+                                                subproblem: BaseProblem,
+                                                linked_entity_defs: Dict[str, Iterable[str]] = None):
+
+        if linked_entity_defs is not None:
+
+            entity_syms = subproblem.entity_symbols
+
+            for linking_sym, linked_defs in linked_entity_defs.items():
+                if linking_sym in entity_syms:
+                    for entity_def in linked_defs:
+                        self.__add_defined_meta_entity_to_subproblem(
+                            problem=problem,
+                            subproblem=subproblem,
+                            entity_def=entity_def
+                        )
+
+    def _build_default_primal_sp(self):
 
         # retrieve meta-variables
         meta_vars = [mv for mv in self.gbd_problem.model_meta_vars]
@@ -488,20 +561,20 @@ class GBDProblemBuilder:
         for id, meta_var in self.gbd_problem.comp_meta_vars.items():
             if meta_var.symbol not in self.gbd_problem.stored_comp_decisions:
 
-                # Generate parameter symbol
+                # generate parameter symbol
                 storage_symbol = self.gbd_problem.generate_unique_symbol("{0}_stored".format(meta_var.symbol))
 
-                # Retrieve parent meta-variable
+                # retrieve parent meta-variable
                 parent_meta_var = self.gbd_problem.meta_vars[meta_var.symbol]
 
-                # Retrieve indexing meta-sets
+                # retrieve indexing meta-sets
                 idx_meta_sets = [ms for ms in parent_meta_var.idx_meta_sets]
                 idx_meta_sets.append(self.gbd_problem.cuts)
 
-                # Retrieve constraint
+                # retrieve constraint
                 idx_set_con_literal = parent_meta_var.idx_set_con_literal
 
-                # Build storage meta-parameter
+                # build storage meta-parameter
                 stored_comp_param = eb.build_meta_param(
                     problem=self.gbd_problem,
                     symbol=storage_symbol,
@@ -509,7 +582,7 @@ class GBDProblemBuilder:
                     idx_set_con_literal=idx_set_con_literal,
                     default_value=0)
 
-                # Add storage meta-parameter to problem
+                # add storage meta-parameter to problem
                 self.gbd_problem.stored_comp_decisions[meta_var.symbol] = stored_comp_param
                 self.gbd_problem.add_meta_parameter(stored_comp_param, is_auxiliary=True)
 
@@ -666,7 +739,7 @@ class GBDProblemBuilder:
 
     def __build_duality_multiplier(self, meta_con: mat.MetaConstraint, id: int):
 
-        sym = self.problem.generate_unique_symbol("lambda_{0}".format(meta_con.symbol))
+        sym = self.gbd_problem.generate_unique_symbol("lambda_{0}".format(meta_con.symbol))
         idx_meta_sets = [ms for ms in meta_con.idx_meta_sets]
         idx_meta_sets.append(self.gbd_problem.cuts)
         idx_set_con_literal = meta_con.idx_set_con_literal
@@ -744,7 +817,7 @@ class GBDProblemBuilder:
                     dummy_element=dummy_element,
                     can_reduce=False
                 )
-                idx_set = OrderedSet().union(*idx_sets)
+                idx_set = mat.OrderedSet().union(*idx_sets)
                 dummy_element = node.idx_set_node.combined_dummy_element
 
             statuses = []
@@ -890,7 +963,7 @@ class GBDProblemBuilder:
                     dummy_element=dummy_element,
                     can_reduce=False
                 )
-                idx_set = OrderedSet().union(*idx_sets)
+                idx_set = mat.OrderedSet().union(*idx_sets)
                 dummy_element = node.idx_set_node.combined_dummy_element
 
             statuses = []
@@ -1213,7 +1286,7 @@ class GBDProblemBuilder:
                         dummy_element=dummy_element,
                         can_reduce=False
                     )
-                    idx_set = OrderedSet().union(*idx_sets)
+                    idx_set = mat.OrderedSet().union(*idx_sets)
                     dummy_element = node.idx_set_node.combined_dummy_element
 
             if not is_comp_var_node:
@@ -1231,6 +1304,20 @@ class GBDProblemBuilder:
     # Master Problem Cuts
     # ------------------------------------------------------------------------------------------------------------------
 
+    def __elicit_complicating_domain(self):
+
+        # determine whether canonical integer cuts can be generated
+        is_y_binary = True
+        comp_var_syms = self.gbd_problem.get_comp_var_syms()
+        for sym in comp_var_syms:
+            parent_meta_var = self.gbd_problem.meta_vars[sym]
+            if not parent_meta_var.is_binary:
+                # if a single complicating variable is not binary, then set the flag to false
+                is_y_binary = False
+                break
+
+        self.gbd_problem.is_y_binary = is_y_binary
+
     def __build_cuts(self):
 
         # generate cutting plane meta-constraints for the master problem
@@ -1238,18 +1325,10 @@ class GBDProblemBuilder:
         self.__build_optimality_cut()
         self.__build_feasibility_cut()
 
-        # determine whether canonical integer cuts can be generated
-        are_comp_vars_binary = True
-        comp_var_syms = self.gbd_problem.get_comp_var_syms()
-        for sym in comp_var_syms:
-            parent_meta_var = self.gbd_problem.meta_vars[sym]
-            if not parent_meta_var.is_binary:
-                # if a single complicating variable is not binary, then set the flag to false
-                are_comp_vars_binary = False
-                break
-
-        if are_comp_vars_binary:  # build the canonical integer cut if all complicating variables are binary
+        if self.gbd_problem.is_y_binary:  # build the canonical integer cut if all complicating variables are binary
             self.__build_canonical_integer_cut()
+
+        self.__build_eta_bounding_constraint()
 
     def __build_optimality_cut(self):
 
@@ -1324,6 +1403,19 @@ class GBDProblemBuilder:
 
         # add meta-constraint to the problem
         self.gbd_problem.gbd_cuts[self.gbd_problem.can_int_cut_con_sym] = meta_con
+        self.gbd_problem.add_meta_constraint(meta_con, is_auxiliary=True)
+
+    def __build_eta_bounding_constraint(self):
+
+        # build expression
+        expression = self.__build_eta_bound_expression()
+
+        # build meta-constraint
+        meta_con = mat.MetaConstraint(symbol=self.gbd_problem.eta_bound_con_sym,
+                                      expression=expression)
+
+        # add meta-constraint to the problem
+        self.gbd_problem.gbd_cuts[meta_con.symbol] = meta_con
         self.gbd_problem.add_meta_constraint(meta_con, is_auxiliary=True)
 
     def __build_optimality_cut_expression(self):
@@ -1539,6 +1631,26 @@ class GBDProblemBuilder:
 
         return mat.Expression(ineq_op_node)
 
+    def __build_eta_bound_expression(self):
+
+        body_node = mat.DeclaredEntityNode(symbol=self.gbd_problem.eta.symbol)
+        lb_node = mat.DeclaredEntityNode(symbol=self.gbd_problem.eta_lb.symbol)
+        ub_node = mat.DeclaredEntityNode(symbol=self.gbd_problem.eta_ub.symbol)
+
+        rel_op_inner = mat.RelationalOperationNode(
+            operator=mat.LESS_EQUAL_INEQUALITY_OPERATOR,
+            lhs_operand=body_node,
+            rhs_operand=ub_node
+        )
+
+        rel_op_outer = mat.RelationalOperationNode(
+            operator=mat.LESS_EQUAL_INEQUALITY_OPERATOR,
+            lhs_operand=lb_node,
+            rhs_operand=rel_op_inner
+        )
+
+        return mat.Expression(rel_op_outer)
+
     # Master Problem
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -1546,6 +1658,8 @@ class GBDProblemBuilder:
 
         meta_sets_params = list(self.gbd_problem.model_meta_sets_params)
         meta_sets_params.append(self.gbd_problem.cuts)
+        meta_sets_params.append(self.gbd_problem.eta_lb)
+        meta_sets_params.append(self.gbd_problem.eta_ub)
         meta_sets_params.extend(self.gbd_problem.duality_multipliers.values())
         meta_sets_params.extend(self.gbd_problem.stored_comp_decisions.values())
 
@@ -1566,6 +1680,8 @@ class GBDProblemBuilder:
         mp.model_meta_objs.append(meta_obj)
         mp.model_meta_cons = meta_cons
 
+        fmr.substitute_defined_variables(mp)
+
         self.gbd_problem.add_subproblem(mp)
         self.gbd_problem.mp = mp
 
@@ -1574,54 +1690,49 @@ class GBDProblemBuilder:
 
     def __build_subproblem_containers(self):
 
-        idx_sets = []
-        for ims in self.gbd_problem.idx_meta_sets.values():
-
-            # scalar
-            if not ims.is_indexed:
-                idx_sets.append(self.gbd_problem.state.get_set(ims.symbol).elements)
-
-            # indexed
-            else:
-                # TODO: add support for indexed sets as decomposition axes in the GBD problem builder
-                raise NotImplementedError("GBD problem builder does not support indexed sets as decomposition axes")
-
-        sp_idx_set = mat.cartesian_product(idx_sets)
-
-        if len(sp_idx_set) == 0:  # scalar subproblems
-            sp_idx_set.add(None)
+        sp_idx_set = self._generate_sp_idx_set()
 
         # generate subproblem containers
-        for sp_index in sp_idx_set:
-            for primal_sp, fbl_sp in zip(self.gbd_problem.primal_sps, self.gbd_problem.fbl_sps):
-                sp_container = GBDSubproblemContainer(primal_sp=primal_sp,
-                                                      fbl_sp=fbl_sp,
-                                                      sp_index=sp_index)
-                self.gbd_problem.sp_containers.append(sp_container)
+
+        def generate_sp_container(gbd_prob: GBDProblem, sp_idx: mat.Element = None):
+            for primal_sp, fbl_sp in zip(gbd_prob.primal_sps, gbd_prob.fbl_sps):
+                sp_ctn = GBDSubproblemContainer(
+                    primal_sp=primal_sp,
+                    fbl_sp=fbl_sp,
+                    sp_index=sp_idx
+                )
+                gbd_prob.sp_containers.append(sp_ctn)
+
+        if len(sp_idx_set) == 0:  # scalar subproblems
+            generate_sp_container(self.gbd_problem)
+
+        else:  # indexed subproblems
+            for sp_index in sp_idx_set:
+                generate_sp_container(self.gbd_problem, sp_index)
 
         # retrieve indexing sets of all complicating meta-variables partitioned by subproblem
-        comp_vars = list(self.gbd_problem.comp_meta_vars.values())
-        idx_sets = self.__assemble_complete_entity_idx_sets_by_symbol(comp_vars)
-        sp_sym_idx_sets = self.__partition_complete_entity_idx_sets_by_sp_sym(entity_type=mat.VAR_TYPE,
-                                                                              complete_idx_sets=idx_sets)
-        sp_idx_sets = self.__partition_sp_entity_idx_sets_by_sp_index(sp_entity_idx_sets=sp_sym_idx_sets)
+        comp_meta_vars = list(self.gbd_problem.comp_meta_vars.values())
+        idx_sets = self._assemble_complete_entity_idx_sets_by_symbol(comp_meta_vars)
+        sp_sym_idx_sets = self._partition_complete_entity_idx_sets_by_sp_sym(entity_type=mat.VAR_TYPE,
+                                                                             complete_idx_sets=idx_sets)
+        sp_idx_sets = self._partition_sp_entity_idx_sets_by_sp_index(sp_entity_idx_sets=sp_sym_idx_sets)
 
         # store indexing sets of all complicating meta-variables partitioned by subproblem
         for sp_idx_set_dict, sp_container in zip(sp_idx_sets, self.gbd_problem.sp_containers):
             sp_container.comp_var_idx_sets = sp_idx_set_dict
 
         # retrieve indexing sets of all mixed-complicating meta-constraints partitioned by subproblem
-        mixed_comp_cons = list(self.gbd_problem.mixed_comp_cons.values())
-        idx_sets = self.__assemble_complete_entity_idx_sets_by_symbol(mixed_comp_cons)
-        sp_sym_idx_sets = self.__partition_complete_entity_idx_sets_by_sp_sym(entity_type=mat.CON_TYPE,
-                                                                              complete_idx_sets=idx_sets)
-        sp_idx_sets = self.__partition_sp_entity_idx_sets_by_sp_index(sp_entity_idx_sets=sp_sym_idx_sets)
+        mixed_comp_meta_cons = list(self.gbd_problem.mixed_comp_cons.values())
+        idx_sets = self._assemble_complete_entity_idx_sets_by_symbol(mixed_comp_meta_cons)
+        sp_sym_idx_sets = self._partition_complete_entity_idx_sets_by_sp_sym(entity_type=mat.CON_TYPE,
+                                                                             complete_idx_sets=idx_sets)
+        sp_idx_sets = self._partition_sp_entity_idx_sets_by_sp_index(sp_entity_idx_sets=sp_sym_idx_sets)
 
         # store indexing sets of all mixed-complicating meta-constraints partitioned by subproblem
         for sp_idx_set_dict, sp_container in zip(sp_idx_sets, self.gbd_problem.sp_containers):
             sp_container.mixed_comp_con_idx_set = sp_idx_set_dict
 
-    def __assemble_complete_entity_idx_sets_by_symbol(self, meta_entities: List[mat.MetaEntity]):
+    def _assemble_complete_entity_idx_sets_by_symbol(self, meta_entities: List[mat.MetaEntity]):
 
         # retrieve the symbols of all entities
         entity_syms = set([me.symbol for me in meta_entities])
@@ -1651,13 +1762,13 @@ class GBDProblemBuilder:
                         entity_idx_subsets.append(entity_idx_subset)
 
                 # evaluate the union of all indexing subsets to obtain the complete indexing set
-                complete_idx_sets[entity_sym] = OrderedSet.union(*entity_idx_subsets)
+                complete_idx_sets[entity_sym] = mat.OrderedSet.union(*entity_idx_subsets)
 
         return complete_idx_sets
 
-    def __partition_complete_entity_idx_sets_by_sp_sym(self,
-                                                       entity_type: str,
-                                                       complete_idx_sets: Dict[str, Optional[OrderedSet]]):
+    def _partition_complete_entity_idx_sets_by_sp_sym(self,
+                                                      entity_type: str,
+                                                      complete_idx_sets: Dict[str, Optional[mat.OrderedSet]]):
 
         # instantiate the collection of the indexing sets by subproblem symbol and entity symbol
         sp_entity_idx_sets = {}  # key: primal subproblem symbol; value: dictionary of indexing sets
@@ -1707,8 +1818,8 @@ class GBDProblemBuilder:
 
         return sp_entity_idx_sets
 
-    def __partition_sp_entity_idx_sets_by_sp_index(self,
-                                                   sp_entity_idx_sets: Dict[str, Dict[str, Optional[mat.IndexingSet]]]):
+    def _partition_sp_entity_idx_sets_by_sp_index(self,
+                                                  sp_entity_idx_sets: Dict[str, Dict[str, Optional[mat.IndexingSet]]]):
 
         partitioned_entity_idx_sets = []
 
@@ -1752,16 +1863,26 @@ class GBDProblemBuilder:
     # ------------------------------------------------------------------------------------------------------------------
 
     def __build_and_write_ampl_script(self):
-        self.__clean_script()
+        self._clean_script(self.gbd_problem.compound_script)
         self.__build_model_scripts()
         self.__build_problem_declarations()
 
-        self.gbd_problem.compound_script.write(dir_path=self.gbd_problem.working_dir_path,
-                                               main_file_name=self.gbd_problem.symbol + ".run")
+        self.gbd_problem.compound_script.write(
+            dir_path=self.gbd_problem.working_dir_path,
+            main_file_name=self.gbd_problem.symbol + ".run"
+        )
 
-    def __clean_script(self):
+    @staticmethod
+    def _clean_script(compound_script: CompoundScript):
 
-        main_script = self.gbd_problem.compound_script.main_script
+        # remove model scripts from the compound script
+        included_script_names = list(compound_script.included_scripts.keys())
+        for name in included_script_names:
+            included_script = compound_script.included_scripts[name]
+            if included_script.script_type == ScriptType.MODEL:
+                compound_script.included_scripts.pop(name)
+
+        main_script = compound_script.main_script
 
         # TODO: account for special commands and other types of file statements
         i = 0
@@ -1822,13 +1943,17 @@ class GBDProblemBuilder:
 
     def __build_reformulated_model_script(self):
         script_builder = ScriptBuilder()
-        return script_builder.generate_problem_model_script(problem=self.gbd_problem,
-                                                            model_file_extension=".modr")
+        return script_builder.generate_problem_model_script(
+            problem=self.gbd_problem,
+            model_file_extension=".modr"
+        )
 
     def __build_mp_model_script(self):
 
         meta_sets_params = [self.gbd_problem.cut_count,
                             self.gbd_problem.cuts,
+                            self.gbd_problem.eta_lb,
+                            self.gbd_problem.eta_ub,
                             self.gbd_problem.stored_obj,
                             self.gbd_problem.is_feasible]
         meta_sets_params.extend([mp for _, mp in self.gbd_problem.stored_comp_decisions.items()])
@@ -1856,9 +1981,9 @@ class GBDProblemBuilder:
         script_builder = ScriptBuilder()
         return script_builder.generate_model_script(model_file_name=self.gbd_problem.symbol,
                                                     model_file_extension=".modrsl",
-                                                    meta_vars=self.gbd_problem.slack_vars,
+                                                    meta_vars=self.gbd_problem.slack_vars.values(),
                                                     meta_objs=fbl_objs,
-                                                    meta_cons=self.gbd_problem.sl_fbl_cons)
+                                                    meta_cons=self.gbd_problem.sl_fbl_cons.values())
 
     def __build_problem_declarations(self):
 
@@ -1886,28 +2011,46 @@ class GBDProblemBuilder:
     # Utility
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __retrieve_meta_entity_from_definition(self, entity_def: str):
+    def _generate_sp_idx_set(self):
 
-        ampl_parser = AMPLParser(self.gbd_problem)
+        idx_sets = []
+        for ims in self.gbd_problem.idx_meta_sets.values():
+
+            # scalar
+            if not ims.is_indexed:
+                idx_sets.append(self.gbd_problem.state.get_set(ims.symbol).elements)
+
+            # indexed
+            else:
+                # TODO: add support for indexed sets as decomposition axes in the GBD problem builder
+                raise NotImplementedError("GBD problem builder does not support indexed sets as decomposition axes")
+
+        return mat.cartesian_product(idx_sets)
+
+    @staticmethod
+    def __retrieve_meta_entity_from_definition(problem: Problem,
+                                               entity_def: str):
+
+        ampl_parser = AMPLParser(problem)
         idx_set_node, entity_node = ampl_parser.parse_declared_entity_and_idx_set(entity_def)
 
         sym = entity_node.symbol
-        if sym in self.gbd_problem.origin_to_std_con_map:
-            std_syms = [mc.symbol for mc in self.gbd_problem.origin_to_std_con_map[sym]]
+        if sym in problem.origin_to_std_con_map:
+            std_syms = [mc.symbol for mc in problem.origin_to_std_con_map[sym]]
         else:
             std_syms = [sym]
 
         meta_entities = []
 
         for std_sym in std_syms:
-            parent_meta_entity = self.gbd_problem.get_meta_entity(std_sym)
+            parent_meta_entity = problem.get_meta_entity(std_sym)
             if idx_set_node is None:
                 meta_entities.append(parent_meta_entity)
             else:
                 sub_meta_entity = eb.build_sub_meta_entity(
-                    problem=self.gbd_problem,
-                    idx_subset_node=idx_set_node,
+                    problem=problem,
                     meta_entity=parent_meta_entity,
+                    idx_subset_node=idx_set_node,
                     entity_idx_node=entity_node.idx_node)
                 meta_entities.append(sub_meta_entity)
 
